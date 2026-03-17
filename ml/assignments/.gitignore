@@ -1,0 +1,11 @@
+# Assignment booklet build artifacts
+/*.aux
+/*.fdb_latexmk
+/*.fls
+/*.log
+/*.out
+/*.pdf
+/*.synctex.gz
+
+# Legacy exported booklet names
+/Week01 excercises.pdf

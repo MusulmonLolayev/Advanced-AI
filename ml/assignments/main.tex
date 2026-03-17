@@ -1,0 +1,318 @@
+\documentclass[11pt]{article}
+
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xurl}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{pgfplots}
+
+\pgfplotsset{compat=1.18}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\setlist[itemize]{leftmargin=1.8em}
+\setlist[enumerate]{leftmargin=2.2em}
+
+\begin{document}
+
+\begin{center}
+{\LARGE Advanced AI: Week 1 Assignment Booklet}\\[0.4em]
+{\large Topic: k-Nearest Neighbors (k-NN)}
+\end{center}
+
+\textbf{Week 1 focus:} prediction problems, datasets, distance functions, validation, and k-nearest neighbors as a baseline for classification, regression, retrieval, and anomaly scoring.
+
+\medskip
+\textbf{Implementation policy (strict):}
+\begin{itemize}
+  \item Implement k-NN from scratch using \textbf{NumPy only} for all coding tasks.
+  \item You may use external libraries only for \textbf{data loading} or \textbf{pretrained feature extraction}.
+  \item Do not use scikit-learn k-NN classes or any high-level nearest-neighbor API.
+  \item Use the provided starter scaffold in \texttt{ml/assignments/assignment1\_knn/}.
+  \item Students should primarily edit \texttt{advanced\_ai/classifiers/k\_nearest\_neighbor.py} and use the provided self-checks and task runners.
+\end{itemize}
+
+\section*{1) Practical Warm-up: Distances, Neighbors, and Decisions}
+\textbf{Practical usage now:} Distance-based matching is used in product recommendation retrieval, anomaly screening, and search ranking pipelines.
+
+\medskip
+\textbf{Public data source:} Iris dataset (UCI / scikit-learn mirror)\\
+\url{https://archive.ics.uci.edu/dataset/53/iris}\\
+\url{https://scikit-learn.org/stable/auto_examples/datasets/plot_iris_dataset.html}
+
+\medskip
+We use two real features: sepal length ($x_1$) and sepal width ($x_2$).\
+Data points are indexed by ID:
+
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+ID & $x_1$ & $x_2$ & Class \\
+\midrule
+1 & 5.1 & 3.5 & Setosa \\
+2 & 4.9 & 3.0 & Setosa \\
+3 & 5.0 & 3.6 & Setosa \\
+4 & 5.4 & 3.9 & Setosa \\
+5 & 7.0 & 3.2 & Versicolor \\
+6 & 6.4 & 3.2 & Versicolor \\
+7 & 6.9 & 3.1 & Versicolor \\
+8 & 5.5 & 2.3 & Versicolor \\
+9 & 6.3 & 3.3 & Virginica \\
+10 & 5.8 & 2.7 & Virginica \\
+11 & 7.1 & 3.0 & Virginica \\
+12 & 6.5 & 3.0 & Virginica \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.82\textwidth,
+  height=0.5\textwidth,
+  xlabel={Sepal length $x_1$ (cm)},
+  ylabel={Sepal width $x_2$ (cm)},
+  xmin=4.4, xmax=7.3,
+  ymin=2.1, ymax=4.1,
+  grid=major,
+  major grid style={draw=black!10},
+  legend style={at={(0.02,0.98)},anchor=north west,draw=none,fill=none,font=\small}
+]
+\addplot[only marks, mark=*, mark size=2.0pt, draw=blue!80!black, fill=blue!70!black]
+coordinates {(5.1,3.5) (4.9,3.0) (5.0,3.6) (5.4,3.9)};
+\addlegendentry{Setosa}
+
+\addplot[only marks, mark=square*, mark size=2.0pt, draw=orange!80!black, fill=orange!75!black]
+coordinates {(7.0,3.2) (6.4,3.2) (6.9,3.1) (5.5,2.3)};
+\addlegendentry{Versicolor}
+
+\addplot[only marks, mark=triangle*, mark size=2.2pt, draw=red!80!black, fill=red!70!black]
+coordinates {(6.3,3.3) (5.8,2.7) (7.1,3.0) (6.5,3.0)};
+\addlegendentry{Virginica}
+
+\addplot[only marks, mark=star, mark size=3.0pt, draw=black, fill=black]
+coordinates {(6.0,3.0)};
+\addlegendentry{Query $q$}
+
+\node[font=\scriptsize, anchor=south west] at (axis cs:5.1,3.5) {1};
+\node[font=\scriptsize, anchor=south west] at (axis cs:4.9,3.0) {2};
+\node[font=\scriptsize, anchor=south west] at (axis cs:5.0,3.6) {3};
+\node[font=\scriptsize, anchor=south west] at (axis cs:5.4,3.9) {4};
+\node[font=\scriptsize, anchor=south west] at (axis cs:7.0,3.2) {5};
+\node[font=\scriptsize, anchor=south west] at (axis cs:6.4,3.2) {6};
+\node[font=\scriptsize, anchor=south west] at (axis cs:6.9,3.1) {7};
+\node[font=\scriptsize, anchor=south west] at (axis cs:5.5,2.3) {8};
+\node[font=\scriptsize, anchor=south west] at (axis cs:6.3,3.3) {9};
+\node[font=\scriptsize, anchor=south west] at (axis cs:5.8,2.7) {10};
+\node[font=\scriptsize, anchor=south west] at (axis cs:7.1,3.0) {11};
+\node[font=\scriptsize, anchor=south west] at (axis cs:6.5,3.0) {12};
+\node[font=\scriptsize, anchor=west] at (axis cs:6.0,3.0) {$q$};
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\begin{enumerate}[label=\textbf{D\arabic*.}]
+  \item Compute Euclidean ($L_2$) distance from query $q=(6.0,3.0)$ to points 2, 6, 10, and 12.
+  \item Compute Manhattan ($L_1$) distance from query $q$ to the same four points.
+  \item Using all 12 labeled points, identify the three nearest neighbors of $q$ under $L_2$ and predict the class for $k=3$.
+  \item Repeat the previous question under $L_1$. If the predicted class changes, explain why.
+  \item Suppose sepal width were recorded in millimeters while sepal length remained in centimeters. Explain what would happen to k-NN without preprocessing and state the correct fix.
+  \item Give one realistic setting where $L_1$ is preferable to $L_2$, or where cosine similarity is preferable to both.
+\end{enumerate}
+
+\section*{2) Multiple-Choice Questions (MCQ)}
+\begin{enumerate}[label=\textbf{MCQ \arabic*.}]
+  \item In k-NN, the main "training" phase is:
+  \begin{enumerate}[label=(\Alph*)]
+    \item Gradient descent optimization
+    \item Tree pruning
+    \item Storing indexed labeled samples
+    \item Backpropagation
+  \end{enumerate}
+
+  \item If feature scales are very different, the most likely issue is:
+  \begin{enumerate}[label=(\Alph*)]
+    \item Data leakage disappears
+    \item Distance becomes dominated by large-scale features
+    \item Overfitting is impossible
+    \item $k$ has no effect
+  \end{enumerate}
+
+  \item Increasing $k$ in k-NN generally tends to:
+  \begin{enumerate}[label=(\Alph*)]
+    \item Increase variance and reduce bias
+    \item Reduce variance and increase bias
+    \item Reduce both bias and variance always
+    \item Have no effect
+  \end{enumerate}
+
+  \item Which metric compares vector direction rather than magnitude?
+  \begin{enumerate}[label=(\Alph*)]
+    \item Euclidean distance
+    \item Manhattan distance
+    \item Cosine similarity
+    \item Hamming distance
+  \end{enumerate}
+
+  \item Which statement is true for brute-force k-NN query cost?
+  \begin{enumerate}[label=(\Alph*)]
+    \item Typically scales with $O(nd)$ per query
+    \item Always constant time
+    \item Independent of feature dimension
+    \item Always faster than ANN
+  \end{enumerate}
+
+  \item The main purpose of a validation set is:
+  \begin{enumerate}[label=(\Alph*)]
+    \item To replace the training set entirely
+    \item To tune hyperparameters such as $k$ without touching the final test set
+    \item To store unlabeled data only
+    \item To guarantee zero generalization gap
+  \end{enumerate}
+
+  \item In a retrieval setting, a common metric is:
+  \begin{enumerate}[label=(\Alph*)]
+    \item BLEU only
+    \item ROC-AUC only
+    \item Recall@k
+    \item MSE only
+  \end{enumerate}
+
+  \item If training error is near zero but validation error is much larger for $k=1$, the best interpretation is:
+  \begin{enumerate}[label=(\Alph*)]
+    \item The model is underfitting
+    \item The distance metric is irrelevant
+    \item The model is likely overfitting
+    \item The dataset no longer needs a test split
+  \end{enumerate}
+
+  \item A small generalization gap means:
+  \begin{enumerate}[label=(\Alph*)]
+    \item Training and unseen-data performance are relatively close
+    \item The model must be linear
+    \item The hypothesis class has size one
+    \item There is no noise in the data
+  \end{enumerate}
+\end{enumerate}
+
+\section*{3) Question-Answering Section}
+\begin{enumerate}[label=\textbf{Q\arabic*.}]
+  \item Define a supervised learning problem using input space $X$, output space $Y$, dataset $S=\{(x_i,y_i)\}_{i=1}^m$, predictor $h$, and loss $\ell$.
+  \item Formally define true risk $R(h)$ and empirical risk $\hat{R}(h)$, then explain what the generalization gap measures.
+  \item For k-NN, explain why $k=1$ can overfit and why very large $k$ can underfit. Connect your answer to bias and variance.
+  \item Describe a clean validation protocol to choose both the distance metric and $k$ without leaking test information.
+  \item Compare Euclidean distance and cosine similarity for text embeddings using one concrete example.
+  \item Explain when approximate nearest neighbor (ANN) indexing becomes necessary in production and what trade-off it introduces.
+  \item Describe one failure mode of k-NN in high-dimensional data and one practical mitigation strategy.
+\end{enumerate}
+
+\section*{4) Implementation Tasks (NumPy from Scratch)}
+\textbf{Important rule:} In every task below, implement distance computation, neighbor search, ranking, voting/averaging, and evaluation logic in NumPy.
+
+\medskip
+\textbf{Starter architecture to use (required):}
+\begin{itemize}
+  \item Main worksheet: \texttt{assignment1\_knn/knn.ipynb}
+  \item Internal package: \texttt{assignment1\_knn/advanced\_ai/}
+  \item Main student edit file: \texttt{advanced\_ai/classifiers/k\_nearest\_neighbor.py}
+  \item Self-check script: \texttt{python -m advanced\_ai.self\_checks}
+  \item Students should work through the notebook in order and use the code cells as the main implementation guide.
+  \item Required task runners: \texttt{banknote\_classification.py} and \texttt{california\_regression.py} in \texttt{assignment1\_knn/}
+  \item Optional task runners: \texttt{text\_retrieval\_optional.py} and \texttt{network\_anomaly\_optional.py} in \texttt{assignment1\_knn/}
+  \item Submission notebook: \texttt{assignment1\_knn/collect\_submission.ipynb}
+  \item Instructor-provided prepared files go in \texttt{assignment1\_knn/datasets/}
+\end{itemize}
+
+\begin{enumerate}[label=\textbf{I\arabic*.}]
+
+  \item \textbf{Build a Reusable k-NN Core}
+  \begin{itemize}
+    \item \textbf{Goal:} Implement a small NumPy k-NN toolkit that will be reused in the remaining tasks.
+    \item \textbf{Minimum requirements:}
+    \begin{itemize}
+      \item support $L_1$, $L_2$, and cosine distance/similarity;
+      \item support both classification vote and regression average;
+      \item support optional distance-weighted voting;
+      \item support a validation loop over $k \in \{1,3,5,9,15,25\}$.
+    \end{itemize}
+    \item \textbf{Required outputs:} passing self-checks in the notebook/starter, short toy-data sanity checks, runtime per query on a small benchmark, and a clear explanation of API design.
+  \end{itemize}
+
+  \item \textbf{k-NN Classification for Banknote Authentication}
+  \begin{itemize}
+    \item \textbf{Practical usage now:} counterfeit screening and binary decision support.
+    \item \textbf{Public dataset:} UCI Banknote Authentication\\
+    \url{https://archive.ics.uci.edu/dataset/267/banknote+authentication}
+    \item \textbf{Problem:} Build a binary classifier using your NumPy k-NN implementation.
+    \item \textbf{Required workflow:}
+    \begin{itemize}
+      \item create train, validation, and test splits;
+      \item standardize features using training statistics only;
+      \item tune $k$ and metric on the validation set;
+      \item report final test metrics with the chosen setting.
+    \end{itemize}
+    \item \textbf{Required outputs:} accuracy, precision, recall, F1, confusion matrix, validation table over $k$, and a brief failure-case analysis.
+  \end{itemize}
+
+  \item \textbf{k-NN Regression for House Price Estimation}
+  \begin{itemize}
+    \item \textbf{Practical usage now:} real-estate valuation, rent estimation, and mortgage pre-screening.
+    \item \textbf{Public dataset:} California Housing (scikit-learn repository/docs)\\
+    \url{https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_california_housing.html}
+    \item \textbf{Problem:} Predict median house value with k-NN regression.
+    \item \textbf{Required workflow:}
+    \begin{itemize}
+      \item evaluate at least $k \in \{1,3,5,9,15,25\}$;
+      \item compare unscaled and standardized features;
+      \item use validation data for model selection and test data for the final report.
+    \end{itemize}
+    \item \textbf{Required outputs:} MAE, RMSE, error-vs-$k$ curve, and a short discussion of how scaling changed the results.
+  \end{itemize}
+
+  \item \textbf{Optional Advanced Extension}
+  \begin{itemize}
+    \item Complete \textbf{at most one} of the following options after finishing I1--I3.
+    \item These extension tasks are optional and are intended for students who finish the core Week 1 work early.
+  \end{itemize}
+
+  \item \textbf{Option A: Text Embedding-Based Search System (k-NN Retrieval)}
+  \begin{itemize}
+    \item \textbf{Practical usage now:} Semantic search and question retrieval (e.g., large-scale search engines and enterprise search stacks, including Google-style vector retrieval stages).
+    \item \textbf{Provided by instructor:} precomputed query/document embedding vectors and text lengths for each item.
+    \item \textbf{Reference sources:} BEIR benchmark and sentence-transformers/all-MiniLM-L6-v2\\
+    \url{https://github.com/beir-cellar/beir}\\
+    \url{https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2}
+    \item \textbf{Problem:} Build top-$k$ document retrieval using cosine similarity in NumPy over the provided embeddings.
+    \item \textbf{Required outputs:} Recall@5, Recall@10, MRR, latency per query, and one short analysis of whether text length appears related to retrieval quality.
+  \end{itemize}
+
+  \item \textbf{Option B: k-NN Anomaly Detection for Network Security}
+  \begin{itemize}
+    \item \textbf{Practical usage now:} Intrusion detection, abnormal transaction monitoring, and SOC alert ranking.
+    \item \textbf{Public dataset:} KDD Cup 99 (scikit-learn interface)\\
+    \url{https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_kddcup99.html}
+    \item \textbf{Problem:} Use distance to the $k$-th nearest neighbor as anomaly score.
+    \item \textbf{Required outputs:} ROC-AUC, PR-AUC, threshold selection using validation data, and analysis of the top detected anomalies.
+  \end{itemize}
+
+\end{enumerate}
+
+\section*{Submission Format (Week 1)}
+\begin{itemize}
+  \item One PDF report containing the warm-up, MCQ answers, question-answering section, and short written discussion for the implementation tasks.
+  \item One completed notebook: \texttt{assignment1\_knn/knn.ipynb}.
+  \item One assignment zip produced from \texttt{assignment1\_knn/collect\_submission.ipynb} or \texttt{bash collectSubmission.sh}.
+  \item Students may additionally submit \textbf{one optional extension} (Option A or Option B), but it is not required.
+  \item Include random seed, environment file, and reproducibility notes.
+  \item For each implementation task: include runtime notes, memory notes, and one short discussion of production relevance.
+  \item Clearly separate validation results from final test results.
+\end{itemize}
+
+\end{document}

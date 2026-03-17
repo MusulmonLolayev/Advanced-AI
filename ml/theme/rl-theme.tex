@@ -1,0 +1,31 @@
+\usetheme{Madrid}
+\usecolortheme{default}
+
+% Colors
+\definecolor{RLBlue}{RGB}{40,75,120}
+\definecolor{RLWhite}{RGB}{255,255,255}
+\definecolor{RLGreen}{RGB}{45,130,110}
+\definecolor{RLOrange}{RGB}{220,130,60}
+\definecolor{RLGray}{RGB}{245,245,245}
+
+% Apply
+% \setbeamercolor{structure}{fg=RLBlue}
+% \setbeamercolor{frametitle}{fg=white,bg=RLBlue}
+% \setbeamercolor{title}{fg=RLBlue}
+% \setbeamercolor{block title}{fg=white,bg=RLGreen}
+% \setbeamercolor{block body}{bg=RLGray}
+\setbeamercolor{alerted text}{fg=RLOrange}
+
+% Footer
+\setbeamertemplate{footline}{
+  \leavevmode%
+  \hbox{
+    \begin{beamercolorbox}[wd=.92\paperwidth,ht=2.5ex,dp=1ex,left,sep=0pt]{author in head/foot}
+      \footnotesize\hspace{0.5em}\insertshortsubtitle
+    \end{beamercolorbox}
+    \begin{beamercolorbox}[wd=.08\paperwidth,ht=2.5ex,dp=1ex,center,sep=0pt]{date in head/foot}
+      \footnotesize\insertframenumber
+    \end{beamercolorbox}
+  }
+}
+\setbeamertemplate{navigation symbols}{}

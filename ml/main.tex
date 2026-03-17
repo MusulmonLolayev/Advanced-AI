@@ -1,0 +1,39 @@
+% -------------------------
+% Document class
+% -------------------------
+\documentclass[aspectratio=169]{beamer}
+
+% -------------------------
+% Theme & macros
+% -------------------------
+\input{theme/rl-theme.tex}
+\input{theme/rl-macros.tex}
+
+% -------------------------
+% Title info
+% -------------------------
+\title{Advanced AI}
+\subtitle{Lecture 1: Introduction to Machine Learning}
+\author{Musulmon Lolaev}
+\institute{TQQT LLC}
+\date{\today}
+
+\newif\ifweekonly
+\newif\ifshowpauses
+\showpausestrue
+
+% Set \showpausesfalse to build a static version with all overlays shown at once.
+\AtBeginDocument{%
+  \let\beamerpause\pause
+  \renewcommand{\pause}[1][]{\ifshowpauses\beamerpause[#1]\fi}
+}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\input{weeks/week01.tex}
+
+\end{document}

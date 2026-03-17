@@ -1,0 +1,15 @@
+# Python cache and notebook checkpoints
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Submission and notebook export artifacts
+assignment1_knn_submission.zip
+*.html
+
+# Local environment clutter
+.venv/
+venv/
+
+# Tool-specific caches
+.pytest_cache/

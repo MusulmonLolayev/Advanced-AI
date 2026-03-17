@@ -1,0 +1,40 @@
+\section{High-Dimensional Effects in k-NN}
+
+\begin{frame}{Curse of Dimensionality for k-NN}
+\begin{itemize}
+  \item As dimension grows, points become similarly distant.
+  \pause
+  \item Nearest and farthest neighbors become less distinguishable.
+  \pause
+  \item Local neighborhoods become less local.
+  \pause
+  \item Brute-force search also becomes expensive with high $d$ and large $n$.
+\end{itemize}
+
+\pause
+\begin{rlintuition}
+k-NN is strongest when representation space has meaningful geometry.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Graphic: Distance Concentration in High Dimensions}
+\centering
+\includegraphics[width=0.84\textwidth]{figures/knn/knn_distance_concentration.pdf}
+
+\vspace{0.35em}
+\footnotesize Blue line increasing to 1 means nearest and farthest distances become closer.
+\end{frame}
+
+\begin{frame}{Making k-NN Work in High Dimensions}
+\begin{itemize}
+  \item Standardize or normalize features before distance computation.
+  \pause
+  \item Reduce dimension (PCA, feature selection, domain features).
+  \pause
+  \item Use better representations (contrastive/self-supervised embeddings).
+  \pause
+  \item Choose metric for representation type (cosine for embeddings is common).
+  \pause
+  \item Evaluate robustness under feature noise and distribution shift.
+\end{itemize}
+\end{frame}

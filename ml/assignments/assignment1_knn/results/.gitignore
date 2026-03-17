@@ -1,0 +1,4 @@
+# Keep the results directory, ignore generated outputs
+*
+!keep.md
+!.gitignore

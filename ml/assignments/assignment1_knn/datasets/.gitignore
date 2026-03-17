@@ -1,0 +1,9 @@
+# Prepared datasets and download caches
+*.csv
+*.npz
+*.zip
+_raw/
+
+# Keep the folder documentation
+!README.md
+!.gitignore

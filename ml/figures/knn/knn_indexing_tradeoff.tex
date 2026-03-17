@@ -1,0 +1,28 @@
+\documentclass[tikz,border=2pt]{standalone}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.94\textwidth,
+  height=0.54\textwidth,
+  xmode=log,
+  ymode=log,
+  xlabel={Dataset size $n$},
+  ylabel={Candidate comparisons per query (illustrative)},
+  xmin=900, xmax=1200000,
+  ymin=120, ymax=1500000,
+  legend style={at={(0.02,0.98)},anchor=north west,draw=none,fill=none,font=\footnotesize},
+  grid=major,
+  major grid style={draw=black!8},
+]
+\addplot[draw=red!75!black, line width=1.1pt, mark=square*, mark size=1.5pt] coordinates {(1000.00000,1000.00000) (3000.00000,3000.00000) (10000.00000,10000.00000) (30000.00000,30000.00000) (100000.00000,100000.00000) (300000.00000,300000.00000) (1000000.00000,1000000.00000)};
+\addlegendentry{Brute-force}
+\addplot[draw=blue!75!black, line width=1.1pt, mark=*, mark size=1.5pt] coordinates {(1000.00000,448.46029) (3000.00000,519.78361) (10000.00000,597.94706) (30000.00000,669.27037) (100000.00000,747.43382) (300000.00000,818.75713) (1000000.00000,896.92059)};
+\addlegendentry{KD/Ball-tree (idealized)}
+\addplot[draw=green!55!black, line width=1.1pt, mark=triangle*, mark size=1.7pt] coordinates {(1000.00000,349.65784) (3000.00000,365.50747) (10000.00000,382.87712) (30000.00000,398.72675) (100000.00000,416.09640) (300000.00000,431.94603) (1000000.00000,449.31569)};
+\addlegendentry{ANN search}
+\end{axis}
+\end{tikzpicture}
+\end{document}

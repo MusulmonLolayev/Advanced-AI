@@ -1,0 +1,26 @@
+\documentclass[tikz,border=2pt]{standalone}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.94\textwidth,
+  height=0.52\textwidth,
+  xlabel={k (number of neighbors)},
+  ylabel={Error rate},
+  xmin=1, xmax=31,
+  ymin=0, ymax=0.35,
+  legend style={at={(0.98,0.98)},anchor=north east,draw=none,fill=none,font=\footnotesize},
+  grid=major,
+  major grid style={draw=black!8},
+]
+\addplot[draw=blue!75!black, line width=1.1pt, mark=*, mark size=1.5pt] coordinates {(1.00000,0.00000) (3.00000,0.03333) (5.00000,0.02778) (7.00000,0.03333) (9.00000,0.02778) (11.00000,0.03333) (13.00000,0.03889) (15.00000,0.03889) (17.00000,0.03333) (19.00000,0.03333) (21.00000,0.03333) (23.00000,0.03333) (25.00000,0.03333) (27.00000,0.03333) (29.00000,0.03333) (31.00000,0.02778)};
+\addlegendentry{Training error}
+\addplot[draw=red!75!black, line width=1.1pt, mark=square*, mark size=1.4pt] coordinates {(1.00000,0.10625) (3.00000,0.06250) (5.00000,0.06250) (7.00000,0.06250) (9.00000,0.06875) (11.00000,0.06875) (13.00000,0.06875) (15.00000,0.06250) (17.00000,0.06875) (19.00000,0.06250) (21.00000,0.06875) (23.00000,0.06250) (25.00000,0.06875) (27.00000,0.06875) (29.00000,0.07500) (31.00000,0.06875)};
+\addlegendentry{Validation error}
+\addplot[draw=black!70, densely dashed, line width=0.8pt] coordinates {(3,0) (3,0.35)};
+\node[anchor=south west, font=\scriptsize] at (axis cs:3,0.06250) {best k=3};
+\end{axis}
+\end{tikzpicture}
+\end{document}
