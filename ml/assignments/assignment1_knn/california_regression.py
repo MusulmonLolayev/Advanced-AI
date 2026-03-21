@@ -31,7 +31,7 @@ def main() -> None:
     print_regression_history(unscaled_history)
     print("best_unscaled =", unscaled_best)
 
-    print_section("\nStandardized experiment")
+    print_section("Standardized experiment")
     standardized_solver = KNNSolver(
         KNearestNeighbor(),
         standardized_data,
@@ -45,7 +45,7 @@ def main() -> None:
     print("best_standardized =", standardized_best)
 
     report = standardized_solver.final_regression_report(standardized_best)
-    print_section("\nFinal standardized test report")
+    print_section("Final standardized test report")
     print(f"mae  = {report['mae']:.4f}")
     print(f"rmse = {report['rmse']:.4f}")
 

@@ -14,8 +14,12 @@ def require_file(path: str | Path) -> Path:
 
 
 def print_section(title: str) -> None:
-    print(title)
-    print("-" * len(title))
+    has_leading_blank = title.startswith("\n")
+    normalized_title = title.lstrip("\n")
+    if has_leading_blank:
+        print()
+    print(normalized_title)
+    print("-" * len(normalized_title))
 
 
 def print_classification_history(history: Iterable[object]) -> None:

@@ -20,6 +20,9 @@ def load_tabular_dataset(path: str | Path, target_col: int = -1, skiprows: int =
         return np.asarray(bundle["X"], dtype=np.float64), np.asarray(bundle["y"])
 
     data = np.loadtxt(path, delimiter=",", skiprows=skiprows)
+    data = np.atleast_2d(data)
+    if data.shape[1] < 2:
+        raise ValueError(f"Expected at least one feature and one target column in {path}")
     X = np.asarray(np.delete(data, target_col, axis=1), dtype=np.float64)
     y = np.asarray(data[:, target_col])
     return X, y
@@ -30,11 +33,11 @@ def _load_required_npz(path: str | Path, required_keys: list[str]) -> dict[str, 
     if not path.exists():
         raise FileNotFoundError(f"Dataset not found: {path}")
 
-    bundle = np.load(path, allow_pickle=True)
-    for key in required_keys:
-        if key not in bundle:
-            raise KeyError(f"Missing key '{key}' in dataset bundle.")
-    return {key: bundle[key] for key in required_keys}
+    with np.load(path, allow_pickle=True) as bundle:
+        for key in required_keys:
+            if key not in bundle:
+                raise KeyError(f"Missing key '{key}' in dataset bundle.")
+        return {key: np.asarray(bundle[key]) for key in required_keys}
 
 
 def train_val_test_split(

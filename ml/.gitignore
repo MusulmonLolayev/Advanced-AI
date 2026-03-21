@@ -1,16 +1,21 @@
 # Top-level LaTeX/Beamer build artifacts
 /*.aux
+/*.bbl
+/*.bcf
+/*.blg
 /*.fdb_latexmk
 /*.fls
 /*.log
 /*.nav
 /*.out
+/*.run.xml
 /*.snm
 /*.synctex.gz
 /*.toc
 /*.vrb
 
 # Built slide decks
+/*.pdf
 /main.pdf
 /mainbuild.pdf
 /week01.pdf

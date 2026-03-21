@@ -27,11 +27,11 @@ def main() -> None:
     print_section("Validation sweep")
     print_classification_history(history)
 
-    print_section("\nBest validation config")
+    print_section("Best validation config")
     print(best)
 
     report = solver.final_classification_report(best)
-    print_section("\nTest report")
+    print_section("Test report")
     print(f"accuracy  = {report['accuracy']:.4f}")
     print(f"precision = {report['precision']:.4f}")
     print(f"recall    = {report['recall']:.4f}")

@@ -53,6 +53,21 @@ class KNNSolver:
                 for k in k_choices:
                     yield k, metric, weighting
 
+    @staticmethod
+    def _validate_sweep_inputs(
+        k_choices: list[int],
+        metric_choices: list[str],
+        weighting_choices: list[str],
+    ) -> None:
+        if not k_choices:
+            raise ValueError("k_choices must not be empty.")
+        if not metric_choices:
+            raise ValueError("metric_choices must not be empty.")
+        if not weighting_choices:
+            raise ValueError("weighting_choices must not be empty.")
+        if any(k < 1 for k in k_choices):
+            raise ValueError(f"k choices must be >= 1, got {k_choices}")
+
     def sweep_classification(
         self,
         k_choices: list[int],
@@ -60,6 +75,7 @@ class KNNSolver:
         weighting_choices: list[str],
         num_loops: int = 0,
     ) -> tuple[list[ClassificationSweepResult], ClassificationSweepResult]:
+        self._validate_sweep_inputs(k_choices, metric_choices, weighting_choices)
         self.fit()
         history: list[ClassificationSweepResult] = []
         best: ClassificationSweepResult | None = None
@@ -116,6 +132,7 @@ class KNNSolver:
         weighting_choices: list[str],
         num_loops: int = 0,
     ) -> tuple[list[RegressionSweepResult], RegressionSweepResult]:
+        self._validate_sweep_inputs(k_choices, metric_choices, weighting_choices)
         self.fit()
         history: list[RegressionSweepResult] = []
         best: RegressionSweepResult | None = None

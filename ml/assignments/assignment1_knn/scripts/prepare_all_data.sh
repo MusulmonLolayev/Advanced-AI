@@ -4,8 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASSIGNMENT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ENV_FILE="${ASSIGNMENT_ROOT}/environment-data.yml"
-REQUIREMENTS_FILE="${ASSIGNMENT_ROOT}/requirements.txt"
-ENV_NAME="ad-ai-ass1"
+source "${SCRIPT_DIR}/common.sh"
 SKIP_INSTALL=0
 CORE_ONLY=0
 SKIP_RETRIEVAL=0
@@ -28,38 +27,12 @@ retry_cmd() {
   done
 }
 
-install_requirements() {
-  local install_mode="$1"
-  local temp_requirements
-  temp_requirements="$(mktemp)"
+install_core_requirements() {
+  retry_cmd 2 conda run -n "${ENV_NAME}" python -m pip install "${CORE_REQUIREMENTS[@]}"
+}
 
-  if [[ "${install_mode}" == "core" ]]; then
-    awk '
-      /^\s*#/ {
-        if ($0 ~ /^# Retrieval dependencies$/) {
-          exit
-        }
-        next
-      }
-      /^\s*$/ { next }
-      { print }
-    ' "${REQUIREMENTS_FILE}" > "${temp_requirements}"
-  elif [[ "${install_mode}" == "retrieval" ]]; then
-    awk '
-      BEGIN { include = 0 }
-      /^# Retrieval dependencies$/ { include = 1; next }
-      /^\s*#/ { next }
-      /^\s*$/ { next }
-      include { print }
-    ' "${REQUIREMENTS_FILE}" > "${temp_requirements}"
-  else
-    echo "Unsupported install mode: ${install_mode}" >&2
-    rm -f "${temp_requirements}"
-    return 1
-  fi
-
-  retry_cmd 2 conda run -n "${ENV_NAME}" python -m pip install -r "${temp_requirements}"
-  rm -f "${temp_requirements}"
+install_retrieval_requirements() {
+  retry_cmd 2 conda run -n "${ENV_NAME}" python -m pip install "${RETRIEVAL_REQUIREMENTS[@]}"
 }
 
 for arg in "$@"; do
@@ -94,12 +67,12 @@ if ! conda env list | awk '{print $1}' | grep -Fx "${ENV_NAME}" >/dev/null 2>&1;
 fi
 
 if [[ "${SKIP_INSTALL}" -eq 0 ]]; then
-  install_requirements "core"
+  install_core_requirements
   if [[ "${CORE_ONLY}" -eq 0 && "${SKIP_RETRIEVAL}" -eq 0 ]]; then
     if ! conda run -n "${ENV_NAME}" python -c "import torch" >/dev/null 2>&1; then
       retry_cmd 2 conda run -n "${ENV_NAME}" python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
     fi
-    install_requirements "retrieval"
+    install_retrieval_requirements
   fi
 fi
 

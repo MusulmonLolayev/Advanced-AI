@@ -217,6 +217,47 @@ coordinates {(6.0,3.0)};
 \textbf{Important rule:} In every task below, implement distance computation, neighbor search, ranking, voting/averaging, and evaluation logic in NumPy.
 
 \medskip
+\textbf{Core equations to use (reference):}
+\begin{itemize}
+  \item For two vectors $x, z \in \mathbb{R}^d$, Euclidean distance is
+  \[
+    d_{L_2}(x,z)=\sqrt{\sum_{j=1}^{d}(x_j-z_j)^2}.
+  \]
+  \item Manhattan distance is
+  \[
+    d_{L_1}(x,z)=\sum_{j=1}^{d}|x_j-z_j|.
+  \]
+  \item Cosine similarity is
+  \[
+    \cos(x,z)=\frac{x^\top z}{\|x\|_2\|z\|_2},
+  \]
+  and in this assignment cosine distance is
+  \[
+    d_{\cos}(x,z)=1-\cos(x,z).
+  \]
+  \item For classification, uniform-vote prediction is the majority label among the $k$ nearest neighbors:
+  \[
+    \hat y = \arg\max_{c} \sum_{i \in \mathcal{N}_k(x)} \mathbf{1}[y_i=c].
+  \]
+  \item For distance-weighted classification, use weights
+  \[
+    w_i=\frac{1}{d(x,x_i)+10^{-12}}.
+  \]
+  \item For regression, uniform prediction is the mean of neighbor targets:
+  \[
+    \hat y = \frac{1}{k}\sum_{i \in \mathcal{N}_k(x)} y_i.
+  \]
+  \item For distance-weighted regression, use
+  \[
+    \hat y = \frac{\sum_{i \in \mathcal{N}_k(x)} w_i y_i}{\sum_{i \in \mathcal{N}_k(x)} w_i}.
+  \]
+  \item Standardize features using training-set statistics only:
+  \[
+    x'_j = \frac{x_j-\mu_j}{\sigma_j}.
+  \]
+\end{itemize}
+
+\medskip
 \textbf{Starter architecture to use (required):}
 \begin{itemize}
   \item Main worksheet: \texttt{assignment1\_knn/knn.ipynb}
@@ -242,6 +283,7 @@ coordinates {(6.0,3.0)};
       \item support optional distance-weighted voting;
       \item support a validation loop over $k \in \{1,3,5,9,15,25\}$.
     \end{itemize}
+    \item \textbf{Implementation note:} The core file should compute the same distances in the two-loop, one-loop, and no-loop implementations, with the no-loop version using NumPy broadcasting or matrix multiplication rather than explicit Python loops.
     \item \textbf{Required outputs:} passing self-checks in the notebook/starter, short toy-data sanity checks, runtime per query on a small benchmark, and a clear explanation of API design.
   \end{itemize}
 

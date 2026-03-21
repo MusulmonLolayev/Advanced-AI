@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ASSIGNMENT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-ENV_NAME="advanced-ai-assignment1-knn-data"
+source "${SCRIPT_DIR}/common.sh"
 
 for arg in "$@"; do
   if [[ "${arg}" == "--help" || "${arg}" == "-h" ]]; then

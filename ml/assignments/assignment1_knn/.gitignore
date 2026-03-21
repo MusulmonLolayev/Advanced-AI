@@ -6,6 +6,7 @@ __pycache__/
 # Submission and notebook export artifacts
 assignment1_knn_submission.zip
 *.html
+*.pdf
 
 # Local environment clutter
 .venv/
@@ -13,3 +14,12 @@ venv/
 
 # Tool-specific caches
 .pytest_cache/
+
+# Local LaTeX scratch files (if students export reports locally)
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc

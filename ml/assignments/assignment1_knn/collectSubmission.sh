@@ -4,7 +4,6 @@ set -euo pipefail
 ZIP_FILENAME="assignment1_knn_submission.zip"
 
 REQUIRED=(
-  "README.md"
   "advanced_ai/classifiers/k_nearest_neighbor.py"
   "advanced_ai/self_checks.py"
   "knn.ipynb"
@@ -23,7 +22,6 @@ done
 
 rm -f "${ZIP_FILENAME}"
 zip -q -r "${ZIP_FILENAME}" \
-  README.md \
   banknote_classification.py \
   california_regression.py \
   collect_submission.ipynb \
@@ -33,7 +31,6 @@ zip -q -r "${ZIP_FILENAME}" \
   network_anomaly_optional.py \
   requirements.txt \
   advanced_ai \
-  datasets/README.md \
   results
 
 echo "Created ${ZIP_FILENAME}"

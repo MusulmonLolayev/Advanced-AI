@@ -31,15 +31,20 @@ def main() -> None:
             first_relevant_rank[i] = hits[0] + 1
 
     valid = ~np.isnan(first_relevant_rank)
-    length_corr = 0.0
+    length_corr: float | None = None
     if np.sum(valid) > 1:
-        length_corr = float(np.corrcoef(bundle["query_lengths"][valid], first_relevant_rank[valid])[0, 1])
+        corr = float(np.corrcoef(bundle["query_lengths"][valid], first_relevant_rank[valid])[0, 1])
+        if np.isfinite(corr):
+            length_corr = corr
 
     print_section("Optional retrieval report")
     print(f"Recall@5  = {r5:.4f}")
     print(f"Recall@10 = {r10:.4f}")
     print(f"MRR       = {mrr:.4f}")
-    print(f"corr(query_length, first_relevant_rank) = {length_corr:.4f}")
+    if length_corr is None:
+        print("corr(query_length, first_relevant_rank) = n/a")
+    else:
+        print(f"corr(query_length, first_relevant_rank) = {length_corr:.4f}")
 
 
 if __name__ == "__main__":
