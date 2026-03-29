@@ -23,11 +23,11 @@
 \begin{document}
 
 \begin{center}
-{\LARGE Advanced AI: Week 1 Assignment Booklet}\\[0.4em]
+{\LARGE Advanced AI: Lab 1 Assignment Booklet}\\[0.4em]
 {\large Topic: k-Nearest Neighbors (k-NN)}
 \end{center}
 
-\textbf{Week 1 focus:} prediction problems, datasets, distance functions, validation, and k-nearest neighbors as a baseline for classification, regression, retrieval, and anomaly scoring.
+\textbf{Lab 1 focus:} prediction problems, datasets, distance functions, validation, and k-nearest neighbors as a baseline for classification, regression, retrieval, and anomaly scoring.
 
 \medskip
 \textbf{Implementation policy (strict):}
@@ -214,7 +214,7 @@ coordinates {(6.0,3.0)};
 \end{enumerate}
 
 \section*{4) Implementation Tasks (NumPy from Scratch)}
-\textbf{Important rule:} In every task below, implement distance computation, neighbor search, ranking, voting/averaging, and evaluation logic in NumPy.
+\textbf{Important rule:} In every task below, fill in the \textbf{TODO blocks} using NumPy only for the core algorithm.
 
 \medskip
 \textbf{Core equations to use (reference):}
@@ -273,80 +273,84 @@ coordinates {(6.0,3.0)};
 
 \begin{enumerate}[label=\textbf{I\arabic*.}]
 
-  \item \textbf{Build a Reusable k-NN Core}
+  \item \textbf{Part I1: Build a Reusable k-NN Core}
   \begin{itemize}
     \item \textbf{Goal:} Implement a small NumPy k-NN toolkit that will be reused in the remaining tasks.
-    \item \textbf{Minimum requirements:}
+    \item \textbf{What to fill in:}
     \begin{itemize}
       \item support $L_1$, $L_2$, and cosine distance/similarity;
       \item support both classification vote and regression average;
       \item support optional distance-weighted voting;
       \item support a validation loop over $k \in \{1,3,5,9,15,25\}$.
     \end{itemize}
-    \item \textbf{Implementation note:} The core file should compute the same distances in the two-loop, one-loop, and no-loop implementations, with the no-loop version using NumPy broadcasting or matrix multiplication rather than explicit Python loops.
-    \item \textbf{Required outputs:} passing self-checks in the notebook/starter, short toy-data sanity checks, runtime per query on a small benchmark, and a clear explanation of API design.
+    \item \textbf{Hint:} Make the two-loop, one-loop, and no-loop implementations return the same distances, then reuse one neighbor-search path for classification, regression, and anomaly scoring.
+    \item \textbf{Deliverable:} passing self-checks in the notebook/starter, short toy-data sanity checks, runtime per query on a small benchmark, and a short explanation of your API design.
   \end{itemize}
 
-  \item \textbf{k-NN Classification for Banknote Authentication}
+  \item \textbf{Part I2: k-NN Classification for Banknote Authentication}
   \begin{itemize}
     \item \textbf{Practical usage now:} counterfeit screening and binary decision support.
     \item \textbf{Public dataset:} UCI Banknote Authentication\\
     \url{https://archive.ics.uci.edu/dataset/267/banknote+authentication}
-    \item \textbf{Problem:} Build a binary classifier using your NumPy k-NN implementation.
-    \item \textbf{Required workflow:}
+    \item \textbf{TODO:} Build a binary classifier using your NumPy k-NN implementation.
+    \item \textbf{What to fill in:}
     \begin{itemize}
       \item create train, validation, and test splits;
       \item standardize features using training statistics only;
       \item tune $k$ and metric on the validation set;
       \item report final test metrics with the chosen setting.
     \end{itemize}
-    \item \textbf{Required outputs:} accuracy, precision, recall, F1, confusion matrix, validation table over $k$, and a brief failure-case analysis.
+    \item \textbf{Hint:} Keep the test set untouched until the very end.
+    \item \textbf{Deliverable:} accuracy, precision, recall, F1, confusion matrix, validation table over $k$, and a brief failure-case analysis.
   \end{itemize}
 
-  \item \textbf{k-NN Regression for House Price Estimation}
+  \item \textbf{Part I3: k-NN Regression for House Price Estimation}
   \begin{itemize}
     \item \textbf{Practical usage now:} real-estate valuation, rent estimation, and mortgage pre-screening.
     \item \textbf{Public dataset:} California Housing (scikit-learn repository/docs)\\
     \url{https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_california_housing.html}
-    \item \textbf{Problem:} Predict median house value with k-NN regression.
-    \item \textbf{Required workflow:}
+    \item \textbf{TODO:} Predict median house value with k-NN regression.
+    \item \textbf{What to fill in:}
     \begin{itemize}
       \item evaluate at least $k \in \{1,3,5,9,15,25\}$;
       \item compare unscaled and standardized features;
       \item use validation data for model selection and test data for the final report.
     \end{itemize}
-    \item \textbf{Required outputs:} MAE, RMSE, error-vs-$k$ curve, and a short discussion of how scaling changed the results.
+    \item \textbf{Hint:} Compare the raw and standardized pipelines with the same split.
+    \item \textbf{Deliverable:} MAE, RMSE, error-vs-$k$ curve, and a short discussion of how scaling changed the results.
   \end{itemize}
 
-  \item \textbf{Optional Advanced Extension}
+  \item \textbf{Part I4: Optional Advanced Extension}
   \begin{itemize}
     \item Complete \textbf{at most one} of the following options after finishing I1--I3.
-    \item These extension tasks are optional and are intended for students who finish the core Week 1 work early.
+    \item These extension tasks are optional and are intended for students who finish the core Lab 1 work early.
   \end{itemize}
 
-  \item \textbf{Option A: Text Embedding-Based Search System (k-NN Retrieval)}
+  \item \textbf{Part I4A: Text Embedding-Based Search System (k-NN Retrieval)}
   \begin{itemize}
     \item \textbf{Practical usage now:} Semantic search and question retrieval (e.g., large-scale search engines and enterprise search stacks, including Google-style vector retrieval stages).
     \item \textbf{Provided by instructor:} precomputed query/document embedding vectors and text lengths for each item.
     \item \textbf{Reference sources:} BEIR benchmark and sentence-transformers/all-MiniLM-L6-v2\\
     \url{https://github.com/beir-cellar/beir}\\
     \url{https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2}
-    \item \textbf{Problem:} Build top-$k$ document retrieval using cosine similarity in NumPy over the provided embeddings.
-    \item \textbf{Required outputs:} Recall@5, Recall@10, MRR, latency per query, and one short analysis of whether text length appears related to retrieval quality.
+    \item \textbf{TODO:} Build top-$k$ document retrieval using cosine similarity in NumPy over the provided embeddings.
+    \item \textbf{Hint:} Treat the queries as test points and rank all documents by distance.
+    \item \textbf{Deliverable:} Recall@5, Recall@10, MRR, latency per query, and one short analysis of whether text length appears related to retrieval quality.
   \end{itemize}
 
-  \item \textbf{Option B: k-NN Anomaly Detection for Network Security}
+  \item \textbf{Part I4B: k-NN Anomaly Detection for Network Security}
   \begin{itemize}
     \item \textbf{Practical usage now:} Intrusion detection, abnormal transaction monitoring, and SOC alert ranking.
     \item \textbf{Public dataset:} KDD Cup 99 (scikit-learn interface)\\
     \url{https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_kddcup99.html}
-    \item \textbf{Problem:} Use distance to the $k$-th nearest neighbor as anomaly score.
-    \item \textbf{Required outputs:} ROC-AUC, PR-AUC, threshold selection using validation data, and analysis of the top detected anomalies.
+    \item \textbf{TODO:} Use distance to the $k$-th nearest neighbor as anomaly score.
+    \item \textbf{Hint:} Use validation labels to choose the threshold before touching the test set.
+    \item \textbf{Deliverable:} ROC-AUC, PR-AUC, threshold selection using validation data, and analysis of the top detected anomalies.
   \end{itemize}
 
 \end{enumerate}
 
-\section*{Submission Format (Week 1)}
+\section*{Submission Format (Lab 1)}
 \begin{itemize}
   \item One PDF report containing the warm-up, MCQ answers, question-answering section, and short written discussion for the implementation tasks.
   \item One completed notebook: \texttt{assignment1\_knn/knn.ipynb}.
@@ -355,6 +359,84 @@ coordinates {(6.0,3.0)};
   \item Include random seed, environment file, and reproducibility notes.
   \item For each implementation task: include runtime notes, memory notes, and one short discussion of production relevance.
   \item Clearly separate validation results from final test results.
+\end{itemize}
+
+\section*{Lab 2 (PCA) Implementation Tasks}
+\textbf{Lab 2 focus:} dimensionality reduction, visualization, denoising, and anomaly scoring with PCA.
+
+\medskip
+\textbf{Implementation policy (strict):}
+\begin{itemize}
+  \item Implement PCA core steps in NumPy (centering, covariance or SVD, projection, reconstruction).
+  \item You may use plotting libraries for visualization and external datasets/loaders for data access.
+  \item Do not call high-level PCA implementations from scikit-learn in the core implementation section.
+\end{itemize}
+
+\medskip
+\textbf{Core PCA equations to use and reference:}
+\begin{itemize}
+  \item Mean and centered data:
+  \[
+    \mu = \frac{1}{n}\sum_{i=1}^{n}x_i,\qquad X_c = X-\mathbf{1}\mu^\top.
+  \]
+  \item Covariance:
+  \[
+    \Sigma=\frac{1}{n-1}X_c^\top X_c.
+  \]
+  \item First component objective:
+  \[
+    w_1=\arg\max_{\|w\|_2=1} w^\top \Sigma w.
+  \]
+  \item Projection and reconstruction:
+  \[
+    z = U_k^\top(x-\mu),\qquad \hat{x}=\mu+U_k z.
+  \]
+  \item Reconstruction error anomaly score:
+  \[
+    a(x)=\|x-\hat{x}\|_2^2.
+  \]
+\end{itemize}
+
+\begin{enumerate}[label=\textbf{P\arabic*.}]
+  \item \textbf{Part P1: Build PCA From Scratch (NumPy)}
+  \begin{itemize}
+    \item \textbf{TODO:} Implement PCA using both covariance eigendecomposition and SVD.
+    \item \textbf{Hint:} Verify both implementations return matching principal directions up to sign.
+    \item \textbf{Hint:} Plot cumulative explained variance and choose $k$ by a target threshold (e.g., $95\%$).
+    \item \textbf{Deliverable:} implementation notes, explained-variance plot, and chosen $k$ with justification.
+  \end{itemize}
+
+  \item \textbf{Part P2: 2D Visualization of Text Embeddings}
+  \begin{itemize}
+    \item \textbf{TODO:} Reduce provided text embeddings (or any approved embedding set) to 2D with PCA.
+    \item \textbf{Hint:} Visualize at least two semantic groups and annotate representative examples.
+    \item \textbf{Hint:} Report what PC1 and PC2 appear to capture semantically.
+    \item \textbf{Deliverable:} 2D scatter figure, short interpretation, and one observed failure case.
+  \end{itemize}
+
+  \item \textbf{Part P3: PCA-Based Anomaly Detection}
+  \begin{itemize}
+    \item \textbf{TODO:} Fit PCA on normal training data only.
+    \item \textbf{TODO:} Score validation/test samples by reconstruction error.
+    \item \textbf{Hint:} Select the threshold on validation set before evaluating test performance.
+    \item \textbf{Deliverable:} threshold-selection method, metrics table, and examples of top-scored anomalies.
+  \end{itemize}
+
+  \item \textbf{Part P4: PCA + k-NN Comparison}
+  \begin{itemize}
+    \item \textbf{TODO:} Compare k-NN on raw features vs PCA-reduced features on one classification or regression dataset.
+    \item \textbf{Hint:} Keep the same train/val/test split and tune $k$ fairly in both settings.
+    \item \textbf{Hint:} Report runtime per query and the performance gap side by side.
+    \item \textbf{Deliverable:} comparison table and short conclusion on when PCA helps or hurts.
+  \end{itemize}
+\end{enumerate}
+
+\section*{Submission Format (Lab 2)}
+\begin{itemize}
+  \item One PDF report with method, equations, plots, and conclusions for P1--P4.
+  \item Source code/notebook for PCA implementation and experiments.
+  \item Reproducibility metadata: random seed, environment specification, and command list.
+  \item Clear separation of training, validation, and final test results.
 \end{itemize}
 
 \end{document}
