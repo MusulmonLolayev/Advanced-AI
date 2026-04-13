@@ -156,6 +156,49 @@ def build_axes() -> None:
     _save(fig, "pca_axes")
 
 
+def build_eigenbasis() -> None:
+    fig, ax = _new_canvas(9.2, 5.6)
+
+    _arrow(ax, (120, 500), (835, 500), color="#404040", lw=2.2, ms=16)
+    _arrow(ax, (120, 500), (120, 75), color="#404040", lw=2.2, ms=16)
+    _text(ax, 846, 506, r"$x_1$", size=13)
+    _text(ax, 105, 65, r"$x_2$", size=13)
+
+    center = (470, 280)
+    ellipse = Ellipse(center, width=380, height=170, angle=-32, fill=False, edgecolor="#2c7fb8", linewidth=4.0)
+    ax.add_patch(ellipse)
+
+    # Principal directions v1 and v2.
+    _arrow(ax, center, (680, 150), color="#d95f02", lw=4.0, ms=18)
+    _arrow(ax, center, (328, 410), color="#1b9e77", lw=4.0, ms=18)
+    _text(ax, 692, 146, r"$v_1$", size=14, color="#d95f02")
+    _text(ax, 303, 422, r"$v_2$", size=14, color="#1b9e77")
+
+    # Right-angle marker to emphasize orthogonality.
+    ax.plot([446, 457], [299, 283], color="#555555", linewidth=2.0)
+    ax.plot([457, 473], [283, 294], color="#555555", linewidth=2.0)
+    ax.plot([446, 462], [299, 310], color="#555555", linewidth=2.0)
+    _text(ax, 486, 322, r"$v_1^\top v_2 = 0$", size=12, color="#404040")
+
+    # Arbitrary unit direction w and its decomposition.
+    _arrow(ax, center, (610, 205), color="#6a3d9a", lw=4.0, ms=18)
+    _text(ax, 618, 198, r"$w$", size=14, color="#6a3d9a")
+
+    proj_v1 = (565, 220)
+    proj_v2 = (510, 330)
+    _line(ax, (610, 205), proj_v1, color="#8c8c8c", lw=1.6, linestyle=(0, (7, 6)))
+    _line(ax, proj_v1, center, color="#d95f02", lw=2.8, linestyle=(0, (4, 4)))
+    _line(ax, proj_v2, center, color="#1b9e77", lw=2.8, linestyle=(0, (4, 4)))
+    ax.scatter([proj_v1[0], proj_v2[0]], [proj_v1[1], proj_v2[1]], s=20, color="#8c8c8c", zorder=4)
+    _text(ax, 575, 235, r"$\alpha_1 v_1$", size=12, color="#d95f02")
+    _text(ax, 475, 350, r"$\alpha_2 v_2$", size=12, color="#1b9e77")
+
+    _text(ax, 182, 105, "symmetric covariance ellipse", size=11)
+    _text(ax, 605, 95, r"$w = \alpha_1 v_1 + \alpha_2 v_2$", size=13, color="#1f1f1f")
+
+    _save(fig, "pca_eigenbasis")
+
+
 def _panel_base(ax: plt.Axes) -> None:
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
@@ -206,6 +249,7 @@ def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     build_projection()
     build_axes()
+    build_eigenbasis()
     build_svd_geometry()
     print(f"Saved PCA graphics to {OUT_DIR}")
 

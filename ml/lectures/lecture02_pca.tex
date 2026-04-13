@@ -1,17 +1,103 @@
 \section{Principal Component Analysis (PCA)}
 
-\begin{frame}{Learning Goals}
+\begin{frame}{From Supervised to Unsupervised Learning}
 \begin{itemize}
   \pause
-  \item Start from a centered data matrix and a projection direction.
+  \item In Lecture 1, the focus was supervised learning, especially classification with labeled data.
   \pause
-  \item Derive PCA as variance maximization under a unit-norm constraint.
+  \item In this lecture, the focus shifts to unsupervised learning, where the goal is to discover structure without target labels.
+  \pause
+  \item Principal Component Analysis (PCA) is a central unsupervised method for finding dominant directions of variation in data.
+  \pause
+  \item PCA provides a bridge from raw high-dimensional features to lower-dimensional representations used for visualization, compression, and preprocessing.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Lecture Outline}
+\begin{itemize}
+  \pause
+  \item Motivate PCA as a response to redundancy, correlation, and high-dimensional representations.
+  \pause
+  \item Start from projection and derive variance maximization.
   \pause
   \item Connect the optimization problem to eigenvectors, eigenvalues, and orthogonality.
   \pause
-  \item Understand practical computation with covariance, power iteration, deflation, and SVD.
+  \item Extend the discussion to multiple components, reconstruction, and explained variance.
   \pause
-  \item Use PCA for compression, visualization, and anomaly detection.
+  \item Conclude with practical computation, applications, and how PCA connects to the lab.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why PCA in Unsupervised Learning?}
+\begin{itemize}
+  \item In supervised learning, labels indicate what should be predicted.
+  \pause
+  \item In unsupervised learning, labels are absent, so the task is to analyze the structure of the input data itself.
+  \pause
+  \item PCA addresses this by identifying directions that capture the largest variation in the data.
+\end{itemize}
+
+\pause
+\begin{rlintuition}
+PCA identifies the directions in the data that carry the greatest variation.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{PCA Versus Raw Features}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\textbf{With raw features}
+\begin{itemize}
+  \item Distances may be distorted by noise or redundancy.
+  \pause
+  \item Correlated features may repeat the same information.
+  \pause
+  \item High-dimensional data are hard to visualize and expensive for k-NN.
+\end{itemize}
+
+\pause
+\column{0.5\textwidth}
+\textbf{With PCA features}
+\begin{itemize}
+  \item Retain a smaller set of directions ranked by variance.
+  \pause
+  \item Often get faster distance computation and cleaner geometry.
+  \pause
+  \item Enable 2D visualization, compression, denoising, and reconstruction-based anomaly detection.
+\end{itemize}
+\end{columns}
+
+\pause
+\vspace{0.35em}
+\footnotesize PCA can be useful, but it does not guarantee improved prediction: low-variance directions may still matter for the target.
+\end{frame}
+
+\begin{frame}{Centering the Data Before PCA}
+\begin{itemize}
+  \item PCA studies variation around the mean, so centering is essential.
+  \pause
+  \item For training examples $x_1,\dots,x_n \in \mathbb{R}^d$, compute the sample mean
+  \[
+    \bar{x}=\frac{1}{n}\sum_{i=1}^n x_i.
+  \]
+  \pause
+  \item Then define centered examples
+  \[
+    x_i^c = x_i-\bar{x},
+    \qquad
+    X_c =
+    \begin{bmatrix}
+      (x_1^c)^\top\\
+      \vdots\\
+      (x_n^c)^\top
+    \end{bmatrix}.
+  \]
+  \pause
+  \item From this point onward, $x_i$ denotes a centered example unless stated otherwise.
+  \pause
+  \item Without centering, the first principal direction can be influenced by the mean level rather than by true variation.
+  \pause
+  \item \footnotesize Example: if $x_1=(4,2)$ and $x_2=(2,0)$, then $\bar{x}=(3,1)$ and the centered examples are $(1,1)$ and $(-1,-1)$.
 \end{itemize}
 \end{frame}
 
@@ -19,15 +105,17 @@
 \begin{columns}[T]
 \column{0.55\textwidth}
 \begin{itemize}
-  \item Assume centered data stacked in $X_c \in \mathbb{R}^{n\times d}$.
+  \item Stack centered training examples in $X_c \in \mathbb{R}^{n\times d}$.
   \pause
   \item Choose a direction $w \in \mathbb{R}^d$.
   \pause
-  \item Each sample projects to one scalar $z_i = w^\top x_i$.
+  \item Each example projects to one scalar $z_i = w^\top x_i$.
   \pause
-  \item For the whole data set, $z = X_c w \in \mathbb{R}^n$ collects all projected coordinates.
+  \item For all training examples, $z = X_c w \in \mathbb{R}^n$ collects the projected coordinates.
   \pause
   \item PCA asks which direction keeps the largest spread after this projection.
+  \pause
+  \item \footnotesize Example: if $x=(2,1)$ and $w=(1,0)$, then $z=w^\top x=2$.
 \end{itemize}
 
 \pause
@@ -37,26 +125,47 @@
 \end{columns}
 \end{frame}
 
-\begin{frame}{Projected Variance}
+\begin{frame}{Projected Variance: Scalar Form}
 \begin{itemize}
-  \item The projected scalars are $z_i = w^\top x_i$.
+  \item The projected coordinates are $z_i = w^\top x_i$.
   \pause
-  \item Because the data are centered, the projected mean is also zero.
+  \item Because the centered examples have mean zero, the projected mean is also zero.
   \pause
-  \item So the variance of the projection is
+  \item Start from the sample variance of the projected coordinates:
   \begin{equation}
     \mathrm{Var}(w^\top x)
-    = \frac{1}{n-1}\sum_{i=1}^{n}(w^\top x_i)^2
-    = \frac{1}{n-1}\sum_{i=1}^{n} w^\top x_i x_i^\top w
-    = w^\top \Sigma w,
+    = \frac{1}{n-1}\sum_{i=1}^{n}(w^\top x_i)^2.
     \label{eq:proj-var-pca}
   \end{equation}
-  where
+  \pause
+  \item Use the identity
   \[
-    \Sigma = \frac{1}{n-1}X_c^\top X_c.
+    (w^\top x_i)^2 = w^\top x_i x_i^\top w,
+  \]
+  which converts each squared scalar projection into a quadratic form.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Projected Variance: Matrix Form}
+\begin{itemize}
+  \item Substitute the identity into the variance expression:
+  \[
+    \mathrm{Var}(w^\top x)
+    = \frac{1}{n-1}\sum_{i=1}^{n} w^\top x_i x_i^\top w
+    = w^\top \left(\frac{1}{n-1}\sum_{i=1}^{n} x_i x_i^\top\right) w.
   \]
   \pause
-  \item PCA now chooses the direction that maximizes $w^\top \Sigma w$.
+  \item Define the covariance matrix by
+  \[
+    \Sigma = \frac{1}{n-1}X_c^\top X_c
+           = \frac{1}{n-1}\sum_{i=1}^{n} x_i x_i^\top,
+  \]
+  so the projected variance becomes
+  \[
+    \mathrm{Var}(w^\top x)=w^\top \Sigma w.
+  \]
+  \pause
+  \item PCA therefore searches for the direction that maximizes the quadratic form $w^\top \Sigma w$.
 \end{itemize}
 \end{frame}
 
@@ -95,78 +204,36 @@
     \Sigma w = \lambda w.
     \label{eq:eigenproblem-pca}
   \end{equation}
-  \item So PCA directions are eigenvectors of the covariance matrix.
+  \item Therefore every stationary unit direction of the PCA objective is an eigenvector of the covariance matrix.
+  \pause
+  \item To identify the maximizing direction, we now compare the objective values of all unit directions.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{A Better Basis for the Argument}
+\begin{frame}{Why the Largest Eigenvalue Matters}
 \begin{itemize}
-  \item The covariance matrix $\Sigma$ is symmetric.
-  \pause
-  \item Therefore its eigenvectors can be chosen orthonormal:
-  \[
-    v_i^\top v_j =
-    \begin{cases}
-      1, & i=j,\\
-      0, & i\neq j.
-    \end{cases}
-  \]
-  \pause
-  \item That means any unit vector $w$ can be written in this basis:
+  \item Let $w_j$ be a unit eigenvector of $\Sigma$, so
   \begin{equation}
-    w = \sum_{j=1}^d \alpha_j v_j,
-    \qquad \sum_{j=1}^d \alpha_j^2 = 1.
-    \label{eq:eigenbasis-expansion}
+    \Sigma w_j = \lambda_j w_j.
+    \label{eq:eigenpair-pca}
   \end{equation}
   \pause
-  \item Now we can study the PCA objective by looking at the coefficients $\alpha_j$.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Why the Largest Eigenvalue Wins}
-\small
-\begin{itemize}
-  \item Let $v_1,\dots,v_d$ be eigenvectors of $\Sigma$ with
-  $\lambda_1\ge \lambda_2 \ge \cdots \ge \lambda_d$.
-  \pause
-  \item Start from the PCA objective:
+  \item Evaluate the PCA objective on that eigenvector:
   \begin{equation}
-    w^\top \Sigma w.
-    \label{eq:pca-objective-short}
+    w_j^\top \Sigma w_j
+    = w_j^\top (\lambda_j w_j)
+    = \lambda_j \|w_j\|_2^2
+    = \lambda_j.
+    \label{eq:eigenvalue-variance}
   \end{equation}
   \pause
-  \item Substitute $w=\sum_j \alpha_j v_j$ and use $\Sigma v_j=\lambda_j v_j$:
-  \begin{equation}
-    w^\top \Sigma w = \sum_{j=1}^d \lambda_j \alpha_j^2.
-    \label{eq:weighted-eigenvalues}
-  \end{equation}
+  \item Therefore, along an eigen-direction, the objective value is exactly its eigenvalue.
   \pause
-  \item Cross-terms vanish because the eigenvectors are orthonormal.
+  \item A larger eigenvalue means a larger projected variance along that direction.
   \pause
-  \item So the variance is a weighted average of the eigenvalues, with weights $\alpha_j^2$.
+  \item If $\lambda_1 \ge \lambda_2 \ge \cdots \ge \lambda_d$, the first principal direction is the eigenvector $w_1$ associated with $\lambda_1$.
   \pause
-  \item In 2D, if $w=\cos\theta\, v_1+\sin\theta\, v_2$, then
-  \[
-    w^\top \Sigma w = \lambda_1\cos^2\theta + \lambda_2\sin^2\theta.
-  \]
-  The closer $w$ is to $v_1$, the more weight goes to $\lambda_1$.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Why the Maximum Is $\lambda_1$}
-\small
-\begin{itemize}
-  \item Since the weights are nonnegative and sum to $1$,
-  \begin{equation}
-    w^\top \Sigma w = \sum_{j=1}^d \lambda_j \alpha_j^2 \le \lambda_1.
-    \label{eq:max-eigenvalue}
-  \end{equation}
-  \pause
-  \item A weighted average cannot be larger than its largest entry.
-  \pause
-  \item Equality holds only when $\alpha_1=1$ and all other $\alpha_j=0$.
-  \pause
-  \item So the maximizing direction is $w=v_1$.
+  \item \footnotesize Example: if $\lambda_1=5$ and $\lambda_2=2$, then the variance along $w_1$ is $5$, while along $w_2$ it is $2$.
 \end{itemize}
 \end{frame}
 
@@ -185,6 +252,8 @@
   \end{equation}
   \pause
   \item This gives orthogonal directions of decreasing variance.
+  \pause
+  \item \footnotesize Example: $(1,0)^\top(0,1)=0$, so these two directions are orthogonal.
 \end{itemize}
 
 \pause
@@ -194,9 +263,88 @@
 \end{columns}
 \end{frame}
 
-\begin{frame}{Power Iteration}
+\begin{frame}{Explained Variance and Component Selection}
 \begin{itemize}
-  \item One practical way to find the top eigenvector is power iteration:
+  \item The explained variance ratio of direction $j$ is
+  \begin{equation}
+    \mathrm{EVR}_j = \frac{\lambda_j}{\sum_{\ell=1}^d \lambda_\ell}.
+    \label{eq:explained-variance-ratio}
+  \end{equation}
+  \pause
+  \item The cumulative explained variance of the first $k$ directions is
+  \begin{equation}
+    \mathrm{CEV}(k) = \frac{\sum_{j=1}^k \lambda_j}{\sum_{\ell=1}^d \lambda_\ell}.
+    \label{eq:cumulative-explained-variance}
+  \end{equation}
+  \pause
+  \item In practice, choose the smallest $k$ that captures a desired fraction such as $90\%$ or $95\%$.
+  \pause
+  \item \footnotesize Example: if $(\lambda_1,\lambda_2,\lambda_3)=(5,3,2)$, then $\mathrm{EVR}_1=0.5$ and $\mathrm{CEV}(2)=0.8$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Projection, Reconstruction, and Error}
+\begin{itemize}
+  \item After choosing the first $k$ principal directions, collect them in
+  \[
+    W_k = [w_1,\dots,w_k] \in \mathbb{R}^{d\times k}.
+  \]
+  \pause
+  \item The low-dimensional representation is
+  \begin{equation}
+    z = W_k^\top x.
+    \label{eq:pca-project-k}
+  \end{equation}
+  \pause
+  \item The reconstruction from that representation is
+  \begin{equation}
+    \hat{x} = W_k z = W_k W_k^\top x.
+    \label{eq:pca-reconstruct}
+  \end{equation}
+  \pause
+  \item If $k$ is small, reconstruction keeps the main structure but discards weaker directions.
+  \pause
+  \item The reconstruction-error score
+  \begin{equation}
+    \|x-\hat{x}\|_2^2,
+    \label{eq:reconstruction-error}
+  \end{equation}
+  is useful for denoising and anomaly detection.
+  \pause
+  \item \footnotesize Example: if $x=(3,1)$ and $w_1=(1,0)$, then $z=w_1^\top x=3$, $\hat{x}=(3,0)$, and $\|x-\hat{x}\|_2^2=1$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{When PCA Is Effective}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\textbf{PCA often helps when}
+\begin{itemize}
+  \item features are strongly correlated,
+  \pause
+  \item many dimensions mostly contain noise,
+  \pause
+  \item faster distance computation is needed for methods such as k-NN,
+  \pause
+  \item 2D or 3D visualization is desired.
+\end{itemize}
+
+\pause
+\column{0.5\textwidth}
+\textbf{PCA can hurt when}
+\begin{itemize}
+  \item low-variance directions still carry target information,
+  \pause
+  \item interpretability of original features matters more than compression,
+  \pause
+  \item the data geometry is strongly nonlinear.
+\end{itemize}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Iterative Computation of Principal Components}
+\begin{itemize}
+  \item For intuition, the leading principal direction can be found by power iteration:
   \begin{equation}
     v^{(t+1)} = \frac{\Sigma v^{(t)}}{\|\Sigma v^{(t)}\|_2}.
     \label{eq:power-iteration}
@@ -204,111 +352,93 @@
   \pause
   \item Repeated multiplication amplifies the dominant eigen-direction.
   \pause
-  \item The vector is renormalized after every step.
-  \pause
-  \item This is useful for intuition and for the top component.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Deflation for Later Components}
-\begin{itemize}
-  \item After finding $w_1$ and $\lambda_1$, remove its contribution:
+  \item Later directions can be obtained by removing the first one:
   \begin{equation}
     \Sigma_2 = \Sigma - \lambda_1 w_1 w_1^\top.
     \label{eq:deflation}
   \end{equation}
   \pause
-  \item Then apply the same procedure to $\Sigma_2$ to get the next direction.
-  \pause
-  \item This enforces orthogonality and prevents rediscovering the first component.
+  \item For full PCA in practice, libraries usually prefer SVD instead of repeating this procedure many times.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Why Libraries Use SVD}
+\begin{frame}{Singular Value Decomposition}
 \begin{itemize}
-  \item The covariance route first builds
-  \[
-    \Sigma = \frac{1}{n-1}X_c^\top X_c.
-  \]
-  \pause
-  \item In practice, libraries often avoid forming $\Sigma$ explicitly.
-  \pause
-  \item Forming $X_c^\top X_c$ adds an extra matrix multiplication and can amplify numerical error.
-  \pause
-  \item So many libraries work directly with the centered data matrix $X_c$.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{SVD Gives the Same PCA Directions}
-\begin{itemize}
-  \item Factor the centered data matrix directly:
+  \item For a centered data matrix $X_c \in \mathbb{R}^{n\times d}$, the singular value decomposition is
   \begin{equation}
     X_c = U S V^\top.
     \label{eq:svd-pca}
   \end{equation}
   \pause
-  \item Then
+  \item Here $U \in \mathbb{R}^{n\times n}$ and $V \in \mathbb{R}^{d\times d}$ are orthonormal matrices.
+  \pause
+  \item The diagonal matrix $S$ contains the singular values
+  \[
+    s_1 \ge s_2 \ge \cdots \ge 0.
+  \]
+  \pause
+  \item In PCA, the columns of $V$ are the directions in feature space, and the singular values measure how strongly the data spread along those directions.
+  \pause
+  \item \footnotesize Example: if $S=\mathrm{diag}(6,3)$, then the first direction carries twice the singular-value scale of the second.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{SVD as a Computational Route to PCA}
+\begin{itemize}
+  \item Instead of first forming
+  \[
+    \Sigma = \frac{1}{n-1}X_c^\top X_c,
+  \]
+  libraries often work directly with $X_c$ through \eqref{eq:svd-pca}.
+  \pause
+  \item Substituting the SVD into $X_c^\top X_c$ gives
   \begin{equation}
-    X_c^\top X_c = V S^\top S V^\top = V S^2 V^\top.
+    X_c^\top X_c = V S^2 V^\top,
     \label{eq:xtx}
   \end{equation}
   \pause
-  \item So the columns of $V$ are the same principal directions we obtained from the covariance eigenproblem.
+  \item Therefore
+  \[
+    \Sigma = \frac{1}{n-1}X_c^\top X_c
+           = V \frac{S^2}{n-1} V^\top.
+  \]
   \pause
-  \item The squared singular values $s_j^2$ are proportional to explained variances.
+  \item This has the same form as the eigen-decomposition of the covariance matrix.
+  \pause
+  \item Therefore the columns of $V$ are the principal directions, and
+  \[
+    \lambda_j = \frac{s_j^2}{n-1}.
+  \]
+  \pause
+  \item Numerical libraries usually prefer this route because it works directly with $X_c$ and avoids an extra covariance-matrix construction.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{What the SVD Factors Mean for PCA}
+\begin{frame}{Practical PCA Workflow}
 \begin{itemize}
-  \item $V$ contains the principal directions in feature space.
+  \item Standardize features first if their scales are very different.
   \pause
-  \item $X_cV$ gives the data expressed in principal-component coordinates.
+  \item Fit PCA on the training split only, after centering the training examples.
   \pause
-  \item Since $X_c = U S V^\top$, multiplying by $V$ gives
-  \[
-    X_cV = US.
-  \]
+  \item Apply the same centering vector and PCA directions to the validation and test splits.
   \pause
-  \item So SVD gives both the PCA directions ($V$) and the sample coordinates along them ($US$).
+  \item If reconstruction is needed in the original space, add the training mean back after projection and reconstruction.
+  \pause
+  \item Choose the number of components by validation or by explained-variance threshold.
+  \pause
+  \item Then evaluate the reduced representation on the downstream task with the same train/validation/test protocol.
 \end{itemize}
-\end{frame}
-
-\begin{frame}{SVD Geometry}
-\begin{columns}[T]
-\column{0.58\textwidth}
-\begin{itemize}
-  \item SVD decomposes the data into rotation, stretching, and rotation:
-  \[
-    X_c = U S V^\top.
-  \]
-  \pause
-  \item $V^\top$ rotates feature axes into principal directions.
-  \pause
-  \item $S$ stretches or shrinks along those directions.
-  \pause
-  \item $U$ organizes the sample coordinates after that transformation.
-  \pause
-  \item This is why SVD is numerically stable and widely used.
-\end{itemize}
-\pause
-\column{0.42\textwidth}
-\centering
-\includegraphics[width=\textwidth]{figures/pca/pca_svd_geometry.pdf}
-\end{columns}
 \end{frame}
 
 \begin{frame}{Geometric Intuition}
 \begin{columns}[T]
 \column{0.56\textwidth}
 \begin{itemize}
-  \item PCA finds the axes of maximal stretching in the data cloud.
+  \item PCA rotates the representation toward the directions of largest spread in the data cloud.
   \pause
-  \item The first axis is the direction of largest variance.
+  \item The first axis captures the largest variance.
   \pause
-  \item The second axis is orthogonal and captures the next largest remaining variance.
-  \pause
-  \item SVD gives the same axes through a stable matrix factorization.
+  \item The next axes are orthogonal and capture the remaining dominant variation.
 \end{itemize}
 \pause
 \column{0.44\textwidth}
@@ -321,13 +451,28 @@
 \begin{itemize}
   \item PCA starts with projection and asks for the direction with maximum projected variance.
   \item The optimization becomes an eigenvalue problem through a constrained quadratic form.
-  \item The largest eigenvector gives the first principal component; the rest follow by orthogonality.
-  \item In practice, PCA is computed either from the covariance matrix or from SVD.
-  \item The geometry is simple: rotate, stretch, keep the important axes.
+  \item The leading eigenvector gives the first principal direction; the remaining directions follow by orthogonality.
+  \item Eigenvalues quantify explained variance and help determine how many components to keep.
+  \item PCA also provides reconstruction, which supports compression, denoising, and anomaly scoring.
+  \item In practice, PCA can be computed either from the covariance matrix or from SVD.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Next Lab}
+\begin{frame}{Applications of PCA}
+\begin{itemize}
+  \item \textbf{Visualization:} reduce high-dimensional embeddings or features to 2D or 3D for inspection.
+  \pause
+  \item \textbf{Preprocessing for k-NN and other models:} remove redundancy and reduce distance-computation cost.
+  \pause
+  \item \textbf{Compression and denoising:} keep the main structure with fewer components and discard weak noisy directions.
+  \pause
+  \item \textbf{Anomaly detection:} use large reconstruction error to flag unusual samples.
+  \pause
+  \item \textbf{Exploration:} inspect correlated features, dominant variation patterns, and low-dimensional structure before modeling.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Lab Connection}
 \begin{itemize}
   \item Implement PCA from scratch with NumPy using both covariance eigendecomposition and SVD.
   \item Reuse the text-embedding setting from Lab 1 and visualize the embeddings in 2D with PCA.
