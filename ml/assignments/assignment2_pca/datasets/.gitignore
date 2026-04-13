@@ -1,0 +1,8 @@
+# Prepared datasets and download caches
+*.csv
+*.npz
+*.zip
+_raw/
+
+# Keep the folder metadata
+!.gitignore
