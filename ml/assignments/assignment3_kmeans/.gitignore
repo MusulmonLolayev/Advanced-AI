@@ -1,0 +1,25 @@
+# Python cache and notebook checkpoints
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Submission and notebook export artifacts
+assignment3_kmeans_submission.zip
+*.html
+*.pdf
+
+# Local environment clutter
+.venv/
+venv/
+
+# Tool-specific caches
+.pytest_cache/
+
+# Local LaTeX scratch files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc

@@ -1,0 +1,77 @@
+\section*{Lab 2 (PCA) Implementation Tasks}
+\textbf{Lab 2 focus:} dimensionality reduction, visualization, denoising, and anomaly scoring with PCA.
+
+\medskip
+\textbf{Implementation policy (strict):}
+\begin{itemize}
+  \item Implement PCA core steps in NumPy (centering, covariance or SVD, projection, reconstruction).
+  \item You may use plotting libraries for visualization and external datasets/loaders for data access.
+  \item Do not call high-level PCA implementations from scikit-learn in the core implementation section.
+\end{itemize}
+
+\medskip
+\textbf{Core PCA equations to use and reference:}
+\begin{itemize}
+  \item Mean and centered data:
+  \[
+    \mu = \frac{1}{n}\sum_{i=1}^{n}x_i,\qquad X_c = X-\mathbf{1}\mu^\top.
+  \]
+  \item Covariance:
+  \[
+    \Sigma=\frac{1}{n-1}X_c^\top X_c.
+  \]
+  \item First component objective:
+  \[
+    w_1=\arg\max_{\|w\|_2=1} w^\top \Sigma w.
+  \]
+  \item Projection and reconstruction:
+  \[
+    z = U_k^\top(x-\mu),\qquad \hat{x}=\mu+U_k z.
+  \]
+  \item Reconstruction error anomaly score:
+  \[
+    a(x)=\|x-\hat{x}\|_2^2.
+  \]
+\end{itemize}
+
+\begin{enumerate}[label=\textbf{P\arabic*.}]
+  \item \textbf{Part P1: Build PCA From Scratch (NumPy)}
+  \begin{itemize}
+    \item \textbf{TODO:} Implement PCA using both covariance eigendecomposition and SVD.
+    \item \textbf{Hint:} Verify both implementations return matching principal directions up to sign.
+    \item \textbf{Hint:} Plot cumulative explained variance and choose $k$ by a target threshold (e.g., $95\%$).
+    \item \textbf{Deliverable:} implementation notes, explained-variance plot, and chosen $k$ with justification.
+  \end{itemize}
+
+  \item \textbf{Part P2: 2D Visualization of Text Embeddings}
+  \begin{itemize}
+    \item \textbf{TODO:} Reduce provided text embeddings (or any approved embedding set) to 2D with PCA.
+    \item \textbf{Hint:} Visualize at least two semantic groups and annotate representative examples.
+    \item \textbf{Hint:} Report what PC1 and PC2 appear to capture semantically.
+    \item \textbf{Deliverable:} 2D scatter figure, short interpretation, and one observed failure case.
+  \end{itemize}
+
+  \item \textbf{Part P3: PCA-Based Anomaly Detection}
+  \begin{itemize}
+    \item \textbf{TODO:} Fit PCA on normal training data only.
+    \item \textbf{TODO:} Score validation/test samples by reconstruction error.
+    \item \textbf{Hint:} Select the threshold on validation set before evaluating test performance.
+    \item \textbf{Deliverable:} threshold-selection method, metrics table, and examples of top-scored anomalies.
+  \end{itemize}
+
+  \item \textbf{Part P4: PCA + k-NN Comparison}
+  \begin{itemize}
+    \item \textbf{TODO:} Compare k-NN on raw features vs PCA-reduced features on one classification or regression dataset.
+    \item \textbf{Hint:} Keep the same train/val/test split and tune $k$ fairly in both settings.
+    \item \textbf{Hint:} Report runtime per query and the performance gap side by side.
+    \item \textbf{Deliverable:} comparison table and short conclusion on when PCA helps or hurts.
+  \end{itemize}
+\end{enumerate}
+
+\section*{Submission Format (Lab 2)}
+\begin{itemize}
+  \item One PDF report with method, equations, plots, and conclusions for P1--P4.
+  \item Source code/notebook for PCA implementation and experiments.
+  \item Reproducibility metadata: random seed, environment specification, and command list.
+  \item Clear separation of training, validation, and final test results.
+\end{itemize}

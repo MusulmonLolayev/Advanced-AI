@@ -1,0 +1,171 @@
+\section*{Lab 3 (k-Means) Numerical Warm-up}
+\textbf{Lab 3 focus:} clustering, alternating optimization, initialization sensitivity, scaling, and cluster analysis with k-means.
+
+\medskip
+\textbf{Practical usage now:} exploratory grouping, prototype discovery, visual organization, palette compression, and fast structure analysis before downstream labeling.
+
+\medskip
+Consider the six unlabeled points in $\mathbb{R}^2$:
+\[
+  x_1=(1,1),\;
+  x_2=(1,2),\;
+  x_3=(2,1),\;
+  x_4=(6,5),\;
+  x_5=(7,5),\;
+  x_6=(6,6).
+\]
+Use $k=2$ with initial centroids
+\[
+  \mu_1^{(0)}=(1,1),\qquad \mu_2^{(0)}=(7,5).
+\]
+
+\begin{enumerate}[label=\textbf{W\arabic*.}]
+  \item Perform the assignment step for all six points using squared Euclidean distance.
+  \item Compute the updated centroids $\mu_1^{(1)}$ and $\mu_2^{(1)}$.
+  \item Compute the objective value
+  \[
+    J(c,\mu)=\sum_{r=1}^{k}\sum_{i:c_i=r}\|x_i-\mu_r\|_2^2
+  \]
+  after the update.
+  \item Explain why the updated centroids are the arithmetic means of the assigned points.
+  \item Suppose the first coordinate were multiplied by $100$ before clustering. Explain how the assignment step would change and why standardization matters.
+\end{enumerate}
+
+\section*{Short Conceptual Questions}
+\begin{enumerate}[label=\textbf{C\arabic*.}]
+  \item State the k-means optimization problem and define every symbol.
+  \item Explain why k-means is an alternating minimization algorithm rather than a closed-form one-shot solver.
+  \item Explain why different random initializations can lead to different final clusterings.
+  \item Give one setting where inertia is useful and one setting where inertia is misleading.
+  \item Explain why a PCA plot can help interpret clustering even when clustering is performed in the original feature space.
+\end{enumerate}
+
+\section*{Lab 3 (k-Means) Implementation Tasks}
+\textbf{Implementation policy (strict):}
+\begin{itemize}
+  \item Implement the k-means core in NumPy only: assignment, centroid update, inertia computation, and repeated restarts.
+  \item You may use plotting libraries for visualization and external datasets/loaders for data access.
+  \item Do not call high-level clustering implementations such as \texttt{sklearn.cluster.KMeans} in the core implementation section.
+  \item Use the provided starter scaffold in \texttt{ml/assignments/assignment3\_kmeans/}.
+  \item Students should primarily edit \texttt{advanced\_ai/clustering/kmeans.py} and use the provided self-checks and task runners.
+\end{itemize}
+
+\medskip
+\textbf{Core k-means equations to use and reference:}
+\begin{itemize}
+  \item Within-cluster sum of squares:
+  \[
+    J(c,\mu)=\sum_{r=1}^{k}\sum_{i:c_i=r}\|x_i-\mu_r\|_2^2.
+  \]
+  \item Assignment step:
+  \[
+    c_i=\arg\min_{r \in \{1,\dots,k\}} \|x_i-\mu_r\|_2^2.
+  \]
+  \item Centroid update:
+  \[
+    \mu_r=\frac{1}{|\{i:c_i=r\}|}\sum_{i:c_i=r}x_i.
+  \]
+  \item Standardization using training-set statistics only:
+  \[
+    x'_j=\frac{x_j-\mu_j}{\sigma_j}.
+  \]
+\end{itemize}
+
+\medskip
+\textbf{Starter architecture to use (required):}
+\begin{itemize}
+  \item Main worksheet: \texttt{assignment3\_kmeans/kmeans.ipynb}
+  \item Internal package: \texttt{assignment3\_kmeans/advanced\_ai/}
+  \item Main student edit file: \texttt{advanced\_ai/clustering/kmeans.py}
+  \item Self-check script: \texttt{python -m advanced\_ai.self\_checks}
+  \item Students should work through the notebook in order and use the code cells as the main implementation guide.
+  \item Required task runners: \texttt{iris\_clustering.py}, \texttt{initialization\_scaling\_study.py}, and \texttt{pca\_projection\_clustering.py}
+  \item Optional task runner: \texttt{image\_quantization\_optional.py}
+  \item Submission notebook: \texttt{assignment3\_kmeans/collect\_submission.ipynb}
+  \item Instructor-provided prepared files go in \texttt{assignment3\_kmeans/datasets/}
+\end{itemize}
+
+\begin{enumerate}[label=\textbf{K\arabic*.}]
+  \item \textbf{Part K1: Build a Reusable k-Means Core}
+  \begin{itemize}
+    \item \textbf{Goal:} Implement a small NumPy k-means toolkit that supports repeated clustering experiments.
+    \item \textbf{What to fill in:}
+    \begin{itemize}
+      \item random centroid initialization;
+      \item nearest-centroid assignment;
+      \item centroid update with empty-cluster handling;
+      \item inertia/objective tracking;
+      \item repeated restarts and best-run selection.
+    \end{itemize}
+    \item \textbf{Hint:} Verify that inertia never increases within one run.
+    \item \textbf{Deliverable:} passing self-checks, toy-data sanity checks, and short notes on how you handled initialization and convergence.
+  \end{itemize}
+
+  \item \textbf{Part K2: Clustering the Iris Feature Space}
+  \begin{itemize}
+    \item \textbf{Public dataset:} Iris dataset (UCI / scikit-learn mirror)\\
+    \url{https://archive.ics.uci.edu/dataset/53/iris}\\
+    \url{https://scikit-learn.org/stable/auto_examples/datasets/plot_iris_dataset.html}
+    \item \textbf{TODO:} Cluster the Iris features using your NumPy k-means implementation.
+    \item \textbf{What to fill in:}
+    \begin{itemize}
+      \item evaluate at least $k \in \{2,3,4,5,6\}$;
+      \item run several random restarts for each $k$;
+      \item compare raw features and standardized features;
+      \item analyze cluster composition against species labels only after clustering is complete.
+    \end{itemize}
+    \item \textbf{Hint:} Use inertia curves and cluster-composition tables together rather than trusting one number alone.
+    \item \textbf{Deliverable:} inertia-vs-$k$ plot, $k=3$ cluster-size summary, one cluster-composition analysis, and a short discussion of how scaling changed the result.
+  \end{itemize}
+
+  \item \textbf{Part K3: PCA Projection and Cluster Visualization}
+  \begin{itemize}
+    \item \textbf{TODO:} Use a provided dataset bundle containing both original features and a 2D PCA projection.
+    \item \textbf{What to fill in:}
+    \begin{itemize}
+      \item cluster the original features with k-means;
+      \item visualize the resulting assignments in the 2D PCA plane;
+      \item compare clustering behavior in raw space vs standardized space;
+      \item explain at least one mismatch between the PCA plot and the final assignments.
+    \end{itemize}
+    \item \textbf{Hint:} The PCA plot is for interpretation; the clustering objective is still computed in the original feature space you choose.
+    \item \textbf{Deliverable:} labeled 2D scatter figure and short interpretation of the observed cluster structure.
+  \end{itemize}
+
+  \item \textbf{Part K4: Initialization and Stability Study}
+  \begin{itemize}
+    \item \textbf{TODO:} Measure how much the final k-means result changes across random initializations.
+    \item \textbf{What to fill in:}
+    \begin{itemize}
+      \item run at least 10 different seeds for one fixed value of $k$;
+      \item report the best, median, and worst inertia;
+      \item compare the resulting cluster sizes;
+      \item explain why local optima appear.
+    \end{itemize}
+    \item \textbf{Hint:} Keep the dataset fixed and vary only the random initialization.
+    \item \textbf{Deliverable:} restart summary table with inertia and cluster sizes, and one short conclusion about why multiple restarts are necessary in practice.
+  \end{itemize}
+
+  \item \textbf{Part K5: Optional Advanced Extension}
+  \begin{itemize}
+    \item Complete \textbf{at most one} optional extension after finishing K1--K4.
+  \end{itemize}
+
+  \item \textbf{Part K5A: Image Color Quantization (Optional)}
+  \begin{itemize}
+    \item \textbf{TODO:} Treat RGB pixel vectors as points in $\mathbb{R}^3$ and cluster them with k-means.
+    \item \textbf{Hint:} Replace each pixel by its centroid color and compare the visual result for several values of $k$.
+    \item \textbf{Deliverable:} original image, compressed reconstructions for several $k$, and one short note on the trade-off between compression and fidelity.
+  \end{itemize}
+\end{enumerate}
+
+\section*{Submission Format (Lab 3)}
+\begin{itemize}
+  \item One PDF report with equations, plots, tables, and conclusions for the warm-up, conceptual questions, and K1--K4.
+  \item One completed notebook: \texttt{assignment3\_kmeans/kmeans.ipynb}.
+  \item One assignment zip produced from \texttt{assignment3\_kmeans/collect\_submission.ipynb} or \texttt{bash collectSubmission.sh}.
+  \item Students may additionally submit \textbf{one optional extension}, but it is not required.
+  \item Include random seed, environment file, and reproducibility notes.
+  \item For each implementation task: include one short note on what the result says about the k-means objective or its limitations.
+  \item Clearly separate exploratory analysis from final conclusions about cluster quality.
+\end{itemize}
