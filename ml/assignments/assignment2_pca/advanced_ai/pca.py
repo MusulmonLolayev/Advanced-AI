@@ -71,7 +71,6 @@ class PrincipalComponentAnalysis:
             raise ValueError("Call fit before using the PCA model.")
 
     def _center(self, X: np.ndarray) -> np.ndarray:
-        self._check_is_fitted()
         return np.asarray(X, dtype=np.float64) - self.mean_
 
     def _top_components(self, n_components: int | None = None) -> np.ndarray:
