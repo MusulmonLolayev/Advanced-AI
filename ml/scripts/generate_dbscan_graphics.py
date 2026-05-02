@@ -131,37 +131,42 @@ def build_eps_neighborhood() -> None:
 
 
 def build_point_types() -> None:
-    core = np.array([1.8, 1.9])
-    neighbors = np.array([[1.1, 1.4], [1.1, 2.5], [2.0, 1.0], [2.6, 1.4], [2.7, 2.4]])
-    border = np.array([4.4, 2.1])
-    border_core = np.array([3.5, 2.0])
-    noise = np.array([6.8, 1.1])
+    core = np.array([2.0, 2.0])
+    core_neighbors = np.array(
+        [
+            [1.3, 1.4],
+            [1.2, 2.5],
+            [1.9, 1.1],
+            [2.1, 2.9],
+        ]
+    )
+    border = np.array([2.95, 2.0])
+    noise = np.array([6.9, 1.0])
     eps = 1.0
+    min_pts = 5
 
-    fig, axes = plt.subplots(1, 3, figsize=(11.8, 4.0), facecolor="white")
-    fig.subplots_adjust(left=0.04, right=0.99, bottom=0.16, top=0.86, wspace=0.18)
+    fig, ax = plt.subplots(figsize=(9.6, 4.1), facecolor="white")
+    _style_axes(ax)
+    ax.set_title("Core, border, and noise in one dataset", fontsize=13, color=DARK)
+    ax.set_xlim(0.4, 7.4)
+    ax.set_ylim(0.4, 3.5)
+    ax.set_aspect("equal", adjustable="box")
 
-    for ax in axes:
-        _style_axes(ax)
-        ax.set_xlim(0.4, 7.5)
-        ax.set_ylim(0.4, 3.4)
-        ax.set_aspect("equal", adjustable="box")
+    ax.scatter(core_neighbors[:, 0], core_neighbors[:, 1], s=70, color=BLUE, zorder=3)
 
-    axes[0].set_title("Core point", fontsize=13, color=DARK)
-    axes[0].scatter(neighbors[:, 0], neighbors[:, 1], s=70, color=BLUE, zorder=3)
-    axes[0].scatter(core[0], core[1], s=145, color=ORANGE, edgecolor="white", linewidth=1.1, zorder=4)
-    axes[0].add_patch(Circle(core, radius=eps, fill=True, facecolor=ORANGE, alpha=0.08, edgecolor=ORANGE, linewidth=1.8))
-    axes[0].text(0.7, 3.0, r"$|N_\varepsilon(x_i)| \geq \mathrm{MinPts}$", fontsize=11, color=DARK)
+    ax.scatter(core[0], core[1], s=150, color=ORANGE, edgecolor="white", linewidth=1.2, zorder=5)
+    ax.add_patch(Circle(core, radius=eps, fill=True, facecolor=ORANGE, alpha=0.08, edgecolor=ORANGE, linewidth=1.8))
 
-    axes[1].set_title("Border point", fontsize=13, color=DARK)
-    axes[1].scatter([border_core[0]], [border_core[1]], s=145, color=BLUE, edgecolor="white", linewidth=1.1, zorder=4)
-    axes[1].scatter([border[0]], [border[1]], s=110, color=ORANGE, edgecolor="white", linewidth=1.1, zorder=4)
-    axes[1].add_patch(Circle(border_core, radius=eps, fill=True, facecolor=BLUE, alpha=0.08, edgecolor=BLUE, linewidth=1.8))
-    axes[1].text(3.0, 3.0, r"not core, but near a core point", fontsize=11, color=DARK)
+    ax.scatter(border[0], border[1], s=130, color=GREEN, edgecolor="white", linewidth=1.1, zorder=6)
 
-    axes[2].set_title("Noise point", fontsize=13, color=DARK)
-    axes[2].scatter([noise[0]], [noise[1]], s=110, color=RED, edgecolor="white", linewidth=1.1, zorder=4)
-    axes[2].text(5.0, 3.0, r"neither core nor border", fontsize=11, color=DARK)
+    ax.scatter(noise[0], noise[1], s=120, color=RED, edgecolor="white", linewidth=1.1, zorder=6)
+
+    ax.text(core[0] - 0.18, core[1] - 0.42, "core", fontsize=11, color=ORANGE)
+    ax.text(border[0] - 0.18, border[1] + 0.25, "border", fontsize=11, color=GREEN)
+    ax.text(noise[0] - 0.12, noise[1] + 0.25, "noise", fontsize=11, color=RED)
+
+    ax.text(0.6, 3.0, r"$\varepsilon = 1.0$", fontsize=11, color=DARK)
+    ax.text(1.95, 3.0, rf"$\mathrm{{MinPts}} = {min_pts}$", fontsize=11, color=DARK)
 
     _save(fig, "dbscan_point_types")
 
