@@ -1,0 +1,86 @@
+\section*{Lab 4: DBSCAN}
+
+\subsection*{Overview}
+This lab follows Lecture 4 on DBSCAN. The goal is to implement density-based clustering from scratch with NumPy and to study how $\varepsilon$ and \text{MinPts} control the result.
+
+Use the same notation as in the lecture:
+\begin{itemize}
+  \item $X = \{x_1,\dots,x_n\}$ is the dataset.
+  \item $N_\varepsilon(x_i) = \{x_j : \|x_j - x_i\|_2 \le \varepsilon\}$ is the $\varepsilon$-neighborhood.
+  \item A point is \emph{core} if $|N_\varepsilon(x_i)| \ge \text{MinPts}$.
+  \item A point is \emph{border} if it is not core, but lies in the $\varepsilon$-neighborhood of a core point.
+  \item A point is \emph{noise} if it is neither core nor border.
+\end{itemize}
+
+\subsection*{Policy}
+\begin{itemize}
+  \item Implement the DBSCAN core algorithm with NumPy only.
+  \item Do not use a library DBSCAN implementation for the main task.
+  \item Plotting libraries are allowed for visual inspection.
+  \item Work through the notebook in order.
+  \item Use \texttt{min\_pts} in code, which corresponds to \text{MinPts} in the lecture.
+\end{itemize}
+
+\subsection*{Files}
+\begin{itemize}
+  \item \texttt{dbscan.ipynb}: guided notebook with the assignment steps.
+  \item \texttt{advanced\_ai/clustering/dbscan.py}: starter implementation.
+  \item \texttt{prepare\_datasets.py}: generates the prepared data bundles.
+  \item \texttt{iris\_dbscan.py}, \texttt{toy\_dbscan.py}, \texttt{scaling\_and\_outliers.py}: task runners.
+\end{itemize}
+
+\subsection*{Step 1: Warm-up by hand}
+Take the 2D toy dataset from the notebook and classify the marked points as core, border, or noise using the given $\varepsilon$ and \text{MinPts}. Write a short justification for each answer.
+
+\subsection*{Step 2: Implement DBSCAN}
+Complete \texttt{advanced\_ai/clustering/dbscan.py}.
+\begin{itemize}
+  \item implement the neighborhood query;
+  \item implement cluster expansion;
+  \item implement \texttt{fit} and \texttt{fit\_predict};
+  \item keep noise labeled as \texttt{-1};
+  \item keep the parameter name \texttt{min\_pts} aligned with the lecture notation.
+\end{itemize}
+
+\subsection*{Step 3: Self-checks}
+Run the self-check script after implementation. The checks cover:
+\begin{itemize}
+  \item neighborhood extraction;
+  \item core expansion on a toy example;
+  \item label shapes and noise handling.
+\end{itemize}
+
+\subsection*{Step 4: Toy clustering}
+Run \texttt{toy\_dbscan.py} on the prepared 2D dataset.
+\begin{itemize}
+  \item report the number of clusters and noise points;
+  \item save the cluster plot;
+  \item compare the result with the hand-worked example.
+\end{itemize}
+
+\subsection*{Step 5: Iris data}
+Run \texttt{iris\_dbscan.py} on the prepared Iris bundle.
+\begin{itemize}
+  \item compare raw and standardized features;
+  \item inspect how $\varepsilon$ changes the result;
+  \item record cluster sizes and the noise fraction.
+\end{itemize}
+
+\subsection*{Step 6: Scaling and outliers}
+Run \texttt{scaling\_and\_outliers.py}.
+\begin{itemize}
+  \item show why feature scaling matters for DBSCAN;
+  \item identify which points are noise in the prepared outlier dataset;
+  \item explain why these points are not border points.
+\end{itemize}
+
+\subsection*{Step 7: Optional extension}
+If you finish early, add one of the following:
+\begin{itemize}
+  \item a small sweep over $\varepsilon$ and \text{MinPts};
+  \item a simple plot of the number of clusters versus $\varepsilon$;
+  \item a short comparison of DBSCAN and $k$-means on the same dataset.
+\end{itemize}
+
+\subsection*{Submission}
+Submit the notebook, the completed starter files, and the generated output files from the required runners.
