@@ -1,31 +1,310 @@
+% -------------------------
+% Packages
+% -------------------------
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+
+% Do not set paperwidth/paperheight here.
+% Keep original size from:
+% \documentclass[aspectratio=169]{beamer}
+
+% -------------------------
+% Theme
+% -------------------------
 \usetheme{Madrid}
-\usecolortheme{default}
+% \usecolortheme{default}
 
+% -------------------------
 % Colors
-\definecolor{RLBlue}{RGB}{40,75,120}
+% -------------------------
+\definecolor{RLBlue}{RGB}{58,53,183}
 \definecolor{RLWhite}{RGB}{255,255,255}
-\definecolor{RLGreen}{RGB}{45,130,110}
-\definecolor{RLOrange}{RGB}{220,130,60}
-\definecolor{RLGray}{RGB}{245,245,245}
+\definecolor{RLGreen}{RGB}{95,160,164}
+\definecolor{RLOrange}{RGB}{244,189,112}
+\definecolor{RLGray}{RGB}{250,249,246}
 
-% Apply
-% \setbeamercolor{structure}{fg=RLBlue}
-% \setbeamercolor{frametitle}{fg=white,bg=RLBlue}
-% \setbeamercolor{title}{fg=RLBlue}
-% \setbeamercolor{block title}{fg=white,bg=RLGreen}
-% \setbeamercolor{block body}{bg=RLGray}
+% Title page colors
+\setbeamercolor{title}{fg=RLWhite}
+\setbeamercolor{subtitle}{fg=RLWhite}
+\setbeamercolor{author}{fg=RLWhite}
+\setbeamercolor{institute}{fg=RLWhite}
+\setbeamercolor{date}{fg=RLWhite}
+
+% -------------------------
+% Main Beamer colors
+% -------------------------
+\setbeamercolor{structure}{fg=RLBlue}
+\setbeamercolor{frametitle}{fg=RLWhite,bg=RLBlue}
+\setbeamercolor{block title}{fg=RLWhite,bg=RLGreen}
+\setbeamercolor{block body}{bg=RLGray}
 \setbeamercolor{alerted text}{fg=RLOrange}
 
-% Footer
-\setbeamertemplate{footline}{
-  \leavevmode%
-  \hbox{
-    \begin{beamercolorbox}[wd=.92\paperwidth,ht=2.5ex,dp=1ex,left,sep=0pt]{author in head/foot}
-      \footnotesize\hspace{0.5em}\insertshortsubtitle
-    \end{beamercolorbox}
-    \begin{beamercolorbox}[wd=.08\paperwidth,ht=2.5ex,dp=1ex,center,sep=0pt]{date in head/foot}
-      \footnotesize\insertframenumber
-    \end{beamercolorbox}
-  }
-}
+
+\definecolor{ShortsPanel}{HTML}{2F2A9A}
+\definecolor{ShortsText}{HTML}{F5F7FA}
+\definecolor{ShortsMuted}{HTML}{C7CDD6}
+\definecolor{ShortsAccent}{HTML}{8EDFFF}
+\definecolor{ShortsWarm}{HTML}{FFD58A}
+
+% -------------------------
+% Footer colors
+% -------------------------
+\definecolor{FooterLeft}{HTML}{1F6AA5}
+\definecolor{FooterCenter}{HTML}{5A57D6}
+\definecolor{FooterRight}{HTML}{2D8A57}
+\definecolor{FooterContacts}{HTML}{4A3FB8}
+\definecolor{FooterContactA}{HTML}{F4F7FB}
+\definecolor{FooterContactB}{HTML}{EAF4FF}
+\definecolor{FooterContactC}{HTML}{E9FBF8}
+\definecolor{FooterContactD}{HTML}{F1ECFF}
+\definecolor{FooterContactE}{HTML}{E8F1FF}
+\definecolor{FooterIconA}{HTML}{EAF4FF}
+\definecolor{FooterIconB}{HTML}{EAF4FF}
+\definecolor{FooterIconC}{HTML}{E9FBF8}
+\definecolor{FooterIconD}{HTML}{F1ECFF}
+\definecolor{FooterIconE}{HTML}{E8F1FF}
+\definecolor{FooterIconDark}{HTML}{1F2450}
+\definecolor{FooterIconYouTube}{HTML}{E11D48}
+\definecolor{FooterIconPhone}{HTML}{0F766E}
+\setbeamercolor{author in head/foot}{fg=ShortsText,bg=FooterLeft}
+\setbeamercolor{title in head/foot}{fg=ShortsText,bg=FooterCenter}
+\setbeamercolor{date in head/foot}{fg=ShortsText,bg=FooterRight}
+\setbeamercolor{footer contacts}{fg=ShortsText,bg=FooterContacts}
+
 \setbeamertemplate{navigation symbols}{}
+
+% -------------------------
+% Logo placement
+% -------------------------
+\newcommand{\RLCompanyLogo}{images/company-logo.png}
+
+\addtobeamertemplate{title page}{}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=center,yshift=-0.3in]
+      at (current page.center)
+      {\includegraphics[height=1.15in]{\RLCompanyLogo}};
+  \end{tikzpicture}%
+}
+
+\makeatletter
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip%
+  \begin{beamercolorbox}[
+    wd=\paperwidth,
+    ht=0.52in,
+    dp=0.08in,
+    sep=0pt
+  ]{frametitle}%
+    \vbox to 0.52in{%
+      \vfil%
+      \hbox to \paperwidth{%
+        \hspace*{0.18in}%
+        \begin{minipage}[t]{0.76\paperwidth}%
+          {\usebeamerfont{frametitle}\insertframetitle\par}%
+          \ifx\insertframesubtitle\@empty\else%
+            \vspace{-0.1em}%
+            {\usebeamerfont{framesubtitle}\insertframesubtitle\par}%
+          \fi%
+        \end{minipage}%
+        \hfill%
+        \raisebox{-0.03in}{\includegraphics[height=0.30in]{\RLCompanyLogo}}%
+        \hspace*{0.18in}%
+      }%
+      \vfil%
+    }%
+  \end{beamercolorbox}%
+}
+\makeatother
+
+% -------------------------
+% Contact values
+% -------------------------
+\newcommand{\RLFooterServiceTitle}{AI/IT yechimlar, loyihalar, maslahatlar, qurilmalar uchun murojaat qiling}
+\newcommand{\RLFooterTelegram}{@tqqt\_llc}
+\newcommand{\RLFooterEmail}{musulmon.lolayev.94@gmail.com}
+\newcommand{\RLFooterInstagram}{@tqqt\_llc}
+\newcommand{\RLFooterLinkedIn}{linkedin.com/in/tqqt\_llc}
+\newcommand{\RLFooterYouTube}{youtube.com/@tqqt\_llc}
+\newcommand{\RLFooterPhone}{+998900667801}
+\newcommand{\RLFooterWebsite}{tqqt.uz}
+
+% -------------------------
+% Icons
+% -------------------------
+\newcommand{\TelegramIcon}{%
+  \tikz[baseline=-0.45ex,x=1pt,y=1pt]{%
+    \path[use as bounding box] (-4,-4) rectangle (4,4);
+    \fill[white] (0,0) circle (3.6);
+    \fill[FooterIconDark]
+      (-2.8,0.1) -- (2.9,2.4) -- (1.1,-2.8) --
+      (-0.2,-0.7) -- (-1.8,-1.8) -- cycle;
+  }%
+}
+
+\newcommand{\EmailIcon}{%
+  \tikz[baseline=-0.45ex,x=1pt,y=1pt]{%
+    \path[use as bounding box] (-4,-4) rectangle (4,4);
+    \fill[white] (0,0) circle (3.6);
+    \draw[FooterIconDark,line width=0.8pt,rounded corners=0.8pt]
+      (-2.6,-1.8) rectangle (2.6,1.8);
+    \draw[FooterIconDark,line width=0.8pt]
+      (-2.6,1.8) -- (0,-0.4) -- (2.6,1.8);
+    \draw[FooterIconDark,line width=0.7pt]
+      (-2.6,-1.8) -- (-0.8,0.3);
+    \draw[FooterIconDark,line width=0.7pt]
+      (2.6,-1.8) -- (0.8,0.3);
+  }%
+}
+
+\newcommand{\InstagramIcon}{%
+  \tikz[baseline=-0.45ex,x=1pt,y=1pt]{%
+    \path[use as bounding box] (-4,-4) rectangle (4,4);
+    \fill[white] (0,0) circle (3.6);
+    \draw[FooterIconDark,line width=0.8pt,rounded corners=1.2pt]
+      (-2.35,-2.35) rectangle (2.35,2.35);
+    \draw[FooterIconDark,line width=0.75pt] (0,0) circle (1.15);
+    \fill[FooterIconDark] (1.75,1.75) circle (0.35);
+  }%
+}
+
+\newcommand{\LinkedInIcon}{%
+  \tikz[baseline=-0.45ex,x=1pt,y=1pt]{%
+    \path[use as bounding box] (-4,-4) rectangle (4,4);
+    \fill[white] (0,0) circle (3.6);
+    \node[text=FooterIconDark,font=\bfseries\tiny] at (0,-0.15) {in};
+  }%
+}
+
+\newcommand{\YouTubeIcon}{%
+  \tikz[baseline=-0.45ex,x=1pt,y=1pt]{%
+    \path[use as bounding box] (-4,-4) rectangle (4,4);
+    \fill[white] (0,0) circle (3.6);
+    \fill[FooterIconDark,rounded corners=1.0pt] (-2.7,-1.65) rectangle (2.7,1.65);
+    \path[fill=white] (1.1,0) -- (-0.9,1.1) -- (-0.9,-1.1) -- cycle;
+  }%
+}
+
+\newcommand{\PhoneIcon}{%
+  \tikz[baseline=-0.45ex,x=1pt,y=1pt]{%
+    \path[use as bounding box] (-4,-4) rectangle (4,4);
+    \fill[white] (0,0) circle (3.6);
+    \draw[FooterIconDark,line width=0.85pt,rounded corners=0.9pt]
+      (-1.75,-2.85) rectangle (1.75,2.85);
+    \draw[FooterIconDark,line width=0.55pt]
+      (-1.05,-1.75) rectangle (1.05,1.65);
+    \fill[FooterIconDark] (-0.45,2.25) rectangle (0.45,2.4);
+    \fill[FooterIconDark] (0,-2.35) circle (0.28);
+  }%
+}
+
+\newcommand{\WebsiteIcon}{%
+  \tikz[baseline=-0.45ex,x=1pt,y=1pt]{%
+    \path[use as bounding box] (-4,-4) rectangle (4,4);
+    \fill[white] (0,0) circle (3.6);
+    \draw[FooterIconDark,line width=0.75pt] (0,0) circle (2.45);
+    \draw[FooterIconDark,line width=0.65pt] (-2.45,0) -- (2.45,0);
+    \draw[FooterIconDark,line width=0.65pt] (0,-2.45) -- (0,2.45);
+    \draw[FooterIconDark,line width=0.55pt]
+      (-2.1,1.75) .. controls (0,0.85) .. (2.1,1.75);
+    \draw[FooterIconDark,line width=0.55pt]
+      (-2.1,-1.75) .. controls (0,-0.85) .. (2.1,-1.75);
+  }%
+}
+
+% -------------------------
+% Footer: two rows
+% -------------------------
+\newlength{\RLFooterTopHeight}
+\newlength{\RLFooterBottomHeight}
+\setlength{\RLFooterTopHeight}{0.13in}
+\setlength{\RLFooterBottomHeight}{0.13in}
+
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \vbox{%
+    % Row 1: title | service title | page number
+    \hbox{%
+      \begin{beamercolorbox}[
+        wd=.22\paperwidth,
+        ht=\RLFooterTopHeight,
+        dp=0pt,
+        sep=0pt
+      ]{author in head/foot}%
+        \vbox to \RLFooterTopHeight{%
+          \vfil
+          \hbox to \linewidth{%
+            \hspace*{0.10in}%
+            {\bfseries\fontsize{6.2}{6.8}\selectfont \inserttitle}%
+            \hfil
+          }%
+          \vfil
+        }%
+      \end{beamercolorbox}%
+
+      \begin{beamercolorbox}[
+        wd=.60\paperwidth,
+        ht=\RLFooterTopHeight,
+        dp=0pt,
+        sep=0pt
+      ]{title in head/foot}%
+        \vbox to \RLFooterTopHeight{%
+          \vfil
+          \hbox to \linewidth{%
+            \hfil
+            {\bfseries\fontsize{6.0}{6.6}\selectfont \RLFooterServiceTitle}%
+            \hfil
+          }%
+          \vfil
+        }%
+      \end{beamercolorbox}%
+
+      \begin{beamercolorbox}[
+        wd=.18\paperwidth,
+        ht=\RLFooterTopHeight,
+        dp=0pt,
+        sep=0pt
+      ]{date in head/foot}%
+        \vbox to \RLFooterTopHeight{%
+          \vfil
+          \hbox to \linewidth{%
+            \hfil
+            {\fontsize{5.8}{6.2}\selectfont \insertframenumber/\inserttotalframenumber}%
+            \hspace*{0.08in}%
+          }%
+          \vfil
+        }%
+      \end{beamercolorbox}%
+    }%
+
+    % Row 2: all contacts
+    \hbox{%
+      \begin{beamercolorbox}[
+        wd=\paperwidth,
+        ht=\RLFooterBottomHeight,
+        dp=0pt,
+        sep=0pt
+        ]{footer contacts}%
+        \vbox to \RLFooterBottomHeight{%
+          \vfil
+          \hbox to \linewidth{%
+            \hspace*{0.10in}%
+            \begin{tabular}{@{}l@{\hspace{0.02in}}l@{\hspace{0.05in}}l@{\hspace{0.02in}}l@{\hspace{0.05in}}l@{\hspace{0.02in}}l@{\hspace{0.05in}}l@{\hspace{0.02in}}l@{\hspace{0.05in}}l@{\hspace{0.02in}}l@{\hspace{0.05in}}l@{\hspace{0.02in}}l@{}}
+              \TelegramIcon & {\color{FooterContactA}\fontsize{3.7}{4.1}\selectfont \RLFooterTelegram}
+                & \EmailIcon & {\color{FooterContactB}\fontsize{3.7}{4.1}\selectfont \RLFooterEmail}
+                & \InstagramIcon & {\color{FooterContactC}\fontsize{3.7}{4.1}\selectfont \RLFooterInstagram}
+                & \LinkedInIcon & {\color{FooterContactD}\fontsize{3.7}{4.1}\selectfont \RLFooterLinkedIn}
+                & \YouTubeIcon & {\color{FooterContactE}\fontsize{3.7}{4.1}\selectfont \RLFooterYouTube}
+                & \PhoneIcon & {\color{FooterContactB}\fontsize{3.7}{4.1}\selectfont \RLFooterPhone}
+            \end{tabular}%
+            \hfil
+          }%
+          \vfil
+        }%
+      \end{beamercolorbox}%
+    }%
+  }%
+}

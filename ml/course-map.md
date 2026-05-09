@@ -1,59 +1,60 @@
-# Advanced AI - Machine Learning Course Map
+# Advanced AI - Machine Learning Course Plan
 
-Primary text: *Foundations of Machine Learning (2nd ed.)* by Mehryar Mohri, Afshin Rostamizadeh, Ameet Talwalkar.
+This is the working course plan for the authored material in `ml/`.
+It reflects the current lecture and assignment sequence, not the older textbook-first outline.
 
-## Course outcomes
+## Course goal
 
-By the end of this course, students should be able to:
+By the end of this block, students should be able to:
 
-- explain core learning theory concepts (generalization, complexity, risk minimization);
-- derive and interpret classical guarantees (PAC bounds, VC/Rademacher-based bounds);
-- implement and evaluate major supervised learning algorithms;
-- compare online, ranking, regression, and reinforcement learning formulations;
-- reason about model selection, regularization, and practical trade-offs.
+- explain the geometry behind nearest-neighbor methods, PCA, clustering, and density-based outlier screening;
+- implement the core computational steps of `k-NN`, `PCA`, `k-means`, and `DBSCAN` with NumPy;
+- interpret when a method is based on distance, projection, density, or optimization;
+- compare clustering methods with supervised tree-based methods at a practical level;
+- know where classical linear models and neural-network training will be introduced later.
 
-## Suggested 14-lecture structure
+## Current lecture sequence
 
-1. **Lecture 1 - Introduction to Machine Learning**  
-   Book: Chapter 1
-2. **Lecture 2 - PAC Learning Framework**  
-   Book: Chapter 2
-3. **Lecture 3 - Rademacher Complexity and VC-Dimension**  
-   Book: Chapter 3
-4. **Lecture 4 - Model Selection and Cross-Validation**  
-   Book: Chapter 4
-5. **Lecture 5 - Support Vector Machines**  
-   Book: Chapter 5
-6. **Lecture 6 - Kernel Methods**  
-   Book: Chapter 6
-7. **Lecture 7 - Boosting**  
-   Book: Chapter 7
-8. **Lecture 8 - Online Learning**  
-   Book: Chapter 8
-9. **Lecture 9 - Multi-Class Classification**  
-   Book: Chapter 9
-10. **Lecture 10 - Ranking**  
-    Book: Chapter 10
-11. **Lecture 11 - Regression**  
-    Book: Chapter 11
-12. **Lecture 12 - Maximum Entropy and Logistic Regression**  
-    Book: Chapters 12-13
-13. **Lecture 13 - Stability and Dimensionality Reduction**  
-    Book: Chapters 14-15
-14. **Lecture 14 - Automata, RL, and Course Integration**  
-    Book: Chapters 16-17 + conclusion
+1. **Lecture 1 - Introduction to Machine Learning and k-NN**
+   - classification, regression, retrieval, anomaly scoring
+   - distance, scaling, and the nearest-neighbor rule
+2. **Lecture 2 - PCA**
+   - linear projection, variance maximization, reconstruction
+   - dimensionality reduction and visualization
+3. **Lecture 3 - k-Means Clustering**
+   - clustering objective, alternating minimization, centroid updates
+   - scaling, initialization, and failure modes
+4. **Lecture 4 - DBSCAN**
+   - epsilon neighborhoods, MinPts, core/border/noise points
+   - density reachability, density connectivity, outlier screening
+5. **Lecture 5 - Decision Trees**
+   - impurity, splits, tree growth, interpretability
+6. **Lecture 6 - Random Forests**
+   - bagging, feature subsampling, variance reduction
+7. **Lecture 7 - Boosting**
+   - weak learners, additive modeling, sequential correction
+8. **Lecture 8 - High-Dimensional Visualization**
+   - `t-SNE` as a visualization tool
+   - contrast with PCA and cluster inspection
 
-## Evaluation blueprint (example)
+## Planned extensions
 
-- 20% quizzes (theory checks)
-- 30% assignments (derivations + coding)
-- 20% project milestone
-- 30% final exam (concepts + proofs + interpretation)
+The following topics can be added after the main block depending on pacing:
 
-## Prerequisites refresh references
+- hierarchical clustering
+- Gaussian mixture models and EM
+- anomaly detection beyond DBSCAN
+- linear models and optimization, moved to the NN section
 
-- Linear algebra: Appendix A
-- Convex optimization: Appendix B
-- Probability and concentration: Appendices C-D
-- Information theory basics: Appendix E
+## Assignment sequence
 
+1. **Lab 1 - k-NN**
+2. **Lab 2 - PCA**
+3. **Lab 3 - k-Means**
+4. **Lab 4 - DBSCAN**
+
+## Notes
+
+- Keep the notation consistent across lectures and assignments.
+- Prefer short derivations followed by numerical examples and graphics.
+- Use the course split to introduce supervised tree methods before the NN block.
