@@ -2,9 +2,6 @@
 \textbf{Lab 5 focus:} supervised rule learning, purity and impurity, split search, recursive tree growth, interpretability, and overfitting control.
 
 \medskip
-\textbf{Practical usage now:} interpretable tabular classification, simple rule extraction, baseline supervised modeling, and preparation for random forests and boosting.
-
-\medskip
 \textbf{Implementation policy (strict):}
 \begin{itemize}
   \item Implement the decision tree core algorithm with NumPy only.
@@ -35,12 +32,15 @@
   \[
     I_G(D_m)=1-\sum_{c=1}^{C}p_{mc}^{2}.
   \]
-  \item Pure and impure nodes:
+  \item Entropy impurity:
   \[
-    I_G(D_m)=0
-    \quad\text{means the node is pure,}
+    I_H(D_m)=-\sum_{c=1}^{C}p_{mc}\log_2 p_{mc}.
   \]
-  while larger impurity means that several classes are mixed in the same node.
+  \item Pure node: $I_G(D_m)=0$; larger values indicate mixed classes.
+  \item Leaf prediction (majority class):
+  \[
+    \hat{y}=\arg\max_{c\in\{1,\dots,C\}} p_{mc}.
+  \]
   \item Candidate split:
   \[
     D_L=\{(x_i,y_i)\in D_m:x_{ij}\leq t\},
@@ -65,7 +65,7 @@
   \item \texttt{advanced\_ai/trees/decision\_tree.py}: starter implementation.
   \item \texttt{prepare\_datasets.py}: generates the prepared data bundles.
   \item \texttt{scripts/prepare\_all\_data.sh}: shell entrypoint for dataset preparation.
-  \item \texttt{scripts/check\_prepare\_datasets.sh}: verification script for the prepared bundles.
+  \item \texttt{scripts/check\_prepare\_all\_data.sh}: verification script for the prepared bundles.
   \item \texttt{toy\_tree.py}, \texttt{iris\_tree.py}, \texttt{depth\_and\_overfitting.py}: task runners.
   \item \texttt{collect\_submission.ipynb} and \texttt{collectSubmission.sh}: submission helpers.
 \end{itemize}
@@ -83,10 +83,9 @@ The scripts use the conda environment \texttt{ai\_courses}.
 
 \section*{Roadmap}
 \begin{itemize}
-  \item First prepare and verify the datasets.
-  \item Then implement the tree core in small pieces: impurity, split scoring, split search, recursion, and prediction.
-  \item Run self-checks before using the task runners.
-  \item Complete the toy, Iris, and overfitting studies in order.
+  \item Start with Step 1: prepare and verify the datasets.
+  \item After that, continue through the steps in order.
+  \item Each step introduces only the task you need next.
 \end{itemize}
 
 \section*{Step 1: Prepare the Datasets}
@@ -195,8 +194,5 @@ The scripts use the conda environment \texttt{ai\_courses}.
 \section*{Submission}
 \begin{itemize}
   \item Submit the notebook, the completed starter files, and the generated output files from the required runners.
-  \item Include one PDF report with equations, plots, tables, and conclusions.
-  \item Include random seed, environment file, and reproducibility notes.
-  \item Include outputs from \texttt{toy\_tree.py}, \texttt{iris\_tree.py}, and \texttt{depth\_and\_overfitting.py}.
-  \item Clearly separate hand calculations, implementation checks, and experimental conclusions.
+  \item Use \texttt{collect\_submission.ipynb} or \texttt{collectSubmission.sh} to bundle the submission.
 \end{itemize}
