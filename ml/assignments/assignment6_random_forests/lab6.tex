@@ -14,10 +14,12 @@
 
 \section*{Core Equations And Rules}
 \begin{itemize}
-  \item Bootstrap index set:
+  \item Bootstrap sample:
   \[
-    I^{(b)} = \{i_1^{(b)},\dots,i_n^{(b)}\},\qquad
-    i_k^{(b)}\in\{1,\dots,n\}\text{ drawn uniformly with replacement}.
+    D^{(b)}
+    =
+    \{(x_i^{(b)},y_i^{(b)})\}_{i=1}^{n}
+    \quad\text{drawn uniformly with replacement from }D.
   \]
   \item Bagging prediction (majority vote):
   \[

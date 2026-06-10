@@ -45,22 +45,22 @@ Averaging many noisy but independent predictions is more stable than one perfect
 \begin{columns}[T]
 \column{0.53\textwidth}
 \begin{itemize}
-  \item Start with feature matrix $X\in\mathbb{R}^{n\times d}$ and labels $y$.
+  \item Start with dataset $D$ of size $n$.
   \pause
-  \item For $b=1,\dots,B$, draw $n$ indices uniformly with replacement:
+  \item For $b=1,\dots,B$, draw a bootstrap sample:
+  \begin{equation}
+    D^{(b)}
+    =
+    \{(x_i^{(b)},y_i^{(b)})\}_{i=1}^{n}
+    \quad\text{drawn uniformly with replacement from }D.
+    \label{eq:bootstrap-sample}
+  \end{equation}
+  \pause
+  \item Each $D^{(b)}$ has size $n$ but many examples appear multiple times.
+  \pause
+  \item The probability that a particular example is left out is
   \[
-    I^{(b)} = \{i_1^{(b)},\dots,i_n^{(b)}\},\qquad
-    i_k^{(b)}\in\{1,\dots,n\}.
-  \]
-  \pause
-  \item The bootstrap training set is the rows of $(X,y)$ at those indices.
-  \pause
-  \item Many original examples appear multiple times; some are left out.
-  \pause
-  \item The probability that a particular example is omitted is
-  \[
-    P\bigl(i\notin I^{(b)}\bigr)=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}
-    \approx\frac{1}{e}\approx 0.368,
+    P(\text{example }i\notin D^{(b)})=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}\approx \frac{1}{e}\approx 0.368,
   \]
   so about $63\%$ of the original examples appear in each bootstrap sample.
 \end{itemize}
@@ -74,7 +74,7 @@ Averaging many noisy but independent predictions is more stable than one perfect
 
 \begin{frame}{Training a Forest}
 \begin{itemize}
-  \item For each bootstrap index set $I^{(b)}$, train one full decision tree $T_b$ on $(X_{I^{(b)}}, y_{I^{(b)}})$.
+  \item For each bootstrap sample $D^{(b)}$, train one full decision tree $T_b$.
   \pause
   \item Each tree is trained independently.
   \pause
@@ -187,7 +187,7 @@ Averaging many noisy but independent predictions is more stable than one perfect
 \begin{columns}[T]
 \column{0.53\textwidth}
 \begin{itemize}
-  \item Each bootstrap draw $I^{(b)}$ omits about $37\%$ of the original examples (left panel).
+  \item As shown in Eq.~\ref{eq:bootstrap-sample}, each bootstrap draw leaves out about $37\%$ of the original examples.
   \pause
   \item These ``out-of-bag'' (OOB) samples are not used to train that tree.
   \pause
