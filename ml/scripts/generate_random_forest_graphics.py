@@ -52,28 +52,35 @@ bagging_tex = r"""
 \definecolor{lightcoral}{RGB}{240,128,128}
 \begin{document}
 \begin{tikzpicture}
-  \node[draw, rounded rectangle, fill=lightblue, minimum width=1.5cm, minimum height=1.8cm] (D) at (0, 1.5) {$D$};
+  % Original dataset
+  \node[draw, rounded rectangle, fill=lightblue, minimum width=1.6cm, minimum height=2cm] (D) at (0, 1) {$D$};
 
+  % Bootstrap samples -- spread widely
   \foreach \i in {0,1,2} {
-    \pgfmathsetmacro{\x}{2.5 + \i * 1.8}
-    \node[draw, rounded rectangle, fill=lightyellow, minimum width=1.3cm, minimum height=1.6cm] (D\i) at (\x, 1.5) {$D^{(\i+1)}$};
-    \draw[-latex] (D.east) -- (D\i.west);
+    \pgfmathsetmacro{\x}{3.2 + \i * 2.8}
+    \node[draw, rounded rectangle, fill=lightyellow, minimum width=1.4cm, minimum height=1.8cm] (D\i) at (\x, 1) {$D^{(\i+1)}$};
   }
+  % Arrows from D to each sample, fanned from right
+  \draw[-latex] (D.15)  -- (D0.west);
+  \draw[-latex] (D.east) -- (D1.west);
+  \draw[-latex] (D.-15) -- (D2.west);
 
+  % Trees above
   \foreach \i in {0,1,2} {
-    \pgfmathsetmacro{\x}{2.5 + \i * 1.8}
-    \node[draw, regular polygon, regular polygon sides=3, fill=lightgreen, minimum size=0.8cm] (T\i) at (\x, 3.5) {T$_{\i+1}$};
+    \pgfmathsetmacro{\x}{3.2 + \i * 2.8}
+    \node[draw, regular polygon, regular polygon sides=3, fill=lightgreen, minimum size=0.9cm] (T\i) at (\x, 3.2) {T$_{\i+1}$};
     \draw[-latex] (D\i.north) -- (T\i.south);
   }
 
-  \node[draw, rounded rectangle, fill=lightcoral, minimum width=2cm, minimum height=0.7cm] (vote) at (4, -0.5) {Majority Vote};
+  % Vote box centered well below
+  \node[draw, rounded rectangle, fill=lightcoral, minimum width=2.4cm, minimum height=0.9cm] (vote) at (6, -0.8) {Majority Vote};
 
-  \foreach \i in {0,1,2} {
-    \pgfmathsetmacro{\x}{2.5 + \i * 1.8}
-    \draw[-latex, gray, thin] (T\i) -- (vote);
-  }
+  % Arrows from trees to vote -- each takes a separate approach angle
+  \draw[-latex] (T0.south) to[out=-90, in=120] (vote.north west);
+  \draw[-latex] (T1.south) -- (vote.90);
+  \draw[-latex] (T2.south) to[out=-90, in=60]  (vote.north east);
 
-  \node[font=\large\bfseries] at (4, 4.5) {Bagging: Bootstrap Aggregating};
+  \node[font=\large\bfseries] at (6, 5.2) {Bagging: Bootstrap Aggregating};
 \end{tikzpicture}
 \end{document}
 """
@@ -131,7 +138,7 @@ vote_tex = r"""
 \definecolor{darkgreen}{RGB}{0,100,0}
 \begin{document}
 \begin{tikzpicture}[node distance=0.8cm]
-  \node[above] at (3, 4) {\large \textbf{Forest Prediction (Classification)}};
+  \node[above] at (3, 5.2) {\large \textbf{Forest Prediction (Classification)}};
 
   % Five trees with predictions
   \foreach \i in {0,1,2,3,4} {

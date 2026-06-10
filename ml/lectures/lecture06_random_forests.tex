@@ -47,20 +47,23 @@ Averaging many noisy but independent predictions is more stable than one perfect
 \begin{itemize}
   \item Start with dataset $D$ of size $n$.
   \pause
-  \item For $b=1,\dots,B$, draw a bootstrap sample:
-  \[
-    D^{(b)} \sim \text{Resample}(D,\,n)\text{ with replacement}.
-  \]
+  \item For $b=1,\dots,B$, draw a bootstrap sample $D^{(b)}$ of size $n$ from $D$ uniformly with replacement.
   \pause
-  \item Each $D^{(b)}$ has size $n$ but many examples appear multiple times.
+  \item Each $D^{(b)}$ has size $n$ but some examples appear multiple times, others are left out.
   \pause
-  \item About $63\%$ of the original $n$ examples appear in each sample.
+  \item The probability that a given example is omitted is
+  \begin{equation}
+    P\bigl((x_i,y_i)\notin D^{(b)}\bigr)=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}\approx\frac{1}{e}\approx 0.368.
+    \label{eq:oob-probability}
+  \end{equation}
+  \pause
+  \item Hence about $63\%$ of the original examples appear in each bootstrap sample.
 \end{itemize}
 
 \pause
 \column{0.47\textwidth}
 \centering
-\includegraphics[width=\textwidth]{figures/random_forests/bagging_diagram.pdf}
+\includegraphics[width=0.75\textwidth]{figures/random_forests/bagging_diagram.pdf}
 \end{columns}
 \end{frame}
 
@@ -124,11 +127,14 @@ Averaging many noisy but independent predictions is more stable than one perfect
   \pause
   \item The forest prediction is the majority vote:
   \begin{equation}
-    \hat{y}(x) = \text{majority}\bigl\{\hat{y}^{(1)}(x),\,\dots,\,\hat{y}^{(B)}(x)\bigr\}.
+    \hat{y}(x)
+    =
+    \arg\max_{c\in\{1,\dots,C\}}\,
+    \sum_{b=1}^{B}\mathbf{1}\{\hat{y}^{(b)}(x)=c\}.
     \label{eq:forest-vote}
   \end{equation}
   \pause
-  \item In case of a tie, the class with the most votes wins.
+  \item In case of a tie, the class with the largest count wins.
 \end{itemize}
 
 \pause
@@ -176,13 +182,20 @@ Averaging many noisy but independent predictions is more stable than one perfect
 \begin{columns}[T]
 \column{0.53\textwidth}
 \begin{itemize}
-  \item When we draw a bootstrap sample of size $n$, about 37\% of the original examples are left out.
+  \item As shown in Eq.~\eqref{eq:oob-probability}, each bootstrap draw leaves out about $37\%$ of the original examples.
   \pause
   \item These ``out-of-bag'' (OOB) samples are not used to train that tree.
   \pause
-  \item Use the OOB samples as a free validation set.
+  \item For each training example $(x_i,y_i)$, let $\mathcal{B}_i=\{b:(x_i,y_i)\notin D^{(b)}\}$ be the trees where it is OOB.
   \pause
-  \item The OOB error is a good estimate of test error.
+  \item The OOB prediction aggregates only those trees:
+  \[
+    \hat{y}_{\text{OOB}}(x_i)
+    =
+    \arg\max_{c}\sum_{b\in\mathcal{B}_i}\mathbf{1}\{\hat{y}^{(b)}(x_i)=c\}.
+  \]
+  \pause
+  \item OOB error is the fraction of OOB predictions that are wrong.
 \end{itemize}
 
 \pause
@@ -212,15 +225,21 @@ Averaging many noisy but independent predictions is more stable than one perfect
   \pause
   \item Compute the mean impurity decrease for each feature across all trees.
   \pause
-  \item For feature $j$, sum the impurity decrease $\Delta I$ over all nodes in all trees where $j$ was chosen as the split feature:
+  \item For feature $j$, sum the impurity decrease over all nodes in all trees where $j$ was chosen as the split feature:
   \begin{equation}
-    \text{FI}(j) = \frac{1}{B}\sum_{b=1}^{B}\sum_{\substack{\text{nodes in }T_b \\ \text{split on }j}} \frac{n_m}{n}\,\Delta I.
+    I_j
+    =
+    \frac{1}{B}
+    \sum_{b=1}^{B}\;
+    \sum_{\substack{m\in T_b\\ \text{feature }m=j}}
+    \frac{n_m}{n}\,\Delta I,
     \label{eq:feature-importance}
   \end{equation}
+where $n_m$ is the number of training examples at node $m$.
   \pause
-  \item Normalize so importances sum to 1.
+  \item Normalize so $\sum_{j=1}^{d}I_j = 1$.
   \pause
-  \item High importance means the feature is used in many high-impact splits.
+  \item Higher $I_j$ means feature $j$ is used in more high-importance splits.
 \end{itemize}
 \end{frame}
 

@@ -16,21 +16,32 @@
 \begin{itemize}
   \item Bootstrap sample:
   \[
-    D^{(b)} \sim \text{Resample}(D,\,n)\text{ with replacement}.
+    D^{(b)} = \text{bootstrap sample of size }n\text{ drawn uniformly with replacement from }D.
+  \]
+  \item OOB probability:
+  \[
+    P\bigl((x_i,y_i)\notin D^{(b)}\bigr)=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}\approx\frac{1}{e}\approx 0.368.
   \]
   \item Bagging prediction (majority vote):
   \[
-    \hat{y}(x)=\text{majority}\bigl\{\hat{y}^{(1)}(x),\dots,\hat{y}^{(B)}(x)\bigr\}.
+    \hat{y}(x)
+    =
+    \arg\max_{c\in\{1,\dots,C\}}\,
+    \sum_{b=1}^{B}\mathbf{1}\{\hat{y}^{(b)}(x)=c\}.
   \]
   \item Feature subset size (classification):
   \[
     m = \lfloor\sqrt{d}\rfloor.
   \]
-  \item Tree impurity and split: same as in Lab 5 (Gini impurity, impurity decrease $\Delta I$, threshold search).
-  \item Out-of-bag error: each tree predicts its OOB samples; aggregate OOB predictions by majority vote per sample; compare with the true labels.
+  \item Tree impurity and split: same as in Lab 5 (Gini impurity $I_G$, impurity decrease $\Delta I$, threshold search).
   \item Feature importance for feature $j$:
   \[
-    \text{FI}(j) = \frac{1}{B}\sum_{b=1}^{B}\sum_{\substack{\text{nodes in }T_b \\ \text{split on }j}} \frac{n_m}{n}\,\Delta I.
+    I_j
+    =
+    \frac{1}{B}
+    \sum_{b=1}^{B}\;
+    \sum_{\substack{m\in T_b\\ \text{feature }m=j}}
+    \frac{n_m}{n}\,\Delta I.
   \]
 \end{itemize}
 
