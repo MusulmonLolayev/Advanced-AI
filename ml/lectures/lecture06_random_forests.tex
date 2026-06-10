@@ -49,13 +49,20 @@ Averaging many noisy but independent predictions is more stable than one perfect
   \pause
   \item For $b=1,\dots,B$, draw a bootstrap sample:
   \begin{equation}
-    D^{(b)} \sim \text{Resample}(D,\,n)\text{ with replacement}.
+    D^{(b)}
+    =
+    \{(x_i^{(b)},y_i^{(b)})\}_{i=1}^{n}
+    \quad\text{drawn uniformly with replacement from }D.
     \label{eq:bootstrap-sample}
   \end{equation}
   \pause
   \item Each $D^{(b)}$ has size $n$ but many examples appear multiple times.
   \pause
-  \item About $63\%$ of the original $n$ examples appear in each sample.
+  \item The probability that a particular example is left out is
+  \[
+    P(\text{example }i\notin D^{(b)})=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}\approx \frac{1}{e}\approx 0.368,
+  \]
+  so about $63\%$ of the original examples appear in each bootstrap sample.
 \end{itemize}
 
 \pause
@@ -125,11 +132,14 @@ Averaging many noisy but independent predictions is more stable than one perfect
   \pause
   \item The forest prediction is the majority vote:
   \begin{equation}
-    \hat{y}(x) = \text{majority}\bigl\{\hat{y}^{(1)}(x),\,\dots,\,\hat{y}^{(B)}(x)\bigr\}.
+    \hat{y}(x)
+    =
+    \arg\max_{c\in\{1,\dots,C\}}
+    \sum_{b=1}^{B}\mathbf{1}\{\hat{y}^{(b)}(x)=c\}.
     \label{eq:forest-vote}
   \end{equation}
   \pause
-  \item In case of a tie, the class with the most votes wins.
+  \item In case of a tie, the class with the largest count wins.
 \end{itemize}
 
 \pause
@@ -177,7 +187,7 @@ Averaging many noisy but independent predictions is more stable than one perfect
 \begin{columns}[T]
 \column{0.53\textwidth}
 \begin{itemize}
-  \item When we draw a bootstrap sample of size $n$, about 37\% of the original examples are left out.
+  \item As shown in Eq.~\ref{eq:bootstrap-sample}, each bootstrap draw leaves out about $37\%$ of the original examples.
   \pause
   \item These ``out-of-bag'' (OOB) samples are not used to train that tree.
   \pause
@@ -213,15 +223,20 @@ Averaging many noisy but independent predictions is more stable than one perfect
   \pause
   \item Compute the mean impurity decrease for each feature across all trees.
   \pause
-  \item For feature $j$, sum the impurity decrease $\Delta I$ over all nodes in all trees where $j$ was chosen as the split feature:
+  \item For feature $j$, sum the impurity decrease over all nodes in all trees where $j$ was chosen as the split feature:
   \begin{equation}
-    \text{FI}(j) = \frac{1}{B}\sum_{b=1}^{B}\sum_{\substack{\text{nodes in }T_b \\ \text{split on }j}} \frac{n_m}{n}\,\Delta I.
+    \mathcal{I}_j
+    =
+    \frac{1}{B}
+    \sum_{b=1}^{B}
+    \sum_{\substack{m\in T_b\\ \text{split}(m)=j}}
+    \frac{n_m}{n}\,\Delta I(m).
     \label{eq:feature-importance}
   \end{equation}
   \pause
-  \item Normalize so importances sum to 1.
+  \item Normalize so $\sum_{j=1}^{d}\mathcal{I}_j = 1$.
   \pause
-  \item High importance means the feature is used in many high-impact splits.
+  \item High $\mathcal{I}_j$ means feature $j$ is used in many high-impact splits.
 \end{itemize}
 \end{frame}
 
