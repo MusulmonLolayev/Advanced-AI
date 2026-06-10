@@ -14,13 +14,11 @@
 
 \section*{Core Equations And Rules}
 \begin{itemize}
-  \item Bootstrap sample:
-  \[
-    D^{(b)} = \text{bootstrap sample of size }n\text{ drawn uniformly with replacement from }D.
-  \]
+  \item Features $X=\{x_1,\dots,x_n\}$, $x_i\in\mathbb{R}^d$, and labels $y=\{y_1,\dots,y_n\}$, $y_i\in\{1,\dots,C\}$.
+  \item Bootstrap sample $(X^{(b)},y^{(b)})$: $n$ draws uniformly with replacement from $(X,y)$.
   \item OOB probability:
   \[
-    P\bigl((x_i,y_i)\notin D^{(b)}\bigr)=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}\approx\frac{1}{e}\approx 0.368.
+    P\bigl((x_i,y_i)\notin (X^{(b)},y^{(b)})\bigr)=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}\approx\frac{1}{e}\approx 0.368.
   \]
   \item Bagging prediction (majority vote):
   \[
