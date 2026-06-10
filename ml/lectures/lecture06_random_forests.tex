@@ -180,26 +180,24 @@ Averaging many noisy but independent predictions is more stable than one perfect
 \begin{columns}[T]
 \column{0.53\textwidth}
 \begin{itemize}
-  \item As shown in Eq.~\eqref{eq:oob-probability}, each bootstrap draw leaves out about $37\%$ of the original examples.
+  \item Each bootstrap leaves out $\approx 37\%$ of examples (Eq.~\eqref{eq:oob-probability}). These ``out-of-bag'' (OOB) samples are unseen by that tree.
   \pause
-  \item These ``out-of-bag'' (OOB) samples are not used to train that tree.
-  \pause
-  \item For each training example $(x_i,y_i)$, let $\mathcal{B}_i=\{b:(x_i,y_i)\notin (X^{(b)},y^{(b)})\}$ be the trees where it is OOB.
-  \pause
-  \item The OOB prediction aggregates only those trees:
+  \item For each example $(x_i,y_i)$, aggregate predictions only from trees that did not see it:
   \[
     \hat{y}_{\text{OOB}}(x_i)
     =
-    \arg\max_{c}\sum_{b\in\mathcal{B}_i}\mathbf{1}\{\hat{y}^{(b)}(x_i)=c\}.
+    \arg\max_{c}
+    \sum_{b:\;(x_i,y_i)\notin (X^{(b)},y^{(b)})}
+    \mathbf{1}\{\hat{y}^{(b)}(x_i)=c\}.
   \]
   \pause
-  \item OOB error is the fraction of OOB predictions that are wrong.
+  \item OOB error = fraction of training examples where $\hat{y}_{\text{OOB}}(x_i)\neq y_i$.
 \end{itemize}
 
 \pause
 \column{0.47\textwidth}
 \centering
-\includegraphics[width=\textwidth]{figures/random_forests/oob_illustration.pdf}
+\includegraphics[width=0.8\textwidth]{figures/random_forests/oob_illustration.pdf}
 \end{columns}
 \end{frame}
 
