@@ -212,24 +212,24 @@ boundary_tex = r"""
 \definecolor{lightcoral}{RGB}{240,128,128}
 \begin{document}
 \begin{tikzpicture}
-  \node[font=\Large\bfseries] at (4, 5) {Decision Boundary: Single Tree vs Forest};
+  \node[font=\Large\bfseries] at (4.25, 5.5) {Decision Boundary: Single Tree vs Forest};
 
-  \node[font=\bfseries] at (1.5, 4.3) {Single Decision Tree};
-  \node[font=\small] at (1.5, 3.9) {(High Variance)};
-  \draw[fill=lightblue, opacity=0.3] (0, 2) rectangle (1.5, 3.5);
-  \draw[fill=lightcoral, opacity=0.3] (0.75, 2.5) rectangle (1.5, 3);
-  \foreach \i in {0,1,2,3} {
-    \node[circle, fill=blue, minimum size=0.15cm] at ({0.3+0.3*\i}, 2.3) {};
-    \node[rectangle, fill=red, minimum width=0.12cm, minimum height=0.12cm] at ({0.5+0.3*\i}, 3.2) {};
+  \node[font=\bfseries] at (2, 4.5) {Single Decision Tree};
+  \node[font=\small] at (2, 4.1) {(High Variance)};
+  \draw[fill=lightblue, opacity=0.3] (0, 1.5) rectangle (3, 3.5);
+  \draw[fill=lightcoral, opacity=0.3] (1.5, 2) rectangle (3, 2.8);
+  \foreach \i in {0,1,2,3,4,5} {
+    \node[circle, fill=blue, minimum size=0.15cm] at ({0.3+0.4*\i}, 1.8) {};
+    \node[rectangle, fill=red, minimum width=0.12cm, minimum height=0.12cm] at ({0.5+0.4*\i}, 2.9) {};
   }
 
-  \node[font=\bfseries] at (4.5, 4.3) {Random Forest};
-  \node[font=\small] at (4.5, 3.9) {(Low Variance)};
-  \draw[fill=lightblue, opacity=0.3] (3, 2) rectangle (6, 3.5);
-  \draw[fill=lightcoral, opacity=0.3] (4.5, 2.5) rectangle (6, 3.5);
-  \foreach \i in {0,1,2,3} {
-    \node[circle, fill=blue, minimum size=0.15cm] at ({3.3+0.3*\i}, 2.3) {};
-    \node[rectangle, fill=red, minimum width=0.12cm, minimum height=0.12cm] at ({3.5+0.3*\i}, 3.2) {};
+  \node[font=\bfseries] at (6.5, 4.5) {Random Forest};
+  \node[font=\small] at (6.5, 4.1) {(Low Variance)};
+  \draw[fill=lightblue, opacity=0.3] (3.5, 1.5) rectangle (8.5, 3.5);
+  \draw[fill=lightcoral, opacity=0.3] (5.5, 2) rectangle (8.5, 2.8);
+  \foreach \i in {0,1,2,3,4,5} {
+    \node[circle, fill=blue, minimum size=0.15cm] at ({3.8+0.5*\i}, 1.8) {};
+    \node[rectangle, fill=red, minimum width=0.12cm, minimum height=0.12cm] at ({4+0.5*\i}, 2.9) {};
   }
 \end{tikzpicture}
 \end{document}
