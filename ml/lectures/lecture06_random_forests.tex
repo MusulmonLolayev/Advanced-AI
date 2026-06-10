@@ -48,10 +48,9 @@ Averaging many noisy but independent predictions is more stable than one perfect
   \item Start with dataset $D$ of size $n$.
   \pause
   \item For $b=1,\dots,B$, draw a bootstrap sample:
-  \begin{equation}
+  \[
     D^{(b)} \sim \text{Resample}(D,\,n)\text{ with replacement}.
-    \label{eq:bootstrap-sample}
-  \end{equation}
+  \]
   \pause
   \item Each $D^{(b)}$ has size $n$ but many examples appear multiple times.
   \pause
