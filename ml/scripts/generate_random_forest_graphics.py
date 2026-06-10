@@ -216,54 +216,61 @@ import matplotlib.pyplot as plt
 
 
 def build_boundary_figure() -> None:
-    """Plot side-by-side decision boundary comparison: tree vs forest."""
+    """Plot side-by-side decision boundary: stepped (tree) vs smooth (forest)."""
     rng = np.random.default_rng(42)
-    n = 50
+    n = 60  # total points per class
 
-    # Two interleaving crescent-shaped classes
-    t = rng.uniform(0, np.pi, n)
-    c0 = np.column_stack([1.5 + t * 0.5, 1.5 + np.sin(t) * 1.2]) + rng.normal(0, 0.12, (n, 2))
+    # Two diagonally separable classes (below the boundary vs above it)
+    c0_x = rng.uniform(0.5, 4.5, n)
+    c0_y = [0.5 + 0.5 * xi + rng.normal(0.0, 0.25) for xi in c0_x]
+    c0 = np.column_stack([c0_x, c0_y])
 
-    t = rng.uniform(0, np.pi, n)
-    c1 = np.column_stack([2.5 - t * 0.5, 1.5 + np.sin(t) * 1.2]) + rng.normal(0, 0.12, (n, 2))
+    c1_x = rng.uniform(0.5, 4.5, n)
+    c1_y = [1.3 + 0.5 * xi + rng.normal(0.0, 0.25) for xi in c1_x]
+    c1 = np.column_stack([c1_x, c1_y])
 
-    # Stepped boundary (decision tree, axis-aligned splits)
-    tree_x = [1.0, 2.0, 2.0, 3.0, 3.0, 4.0]
-    tree_y = [1.0, 1.0, 2.3, 2.3, 3.5, 3.5]
+    # True diagonal boundary: y = 0.5 + 0.5 * (x - 0.5) → y = 0.25 + 0.5x
+    true_x = np.linspace(0.5, 4.5, 200)
+    true_y = 0.25 + 0.5 * true_x
 
-    # Smooth boundary (random forest, diagonal curve)
-    smooth_x = np.linspace(1.0, 4.0, 200)
-    smooth_y = 1.0 + 0.25 * (smooth_x - 1.0) + 0.07 * (smooth_x - 1.0) ** 2
+    # Axis-aligned stepped approximation (tree) with 5 splits
+    step_x = [0.5, 1.3, 1.3, 2.1, 2.1, 2.9, 2.9, 3.7, 3.7, 4.5]
+    step_y = [0.9, 0.9, 1.3, 1.3, 1.7, 1.7, 2.1, 2.1, 2.5, 2.5]
+
+    # Smooth approximation (forest) — arc above the diagonal
+    forest_y = true_y + 0.15  # slightly offset for visual contrast
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.5))
 
     # ---- LEFT: Single Decision Tree ----
-    # Polygon for region below the stepped boundary
-    fill_x = [0.5, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 4.5, 0.5]
-    fill_y = [0.5, 0.5, 1.0, 1.0, 2.3, 2.3, 3.5, 3.5, 0.5, 0.5, 0.5]
-    ax1.fill(fill_x, fill_y, color="lightcoral", alpha=0.3, linewidth=0)
-    ax1.step(tree_x, tree_y, color="black", linewidth=2.5, where="post")
-    ax1.scatter(c0[:, 0], c0[:, 1], c="#3366cc", marker="o", s=25, edgecolors="white", linewidth=0.3, zorder=5, label="Class 0")
-    ax1.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=25, edgecolors="white", linewidth=0.3, zorder=5, label="Class 1")
+    # Build closed polygon for the fill region (below the step)
+    px = [0.5] + step_x + [4.5, 0.5]
+    py = [0.5] + step_y + [0.5, 0.5]
+    ax1.fill(px, py, color="lightcoral", alpha=0.3, linewidth=0)
+    ax1.step(step_x, step_y, color="black", linewidth=2.5, where="post")
+    # Dashed overlay: the true diagonal (shows the tree boundary is an approximation)
+    ax1.plot(true_x, true_y, color="gray", linewidth=1.2, linestyle="--", alpha=0.7, label="True boundary")
+    ax1.scatter(c0[:, 0], c0[:, 1], c="#2255aa", marker="o", s=22, edgecolors="white", linewidth=0.3, zorder=5, label="Class 0")
+    ax1.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=22, edgecolors="white", linewidth=0.3, zorder=5, label="Class 1")
     ax1.set_xlim(0.5, 4.5)
     ax1.set_ylim(0.5, 4.5)
     ax1.set_xlabel("$x_1$")
     ax1.set_ylabel("$x_2$")
     ax1.set_title("Single Decision Tree", fontweight="bold")
-    ax1.legend(loc="lower right", fontsize=8)
+    ax1.legend(loc="lower right", fontsize=7.5)
 
     # ---- RIGHT: Random Forest ----
-    # Fill the region below the smooth curve
-    ax2.fill_between(smooth_x, smooth_y, 0.5, color="lightcoral", alpha=0.3)
-    ax2.plot(smooth_x, smooth_y, color="black", linewidth=2.5)
-    ax2.scatter(c0[:, 0], c0[:, 1], c="#3366cc", marker="o", s=25, edgecolors="white", linewidth=0.3, zorder=5, label="Class 0")
-    ax2.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=25, edgecolors="white", linewidth=0.3, zorder=5, label="Class 1")
+    ax2.fill_between(true_x, forest_y, 0.5, color="lightcoral", alpha=0.3)
+    ax2.plot(true_x, forest_y, color="black", linewidth=2.5)
+    ax2.plot(true_x, true_y, color="gray", linewidth=1.2, linestyle="--", alpha=0.7, label="True boundary")
+    ax2.scatter(c0[:, 0], c0[:, 1], c="#2255aa", marker="o", s=22, edgecolors="white", linewidth=0.3, zorder=5, label="Class 0")
+    ax2.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=22, edgecolors="white", linewidth=0.3, zorder=5, label="Class 1")
     ax2.set_xlim(0.5, 4.5)
     ax2.set_ylim(0.5, 4.5)
     ax2.set_xlabel("$x_1$")
     ax2.set_ylabel("$x_2$")
     ax2.set_title("Random Forest", fontweight="bold")
-    ax2.legend(loc="lower right", fontsize=8)
+    ax2.legend(loc="lower right", fontsize=7.5)
 
     fig.suptitle("Decision Boundary: Single Tree vs Random Forest", fontsize=13, fontweight="bold")
     plt.tight_layout(rect=[0, 0, 1, 0.95])
