@@ -1,0 +1,190 @@
+\section*{Lab 6 (Random Forests) Implementation Tasks}
+\textbf{Lab 6 focus:} ensemble learning, bagging, feature subsampling, out-of-bag error, feature importance, and comparing forest versus single tree.
+
+\medskip
+\textbf{Implementation policy (strict):}
+\begin{itemize}
+  \item Implement the random forest core algorithm with NumPy only.
+  \item Do not use a library random forest implementation for the main task.
+  \item You may reuse your decision tree implementation from Lab 5.
+  \item Plotting libraries are allowed for visual inspection.
+  \item External libraries are allowed only for data loading if explicitly needed.
+  \item Work through the notebook in order.
+\end{itemize}
+
+\section*{Core Equations And Rules}
+\begin{itemize}
+  \item Bootstrap sample:
+  \[
+    D^{(b)} \sim \text{Resample}(D,\,n)\text{ with replacement}.
+  \]
+  \item Bagging prediction (majority vote):
+  \[
+    \hat{y}(x)=\text{majority}\bigl\{\hat{y}^{(1)}(x),\dots,\hat{y}^{(B)}(x)\bigr\}.
+  \]
+  \item Feature subset size (classification):
+  \[
+    m = \lfloor\sqrt{d}\rfloor.
+  \]
+  \item Tree impurity and split: same as in Lab 5 (Gini impurity, impurity decrease $\Delta I$, threshold search).
+  \item Out-of-bag error: each tree predicts its OOB samples; aggregate OOB predictions by majority vote per sample; compare with the true labels.
+  \item Feature importance for feature $j$:
+  \[
+    \text{FI}(j) = \frac{1}{B}\sum_{b=1}^{B}\sum_{\substack{\text{nodes in }T_b \\ \text{split on }j}} \frac{n_m}{n}\,\Delta I.
+  \]
+\end{itemize}
+
+\section*{Data Files And Preparation}
+\begin{itemize}
+  \item \texttt{random\_forests.ipynb}: guided notebook with the assignment steps.
+  \item \texttt{advanced\_ai/forest/random\_forest.py}: starter implementation.
+  \item \texttt{prepare\_datasets.py}: generates the prepared data bundles.
+  \item \texttt{scripts/prepare\_all\_data.sh}: shell entrypoint for dataset preparation.
+  \item \texttt{scripts/check\_prepare\_all\_data.sh}: verification script for the prepared bundles.
+  \item \texttt{toy\_forest.py}, \texttt{iris\_forest.py}, \texttt{oob\_and\_importance.py}: task runners.
+\end{itemize}
+
+\medskip
+Expected prepared files:
+\begin{itemize}
+  \item \texttt{datasets/toy\_forest.npz}
+  \item \texttt{datasets/iris\_forest.npz}
+  \item \texttt{datasets/forest\_study.npz}
+\end{itemize}
+
+\medskip
+The scripts use the conda environment \texttt{ai\_courses}.
+
+\section*{Roadmap}
+\begin{itemize}
+  \item Start with Step 1: prepare and verify the datasets.
+  \item After that, continue through the steps in order.
+  \item Each step introduces only the task you need next.
+\end{itemize}
+
+\section*{Step 1: Prepare the Datasets}
+\begin{itemize}
+  \item From \texttt{assignment6\_random\_forests/}, run:
+  \[
+    \texttt{bash scripts/prepare\_all\_data.sh}
+  \]
+  \item Then run:
+  \[
+    \texttt{bash scripts/check\_prepare\_all\_data.sh}
+  \]
+  \item Confirm that all three expected \texttt{.npz} bundles exist.
+\end{itemize}
+
+\section*{Step 2: Warm-up by Hand}
+\begin{itemize}
+  \item Three trees predict the following votes for a test example:
+  \[
+    \hat{y}^{(1)} = A,\quad
+    \hat{y}^{(2)} = A,\quad
+    \hat{y}^{(3)} = B.
+  \]
+  Compute the forest prediction. Then repeat for votes $[B, B, A]$.
+  \item A bootstrap sample of size $n=8$ is drawn. The sampled indices are
+  \[
+    [0, 1, 3, 3, 5, 6, 7, 7].
+  \]
+  Identify the OOB indices. Count how many distinct OOB samples there are out of $8$.
+\end{itemize}
+
+\section*{Step 3: Implement the Random Forest Core}
+\begin{enumerate}[label=\textbf{T\arabic*.}]
+  \item \textbf{Bootstrap sampler}
+\begin{itemize}
+  \item Open \texttt{advanced\_ai/forest/random\_forest.py}.
+  \item Fill in \texttt{\_bootstrap\_sample}.
+  \item Draw $n$ indices from $\{0,\dots,n-1\}$ with replacement.
+  \item Return the array of sampled indices.
+\end{itemize}
+
+  \item \textbf{Feature subsampler}
+\begin{itemize}
+  \item Fill in \texttt{\_feature\_subset}.
+  \item For a dataset with $d$ features, randomly select $m = \lfloor\sqrt{d}\rfloor$ feature indices.
+  \item Return the array of selected feature indices.
+\end{itemize}
+
+  \item \textbf{Bagging training loop}
+\begin{itemize}
+  \item Fill in \texttt{fit}.
+  \item For each of $B$ rounds, draw a bootstrap sample.
+  \item Create a new decision tree (reuse the class from Lab 5) and train it on the bootstrapped data.
+  \item Store the trained tree and the OOB index mask.
+\end{itemize}
+
+  \item \textbf{Prediction (classification)}
+\begin{itemize}
+  \item Fill in \texttt{predict}.
+  \item Each stored tree makes a prediction for the input.
+  \item Return the majority class across all trees.
+\end{itemize}
+
+  \item \textbf{Out-of-bag error}
+\begin{itemize}
+  \item Fill in \texttt{oob\_error}.
+  \item For each training sample, find which trees had it OOB.
+  \item Aggregate the votes of those trees.
+  \item Compare the aggregated prediction with the true label.
+  \item Return the fraction of OOB predictions that are wrong.
+\end{itemize}
+
+  \item \textbf{Feature importance}
+\begin{itemize}
+  \item Fill in \texttt{feature\_importances}.
+  \item Walk through each tree and each internal node.
+  \item Sum $\frac{n_m}{n}\Delta I$ for each feature used as the split feature.
+  \item Average over $B$ trees and normalize so the importances sum to 1.
+\end{itemize}
+\end{enumerate}
+
+\section*{Step 4: Run the Self-Checks}
+\begin{itemize}
+  \item After implementing the core class, run:
+  \[
+    \texttt{python -m advanced\_ai.self\_checks}
+  \]
+  \item Continue only after every check passes.
+\end{itemize}
+
+\section*{Step 5: Toy Dataset}
+\begin{itemize}
+  \item Run \texttt{toy\_forest.py}.
+  \item Report the depth, number of leaves, and training accuracy of a single tree.
+  \item Then report the forest accuracy (same dataset) with $B=50$.
+  \item Save the decision-region comparison plot (single tree side by side with forest).
+  \item Explain in one sentence why the forest boundary is smoother.
+\end{itemize}
+
+\section*{Step 6: Iris Data}
+\begin{itemize}
+  \item Run \texttt{iris\_forest.py}.
+  \item Sweep over $B = 1, 5, 10, 20, 50, 100, 200$.
+  \item Record training accuracy, OOB error, and test accuracy for each $B$.
+  \item Plot OOB error and test accuracy versus $B$ on the same axes.
+  \item State at which $B$ the test accuracy plateaus.
+\end{itemize}
+
+\section*{Step 7: OOB Error and Feature Importance}
+\begin{itemize}
+  \item Run \texttt{oob\_and\_importance.py}.
+  \item Report the final OOB error and compare it with the test accuracy.
+  \item List the top-3 features and their importance scores.
+  \item Explain whether the top features match what you know about the dataset.
+\end{itemize}
+
+\section*{Step 8: Optional Extension}
+\begin{itemize}
+  \item Try different feature subset sizes: $m = 1$, $m = \lfloor\sqrt{d}/2\rfloor$, $m = d$.
+  \item Report how $m$ changes the OOB error curve.
+  \item Try regression with a random forest on a simple 1D dataset.
+\end{itemize}
+
+\section*{Submission}
+\begin{itemize}
+  \item Submit the notebook, the completed starter files, and the generated output files from the required runners.
+  \item Use \texttt{collect\_submission.ipynb} or \texttt{collectSubmission.sh} to bundle the submission.
+\end{itemize}
