@@ -16,17 +16,11 @@
 \begin{itemize}
   \item Bootstrap sample:
   \[
-    D^{(b)}
-    =
-    \{(x_i^{(b)},y_i^{(b)})\}_{i=1}^{n}
-    \quad\text{drawn uniformly with replacement from }D.
+    D^{(b)} \sim \text{Resample}(D,\,n)\text{ with replacement}.
   \]
   \item Bagging prediction (majority vote):
   \[
-    \hat{y}(x)
-    =
-    \arg\max_{c\in\{1,\dots,C\}}
-    \sum_{b=1}^{B}\mathbf{1}\{\hat{y}^{(b)}(x)=c\}.
+    \hat{y}(x)=\text{majority}\bigl\{\hat{y}^{(1)}(x),\dots,\hat{y}^{(B)}(x)\bigr\}.
   \]
   \item Feature subset size (classification):
   \[
@@ -36,12 +30,7 @@
   \item Out-of-bag error: each tree predicts its OOB samples; aggregate OOB predictions by majority vote per sample; compare with the true labels.
   \item Feature importance for feature $j$:
   \[
-    \mathcal{I}_j
-    =
-    \frac{1}{B}
-    \sum_{b=1}^{B}
-    \sum_{\substack{m\in T_b\\ \text{split}(m)=j}}
-    \frac{n_m}{n}\,\Delta I(m).
+    \text{FI}(j) = \frac{1}{B}\sum_{b=1}^{B}\sum_{\substack{\text{nodes in }T_b \\ \text{split on }j}} \frac{n_m}{n}\,\Delta I.
   \]
 \end{itemize}
 
