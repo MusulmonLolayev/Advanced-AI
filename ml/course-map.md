@@ -52,6 +52,8 @@ The following topics can be added after the main block depending on pacing:
 2. **Lab 2 - PCA**
 3. **Lab 3 - k-Means**
 4. **Lab 4 - DBSCAN**
+5. **Lab 5 - Decision Trees**
+6. **Lab 6 - Random Forests**
 
 ## Notes
 
