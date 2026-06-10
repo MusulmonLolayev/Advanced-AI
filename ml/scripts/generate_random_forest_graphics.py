@@ -9,6 +9,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import numpy as np
+
 BASE_DIR = Path(__file__).resolve().parents[1]
 OUT_DIR = BASE_DIR / "figures" / "random_forests"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -204,38 +206,75 @@ compile_tikz(oob_tex, "oob_illustration")
 # ============================================================================
 # Figure 5: Decision boundary comparison
 # ============================================================================
-boundary_tex = r"""
-\documentclass[crop]{standalone}
-\usepackage{xcolor}
-\usepackage{tikz}
-\definecolor{lightblue}{RGB}{173,216,230}
-\definecolor{lightcoral}{RGB}{240,128,128}
-\begin{document}
-\begin{tikzpicture}
-  \node[font=\Large\bfseries] at (4.25, 5.5) {Decision Boundary: Single Tree vs Forest};
+# ============================================================================
+# Figure 5: Decision boundary comparison (matplotlib)
+# ============================================================================
+import matplotlib
 
-  \node[font=\bfseries] at (2, 4.5) {Single Decision Tree};
-  \node[font=\small] at (2, 4.1) {(High Variance)};
-  \draw[fill=lightblue, opacity=0.3] (0, 1.5) rectangle (3, 3.5);
-  \draw[fill=lightcoral, opacity=0.3] (1.5, 2) rectangle (3, 2.8);
-  \foreach \i in {0,1,2,3,4,5} {
-    \node[circle, fill=blue, minimum size=0.15cm] at ({0.3+0.4*\i}, 1.8) {};
-    \node[rectangle, fill=red, minimum width=0.12cm, minimum height=0.12cm] at ({0.5+0.4*\i}, 2.9) {};
-  }
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
-  \node[font=\bfseries] at (6.5, 4.5) {Random Forest};
-  \node[font=\small] at (6.5, 4.1) {(Low Variance)};
-  \draw[fill=lightblue, opacity=0.3] (3.5, 1.5) rectangle (8.5, 3.5);
-  \draw[fill=lightcoral, opacity=0.3] (5.5, 2) rectangle (8.5, 2.8);
-  \foreach \i in {0,1,2,3,4,5} {
-    \node[circle, fill=blue, minimum size=0.15cm] at ({3.8+0.5*\i}, 1.8) {};
-    \node[rectangle, fill=red, minimum width=0.12cm, minimum height=0.12cm] at ({4+0.5*\i}, 2.9) {};
-  }
-\end{tikzpicture}
-\end{document}
-"""
 
-compile_tikz(boundary_tex, "boundary_comparison")
+def build_boundary_figure() -> None:
+    """Plot side-by-side decision boundary comparison: tree vs forest."""
+    rng = np.random.default_rng(42)
+    n = 50
+
+    # Two interleaving crescent-shaped classes
+    t = rng.uniform(0, np.pi, n)
+    c0 = np.column_stack([1.5 + t * 0.5, 1.5 + np.sin(t) * 1.2]) + rng.normal(0, 0.12, (n, 2))
+
+    t = rng.uniform(0, np.pi, n)
+    c1 = np.column_stack([2.5 - t * 0.5, 1.5 + np.sin(t) * 1.2]) + rng.normal(0, 0.12, (n, 2))
+
+    # Stepped boundary (decision tree, axis-aligned splits)
+    tree_x = [1.0, 2.0, 2.0, 3.0, 3.0, 4.0]
+    tree_y = [1.0, 1.0, 2.3, 2.3, 3.5, 3.5]
+
+    # Smooth boundary (random forest, diagonal curve)
+    smooth_x = np.linspace(1.0, 4.0, 200)
+    smooth_y = 1.0 + 0.25 * (smooth_x - 1.0) + 0.07 * (smooth_x - 1.0) ** 2
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.5))
+
+    # ---- LEFT: Single Decision Tree ----
+    # Polygon for region below the stepped boundary
+    fill_x = [0.5, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0, 4.0, 4.5, 0.5]
+    fill_y = [0.5, 0.5, 1.0, 1.0, 2.3, 2.3, 3.5, 3.5, 0.5, 0.5, 0.5]
+    ax1.fill(fill_x, fill_y, color="lightcoral", alpha=0.3, linewidth=0)
+    ax1.step(tree_x, tree_y, color="black", linewidth=2.5, where="post")
+    ax1.scatter(c0[:, 0], c0[:, 1], c="#3366cc", marker="o", s=25, edgecolors="white", linewidth=0.3, zorder=5, label="Class 0")
+    ax1.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=25, edgecolors="white", linewidth=0.3, zorder=5, label="Class 1")
+    ax1.set_xlim(0.5, 4.5)
+    ax1.set_ylim(0.5, 4.5)
+    ax1.set_xlabel("$x_1$")
+    ax1.set_ylabel("$x_2$")
+    ax1.set_title("Single Decision Tree", fontweight="bold")
+    ax1.legend(loc="lower right", fontsize=8)
+
+    # ---- RIGHT: Random Forest ----
+    # Fill the region below the smooth curve
+    ax2.fill_between(smooth_x, smooth_y, 0.5, color="lightcoral", alpha=0.3)
+    ax2.plot(smooth_x, smooth_y, color="black", linewidth=2.5)
+    ax2.scatter(c0[:, 0], c0[:, 1], c="#3366cc", marker="o", s=25, edgecolors="white", linewidth=0.3, zorder=5, label="Class 0")
+    ax2.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=25, edgecolors="white", linewidth=0.3, zorder=5, label="Class 1")
+    ax2.set_xlim(0.5, 4.5)
+    ax2.set_ylim(0.5, 4.5)
+    ax2.set_xlabel("$x_1$")
+    ax2.set_ylabel("$x_2$")
+    ax2.set_title("Random Forest", fontweight="bold")
+    ax2.legend(loc="lower right", fontsize=8)
+
+    fig.suptitle("Decision Boundary: Single Tree vs Random Forest", fontsize=13, fontweight="bold")
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    fig.savefig(OUT_DIR / "boundary_comparison.pdf", bbox_inches="tight", pad_inches=0.08)
+    plt.close(fig)
+    print("Saved: boundary_comparison.pdf")
+
+
+build_boundary_figure()
 
 
 # ============================================================================
