@@ -43,27 +43,25 @@ Averaging many noisy but independent predictions is more stable than one perfect
 
 \begin{frame}{Bagging: Bootstrap Sampling}
 \begin{columns}[T]
-\column{0.53\textwidth}
+\column{0.45\textwidth}
 \begin{itemize}
-  \item Start with features $X=\{x_1,\dots,x_n\}$, $x_i\in\mathbb{R}^d$, and labels $y=\{y_1,\dots,y_n\}$, $y_i\in\{1,\dots,C\}$.
+  \item Features $X=\{x_1,\dots,x_n\}$, labels $y$.
   \pause
-  \item For $b=1,\dots,B$, draw a bootstrap sample $(X^{(b)},y^{(b)})$ of size $n$ uniformly with replacement.
+  \item For each $b$, draw $n$ examples with replacement: bootstrap $(X^{(b)},y^{(b)})$.
   \pause
-  \item Each bootstrap sample has size $n$ but some examples appear multiple times, others are left out.
-  \pause
-  \item The probability that a given example is omitted is
+  \item Omission probability per example:
   \begin{equation}
-    P\bigl((x_i,y_i)\notin (X^{(b)},y^{(b)})\bigr)=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}\approx\frac{1}{e}\approx 0.368.
+    P\bigl((x_i,y_i)\notin (X^{(b)},y^{(b)})\bigr)=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}\approx\frac{1}{e}.
     \label{eq:oob-probability}
   \end{equation}
   \pause
-  \item Hence about $63\%$ of the original examples appear in each bootstrap sample.
+  \item Each bootstrap contains $\approx 63\%$ of the original examples; the remaining $37\%$ are out-of-bag.
 \end{itemize}
 
 \pause
-\column{0.47\textwidth}
+\column{0.55\textwidth}
 \centering
-\includegraphics[width=0.75\textwidth]{figures/random_forests/bagging_diagram.pdf}
+\includegraphics[width=0.62\textwidth]{figures/random_forests/bagging_diagram.pdf}
 \end{columns}
 \end{frame}
 
