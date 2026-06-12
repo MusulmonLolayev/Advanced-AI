@@ -218,59 +218,90 @@ import matplotlib.pyplot as plt
 def build_boundary_figure() -> None:
     """Plot side-by-side decision boundary: stepped (tree) vs smooth (forest)."""
     rng = np.random.default_rng(42)
-    n = 60  # total points per class
+    n = 60
 
-    # Two diagonally separable classes (below the boundary vs above it)
+    # True diagonal boundary: y = 0.9 + 0.5 * x  (midway between the two classes)
+    true_x = np.linspace(0.5, 4.5, 200)
+    true_y = 0.9 + 0.5 * true_x
+
+    # Class 0: centered slightly below the true boundary (margin = 0.4)
+    # y ≈ 0.5 + 0.5*x, half-width = 0.4 below the boundary
     c0_x = rng.uniform(0.5, 4.5, n)
-    c0_y = [0.5 + 0.5 * xi + rng.normal(0.0, 0.25) for xi in c0_x]
+    c0_y = 0.5 + 0.5 * c0_x + rng.normal(0.0, 0.22, n)
     c0 = np.column_stack([c0_x, c0_y])
 
+    # Class 1: centered slightly above the true boundary
+    # y ≈ 1.3 + 0.5*x, half-width = 0.4 above the boundary
     c1_x = rng.uniform(0.5, 4.5, n)
-    c1_y = [1.3 + 0.5 * xi + rng.normal(0.0, 0.25) for xi in c1_x]
+    c1_y = 1.3 + 0.5 * c1_x + rng.normal(0.0, 0.22, n)
     c1 = np.column_stack([c1_x, c1_y])
 
-    # True diagonal boundary: y = 0.5 + 0.5 * (x - 0.5) → y = 0.25 + 0.5x
-    true_x = np.linspace(0.5, 4.5, 200)
-    true_y = 0.25 + 0.5 * true_x
+    # ------ Stepped boundary (decision tree, axis-aligned) ------
+    # The step function approximates the diagonal with where="post":
+    #   horizontal from (x_k, y_k) to (x_{k+1}, y_k), then vertical to (x_{k+1}, y_{k+1})
+    # 5 splits at x = [0.5, 1.3, 2.1, 2.9, 3.7, 4.5]
+    # Step y-values follow the true diagonal: y = 0.9 + 0.5*x at the midpoints
+    step_x = [0.5, 1.3, 2.1, 2.9, 3.7, 4.5]
+    step_y = [1.15, 1.55, 1.95, 2.35, 2.75, 3.15]
 
-    # Axis-aligned stepped approximation (tree) with 5 splits
-    step_x = [0.5, 1.3, 1.3, 2.1, 2.1, 2.9, 2.9, 3.7, 3.7, 4.5]
-    step_y = [0.9, 0.9, 1.3, 1.3, 1.7, 1.7, 2.1, 2.1, 2.5, 2.5]
+    # Expanded path from step(step_x, step_y, where="post"):
+    # (0.5,1.15) → (1.3,1.15) → (1.3,1.55) → (2.1,1.55) → (2.1,1.95) →
+    # (2.9,1.95) → (2.9,2.35) → (3.7,2.35) → (3.7,2.75) → (4.5,2.75) → (4.5,3.15)
 
-    # Smooth approximation (forest) — arc above the diagonal
-    forest_y = true_y + 0.15  # slightly offset for visual contrast
+    # Fill polygon below the stepped boundary
+    poly_x = [0.5, 0.5, 1.3, 1.3, 2.1, 2.1, 2.9, 2.9, 3.7, 3.7, 4.5, 4.5, 4.5, 0.5]
+    poly_y = [0.5, 1.15, 1.15, 1.55, 1.55, 1.95, 1.95, 2.35, 2.35, 2.75, 2.75, 3.15, 0.5, 0.5]
+
+    # Fill polygon above the stepped boundary (blue region)
+    poly_x_above = [0.5, 0.5, 1.3, 1.3, 2.1, 2.1, 2.9, 2.9, 3.7, 3.7, 4.5, 4.5, 4.5, 0.5]
+    poly_y_above = [4.5, 1.15, 1.15, 1.55, 1.55, 1.95, 1.95, 2.35, 2.35, 2.75, 2.75, 3.15, 4.5, 4.5]
+
+    # ------ Smooth boundary (random forest) ------
+    forest_y = 0.905 + 0.5 * true_x  # virtually identical to the true diagonal
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4.5))
 
-    # ---- LEFT: Single Decision Tree ----
-    # Build closed polygon for the fill region (below the step)
-    px = [0.5] + step_x + [4.5, 0.5]
-    py = [0.5] + step_y + [0.5, 0.5]
-    ax1.fill(px, py, color="lightcoral", alpha=0.3, linewidth=0)
+    # ===== LEFT: Single Decision Tree =====
+    # Fill above the stepped boundary (blue, class 1 region)
+    ax1.fill(poly_x_above, poly_y_above, color="lightblue", alpha=0.3, linewidth=0)
+    # Fill below the stepped boundary (red, class 0 region)
+    ax1.fill(poly_x, poly_y, color="lightcoral", alpha=0.3, linewidth=0)
+    # Stepped boundary line
     ax1.step(step_x, step_y, color="black", linewidth=2.5, where="post")
-    # Dashed overlay: the true diagonal (shows the tree boundary is an approximation)
+    # True boundary as dashed reference
     ax1.plot(true_x, true_y, color="gray", linewidth=1.2, linestyle="--", alpha=0.7, label="True boundary")
-    ax1.scatter(c0[:, 0], c0[:, 1], c="#2255aa", marker="o", s=22, edgecolors="white", linewidth=0.3, zorder=5, label="Class 0")
-    ax1.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=22, edgecolors="white", linewidth=0.3, zorder=5, label="Class 1")
+    # Data points
+    ax1.scatter(c0[:, 0], c0[:, 1], c="#2255aa", marker="o", s=22,
+                edgecolors="white", linewidth=0.3, zorder=5, label="Class 0 (below)")
+    ax1.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=22,
+                edgecolors="white", linewidth=0.3, zorder=5, label="Class 1 (above)")
     ax1.set_xlim(0.5, 4.5)
     ax1.set_ylim(0.5, 4.5)
     ax1.set_xlabel("$x_1$")
     ax1.set_ylabel("$x_2$")
     ax1.set_title("Single Decision Tree", fontweight="bold")
-    ax1.legend(loc="lower right", fontsize=7.5)
+    ax1.legend(loc="lower right", fontsize=7)
 
-    # ---- RIGHT: Random Forest ----
+    # ===== RIGHT: Random Forest =====
+    # Fill above the smooth boundary (blue)
+    ax2.fill_between(true_x, forest_y, 4.5, color="lightblue", alpha=0.3)
+    # Fill below the smooth boundary (red)
     ax2.fill_between(true_x, forest_y, 0.5, color="lightcoral", alpha=0.3)
+    # Smooth boundary line
     ax2.plot(true_x, forest_y, color="black", linewidth=2.5)
+    # True boundary as dashed reference
     ax2.plot(true_x, true_y, color="gray", linewidth=1.2, linestyle="--", alpha=0.7, label="True boundary")
-    ax2.scatter(c0[:, 0], c0[:, 1], c="#2255aa", marker="o", s=22, edgecolors="white", linewidth=0.3, zorder=5, label="Class 0")
-    ax2.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=22, edgecolors="white", linewidth=0.3, zorder=5, label="Class 1")
+    # Data points
+    ax2.scatter(c0[:, 0], c0[:, 1], c="#2255aa", marker="o", s=22,
+                edgecolors="white", linewidth=0.3, zorder=5, label="Class 0 (below)")
+    ax2.scatter(c1[:, 0], c1[:, 1], c="#cc3333", marker="s", s=22,
+                edgecolors="white", linewidth=0.3, zorder=5, label="Class 1 (above)")
     ax2.set_xlim(0.5, 4.5)
     ax2.set_ylim(0.5, 4.5)
     ax2.set_xlabel("$x_1$")
     ax2.set_ylabel("$x_2$")
     ax2.set_title("Random Forest", fontweight="bold")
-    ax2.legend(loc="lower right", fontsize=7.5)
+    ax2.legend(loc="lower right", fontsize=7)
 
     fig.suptitle("Decision Boundary: Single Tree vs Random Forest", fontsize=13, fontweight="bold")
     plt.tight_layout(rect=[0, 0, 1, 0.95])
