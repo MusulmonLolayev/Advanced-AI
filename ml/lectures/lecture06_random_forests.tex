@@ -142,6 +142,31 @@ Averaging many noisy but independent predictions is more stable than one perfect
 \end{columns}
 \end{frame}
 
+\begin{frame}{Regression with Decision Trees}
+\begin{itemize}
+  \item Decision trees also handle regression when the target is continuous: $y_i\in\mathbb{R}$.
+  \pause
+  \item Split objective: minimize the mean squared error (MSE) in child nodes instead of Gini impurity.
+  \pause
+  \item For a candidate split $(j,t)$, the child MSE is
+  \[
+    \text{MSE}_L=\frac{1}{|D_L|}\sum_{(x_i,y_i)\in D_L}(y_i-\bar{y}_L)^2,\quad
+    \text{MSE}_R=\frac{1}{|D_R|}\sum_{(x_i,y_i)\in D_R}(y_i-\bar{y}_R)^2,
+  \]
+  where $\bar{y}_L,\bar{y}_R$ are the mean target values in the left and right child.
+  \pause
+  \item The split chooses $(j,t)$ that minimizes the weighted average:
+  \[
+    \frac{|D_L|}{|D_m|}\text{MSE}_L + \frac{|D_R|}{|D_m|}\text{MSE}_R.
+  \]
+  \pause
+  \item Leaf prediction for regression: the mean target value of examples in that leaf
+  \[
+    \hat{y} = \frac{1}{n_m}\sum_{(x_i,y_i)\in D_m} y_i.
+  \]
+\end{itemize}
+\end{frame}
+
 \begin{frame}{Forest Prediction (Regression)}
 \begin{itemize}
   \item For regression, each tree $T_b$ predicts a continuous value $\hat{y}^{(b)}(x)$.
@@ -253,7 +278,7 @@ where $n_m$ is the number of training examples at node $m$.
 
 \begin{frame}{Error vs Number of Trees}
 \centering
-\includegraphics[width=0.7\textwidth]{figures/random_forests/error_vs_trees.pdf}
+\includegraphics[scale=0.8]{figures/random_forests/error_vs_trees.pdf}
 
 \vspace{0.35em}
 \begin{itemize}
