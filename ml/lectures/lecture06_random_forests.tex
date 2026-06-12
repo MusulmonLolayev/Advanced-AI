@@ -142,6 +142,26 @@ Averaging many noisy but independent predictions is more stable than one perfect
 \end{columns}
 \end{frame}
 
+\begin{frame}{Worked Numerical Example}
+\small
+\begin{itemize}
+  \item Five trees make the following predictions on one example:
+  \[
+    \hat{y}^{(1)} = A,\quad
+    \hat{y}^{(2)} = A,\quad
+    \hat{y}^{(3)} = B,\quad
+    \hat{y}^{(4)} = A,\quad
+    \hat{y}^{(5)} = B.
+  \]
+  \pause
+  \item Class counts: $A$ appears 3 times, $B$ appears 2 times.
+  \pause
+  \item The forest prediction is $\hat{y} = A$ (majority class).
+  \pause
+  \item Even if one tree is wrong, the forest is robust.
+\end{itemize}
+\end{frame}
+
 \begin{frame}{Regression with Decision Trees}
 \begin{itemize}
   \item Decision trees also handle regression: target $y_i\in\mathbb{R}$.
@@ -170,26 +190,6 @@ Averaging many noisy but independent predictions is more stable than one perfect
   \end{equation}
   \pause
   \item Averaging many estimates reduces variance.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Worked Numerical Example}
-\small
-\begin{itemize}
-  \item Five trees make the following predictions on one example:
-  \[
-    \hat{y}^{(1)} = A,\quad
-    \hat{y}^{(2)} = A,\quad
-    \hat{y}^{(3)} = B,\quad
-    \hat{y}^{(4)} = A,\quad
-    \hat{y}^{(5)} = B.
-  \]
-  \pause
-  \item Class counts: $A$ appears 3 times, $B$ appears 2 times.
-  \pause
-  \item The forest prediction is $\hat{y} = A$ (majority class).
-  \pause
-  \item Even if one tree is wrong, the forest is robust.
 \end{itemize}
 \end{frame}
 
