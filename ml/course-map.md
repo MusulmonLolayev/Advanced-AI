@@ -31,9 +31,13 @@ By the end of this block, students should be able to:
    - impurity, splits, tree growth, interpretability
 6. **Lecture 6 - Random Forests**
    - bagging, feature subsampling, variance reduction
-7. **Lecture 7 - Boosting**
+7. **Lecture 7 - Forest Variants: Isolation Forest, Extra-Trees, Quantile Forests**
+   - Isolation Forest: anomaly scoring via random partitioning depth
+   - Extremely Randomized Trees (Extra-Trees): random split thresholds, variance reduction
+   - Quantile Regression Forests: predictive intervals from forest leaves
+8. **Lecture 8 - Boosting**
    - weak learners, additive modeling, sequential correction
-8. **Lecture 8 - High-Dimensional Visualization**
+9. **Lecture 9 - High-Dimensional Visualization**
    - `t-SNE` as a visualization tool
    - contrast with PCA and cluster inspection
 
@@ -43,7 +47,6 @@ The following topics can be added after the main block depending on pacing:
 
 - hierarchical clustering
 - Gaussian mixture models and EM
-- anomaly detection beyond DBSCAN
 - linear models and optimization, moved to the NN section
 
 ## Assignment sequence
@@ -52,6 +55,9 @@ The following topics can be added after the main block depending on pacing:
 2. **Lab 2 - PCA**
 3. **Lab 3 - k-Means**
 4. **Lab 4 - DBSCAN**
+5. **Lab 5 - Decision Trees**
+6. **Lab 6 - Random Forests**
+7. **Lab 7 - Forest Variants (Isolation Forest)**
 
 ## Notes
 

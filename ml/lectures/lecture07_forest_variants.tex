@@ -1,0 +1,373 @@
+\section{Forest Variants}
+
+\begin{frame}{From Random Forests to Other Forest Variants}
+\begin{itemize}
+  \item Random forests average many randomized trees to reduce variance.
+  \pause
+  \item The same recipe -- random partitioning, repeated many times -- is useful beyond classification and regression.
+  \pause
+  \item Today: three variants that reuse the forest idea for new purposes.
+\end{itemize}
+
+\pause
+\begin{rlintuition}
+A forest is not just a predictor. It is a way to summarize how data is partitioned by randomized splits, and that summary itself is useful information.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Three Ways to Reuse Random Partitioning}
+\begin{itemize}
+  \item \textbf{Isolation Forest} -- use how \emph{quickly} a point gets isolated as an anomaly score.
+  \pause
+  \item \textbf{Extremely Randomized Trees (Extra-Trees)} -- push randomization further into the split itself, not just the data.
+  \pause
+  \item \textbf{Quantile Regression Forests} -- keep the full leaf distribution instead of only its mean.
+  \pause
+  \item All three reuse bagging and/or feature randomness from Lecture 6.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Isolation Forest: Anomalies Are Easy to Isolate}
+\begin{columns}[T]
+\column{0.53\textwidth}
+\begin{itemize}
+  \item Idea: anomalies are few and different.
+  \pause
+  \item Random axis-aligned cuts isolate them in a small box quickly.
+  \pause
+  \item Normal points sit in dense regions and need many cuts to separate from their neighbors.
+  \pause
+  \item So: \emph{short average path to a leaf} $\Rightarrow$ likely anomaly.
+\end{itemize}
+
+\pause
+\column{0.47\textwidth}
+\begin{rlintuition}
+Isolation Forest never models what ``normal'' looks like. It only measures how easy a point is to cut off from the rest.
+\end{rlintuition}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Building an Isolation Tree}
+\begin{itemize}
+  \item Draw a random subsample of size $\psi$ from the data (no class labels needed).
+  \pause
+  \item At each node, pick a feature $j$ uniformly at random.
+  \pause
+  \item Pick a split threshold $t$ uniformly at random between the min and max of feature $j$ at that node.
+  \pause
+  \item Split the node into two children and recurse.
+  \pause
+  \item Stop when a node has one point left, or a height limit is reached.
+  \pause
+  \item Repeat for $B$ trees, each on a fresh random subsample, to form the isolation forest.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Path Length as an Anomaly Signal}
+\centering
+\includegraphics[width=0.75\textwidth]{figures/forest_variants/isolation_partition.pdf}
+
+\vspace{0.35em}
+\begin{itemize}
+  \item Left: the anomaly sits alone, so two random cuts isolate it.
+  \pause
+  \item Right: the normal point is surrounded by neighbors, so isolating it takes more cuts.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Path Length in the Tree}
+\centering
+\includegraphics[width=0.9\textwidth]{figures/forest_variants/path_length_tree.pdf}
+
+\vspace{0.35em}
+\begin{itemize}
+  \item The path length $h(x)$ is the number of edges from the root to the leaf containing $x$.
+  \pause
+  \item Anomalies have small $h(x)$; normal points have large $h(x)$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Numerical Example: Path Lengths}
+\small
+\begin{itemize}
+  \item Subsample size $\psi=16$ for each isolation tree.
+  \item Across $B=5$ trees, point $A$ (the anomaly) has path lengths
+  \[
+    h^{(1)}=2,\quad h^{(2)}=3,\quad h^{(3)}=2,\quad h^{(4)}=1,\quad h^{(5)}=2,
+    \qquad \mathbb{E}[h(A)] = 2.0.
+  \]
+  \pause
+  \item Point $B$ (a normal point) has path lengths
+  \[
+    h^{(1)}=8,\quad h^{(2)}=5,\quad h^{(3)}=6,\quad h^{(4)}=6,\quad h^{(5)}=5,
+    \qquad \mathbb{E}[h(B)] = 6.0.
+  \]
+  \pause
+  \item $A$ is isolated three times faster than $B$ on average.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Anomaly Score Formula}
+\begin{itemize}
+  \item Average path length over an unsuccessful binary search tree of $\psi$ nodes:
+  \begin{equation}
+    c(\psi) = 2H(\psi-1) - \frac{2(\psi-1)}{\psi},
+    \qquad H(i) \approx \ln(i) + 0.5772,
+    \label{eq:avg-path-length}
+  \end{equation}
+  where $H(i)$ is the $i$-th harmonic number.
+  \pause
+  \item The anomaly score for a point $x$ is
+  \begin{equation}
+    s(x,\psi) = 2^{-\,\mathbb{E}[h(x)]/c(\psi)}.
+    \label{eq:anomaly-score}
+  \end{equation}
+  \pause
+  \item $s \to 1$: short paths, likely anomaly.
+  \item $s \to 0.5$ or below: long paths, likely normal.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Numerical Example: Anomaly Scores}
+\small
+\begin{itemize}
+  \item For $\psi=16$: $H(15) \approx 3.3182$, so by Eq.~\eqref{eq:avg-path-length}
+  \[
+    c(16) = 2(3.3182) - \frac{2(15)}{16} \approx 4.7614.
+  \]
+  \pause
+  \item Point $A$ (anomaly), $\mathbb{E}[h(A)] = 2.0$:
+  \[
+    s(A,16) = 2^{-2.0/4.7614} = 2^{-0.420} \approx 0.747.
+  \]
+  \pause
+  \item Point $B$ (normal), $\mathbb{E}[h(B)] = 6.0$:
+  \[
+    s(B,16) = 2^{-6.0/4.7614} = 2^{-1.260} \approx 0.418.
+  \]
+  \pause
+  \item $A$ scores well above $0.5$; $B$ scores well below $0.5$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading the Anomaly Score}
+\centering
+\includegraphics[width=0.68\textwidth]{figures/forest_variants/anomaly_score_curve.pdf}
+
+\vspace{0.35em}
+\begin{itemize}
+  \item Score decreases smoothly as the (normalized) average path length grows.
+  \pause
+  \item A common rule: flag $x$ as an anomaly if $s(x,\psi)$ exceeds a chosen threshold (e.g.\ $0.6$--$0.7$).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Isolation Forest: When It Works}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\textbf{Works well when}
+\begin{itemize}
+  \item anomalies are rare and few,
+  \pause
+  \item anomalies are ``different'' along some feature,
+  \pause
+  \item no labeled anomalies are available,
+  \pause
+  \item linear-time scoring is needed.
+\end{itemize}
+
+\pause
+\column{0.5\textwidth}
+\textbf{Can fail when}
+\begin{itemize}
+  \item anomalies form their own dense cluster,
+  \pause
+  \item normal data has many irrelevant features,
+  \pause
+  \item anomaly notion requires labels.
+\end{itemize}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Extremely Randomized Trees: Pushing Randomization Further}
+\begin{itemize}
+  \item Random forests already randomize: bootstrap samples + feature subsampling.
+  \pause
+  \item But the split threshold $t$ within the chosen feature is still found by an exhaustive search for the best impurity decrease.
+  \pause
+  \item Extra-Trees randomizes the threshold too.
+  \pause
+  \item Typically trains on the full dataset (no bootstrap), relying on threshold randomness for decorrelation instead.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Random Thresholds Instead of Optimal Splits}
+\centering
+\includegraphics[width=0.95\textwidth]{figures/forest_variants/extra_trees_vs_rf.pdf}
+
+\vspace{0.35em}
+\begin{itemize}
+  \item Random forest: scan many candidate thresholds, keep the one with the largest $\Delta I$.
+  \pause
+  \item Extra-Trees: for each candidate feature, draw \emph{one} threshold uniformly at random; pick the best feature among those random draws.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Extra-Trees vs Random Forest}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\textbf{Random Forest}
+\begin{itemize}
+  \item Bootstrap sampling.
+  \pause
+  \item Exhaustive threshold search per feature.
+  \pause
+  \item Slower to train.
+  \pause
+  \item Slightly lower bias.
+\end{itemize}
+
+\pause
+\column{0.5\textwidth}
+\textbf{Extra-Trees}
+\begin{itemize}
+  \item Usually full dataset, no bootstrap.
+  \pause
+  \item One random threshold per feature.
+  \pause
+  \item Faster to train.
+  \pause
+  \item Slightly higher bias, often lower variance.
+\end{itemize}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why Does Extra Randomization Help?}
+\begin{itemize}
+  \item Random thresholds make individual trees weaker (more biased).
+  \pause
+  \item But they also make trees less correlated with each other.
+  \pause
+  \item Averaging many weak, decorrelated trees can still reduce variance more than averaging fewer, stronger, correlated trees.
+  \pause
+  \item Skipping the threshold search also makes training noticeably faster.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Quantile Regression Forests: Beyond Point Predictions}
+\begin{columns}[T]
+\column{0.53\textwidth}
+\begin{itemize}
+  \item A standard regression forest predicts only the conditional mean $\mathbb{E}[y\mid x]$.
+  \pause
+  \item It discards information: every leaf actually stores several training $y$-values, not just their average.
+  \pause
+  \item Quantile Regression Forests keep that full leaf distribution.
+\end{itemize}
+
+\pause
+\column{0.47\textwidth}
+\begin{rlintuition}
+A mean prediction tells you the center. A quantile forest tells you the spread -- which is exactly what you need for a prediction interval.
+\end{rlintuition}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Leaf Distributions Instead of Leaf Means}
+\centering
+\includegraphics[width=0.85\textwidth]{figures/forest_variants/quantile_forest_leaf.pdf}
+
+\vspace{0.35em}
+\begin{itemize}
+  \item Each leaf holds the $y$-values of the training points that land there.
+  \pause
+  \item Pooled across all trees, these values approximate the conditional distribution of $y$ given $x$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Estimating Conditional Quantiles}
+\begin{itemize}
+  \item For a new point $x$, let $L_b(x)$ be the leaf of tree $b$ that $x$ falls into.
+  \pause
+  \item Define a weight for each training example $i$:
+  \begin{equation}
+    w_i(x) = \frac{1}{B}\sum_{b=1}^{B}
+    \frac{\mathbf{1}\{x_i \in L_b(x)\}}{\bigl|L_b(x)\bigr|},
+    \label{eq:qrf-weight}
+  \end{equation}
+  where $|L_b(x)|$ is the number of training points in that leaf.
+  \pause
+  \item The weighted empirical CDF is
+  \[
+    \hat{F}(y\mid x) = \sum_{i=1}^{n} w_i(x)\,\mathbf{1}\{y_i \le y\}.
+  \]
+  \pause
+  \item The $\tau$-quantile prediction is $\hat{Q}_\tau(x) = \inf\{y : \hat{F}(y\mid x) \ge \tau\}$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Numerical Example: Prediction Interval}
+\small
+\begin{itemize}
+  \item A new point $x$ falls into leaves containing these pooled $y$-values (sorted):
+  \[
+    \{12,\,14,\,15,\,15,\,16,\,17,\,17,\,18,\,19,\,22\}.
+  \]
+  \pause
+  \item Median ($\tau=0.5$) prediction: $\hat{Q}_{0.5}(x) = 16.5$.
+  \pause
+  \item A $80\%$ prediction interval uses $\tau=0.1$ and $\tau=0.9$:
+  \[
+    \hat{Q}_{0.1}(x) = 14,\qquad \hat{Q}_{0.9}(x) = 19.
+  \]
+  \pause
+  \item Report: ``predicted value $16.5$, $80\%$ interval $[14, 19]$'' -- far more informative than a single number.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Choosing a Forest Variant}
+\begin{itemize}
+  \item \textbf{Need labeled classification/regression?} Use a standard random forest (Lecture 6).
+  \pause
+  \item \textbf{Need to flag rare, unusual points with no labels?} Use Isolation Forest.
+  \pause
+  \item \textbf{Need faster training and lower variance, can tolerate a bit more bias?} Use Extra-Trees.
+  \pause
+  \item \textbf{Need a prediction interval, not just a point estimate?} Use Quantile Regression Forests.
+  \pause
+  \item These are not mutually exclusive -- the splitting rule (random vs optimal threshold) and the output rule (vote/mean vs path length vs full distribution) can be mixed.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Key Hyperparameters}
+\begin{itemize}
+  \item \textbf{Isolation Forest:} \texttt{n\_estimators} $B$, subsample size $\psi$ per tree (small, e.g.\ 256), height limit $\approx \log_2 \psi$.
+  \pause
+  \item \textbf{Extra-Trees:} \texttt{n\_estimators}, \texttt{max\_features} $m$ (as in RF), bootstrap on/off.
+  \pause
+  \item \textbf{Quantile Regression Forests:} same growth hyperparameters as a regression forest; quantile level $\tau$ is chosen at prediction time, not training time.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item Isolation Forest scores anomalies by how quickly random partitioning isolates a point.
+  \item The anomaly score $s(x,\psi) = 2^{-\mathbb{E}[h(x)]/c(\psi)}$ maps short paths to scores near 1.
+  \item Extra-Trees randomizes the split threshold itself, trading a little bias for less correlation and faster training.
+  \item Quantile Regression Forests keep each leaf's full $y$-distribution to produce prediction intervals, not just a mean.
+  \item All three reuse the bagging/feature-randomization machinery from random forests for a different purpose.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Lab Connection}
+\begin{itemize}
+  \item Implement random partitioning and path-length tracking for an isolation tree.
+  \pause
+  \item Compute $c(\psi)$ and the anomaly score $s(x,\psi)$ for a toy dataset with injected outliers.
+  \pause
+  \item Modify your Lab 6 split search to draw one random threshold per feature (Extra-Trees) and compare accuracy/variance to the standard forest.
+  \pause
+  \item Extract per-leaf $y$-values from a regression forest and report a prediction interval instead of a single value.
+\end{itemize}
+\end{frame}
