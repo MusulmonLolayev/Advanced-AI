@@ -50,7 +50,7 @@ Isolation Forest never models what ``normal'' looks like. It only measures how e
 
 \begin{frame}{Building an Isolation Tree}
 \begin{itemize}
-  \item Draw a random subsample of size $n$ from the data (no class labels needed).
+  \item Draw a random subsample of size $\psi$ from the data (no class labels needed).
   \pause
   \item At each node, pick a feature $j$ uniformly at random.
   \pause
@@ -91,17 +91,17 @@ Isolation Forest never models what ``normal'' looks like. It only measures how e
 \begin{frame}{Worked Numerical Example: Path Lengths}
 \small
 \begin{itemize}
-  \item Subsample size $n=16$ for each isolation tree.
+  \item Subsample size $\psi=16$ for each isolation tree.
   \item Across $B=5$ trees, point $A$ (the anomaly) has path lengths
   \[
     h^{(1)}=2,\quad h^{(2)}=3,\quad h^{(3)}=2,\quad h^{(4)}=1,\quad h^{(5)}=2,
-    \qquad E[h(A)] = 2.0.
+    \qquad \mathbb{E}[h(A)] = 2.0.
   \]
   \pause
   \item Point $B$ (a normal point) has path lengths
   \[
     h^{(1)}=8,\quad h^{(2)}=5,\quad h^{(3)}=6,\quad h^{(4)}=6,\quad h^{(5)}=5,
-    \qquad E[h(B)] = 6.0.
+    \qquad \mathbb{E}[h(B)] = 6.0.
   \]
   \pause
   \item $A$ is isolated three times faster than $B$ on average.
@@ -110,9 +110,9 @@ Isolation Forest never models what ``normal'' looks like. It only measures how e
 
 \begin{frame}{Anomaly Score Formula}
 \begin{itemize}
-  \item Average path length over an unsuccessful binary search tree of $n$ nodes:
+  \item Average path length over an unsuccessful binary search tree of $\psi$ nodes:
   \begin{equation}
-    c(n) = 2H(n-1) - \frac{2(n-1)}{n},
+    c(\psi) = 2H(\psi-1) - \frac{2(\psi-1)}{\psi},
     \qquad H(i) \approx \ln(i) + 0.5772,
     \label{eq:avg-path-length}
   \end{equation}
@@ -120,7 +120,7 @@ Isolation Forest never models what ``normal'' looks like. It only measures how e
   \pause
   \item The anomaly score for a point $x$ is
   \begin{equation}
-    s(x,n) = 2^{-\,E[h(x)]/c(n)}.
+    s(x,\psi) = 2^{-\,\mathbb{E}[h(x)]/c(\psi)}.
     \label{eq:anomaly-score}
   \end{equation}
   \pause
@@ -132,17 +132,17 @@ Isolation Forest never models what ``normal'' looks like. It only measures how e
 \begin{frame}{Worked Numerical Example: Anomaly Scores}
 \small
 \begin{itemize}
-  \item For $n=16$: $H(15) \approx 3.3182$, so by Eq.~\eqref{eq:avg-path-length}
+  \item For $\psi=16$: $H(15) \approx 3.3182$, so by Eq.~\eqref{eq:avg-path-length}
   \[
     c(16) = 2(3.3182) - \frac{2(15)}{16} \approx 4.7614.
   \]
   \pause
-  \item Point $A$ (anomaly), $E[h(A)] = 2.0$:
+  \item Point $A$ (anomaly), $\mathbb{E}[h(A)] = 2.0$:
   \[
     s(A,16) = 2^{-2.0/4.7614} = 2^{-0.420} \approx 0.747.
   \]
   \pause
-  \item Point $B$ (normal), $E[h(B)] = 6.0$:
+  \item Point $B$ (normal), $\mathbb{E}[h(B)] = 6.0$:
   \[
     s(B,16) = 2^{-6.0/4.7614} = 2^{-1.260} \approx 0.418.
   \]
@@ -159,7 +159,7 @@ Isolation Forest never models what ``normal'' looks like. It only measures how e
 \begin{itemize}
   \item Score decreases smoothly as the (normalized) average path length grows.
   \pause
-  \item A common rule: flag $x$ as an anomaly if $s(x,n)$ exceeds a chosen threshold (e.g.\ $0.6$--$0.7$).
+  \item A common rule: flag $x$ as an anomaly if $s(x,\psi)$ exceeds a chosen threshold (e.g.\ $0.6$--$0.7$).
 \end{itemize}
 \end{frame}
 
@@ -259,7 +259,7 @@ Isolation Forest never models what ``normal'' looks like. It only measures how e
 \begin{columns}[T]
 \column{0.53\textwidth}
 \begin{itemize}
-  \item A standard regression forest predicts only the conditional mean $E[y\mid x]$.
+  \item A standard regression forest predicts only the conditional mean $\mathbb{E}[y\mid x]$.
   \pause
   \item It discards information: every leaf actually stores several training $y$-values, not just their average.
   \pause
@@ -300,10 +300,10 @@ A mean prediction tells you the center. A quantile forest tells you the spread -
   \pause
   \item The weighted empirical CDF is
   \[
-    \widehat{F}(y\mid x) = \sum_{i=1}^{n} w_i(x)\,\mathbf{1}\{y_i \le y\}.
+    \hat{F}(y\mid x) = \sum_{i=1}^{n} w_i(x)\,\mathbf{1}\{y_i \le y\}.
   \]
   \pause
-  \item The $\tau$-quantile prediction is $\widehat{Q}_\tau(x) = \inf\{y : \widehat{F}(y\mid x) \ge \tau\}$.
+  \item The $\tau$-quantile prediction is $\hat{Q}_\tau(x) = \inf\{y : \hat{F}(y\mid x) \ge \tau\}$.
 \end{itemize}
 \end{frame}
 
@@ -315,11 +315,11 @@ A mean prediction tells you the center. A quantile forest tells you the spread -
     \{12,\,14,\,15,\,15,\,16,\,17,\,17,\,18,\,19,\,22\}.
   \]
   \pause
-  \item Median ($\tau=0.5$) prediction: $\widehat{Q}_{0.5}(x) = 16.5$.
+  \item Median ($\tau=0.5$) prediction: $\hat{Q}_{0.5}(x) = 16.5$.
   \pause
   \item A $80\%$ prediction interval uses $\tau=0.1$ and $\tau=0.9$:
   \[
-    \widehat{Q}_{0.1}(x) = 14,\qquad \widehat{Q}_{0.9}(x) = 19.
+    \hat{Q}_{0.1}(x) = 14,\qquad \hat{Q}_{0.9}(x) = 19.
   \]
   \pause
   \item Report: ``predicted value $16.5$, $80\%$ interval $[14, 19]$'' -- far more informative than a single number.
@@ -342,7 +342,7 @@ A mean prediction tells you the center. A quantile forest tells you the spread -
 
 \begin{frame}{Key Hyperparameters}
 \begin{itemize}
-  \item \textbf{Isolation Forest:} \texttt{n\_estimators} $B$, subsample size $n$ per tree (small, e.g.\ 256), height limit $\approx \log_2 n$.
+  \item \textbf{Isolation Forest:} \texttt{n\_estimators} $B$, subsample size $\psi$ per tree (small, e.g.\ 256), height limit $\approx \log_2 \psi$.
   \pause
   \item \textbf{Extra-Trees:} \texttt{n\_estimators}, \texttt{max\_features} $m$ (as in RF), bootstrap on/off.
   \pause
@@ -353,7 +353,7 @@ A mean prediction tells you the center. A quantile forest tells you the spread -
 \begin{frame}{Summary}
 \begin{itemize}
   \item Isolation Forest scores anomalies by how quickly random partitioning isolates a point.
-  \item The anomaly score $s(x,n) = 2^{-E[h(x)]/c(n)}$ maps short paths to scores near 1.
+  \item The anomaly score $s(x,\psi) = 2^{-\mathbb{E}[h(x)]/c(\psi)}$ maps short paths to scores near 1.
   \item Extra-Trees randomizes the split threshold itself, trading a little bias for less correlation and faster training.
   \item Quantile Regression Forests keep each leaf's full $y$-distribution to produce prediction intervals, not just a mean.
   \item All three reuse the bagging/feature-randomization machinery from random forests for a different purpose.
@@ -364,7 +364,7 @@ A mean prediction tells you the center. A quantile forest tells you the spread -
 \begin{itemize}
   \item Implement random partitioning and path-length tracking for an isolation tree.
   \pause
-  \item Compute $c(n)$ and the anomaly score $s(x,n)$ for a toy dataset with injected outliers.
+  \item Compute $c(\psi)$ and the anomaly score $s(x,\psi)$ for a toy dataset with injected outliers.
   \pause
   \item Modify your Lab 6 split search to draw one random threshold per feature (Extra-Trees) and compare accuracy/variance to the standard forest.
   \pause
