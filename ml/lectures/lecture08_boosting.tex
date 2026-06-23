@@ -1,0 +1,334 @@
+\section{Boosting}
+
+\begin{frame}{From Independent Trees to Sequential Correction}
+\begin{itemize}
+  \item Random forests train many trees independently and average them.
+  \pause
+  \item Independence is what makes averaging reduce variance.
+  \pause
+  \item Boosting takes the opposite approach: train weak learners \emph{one at a time}, each one correcting the mistakes of the ones before it.
+  \pause
+  \item The ensemble is built additively, not averaged uniformly.
+\end{itemize}
+
+\pause
+\begin{rlintuition}
+Bagging fights variance with independent votes. Boosting fights bias by having each new learner focus on what the ensemble still gets wrong.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Weak Learners}
+\begin{columns}[T]
+\column{0.53\textwidth}
+\begin{itemize}
+  \item A weak learner only needs to beat random guessing by a small margin.
+  \pause
+  \item The classic weak learner is a \emph{decision stump}: a depth-1 tree that splits on one feature and one threshold.
+  \pause
+  \item Individually inaccurate, but cheap to train and easy to combine.
+\end{itemize}
+
+\pause
+\column{0.47\textwidth}
+\begin{rldefinition}
+A weak learner $h$ for binary labels $y\in\{-1,+1\}$ satisfies
+$P(h(x)\neq y) < 0.5 - \gamma$ for some fixed margin $\gamma > 0$.
+\end{rldefinition}
+\end{columns}
+\end{frame}
+
+\begin{frame}{The Boosting Idea}
+\begin{itemize}
+  \item Start with equal importance (weight) on every training example.
+  \pause
+  \item Train a weak learner on the weighted data.
+  \pause
+  \item Increase the weight of examples it got wrong; decrease the weight of examples it got right.
+  \pause
+  \item Train the next weak learner on the \emph{reweighted} data -- it is forced to focus on the hard examples.
+  \pause
+  \item Repeat, then combine all weak learners into one weighted vote.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{AdaBoost: Algorithm Overview}
+\begin{itemize}
+  \item Binary labels $y_i \in \{-1,+1\}$, $i=1,\dots,n$.
+  \pause
+  \item Initialize weights $w_i^{(1)} = 1/n$ for all $i$.
+  \pause
+  \item For $m = 1,\dots,M$:
+  \begin{itemize}
+    \item Train weak learner $h_m$ on the data weighted by $w^{(m)}$.
+    \item Compute the weighted error $\epsilon_m$ of $h_m$.
+    \item Compute a confidence coefficient $\alpha_m$ from $\epsilon_m$.
+    \item Update and renormalize the weights $w^{(m+1)}$.
+  \end{itemize}
+  \pause
+  \item Output the weighted-vote classifier $H(x) = \mathrm{sign}\!\left(\sum_{m=1}^{M}\alpha_m h_m(x)\right)$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Weighted Training Error}
+\begin{itemize}
+  \item Each weak learner is scored by the weights of the points it misclassifies:
+  \begin{equation}
+    \epsilon_m = \sum_{i=1}^{n} w_i^{(m)}\,\mathbf{1}\{h_m(x_i) \neq y_i\}.
+    \label{eq:weighted-error}
+  \end{equation}
+  \pause
+  \item Since $\sum_i w_i^{(m)} = 1$, $\epsilon_m$ is a number in $[0,1]$.
+  \pause
+  \item $\epsilon_m < 0.5$ means $h_m$ beats random guessing on the current weighting.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Alpha Coefficient}
+\begin{itemize}
+  \item Each weak learner's vote is weighted by how much better than chance it was:
+  \begin{equation}
+    \alpha_m = \frac{1}{2}\ln\!\left(\frac{1-\epsilon_m}{\epsilon_m}\right).
+    \label{eq:alpha}
+  \end{equation}
+  \pause
+  \item $\epsilon_m \to 0$: $\alpha_m \to +\infty$ -- a nearly perfect learner gets a huge vote.
+  \pause
+  \item $\epsilon_m = 0.5$: $\alpha_m = 0$ -- a coin-flip learner gets no vote at all.
+  \pause
+  \item $\epsilon_m > 0.5$: $\alpha_m < 0$ -- a learner worse than chance gets its vote flipped.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Updating the Weights}
+\begin{columns}[T]
+\column{0.55\textwidth}
+\begin{itemize}
+  \item After training $h_m$, reweight every example:
+  \begin{equation}
+    w_i^{(m+1)} = \frac{w_i^{(m)}\exp\!\bigl(-\alpha_m\,y_i\,h_m(x_i)\bigr)}{Z_m},
+    \label{eq:weight-update}
+  \end{equation}
+  where $Z_m$ normalizes the weights to sum to 1.
+  \pause
+  \item Correct prediction ($y_i h_m(x_i) = 1$): weight shrinks by a factor $e^{-\alpha_m}$.
+  \pause
+  \item Misclassified ($y_i h_m(x_i) = -1$): weight grows by a factor $e^{\alpha_m}$.
+\end{itemize}
+
+\pause
+\column{0.45\textwidth}
+\begin{rlintuition}
+Getting a point wrong makes it ``louder'' for the next weak learner. Getting it right lets the ensemble move on.
+\end{rlintuition}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Reweighting in Action}
+\centering
+\includegraphics[width=0.85\textwidth]{figures/boosting/boosting_reweighting.pdf}
+
+\vspace{0.35em}
+\begin{itemize}
+  \item Left: round 1, all five points have equal weight; the stump misclassifies one point.
+  \pause
+  \item Right: round 2, the misclassified point is now $5\times$ heavier than the others.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Final Prediction Rule}
+\begin{itemize}
+  \item After $M$ rounds, combine all weak learners into a single weighted vote:
+  \begin{equation}
+    H(x) = \mathrm{sign}\!\left(\sum_{m=1}^{M}\alpha_m h_m(x)\right).
+    \label{eq:final-prediction}
+  \end{equation}
+  \pause
+  \item Each weak learner contributes in proportion to how reliable it was on its round.
+  \pause
+  \item No single weak learner needs to be accurate; the weighted sum can still be very strong.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Numerical Example: Round 1}
+\small
+\begin{itemize}
+  \item Five training points, initial weights $w_i^{(1)} = 1/5 = 0.2$.
+  \item A decision stump misclassifies exactly one of the five points.
+  \pause
+  \item Weighted error by Eq.~\eqref{eq:weighted-error}:
+  \[
+    \epsilon_1 = w_5^{(1)} = 0.2.
+  \]
+  \pause
+  \item Confidence coefficient by Eq.~\eqref{eq:alpha}:
+  \[
+    \alpha_1 = \frac{1}{2}\ln\!\left(\frac{1-0.2}{0.2}\right) = \frac{1}{2}\ln 4 \approx 0.693.
+  \]
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Numerical Example: Weight Update}
+\small
+\begin{itemize}
+  \item Misclassified point: $w^{(2)} \propto 0.2\cdot e^{0.693} = 0.2\cdot 2 = 0.4$.
+  \item Each of the four correct points: $w^{(2)} \propto 0.2\cdot e^{-0.693} = 0.2\cdot 0.5 = 0.1$.
+  \pause
+  \item Normalizer: $Z_1 = 0.4 + 4(0.1) = 0.8$.
+  \pause
+  \item Renormalized weights:
+  \[
+    w_{\text{miss}}^{(2)} = \frac{0.4}{0.8} = 0.5,
+    \qquad
+    w_{\text{correct}}^{(2)} = \frac{0.1}{0.8} = 0.125 \ \text{(each)}.
+  \]
+  \pause
+  \item Check: $0.5 + 4(0.125) = 1.0$. The misclassified point now carries half of the total weight.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading the Alpha Curve}
+\centering
+\includegraphics[width=0.78\textwidth]{figures/boosting/alpha_vs_error.pdf}
+
+\vspace{0.35em}
+\begin{itemize}
+  \item $\alpha_m$ falls sharply as $\epsilon_m$ rises toward $0.5$.
+  \pause
+  \item Low-error learners dominate the final vote; near-chance learners are nearly silent.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Additive Modeling View}
+\begin{itemize}
+  \item AdaBoost builds its output one term at a time:
+  \begin{equation}
+    F_m(x) = F_{m-1}(x) + \alpha_m h_m(x), \qquad F_0(x) = 0.
+    \label{eq:additive-update}
+  \end{equation}
+  \pause
+  \item Each new term is chosen greedily to reduce the exponential loss $\sum_i \exp(-y_i F(x_i))$ as much as possible.
+  \pause
+  \item This is \emph{forward stagewise additive modeling}: never revisit earlier terms, only add new ones.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Building the Model Stage by Stage}
+\centering
+\includegraphics[width=0.42\textwidth]{figures/boosting/stagewise_additive.pdf}
+
+\begin{itemize}
+  \item Each stage adds one weighted weak learner to the running sum.
+  \pause
+  \item The final model is just the accumulated sum of all stages.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{From AdaBoost to Gradient Boosting}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\textbf{AdaBoost}
+\begin{itemize}
+  \item Minimizes exponential loss.
+  \pause
+  \item Corrects mistakes by reweighting \emph{examples}.
+  \pause
+  \item Weak learner trained on reweighted data.
+\end{itemize}
+
+\pause
+\column{0.5\textwidth}
+\textbf{Gradient Boosting}
+\begin{itemize}
+  \item Minimizes any differentiable loss.
+  \pause
+  \item Corrects mistakes by fitting the \emph{negative gradient} (residual).
+  \pause
+  \item Weak learner trained on residuals, then scaled by a learning rate.
+\end{itemize}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Gradient Boosting Sketch (Regression)}
+\begin{itemize}
+  \item Initialize $F_0(x) = \bar{y}$, the mean training label.
+  \pause
+  \item For $m=1,\dots,M$:
+  \begin{itemize}
+    \item Compute residuals $r_i = y_i - F_{m-1}(x_i)$.
+    \item Fit a weak learner $h_m$ to predict $r_i$ from $x_i$.
+    \item Update $F_m(x) = F_{m-1}(x) + \eta\, h_m(x)$, with learning rate (shrinkage) $\eta \in (0,1]$.
+  \end{itemize}
+  \pause
+  \item Same sequential-correction idea as AdaBoost, generalized beyond exponential loss and beyond classification.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Training and Test Error Over Rounds}
+\centering
+\includegraphics[width=0.78\textwidth]{figures/boosting/training_error_curve.pdf}
+
+\vspace{0.35em}
+\begin{itemize}
+  \item Training error keeps falling, often toward zero.
+  \pause
+  \item Test error can flatten and then creep back up: too many rounds (or too large a learning rate) can overfit.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Bagging vs Boosting}
+\centering
+\includegraphics[width=0.8\textwidth]{figures/boosting/bagging_vs_boosting.pdf}
+
+\begin{itemize}
+  \item Bagging: independent learners, combined by an average or vote.
+  \pause
+  \item Boosting: dependent learners, each shaped by earlier errors.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Boosting: When It Works and When It Fails}
+\begin{columns}[T]
+\column{0.5\textwidth}
+\textbf{Works well when}
+\begin{itemize}
+  \item weak learners are genuinely better than chance,
+  \pause
+  \item labels are reasonably clean,
+  \pause
+  \item bias (not just variance) is the main problem.
+\end{itemize}
+
+\pause
+\column{0.5\textwidth}
+\textbf{Can fail when}
+\begin{itemize}
+  \item labels are noisy -- boosting will chase the noise,
+  \pause
+  \item too many rounds or too high a learning rate (overfitting),
+  \pause
+  \item weak learners are too weak to beat chance at all.
+\end{itemize}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Key Hyperparameters}
+\begin{itemize}
+  \item \textbf{\texttt{n\_estimators}} $M$: number of boosting rounds. Too few underfits; too many can overfit.
+  \pause
+  \item \textbf{\texttt{learning\_rate}} $\eta$: shrinks each stage's contribution. Smaller $\eta$ needs more rounds but generalizes better.
+  \pause
+  \item \textbf{weak learner depth}: stumps (depth 1) are classic for AdaBoost; gradient boosting often uses slightly deeper trees.
+  \pause
+  \item \textbf{loss function} (gradient boosting): exponential, logistic, squared error, etc. -- determines what ``residual'' means.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item Boosting trains weak learners sequentially, each one correcting the previous ensemble's mistakes.
+  \item AdaBoost reweights examples: $\epsilon_m$ measures a learner's weighted error, $\alpha_m=\tfrac12\ln\frac{1-\epsilon_m}{\epsilon_m}$ sets its vote, and misclassified points get heavier.
+  \item The final classifier is a weighted vote: $H(x)=\mathrm{sign}\bigl(\sum_m \alpha_m h_m(x)\bigr)$.
+  \item This is forward stagewise additive modeling; gradient boosting generalizes it to fit residuals under any differentiable loss.
+  \item Boosting reduces bias (unlike bagging, which reduces variance) but can overfit with too many rounds or a learning rate that is too high.
+\end{itemize}
+\end{frame}
