@@ -1,0 +1,9 @@
+# Temporary LaTeX files from standalone figure compilation
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.tex
+*.pdf
