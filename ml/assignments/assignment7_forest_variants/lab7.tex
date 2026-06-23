@@ -1,0 +1,186 @@
+\section*{Lab 7 (Forest Variants) Implementation Tasks}
+\textbf{Lab 7 focus:} random partitioning as an anomaly signal (Isolation Forest), randomized split thresholds (Extra-Trees), and full leaf-distribution prediction intervals (Quantile Regression Forests).
+
+\medskip
+\textbf{Implementation policy (strict):}
+\begin{itemize}
+  \item Implement the isolation tree, the random-threshold split rule, and the quantile aggregation with NumPy only.
+  \item Do not use a library implementation (e.g.\ \texttt{IsolationForest}, \texttt{ExtraTreesClassifier}) for the main task.
+  \item You may reuse your decision tree implementation from Lab 5 and your random forest implementation from Lab 6.
+  \item Plotting libraries are allowed for visual inspection.
+  \item External libraries are allowed only for data loading if explicitly needed.
+  \item Work through the notebook in order.
+\end{itemize}
+
+\section*{Core Equations And Rules}
+\begin{itemize}
+  \item Isolation tree split: pick feature $j$ uniformly at random, then pick threshold $t$ uniformly at random between the min and max of feature $j$ at the current node.
+  \item Path length $h(x)$: number of edges from the root to the leaf containing $x$.
+  \item Average path length normalizer over $\psi$ nodes:
+  \[
+    c(\psi) = 2H(\psi-1) - \frac{2(\psi-1)}{\psi},
+    \qquad H(i) \approx \ln(i) + 0.5772.
+  \]
+  \item Anomaly score:
+  \[
+    s(x,\psi) = 2^{-\,\mathbb{E}[h(x)]/c(\psi)}.
+  \]
+  \item Extra-Trees split rule: for each candidate feature, draw \emph{one} threshold uniformly at random (no exhaustive search); keep the feature with the best $\Delta I$ among those random draws.
+  \item QRF leaf weight for training example $i$:
+  \[
+    w_i(x) = \frac{1}{B}\sum_{b=1}^{B}
+    \frac{\mathbf{1}\{x_i \in L_b(x)\}}{\bigl|L_b(x)\bigr|}.
+  \]
+  \item Weighted empirical CDF and quantile prediction:
+  \[
+    \hat{F}(y\mid x) = \sum_{i=1}^{n} w_i(x)\,\mathbf{1}\{y_i \le y\},
+    \qquad
+    \hat{Q}_\tau(x) = \inf\{y : \hat{F}(y\mid x) \ge \tau\}.
+  \]
+\end{itemize}
+
+\section*{Data Files And Preparation}
+\begin{itemize}
+  \item \texttt{forest\_variants.ipynb}: guided notebook with the assignment steps.
+  \item \texttt{advanced\_ai/forest/isolation\_forest.py}: starter implementation (Isolation Forest).
+  \item \texttt{advanced\_ai/forest/extra\_trees.py}: starter implementation (Extra-Trees split rule).
+  \item \texttt{advanced\_ai/forest/quantile\_forest.py}: starter implementation (Quantile Regression Forest aggregation).
+  \item \texttt{prepare\_datasets.py}: generates the prepared data bundles.
+  \item \texttt{scripts/prepare\_all\_data.sh}: shell entrypoint for dataset preparation.
+  \item \texttt{scripts/check\_prepare\_all\_data.sh}: verification script for the prepared bundles.
+  \item \texttt{toy\_isolation.py}, \texttt{extra\_trees\_iris.py}, \texttt{quantile\_forest\_demo.py}: task runners.
+\end{itemize}
+
+\medskip
+Expected prepared files:
+\begin{itemize}
+  \item \texttt{datasets/isolation\_toy.npz}
+  \item \texttt{datasets/extra\_trees\_iris.npz}
+  \item \texttt{datasets/quantile\_regression.npz}
+\end{itemize}
+
+\medskip
+The scripts use the conda environment \texttt{ai\_courses}.
+
+\section*{Roadmap}
+\begin{itemize}
+  \item Start with Step 1: prepare and verify the datasets.
+  \item After that, continue through the steps in order.
+  \item Each step introduces only the task you need next.
+\end{itemize}
+
+\section*{Step 1: Prepare the Datasets}
+\begin{itemize}
+  \item From \texttt{assignment7\_forest\_variants/}, run:
+  \[
+    \texttt{bash scripts/prepare\_all\_data.sh}
+  \]
+  \item Then run:
+  \[
+    \texttt{bash scripts/check\_prepare\_all\_data.sh}
+  \]
+  \item Confirm that all three expected \texttt{.npz} bundles exist.
+\end{itemize}
+
+\section*{Step 2: Warm-up by Hand}
+\begin{itemize}
+  \item For $\psi=16$: $H(15) \approx 3.3182$. Compute $c(16)$ by hand.
+  \item Point $A$ has $\mathbb{E}[h(A)] = 2.0$ and point $B$ has $\mathbb{E}[h(B)] = 6.0$. Compute $s(A,16)$ and $s(B,16)$, and state which point is the anomaly.
+  \item A new point falls into leaves containing the pooled $y$-values (sorted)
+  \[
+    \{12,\,14,\,15,\,15,\,16,\,17,\,17,\,18,\,19,\,22\}.
+  \]
+  Compute the median ($\tau=0.5$) prediction and the $80\%$ prediction interval ($\tau=0.1$, $\tau=0.9$).
+\end{itemize}
+
+\section*{Step 3: Implement the Forest Variants Core}
+\begin{enumerate}[label=\textbf{T\arabic*.}]
+  \item \textbf{Isolation tree growth}
+\begin{itemize}
+  \item Open \texttt{advanced\_ai/forest/isolation\_forest.py}.
+  \item Fill in \texttt{\_build\_node}.
+  \item At each node, pick a feature $j$ uniformly at random, then a threshold $t$ uniformly at random between the min and max of feature $j$ at that node.
+  \item Stop when a node has one point left, or the height limit $\approx \log_2 \psi$ is reached.
+\end{itemize}
+
+  \item \textbf{Path length}
+\begin{itemize}
+  \item Fill in \texttt{path\_length}.
+  \item Route $x$ from the root and count the number of edges to its leaf.
+\end{itemize}
+
+  \item \textbf{Anomaly score}
+\begin{itemize}
+  \item Fill in \texttt{\_avg\_path\_length} (computes $c(\psi)$) and \texttt{anomaly\_score}.
+  \item Average $h(x)$ over the $B$ isolation trees, then apply $s(x,\psi) = 2^{-\mathbb{E}[h(x)]/c(\psi)}$.
+\end{itemize}
+
+  \item \textbf{Extra-Trees split rule}
+\begin{itemize}
+  \item Open \texttt{advanced\_ai/forest/extra\_trees.py}.
+  \item Fill in \texttt{\_random\_threshold\_split}.
+  \item For each candidate feature, draw one threshold uniformly at random instead of searching all thresholds.
+  \item Keep the feature whose random threshold gives the largest $\Delta I$.
+  \item Reuse your Lab 5 impurity and Lab 6 bagging loop; only the threshold selection changes.
+\end{itemize}
+
+  \item \textbf{Leaf distribution collection}
+\begin{itemize}
+  \item Open \texttt{advanced\_ai/forest/quantile\_forest.py}.
+  \item Fill in \texttt{\_collect\_leaf\_values}.
+  \item For a regression forest trained as in Lab 6, store the training $y$-values that reach each leaf, for every tree.
+\end{itemize}
+
+  \item \textbf{Weighted quantile prediction}
+\begin{itemize}
+  \item Fill in \texttt{predict\_quantile}.
+  \item Compute $w_i(x)$ from the leaves $x$ falls into across all $B$ trees.
+  \item Build $\hat{F}(y\mid x)$ and return $\hat{Q}_\tau(x) = \inf\{y : \hat{F}(y\mid x) \ge \tau\}$.
+\end{itemize}
+\end{enumerate}
+
+\section*{Step 4: Run the Self-Checks}
+\begin{itemize}
+  \item After implementing the core classes, run:
+  \[
+    \texttt{python -m advanced\_ai.self\_checks}
+  \]
+  \item Continue only after every check passes.
+\end{itemize}
+
+\section*{Step 5: Toy Isolation Forest}
+\begin{itemize}
+  \item Run \texttt{toy\_isolation.py} on the toy dataset with injected outliers.
+  \item Report the average path length and anomaly score for an injected outlier and for a normal point.
+  \item Save the anomaly score plot (score versus normalized path length, as in the lecture).
+  \item State the threshold you used to flag anomalies and how many points were flagged.
+\end{itemize}
+
+\section*{Step 6: Extra-Trees vs Random Forest on Iris}
+\begin{itemize}
+  \item Run \texttt{extra\_trees\_iris.py}.
+  \item Sweep over $B = 1, 5, 10, 20, 50, 100$ for both your Lab 6 random forest and your Extra-Trees forest.
+  \item Record training time, training accuracy, and test accuracy for each $B$ and each method.
+  \item State which method trains faster and which has lower variance across repeated runs.
+\end{itemize}
+
+\section*{Step 7: Quantile Regression Forest}
+\begin{itemize}
+  \item Run \texttt{quantile\_forest\_demo.py} on the 1D regression dataset.
+  \item Report the median prediction and an $80\%$ prediction interval ($\tau=0.1,0.9$) for three test points.
+  \item Save the plot of the predicted median curve with the prediction interval band.
+  \item Report the fraction of held-out test points that actually fall inside their predicted $80\%$ interval.
+\end{itemize}
+
+\section*{Step 8: Optional Extension}
+\begin{itemize}
+  \item Vary the subsample size $\psi \in \{64, 128, 256, 512\}$ and report how the anomaly scores change.
+  \item Try a $50\%$ and a $95\%$ prediction interval instead of $80\%$ and compare interval width.
+  \item Combine Extra-Trees splitting with the quantile-forest leaf aggregation and report whether the prediction intervals change.
+\end{itemize}
+
+\section*{Submission}
+\begin{itemize}
+  \item Submit the notebook, the completed starter files, and the generated output files from the required runners.
+  \item Use \texttt{collect\_submission.ipynb} or \texttt{collectSubmission.sh} to bundle the submission.
+\end{itemize}
