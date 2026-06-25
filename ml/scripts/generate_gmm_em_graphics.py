@@ -68,6 +68,222 @@ def responsibility1(x: np.ndarray, mu1: float, mu2: float, sigma: float) -> np.n
 
 
 # ============================================================================
+# Figure 0: Intro contrast -- one boundary point, forced choice vs. soft probability
+# ============================================================================
+intro_df = pd.DataFrame(
+    [
+        ("A1", 0.6, 0.8, "A"), ("A2", 1.0, 1.3, "A"),
+        ("A3", 1.4, 0.6, "A"), ("A4", 0.8, 1.6, "A"),
+        ("B1", 4.4, 3.2, "B"), ("B2", 3.8, 3.8, "B"),
+        ("B3", 4.0, 2.8, "B"), ("B4", 4.6, 3.6, "B"),
+    ],
+    columns=["id", "x", "y", "cluster"],
+)
+intro_cA = intro_df.loc[intro_df["cluster"] == "A", ["x", "y"]].mean()
+intro_cB = intro_df.loc[intro_df["cluster"] == "B", ["x", "y"]].mean()
+intro_mid = (intro_cA + intro_cB) / 2.0
+intro_direction = np.array([intro_cB.x - intro_cA.x, intro_cB.y - intro_cA.y])
+intro_perp = np.array([-intro_direction[1], intro_direction[0]])
+intro_perp_unit = intro_perp / np.linalg.norm(intro_perp)
+intro_boundary_a = intro_mid.values + 2.5 * intro_perp_unit
+intro_boundary_b = intro_mid.values - 2.5 * intro_perp_unit
+MX, MY, PIE_R = float(intro_mid.x), float(intro_mid.y), 0.30
+
+
+def intro_marks() -> str:
+    out = []
+    for _, row in intro_df.iterrows():
+        color = "lightblue" if row["cluster"] == "A" else "lightcoral"
+        out.append(f"\\fill[{color}, draw=black] ({row['x']:.3f},{row['y']:.3f}) circle (3.0pt);\n    ")
+    return "".join(out)
+
+
+intro_panel_marks = intro_marks()
+
+hard_vs_soft_tex = (
+    r"""
+\documentclass[crop]{standalone}
+\usepackage{xcolor}
+\usepackage{tikz}
+\definecolor{lightblue}{RGB}{173,216,230}
+\definecolor{lightcoral}{RGB}{240,128,128}
+\begin{document}
+\begin{tabular}{cc}
+\textbf{$k$-Means: forced choice} & \textbf{GMM: soft probability} \\[3pt]
+\begin{tikzpicture}
+  \begin{scope}
+    \clip (-0.5,-0.5) rectangle (5.1,4.3);
+    \draw[dashed, thick, gray] ("""
+    + f"{intro_boundary_a[0]:.3f},{intro_boundary_a[1]:.3f}) -- ({intro_boundary_b[0]:.3f},{intro_boundary_b[1]:.3f}"
+    + r""");
+  \end{scope}
+"""
+    + intro_panel_marks
+    + r"""\fill[lightblue, draw=black, line width=0.8pt] ("""
+    + f"{MX:.3f},{MY:.3f}) circle ({PIE_R:.2f}"
+    + r""");
+  \node[font=\tiny, align=center] at ("""
+    + f"{MX:.3f},{MY - 0.65:.3f}"
+    + r""") {forced to cluster $A$\\(despite 50/50 evidence)};
+\end{tikzpicture}
+&
+\begin{tikzpicture}
+"""
+    + intro_panel_marks
+    + r"""\begin{scope}
+    \clip ("""
+    + f"{MX - PIE_R:.3f},{MY - PIE_R:.3f}) rectangle ({MX:.3f},{MY + PIE_R:.3f}"
+    + r""");
+    \fill[lightblue] ("""
+    + f"{MX:.3f},{MY:.3f}) circle ({PIE_R:.2f}"
+    + r""");
+  \end{scope}
+  \begin{scope}
+    \clip ("""
+    + f"{MX:.3f},{MY - PIE_R:.3f}) rectangle ({MX + PIE_R:.3f},{MY + PIE_R:.3f}"
+    + r""");
+    \fill[lightcoral] ("""
+    + f"{MX:.3f},{MY:.3f}) circle ({PIE_R:.2f}"
+    + r""");
+  \end{scope}
+  \draw[black, line width=0.8pt] ("""
+    + f"{MX:.3f},{MY:.3f}) circle ({PIE_R:.2f}"
+    + r""");
+  \node[font=\tiny, align=center] at ("""
+    + f"{MX:.3f},{MY - 0.65:.3f}"
+    + r""") {$p(A)=0.50,\ p(B)=0.50$\\(both kept)};
+\end{tikzpicture}
+\end{tabular}
+\end{document}
+"""
+)
+
+compile_tikz(hard_vs_soft_tex, "hard_vs_soft_intro")
+
+
+# ============================================================================
+# Figure 0a: Refresher -- the 1D Gaussian (Normal) distribution
+# ============================================================================
+REF_MU, REF_SIGMA = 0.0, 1.5
+ref_x = np.linspace(-5, 5, 201)
+ref_y = gaussian_pdf(ref_x, REF_MU, REF_SIGMA)
+ref_curve_pts = " ".join(f"({x:.3f},{y:.5f})" for x, y in zip(ref_x, ref_y))
+
+band_x = np.linspace(REF_MU - REF_SIGMA, REF_MU + REF_SIGMA, 41)
+band_y = gaussian_pdf(band_x, REF_MU, REF_SIGMA)
+band_pts = " ".join(f"({x:.3f},{y:.5f})" for x, y in zip(band_x, band_y))
+
+peak_y = float(gaussian_pdf(np.array([REF_MU]), REF_MU, REF_SIGMA)[0])
+ymax = peak_y * 1.35
+mu_line_top = peak_y * 1.05
+mu_label_y = peak_y * 1.20
+sigma_arrow_y = peak_y * 0.42
+sigma_label_y = peak_y * 0.54
+
+gaussian_1d_tex = rf"""
+\documentclass[crop]{{standalone}}
+\usepackage{{xcolor}}
+\usepackage{{amsmath}}
+\usepackage{{pgfplots}}
+\pgfplotsset{{compat=1.18}}
+\definecolor{{darkblue}}{{RGB}}{{0,0,139}}
+\definecolor{{lightblue}}{{RGB}}{{173,216,230}}
+\begin{{document}}
+\begin{{tikzpicture}}
+  \begin{{axis}}[
+    width=9cm,
+    height=5.0cm,
+    xlabel={{$x$}},
+    ylabel={{density}},
+    grid,
+    grid style=gray!20,
+    xmin=-5, xmax=5,
+    ymin=0, ymax={ymax:.4f},
+  ]
+    \addplot[fill=lightblue, draw=none, opacity=0.6] coordinates {{
+{band_pts} ({REF_MU + REF_SIGMA:.3f},0.0) ({REF_MU - REF_SIGMA:.3f},0.0)
+    }} \closedcycle;
+    \addplot[line width=1.8, color=darkblue] coordinates {{
+{ref_curve_pts}
+    }};
+    \draw[dashed, gray] (axis cs: {REF_MU:.3f},0) -- (axis cs: {REF_MU:.3f},{mu_line_top:.4f});
+    \node[font=\small] at (axis cs: {REF_MU:.3f},{mu_label_y:.4f}) {{$\mu$}};
+    \draw[latex-latex] (axis cs: {REF_MU - REF_SIGMA:.3f},{sigma_arrow_y:.4f}) -- (axis cs: {REF_MU + REF_SIGMA:.3f},{sigma_arrow_y:.4f});
+    \node[font=\small] at (axis cs: {REF_MU:.3f},{sigma_label_y:.4f}) {{$\sigma$}};
+  \end{{axis}}
+\end{{tikzpicture}}
+\end{{document}}
+"""
+
+compile_tikz(gaussian_1d_tex, "gaussian_1d_refresher")
+
+
+# ============================================================================
+# Figure 0b: Refresher -- covariance shapes a multivariate Gaussian "blob"
+# ============================================================================
+def covariance_ellipse(cov: np.ndarray, n_std: float = 1.5, n_points: int = 100) -> tuple[np.ndarray, np.ndarray]:
+    """Points on the n_std-sigma contour ellipse of a 2D covariance matrix."""
+    eigvals, eigvecs = np.linalg.eigh(cov)
+    theta = np.linspace(0, 2 * np.pi, n_points)
+    circle = np.vstack([np.cos(theta), np.sin(theta)])
+    sqrt_cov = eigvecs @ np.diag(np.sqrt(eigvals))
+    pts = n_std * (sqrt_cov @ circle)
+    return pts[0], pts[1]
+
+
+cov_specs = [
+    ("spherical (isotropic)", np.array([[1.0, 0.0], [0.0, 1.0]])),
+    ("diagonal", np.array([[2.2, 0.0], [0.0, 0.5]])),
+    ("full (correlated)", np.array([[2.0, 1.3], [1.3, 1.2]])),
+]
+
+
+def ellipse_panel(label: str, cov: np.ndarray) -> str:
+    ex, ey = covariance_ellipse(cov)
+    outline = " -- ".join(f"({x:.3f},{y:.3f})" for x, y in zip(ex, ey))
+    return (
+        r"""\begin{tikzpicture}
+  \draw[-latex, gray] (-3,0) -- (3,0);
+  \draw[-latex, gray] (0,-3) -- (0,3);
+  \draw[line width=1.6, color=darkblue, fill=lightblue, fill opacity=0.35] """
+        + outline
+        + r""" -- cycle;
+  \node[font=\small] at (0,-3.4) {"""
+        + label
+        + r"""};
+\end{tikzpicture}"""
+    )
+
+
+cov_panels = [ellipse_panel(label, cov) for label, cov in cov_specs]
+
+covariance_shapes_tex = (
+    r"""
+\documentclass[crop]{standalone}
+\usepackage{xcolor}
+\usepackage{tikz}
+\definecolor{darkblue}{RGB}{0,0,139}
+\definecolor{lightblue}{RGB}{173,216,230}
+\begin{document}
+\begin{tabular}{ccc}
+"""
+    + cov_panels[0]
+    + r""" &
+"""
+    + cov_panels[1]
+    + r""" &
+"""
+    + cov_panels[2]
+    + r"""
+\end{tabular}
+\end{document}
+"""
+)
+
+compile_tikz(covariance_shapes_tex, "covariance_shapes")
+
+
+# ============================================================================
 # Figure 1: 1D mixture density = weighted sum of two Gaussian components
 # ============================================================================
 MU1, MU2, SIGMA = 0.0, 10.0, 3.0
