@@ -17,72 +17,62 @@ By the end of this course, students should be able to:
 
 The course is organized into five modules. Lecture numbering restarts at 1 within each module.
 
-### Module 0: Statistics for Advanced AI (Lectures 1-14)
+### Module 0: Statistics for Advanced AI (Lectures 1-10)
 
 Primary references:
-- Illowsky & Dean, *Introductory Statistics 2e* (OpenStax) — Lectures 1–7 core probability and distributions
-- Bishop, *PRML* — Lectures 8–9 (MLE, Bayesian inference)
-- Cover & Thomas, *Elements of Information Theory* — Lecture 10
-- Wainwright & Jordan, *Graphical Models, Exponential Families, and Variational Inference* — Lecture 11
+- Illowsky & Dean, *Introductory Statistics 2e* (OpenStax) — Lectures 1–5 core probability and distributions
+- Bishop, *PRML* — Lectures 6–7 (MLE, Bayesian inference)
+- Cover & Thomas, *Elements of Information Theory* — Lecture 7
+- Wainwright & Jordan, *Graphical Models, Exponential Families, and Variational Inference* — Lecture 8
 Topics not critical for AI (chi-square tests, two-sample t-tests, ANOVA, study-design methodology)
-are deliberately omitted. Hypothesis testing is retained but moved to L14 where it is applied
-directly to model evaluation, its most relevant AI context.
+are omitted. Hypothesis testing is embedded in L10 (model evaluation), its most relevant context.
 
-1. **Lecture 1 - Data & Descriptive Statistics**
+1. **Lecture 1 - Data, Probability & Descriptive Statistics**
    - data types, frequency distributions, histograms, box plots
-   - measures of center (mean, median, mode) and spread (variance, standard deviation, IQR)
-   - why understanding feature distributions matters before any ML step
-2. **Lecture 2 - Probability Foundations**
-   - sample spaces, events, classical and empirical probability
-   - complement, addition, and multiplication rules; mutual exclusivity vs. independence
-3. **Lecture 3 - Conditional Probability, Independence & Bayes' Theorem**
+   - measures of center and spread (mean, variance, standard deviation, IQR)
+   - sample spaces, events, probability rules (complement, addition, multiplication)
+   - mutual exclusivity vs. independence; empirical vs. classical probability
+2. **Lecture 2 - Conditional Probability, Independence & Bayes' Theorem**
    - conditional probability and the multiplication rule
    - statistical independence, tree diagrams, contingency tables
    - Bayes' theorem: the formula that drives probabilistic ML from Naive Bayes to diffusion models
-4. **Lecture 4 - Discrete Random Variables & Key Distributions**
+3. **Lecture 3 - Discrete Random Variables & Key Distributions**
    - probability mass function, expectation, variance
    - Bernoulli and Binomial (binary outputs); Categorical and Multinomial (multi-class outputs, softmax)
-   - Poisson (count data, event modeling); Dirichlet as a prior over Categorical (preview of LDA and topic models)
-5. **Lecture 5 - Continuous Random Variables**
+   - Poisson (count data, event modeling); Dirichlet as a prior over Categorical (LDA, topic models)
+4. **Lecture 4 - Continuous Random Variables & the Gaussian**
    - probability density function, CDF, area-as-probability
-   - uniform distribution; exponential distribution (waiting times, generative sampling)
-   - Beta distribution: the continuous [0,1]-valued RV and natural conjugate prior for Bernoulli/Binomial
-6. **Lecture 6 - The Gaussian Distribution: 1D and Multivariate**
-   - standard normal, z-scores, the 68-95-99.7 rule
+   - uniform, exponential (generative sampling), Beta (conjugate prior for Bernoulli/Binomial)
+   - the Gaussian: 1D standard normal, z-scores, 68-95-99.7 rule
    - multivariate Gaussian: mean vector, covariance matrix, contour ellipses
-   - why the Gaussian appears everywhere: GMMs, VAEs, Bayesian priors, neural network weight init
-7. **Lecture 7 - The Central Limit Theorem & Sampling Distributions**
-   - sampling distribution of the mean, standard error
-   - CLT statement and conditions; law of large numbers
-   - why mini-batch gradients and batch normalization rest on these results
-8. **Lecture 8 - Maximum Likelihood Estimation**
-   - likelihood function, log-likelihood, MLE derivations for Gaussian and Bernoulli
-   - MLE as the statistical foundation of cross-entropy loss and MSE loss
-   - numerical optimization of the likelihood: the bridge from statistics to gradient descent
-9. **Lecture 9 - Bayesian Inference & MAP Estimation**
+   - why the Gaussian appears everywhere: GMMs, VAEs, weight initialization, Bayesian priors
+5. **Lecture 5 - The Central Limit Theorem & Maximum Likelihood Estimation**
+   - sampling distribution of the mean, standard error, law of large numbers
+   - CLT statement and conditions; why mini-batch gradients and batch normalization rely on this
+   - likelihood function, log-likelihood; MLE derivations for Gaussian and Bernoulli
+   - MLE as the statistical foundation of cross-entropy loss and MSE; bridge to gradient descent
+6. **Lecture 6 - Bayesian Inference & MAP Estimation**
    - prior, likelihood, posterior; Bayes' rule as an update rule
    - MAP estimation as regularized MLE (L2 regularization = Gaussian prior)
-   - conjugate priors (Beta–Bernoulli, Dirichlet–Categorical, Gaussian–Gaussian); Bayesian vs. frequentist framing
-10. **Lecture 10 - Information Theory: Entropy, KL Divergence & Mutual Information**
-    - Shannon entropy: measuring uncertainty in a distribution
-    - cross-entropy as a loss function; KL divergence as a distance between distributions
-    - mutual information and its role in feature selection, VAE objectives, and representation learning
-11. **Lecture 11 - The Exponential Family & Sufficient Statistics**
-    - exponential family form: $p(x|\eta) = h(x)\exp(\eta^\top T(x) - A(\eta))$
-    - natural parameters $\eta$, sufficient statistics $T(x)$, log-partition function $A(\eta)$
-    - membership: Gaussian, Bernoulli, Categorical, Poisson, Beta, Dirichlet, Gamma — all unified in one family
-    - moment identities: $\nabla_\eta A(\eta) = \mathbb{E}[T(x)]$; why this makes MLE and Bayesian updates elegant
-    - sufficient statistics and data compression: Fisher-Neyman factorization theorem
-    - connection to GLMs, log-linear models, and variational inference (ELBO with exponential-family posteriors)
-12. **Lecture 12 - Correlation & Simple Linear Regression**
-    - Pearson correlation coefficient, covariance, scatter plots
-    - ordinary least squares: derivation, residuals, R²
-    - MLE interpretation of OLS; bridge to regularized regression in Module 1
-13. **Lecture 13 - Multivariate Statistics: Covariance Matrices & Eigenvectors**
-    - sample covariance matrix, correlation matrix
-    - eigendecomposition of the covariance matrix; variance along principal directions
-    - statistical preview of PCA before its geometric treatment in Module 1
-14. **Lecture 14 - Statistical Model Evaluation & Hypothesis Testing**
+   - conjugate priors: Beta–Bernoulli, Dirichlet–Categorical, Gaussian–Gaussian
+   - Bayesian vs. frequentist framing; predictive distributions
+7. **Lecture 7 - Information Theory: Entropy, KL Divergence & Mutual Information**
+   - Shannon entropy: measuring uncertainty in a distribution
+   - cross-entropy as a loss function; KL divergence as a distance between distributions
+   - mutual information: feature selection, VAE objectives, representation learning
+8. **Lecture 8 - The Exponential Family & Sufficient Statistics**
+   - exponential family form: $p(x|\eta) = h(x)\exp(\eta^\top T(x) - A(\eta))$
+   - natural parameters $\eta$, sufficient statistics $T(x)$, log-partition function $A(\eta)$
+   - membership: Gaussian, Bernoulli, Categorical, Poisson, Beta, Dirichlet — unified in one family
+   - moment identities ($\nabla_\eta A = \mathbb{E}[T(x)]$), Fisher-Neyman factorization theorem
+   - connection to GLMs, log-linear models, and variational inference (ELBO with exponential-family posteriors)
+9. **Lecture 9 - Correlation, Regression & Multivariate Statistics**
+   - Pearson correlation, covariance, scatter plots; ordinary least squares, residuals, R²
+   - MLE interpretation of OLS; bridge to regularized regression in Module 1
+   - sample covariance matrix, correlation matrix
+   - eigendecomposition of the covariance matrix; variance along principal directions
+   - statistical preview of PCA before its geometric treatment in Module 1
+10. **Lecture 10 - Statistical Model Evaluation**
     - train / validation / test splits; the bias-variance tradeoff as a statistical phenomenon
     - cross-validation, bootstrap confidence intervals on metrics
     - null/alternative hypotheses, p-values, Type I and Type II errors; A/B testing for model comparisons
