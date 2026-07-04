@@ -15,7 +15,58 @@ By the end of this course, students should be able to:
 
 ## Course structure
 
-The course is organized into four modules. Lecture numbering restarts at 1 within each module.
+The course is organized into five modules. Lecture numbering restarts at 1 within each module.
+
+### Module 0: Introductory Statistics (Lectures 1-14)
+
+Source: *Introductory Statistics, 2nd Edition* — Barbara Illowsky & Susan Dean (OpenStax, De Anza College).
+Chapters 3 and 9 are split across two lectures each; Chapters 12 and 13 receive one lecture each.
+
+1. **Lecture 1 - Sampling, Data & Study Design**
+   - populations vs. samples, data types, measurement scales
+   - sampling methods (simple random, stratified, cluster, systematic), observational vs. experimental studies, sources of bias
+2. **Lecture 2 - Descriptive Statistics**
+   - frequency distributions, histograms, stem-and-leaf plots, box plots
+   - measures of center (mean, median, mode) and spread (range, IQR, standard deviation, variance), outliers
+3. **Lecture 3 - Introduction to Probability**
+   - sample spaces, events, classical / empirical / subjective probability
+   - complement rule, addition rule, mutual exclusivity
+4. **Lecture 4 - Conditional Probability, Independence & Bayes**
+   - conditional probability, multiplication rule, statistical independence
+   - tree diagrams, contingency tables, Bayes' theorem
+   - counting techniques: permutations and combinations
+5. **Lecture 5 - Discrete Random Variables**
+   - probability mass function, cumulative distribution function
+   - expectation, variance, and standard deviation of a discrete RV
+   - Binomial, geometric, and Poisson distributions
+6. **Lecture 6 - Continuous Random Variables**
+   - probability density function and area-as-probability
+   - uniform distribution, exponential distribution, memoryless property
+7. **Lecture 7 - The Normal Distribution**
+   - the standard normal (z-scores), empirical 68-95-99.7 rule
+   - normal tables and inverse-normal calculations, real-world applications
+8. **Lecture 8 - The Central Limit Theorem**
+   - sampling distribution of the sample mean, standard error
+   - CLT statement and conditions, finite-population correction factor
+9. **Lecture 9 - Confidence Intervals**
+   - CI for a population mean (σ known: z-interval; σ unknown: t-interval)
+   - CI for a population proportion, sample-size planning
+10. **Lecture 10 - Hypothesis Testing: Framework & z-Tests**
+    - null and alternative hypotheses, significance level α, Type I and Type II errors
+    - one- and two-tailed z-tests for means and proportions, p-values
+11. **Lecture 11 - Hypothesis Testing: t-Tests & Tests for Variance**
+    - Student's t-distribution, one-sample t-test
+    - Chi-square distribution introduced for tests of a single variance
+12. **Lecture 12 - Hypothesis Testing: Two Samples**
+    - two-sample z-tests and t-tests for means (independent samples)
+    - matched-pairs (dependent samples) t-test, two-sample test for proportions
+13. **Lecture 13 - Chi-Square Tests**
+    - goodness-of-fit test
+    - test of independence and test of homogeneity using contingency tables
+14. **Lecture 14 - Linear Regression, Correlation & One-Way ANOVA**
+    - scatter plots, Pearson correlation coefficient r, least-squares regression line
+    - coefficient of determination R², predictions and residuals
+    - F distribution, one-way ANOVA, F-test for equality of group means
 
 ### Module 1: Classical Machine Learning (Lectures 1-14)
 
