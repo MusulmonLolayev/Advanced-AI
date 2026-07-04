@@ -19,14 +19,14 @@ The course is organized into five modules. Lecture numbering restarts at 1 withi
 
 ### Module 0: Statistics for Advanced AI (Lectures 1-14)
 
-Primary reference: *Introductory Statistics, 2nd Edition* — Barbara Illowsky & Susan Dean (OpenStax).
-Lectures 1–7 draw on Illowsky Chapters 1–7 (probability, distributions, CLT).
-Lectures 8–10 supplement with material from Bishop's *PRML* and Cover & Thomas's
-*Elements of Information Theory* — these three topics are absent from Illowsky but are
-the direct mathematical language of every modern ML training objective.
-Lectures 11–14 bridge from probability theory into applied statistical practice for AI.
-Topics from Illowsky that are not critical for AI (chi-square tests, two-sample tests,
-ANOVA, study-design methodology) are deliberately omitted.
+Primary references:
+- Illowsky & Dean, *Introductory Statistics 2e* (OpenStax) — Lectures 1–7 core probability and distributions
+- Bishop, *PRML* — Lectures 8–9 (MLE, Bayesian inference)
+- Cover & Thomas, *Elements of Information Theory* — Lecture 10
+- Norris, *Markov Chains* / Ross, *Introduction to Probability Models* — Lecture 11
+Topics not critical for AI (chi-square tests, two-sample t-tests, ANOVA, study-design methodology)
+are deliberately omitted. Hypothesis testing is retained but moved to L14 where it is applied
+directly to model evaluation, its most relevant AI context.
 
 1. **Lecture 1 - Data & Descriptive Statistics**
    - data types, frequency distributions, histograms, box plots
@@ -41,11 +41,12 @@ ANOVA, study-design methodology) are deliberately omitted.
    - Bayes' theorem: the formula that drives probabilistic ML from Naive Bayes to diffusion models
 4. **Lecture 4 - Discrete Random Variables & Key Distributions**
    - probability mass function, expectation, variance
-   - Bernoulli and Binomial (classification outputs), Poisson (count data, attention heads)
-   - the role of discrete distributions in generative models and language modeling
+   - Bernoulli and Binomial (binary outputs); Categorical and Multinomial (multi-class outputs, softmax)
+   - Poisson (count data, event modeling); Dirichlet as a prior over Categorical (preview of LDA and topic models)
 5. **Lecture 5 - Continuous Random Variables**
    - probability density function, CDF, area-as-probability
-   - uniform distribution, exponential distribution (waiting times, generative sampling)
+   - uniform distribution; exponential distribution (waiting times, generative sampling)
+   - Beta distribution: the continuous [0,1]-valued RV and natural conjugate prior for Bernoulli/Binomial
 6. **Lecture 6 - The Gaussian Distribution: 1D and Multivariate**
    - standard normal, z-scores, the 68-95-99.7 rule
    - multivariate Gaussian: mean vector, covariance matrix, contour ellipses
@@ -61,15 +62,16 @@ ANOVA, study-design methodology) are deliberately omitted.
 9. **Lecture 9 - Bayesian Inference & MAP Estimation**
    - prior, likelihood, posterior; Bayes' rule as an update rule
    - MAP estimation as regularized MLE (L2 regularization = Gaussian prior)
-   - predictive distributions, conjugate priors, Bayesian vs. frequentist framing
+   - conjugate priors (Beta–Bernoulli, Dirichlet–Categorical, Gaussian–Gaussian); Bayesian vs. frequentist framing
 10. **Lecture 10 - Information Theory: Entropy, KL Divergence & Mutual Information**
     - Shannon entropy: measuring uncertainty in a distribution
     - cross-entropy as a loss function; KL divergence as a distance between distributions
     - mutual information and its role in feature selection, VAE objectives, and representation learning
-11. **Lecture 11 - Confidence Intervals & Hypothesis Testing for AI**
-    - confidence intervals for means and proportions
-    - null/alternative hypotheses, p-values, Type I and Type II errors
-    - applying hypothesis testing to A/B experiments and model comparisons
+11. **Lecture 11 - Markov Chains & Sequential Probability Models**
+    - the Markov property: future depends only on the present state, not the full history
+    - transition matrices, state diagrams, stationary distributions, mixing time
+    - Hidden Markov Models (HMMs): states, observations, emission probabilities — foundation for Module 3 L3
+    - Markov Decision Processes (MDPs): states, actions, rewards, policy — foundation for Module 5 (RL)
 12. **Lecture 12 - Correlation & Simple Linear Regression**
     - Pearson correlation coefficient, covariance, scatter plots
     - ordinary least squares: derivation, residuals, R²
@@ -78,10 +80,11 @@ ANOVA, study-design methodology) are deliberately omitted.
     - sample covariance matrix, correlation matrix
     - eigendecomposition of the covariance matrix; variance along principal directions
     - statistical preview of PCA before its geometric treatment in Module 1
-14. **Lecture 14 - Statistical Model Evaluation**
+14. **Lecture 14 - Statistical Model Evaluation & Hypothesis Testing**
     - train / validation / test splits; the bias-variance tradeoff as a statistical phenomenon
     - cross-validation, bootstrap confidence intervals on metrics
-    - calibration (reliability diagrams), statistical significance of model comparisons (permutation tests)
+    - null/alternative hypotheses, p-values, Type I and Type II errors; A/B testing for model comparisons
+    - calibration (reliability diagrams), permutation tests for statistical significance
 
 ### Module 1: Classical Machine Learning (Lectures 1-14)
 
