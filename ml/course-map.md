@@ -23,7 +23,7 @@ Primary references:
 - Illowsky & Dean, *Introductory Statistics 2e* (OpenStax) — Lectures 1–7 core probability and distributions
 - Bishop, *PRML* — Lectures 8–9 (MLE, Bayesian inference)
 - Cover & Thomas, *Elements of Information Theory* — Lecture 10
-- Norris, *Markov Chains* / Ross, *Introduction to Probability Models* — Lecture 11
+- Wainwright & Jordan, *Graphical Models, Exponential Families, and Variational Inference* — Lecture 11
 Topics not critical for AI (chi-square tests, two-sample t-tests, ANOVA, study-design methodology)
 are deliberately omitted. Hypothesis testing is retained but moved to L14 where it is applied
 directly to model evaluation, its most relevant AI context.
@@ -67,11 +67,13 @@ directly to model evaluation, its most relevant AI context.
     - Shannon entropy: measuring uncertainty in a distribution
     - cross-entropy as a loss function; KL divergence as a distance between distributions
     - mutual information and its role in feature selection, VAE objectives, and representation learning
-11. **Lecture 11 - Markov Chains & Sequential Probability Models**
-    - the Markov property: future depends only on the present state, not the full history
-    - transition matrices, state diagrams, stationary distributions, mixing time
-    - Hidden Markov Models (HMMs): states, observations, emission probabilities — foundation for Module 3 L3
-    - Markov Decision Processes (MDPs): states, actions, rewards, policy — foundation for Module 5 (RL)
+11. **Lecture 11 - The Exponential Family & Sufficient Statistics**
+    - exponential family form: $p(x|\eta) = h(x)\exp(\eta^\top T(x) - A(\eta))$
+    - natural parameters $\eta$, sufficient statistics $T(x)$, log-partition function $A(\eta)$
+    - membership: Gaussian, Bernoulli, Categorical, Poisson, Beta, Dirichlet, Gamma — all unified in one family
+    - moment identities: $\nabla_\eta A(\eta) = \mathbb{E}[T(x)]$; why this makes MLE and Bayesian updates elegant
+    - sufficient statistics and data compression: Fisher-Neyman factorization theorem
+    - connection to GLMs, log-linear models, and variational inference (ELBO with exponential-family posteriors)
 12. **Lecture 12 - Correlation & Simple Linear Regression**
     - Pearson correlation coefficient, covariance, scatter plots
     - ordinary least squares: derivation, residuals, R²
