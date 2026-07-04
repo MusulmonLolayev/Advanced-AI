@@ -17,56 +17,71 @@ By the end of this course, students should be able to:
 
 The course is organized into five modules. Lecture numbering restarts at 1 within each module.
 
-### Module 0: Introductory Statistics (Lectures 1-14)
+### Module 0: Statistics for Advanced AI (Lectures 1-14)
 
-Source: *Introductory Statistics, 2nd Edition* — Barbara Illowsky & Susan Dean (OpenStax, De Anza College).
-Chapters 3 and 9 are split across two lectures each; Chapters 12 and 13 receive one lecture each.
+Primary reference: *Introductory Statistics, 2nd Edition* — Barbara Illowsky & Susan Dean (OpenStax).
+Lectures 1–7 draw on Illowsky Chapters 1–7 (probability, distributions, CLT).
+Lectures 8–10 supplement with material from Bishop's *PRML* and Cover & Thomas's
+*Elements of Information Theory* — these three topics are absent from Illowsky but are
+the direct mathematical language of every modern ML training objective.
+Lectures 11–14 bridge from probability theory into applied statistical practice for AI.
+Topics from Illowsky that are not critical for AI (chi-square tests, two-sample tests,
+ANOVA, study-design methodology) are deliberately omitted.
 
-1. **Lecture 1 - Sampling, Data & Study Design**
-   - populations vs. samples, data types, measurement scales
-   - sampling methods (simple random, stratified, cluster, systematic), observational vs. experimental studies, sources of bias
-2. **Lecture 2 - Descriptive Statistics**
-   - frequency distributions, histograms, stem-and-leaf plots, box plots
-   - measures of center (mean, median, mode) and spread (range, IQR, standard deviation, variance), outliers
-3. **Lecture 3 - Introduction to Probability**
-   - sample spaces, events, classical / empirical / subjective probability
-   - complement rule, addition rule, mutual exclusivity
-4. **Lecture 4 - Conditional Probability, Independence & Bayes**
-   - conditional probability, multiplication rule, statistical independence
-   - tree diagrams, contingency tables, Bayes' theorem
-   - counting techniques: permutations and combinations
-5. **Lecture 5 - Discrete Random Variables**
-   - probability mass function, cumulative distribution function
-   - expectation, variance, and standard deviation of a discrete RV
-   - Binomial, geometric, and Poisson distributions
-6. **Lecture 6 - Continuous Random Variables**
-   - probability density function and area-as-probability
-   - uniform distribution, exponential distribution, memoryless property
-7. **Lecture 7 - The Normal Distribution**
-   - the standard normal (z-scores), empirical 68-95-99.7 rule
-   - normal tables and inverse-normal calculations, real-world applications
-8. **Lecture 8 - The Central Limit Theorem**
-   - sampling distribution of the sample mean, standard error
-   - CLT statement and conditions, finite-population correction factor
-9. **Lecture 9 - Confidence Intervals**
-   - CI for a population mean (σ known: z-interval; σ unknown: t-interval)
-   - CI for a population proportion, sample-size planning
-10. **Lecture 10 - Hypothesis Testing: Framework & z-Tests**
-    - null and alternative hypotheses, significance level α, Type I and Type II errors
-    - one- and two-tailed z-tests for means and proportions, p-values
-11. **Lecture 11 - Hypothesis Testing: t-Tests & Tests for Variance**
-    - Student's t-distribution, one-sample t-test
-    - Chi-square distribution introduced for tests of a single variance
-12. **Lecture 12 - Hypothesis Testing: Two Samples**
-    - two-sample z-tests and t-tests for means (independent samples)
-    - matched-pairs (dependent samples) t-test, two-sample test for proportions
-13. **Lecture 13 - Chi-Square Tests**
-    - goodness-of-fit test
-    - test of independence and test of homogeneity using contingency tables
-14. **Lecture 14 - Linear Regression, Correlation & One-Way ANOVA**
-    - scatter plots, Pearson correlation coefficient r, least-squares regression line
-    - coefficient of determination R², predictions and residuals
-    - F distribution, one-way ANOVA, F-test for equality of group means
+1. **Lecture 1 - Data & Descriptive Statistics**
+   - data types, frequency distributions, histograms, box plots
+   - measures of center (mean, median, mode) and spread (variance, standard deviation, IQR)
+   - why understanding feature distributions matters before any ML step
+2. **Lecture 2 - Probability Foundations**
+   - sample spaces, events, classical and empirical probability
+   - complement, addition, and multiplication rules; mutual exclusivity vs. independence
+3. **Lecture 3 - Conditional Probability, Independence & Bayes' Theorem**
+   - conditional probability and the multiplication rule
+   - statistical independence, tree diagrams, contingency tables
+   - Bayes' theorem: the formula that drives probabilistic ML from Naive Bayes to diffusion models
+4. **Lecture 4 - Discrete Random Variables & Key Distributions**
+   - probability mass function, expectation, variance
+   - Bernoulli and Binomial (classification outputs), Poisson (count data, attention heads)
+   - the role of discrete distributions in generative models and language modeling
+5. **Lecture 5 - Continuous Random Variables**
+   - probability density function, CDF, area-as-probability
+   - uniform distribution, exponential distribution (waiting times, generative sampling)
+6. **Lecture 6 - The Gaussian Distribution: 1D and Multivariate**
+   - standard normal, z-scores, the 68-95-99.7 rule
+   - multivariate Gaussian: mean vector, covariance matrix, contour ellipses
+   - why the Gaussian appears everywhere: GMMs, VAEs, Bayesian priors, neural network weight init
+7. **Lecture 7 - The Central Limit Theorem & Sampling Distributions**
+   - sampling distribution of the mean, standard error
+   - CLT statement and conditions; law of large numbers
+   - why mini-batch gradients and batch normalization rest on these results
+8. **Lecture 8 - Maximum Likelihood Estimation**
+   - likelihood function, log-likelihood, MLE derivations for Gaussian and Bernoulli
+   - MLE as the statistical foundation of cross-entropy loss and MSE loss
+   - numerical optimization of the likelihood: the bridge from statistics to gradient descent
+9. **Lecture 9 - Bayesian Inference & MAP Estimation**
+   - prior, likelihood, posterior; Bayes' rule as an update rule
+   - MAP estimation as regularized MLE (L2 regularization = Gaussian prior)
+   - predictive distributions, conjugate priors, Bayesian vs. frequentist framing
+10. **Lecture 10 - Information Theory: Entropy, KL Divergence & Mutual Information**
+    - Shannon entropy: measuring uncertainty in a distribution
+    - cross-entropy as a loss function; KL divergence as a distance between distributions
+    - mutual information and its role in feature selection, VAE objectives, and representation learning
+11. **Lecture 11 - Confidence Intervals & Hypothesis Testing for AI**
+    - confidence intervals for means and proportions
+    - null/alternative hypotheses, p-values, Type I and Type II errors
+    - applying hypothesis testing to A/B experiments and model comparisons
+12. **Lecture 12 - Correlation & Simple Linear Regression**
+    - Pearson correlation coefficient, covariance, scatter plots
+    - ordinary least squares: derivation, residuals, R²
+    - MLE interpretation of OLS; bridge to regularized regression in Module 1
+13. **Lecture 13 - Multivariate Statistics: Covariance Matrices & Eigenvectors**
+    - sample covariance matrix, correlation matrix
+    - eigendecomposition of the covariance matrix; variance along principal directions
+    - statistical preview of PCA before its geometric treatment in Module 1
+14. **Lecture 14 - Statistical Model Evaluation**
+    - train / validation / test splits; the bias-variance tradeoff as a statistical phenomenon
+    - cross-validation, bootstrap confidence intervals on metrics
+    - calibration (reliability diagrams), statistical significance of model comparisons (permutation tests)
 
 ### Module 1: Classical Machine Learning (Lectures 1-14)
 
