@@ -15,7 +15,7 @@ By the end of this course, students should be able to:
 
 ## Course structure
 
-The course is organized into five modules. Lecture numbering restarts at 1 within each module.
+The course is organized into eight modules (0–7). Lecture numbering restarts at 1 within each module.
 
 ### Module 0: Statistics for Advanced AI (Lectures 1-10)
 
@@ -230,17 +230,90 @@ Modules 1 and 2.
 5. **Lecture 5 - GNN Applications in Practice**
    - recommendation systems (e.g. PinSAGE), molecule property prediction, fraud detection
 
-## Topics covered in forthcoming modules
+### Module 5: Reinforcement Learning & Alignment (being authored separately)
 
-- **Reinforcement Learning & Alignment** (Module 5, being authored separately) -- MDPs, value
-  functions, policy gradients, PPO, RLHF, DPO. Foundational mathematics treated there, not
-  scattered across Modules 1-3. Forward-referenced in Module 1 L14 (Gaussian Processes / Bayesian
-  optimization) and Module 3 L13 (RLHF overview).
-- **Efficient AI & Deployment** (Module 6, forthcoming) -- LoRA/QLoRA, quantization, distillation,
-  speculative decoding, vLLM, serving infrastructure.
-- **AI Agents & Retrieval** (Module 7, forthcoming) -- ReAct, function calling, multi-agent
-  orchestration, RAG architecture end-to-end, vector databases, ANN search. Forward-referenced
-  in Module 3 L14 (RAG pipeline overview).
+MDPs, value functions, policy gradients, PPO, RLHF, DPO. Foundational mathematics treated
+here, not scattered across Modules 1–3. Forward-referenced in Module 1 L14 (Gaussian Processes
+/ Bayesian optimization) and Module 3 L13 (RLHF overview).
+
+### Module 6: Efficient AI & Deployment (Lectures 1-8)
+
+1. **Lecture 1 - Model Compression: Pruning & Quantization**
+   - structured vs. unstructured pruning; magnitude and gradient-based criteria
+   - post-training quantization (PTQ): INT8, INT4, GPTQ; quantization-aware training (QAT)
+   - trade-offs: accuracy, memory footprint, inference latency
+2. **Lecture 2 - Knowledge Distillation**
+   - teacher–student framework; soft targets and temperature scaling
+   - feature-level distillation (intermediate representations); self-distillation
+   - application to LLM compression (DistilBERT, Alpaca-style distillation)
+3. **Lecture 3 - Parameter-Efficient Fine-Tuning: LoRA & QLoRA**
+   - motivation: full fine-tuning cost at LLM scale
+   - low-rank adaptation (LoRA): decomposition, rank selection, merging at inference
+   - QLoRA: 4-bit base model + LoRA adapters; practical memory budgets
+   - adapter methods, prefix tuning, and prompt tuning as alternatives
+4. **Lecture 4 - Inference Optimization: KV Cache, Speculative Decoding & Continuous Batching**
+   - autoregressive decoding bottleneck; key-value cache mechanics
+   - speculative decoding: draft model + verifier; acceptance rate analysis
+   - continuous batching vs. static batching; PagedAttention (vLLM)
+   - FlashAttention: IO-aware exact attention; memory and speed gains
+5. **Lecture 5 - Serving Infrastructure: vLLM, TensorRT & ONNX**
+   - model serving architecture: load balancing, replicas, routing
+   - vLLM: paged KV cache, throughput benchmarks
+   - TensorRT and ONNX: graph optimization, kernel fusion, deployment pipelines
+   - multi-GPU serving: tensor parallelism, pipeline parallelism at inference time
+6. **Lecture 6 - Evaluation & Benchmarking at Scale**
+   - latency vs. throughput trade-offs; time-to-first-token, tokens-per-second
+   - hardware utilization: MFU (model FLOP utilization), memory bandwidth bounds
+   - standard benchmarks: MLPerf, LM-Eval Harness; cost-per-token analysis
+7. **Lecture 7 - Edge Deployment: Mobile, WASM & Embedded**
+   - on-device inference constraints: memory, power, latency SLAs
+   - CoreML, ONNX Runtime Mobile, TFLite; WebAssembly for browser inference
+   - LLM on-device: llama.cpp, MLC-LLM; model selection for edge targets
+8. **Lecture 8 - Responsible Deployment: Monitoring, Drift & Safety Guardrails**
+   - production monitoring: latency/error dashboards, output logging
+   - distribution shift and concept drift detection; model refresh strategies
+   - safety guardrails: input/output filtering, constitutional AI, red-teaming
+   - deployment checklists: bias auditing, rate limiting, fallback policies
+
+### Module 7: AI Agents, Tool Use & Retrieval (Lectures 1-8)
+
+1. **Lecture 1 - What is an Agent? ReAct, Tool Use & Action Loops**
+   - agents vs. pipelines: when a model controls its own next step
+   - ReAct: interleaving reasoning traces and actions; scratchpad pattern
+   - tool use primitives: search, code execution, API calls; action space design
+   - failure modes: infinite loops, hallucinated tool calls, compounding errors
+2. **Lecture 2 - Function Calling & Structured Outputs**
+   - function/tool schemas: JSON Schema, OpenAPI; how models learn to call tools
+   - structured output generation: constrained decoding, grammar-guided sampling
+   - parallel vs. sequential tool calls; tool result injection into context
+3. **Lecture 3 - Memory: In-Context, External & Episodic**
+   - in-context memory: context window limits, prompt compression, summarization
+   - external memory: key-value stores, document stores, episodic buffers
+   - retrieval-augmented memory vs. fine-tuned memory; MemGPT architecture
+4. **Lecture 4 - Multi-Agent Orchestration**
+   - orchestrator–subagent pattern; task decomposition and delegation
+   - message-passing protocols: shared memory vs. structured communication
+   - frameworks: LangGraph, AutoGen, CrewAI; trust and permission boundaries
+   - failure recovery: retry logic, fallback agents, human-in-the-loop checkpoints
+5. **Lecture 5 - Retrieval-Augmented Generation: Architecture End-to-End**
+   - RAG pipeline: query → retrieve → augment → generate
+   - chunking strategies: fixed-size, sentence, semantic, hierarchical
+   - reranking: cross-encoder rerankers, reciprocal rank fusion
+   - advanced RAG: HyDE, multi-hop retrieval, iterative refinement
+6. **Lecture 6 - Dense Retrieval & Embedding Models**
+   - bi-encoder architecture; contrastive training (in-batch negatives, hard negatives)
+   - embedding model families: E5, BGE, GTE, OpenAI Ada; MTEB benchmark
+   - late interaction models: ColBERT; sparse–dense hybrid retrieval (BM25 + dense)
+7. **Lecture 7 - Vector Databases & ANN Search**
+   - approximate nearest neighbor (ANN) algorithms: HNSW, IVF, PQ, ScaNN
+   - vector database landscape: Pinecone, Weaviate, Qdrant, pgvector
+   - indexing trade-offs: recall vs. latency vs. memory; metadata filtering
+   - scaling: sharding, replication, incremental index updates
+8. **Lecture 8 - Agent Evaluation, Safety & Failure Modes**
+   - agent evaluation frameworks: trajectory scoring, tool-call accuracy, task completion
+   - benchmarks: AgentBench, WebArena, SWE-bench; human vs. automated eval
+   - safety: prompt injection attacks, tool misuse, sandboxing code execution
+   - alignment in agentic systems: minimal footprint, reversibility, human oversight
 
 ## Topics intentionally excluded
 
