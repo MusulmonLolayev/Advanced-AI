@@ -135,6 +135,58 @@ This is a chicken-and-egg problem -- it cannot be solved in one shot by a closed
 \end{rlpitfall}
 \end{frame}
 
+\begin{frame}{k-Means Already Solves a Chicken-and-Egg}
+\begin{itemize}
+  \item $k$-Means has the same chicken-and-egg: to assign points you need centers; to update centers you need assignments.
+  \pause
+  \item $k$-Means breaks the deadlock by alternating two frozen sub-problems:
+  \begin{enumerate}
+    \item \textbf{Freeze centers, update assignments:} assign every point to its nearest center -- a hard, all-or-nothing 0/1 label.
+    \item \textbf{Freeze assignments, update centers:} move each center to the mean of its assigned points.
+  \end{enumerate}
+  \pause
+  \item EM uses the \emph{identical} alternating structure -- the only change is that the hard 0/1 assignment becomes a soft probability $\gamma_{nk}$.
+\end{itemize}
+
+\pause
+\begin{rlintuition}
+EM is $k$-Means with soft labels. The freeze-one-update-the-other rhythm is the same; only the sharpness of the assignment changes.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{k-Means Numerical Trace: Four Points}
+\small
+\begin{itemize}
+  \item Data: $x \in \{1, 2, 8, 9\}$. Initialize: $\mu_1^{(0)}=0,\ \mu_2^{(0)}=10$.
+  \pause
+  \item \textbf{Step 1 -- freeze centers, update assignments} (nearest center wins):
+\end{itemize}
+
+\pause
+\begin{center}
+\begin{tabular}{cccc}
+\hline
+$x$ & dist to $\mu_1=0$ & dist to $\mu_2=10$ & hard label \\
+\hline
+1 & 1 & 9 & cluster 1 \\
+2 & 2 & 8 & cluster 1 \\
+8 & 8 & 2 & cluster 2 \\
+9 & 9 & 1 & cluster 2 \\
+\hline
+\end{tabular}
+\end{center}
+
+\pause
+\begin{itemize}
+  \item \textbf{Step 2 -- freeze assignments, update centers} (ordinary mean of each cluster):
+  \[
+    \mu_1^{(1)} = \tfrac{1+2}{2} = 1.5, \qquad \mu_2^{(1)} = \tfrac{8+9}{2} = 8.5.
+  \]
+  \pause
+  \item Hard labels made the update exact: one iteration reaches the true centers. Now we run the same two steps with \emph{soft} labels instead.
+\end{itemize}
+\end{frame}
+
 \begin{frame}{The EM Idea}
 \begin{itemize}
   \item \textbf{E-step (Expectation):} fix the current parameters, compute the probability that each point belongs to each component.
@@ -205,14 +257,15 @@ $\gamma_{nk}$ is a \emph{soft assignment}: how much of point $n$'s ``mass'' is e
 \begin{frame}{Worked Numerical Example: Setup}
 \small
 \begin{itemize}
-  \item Four 1D points: $x \in \{1, 2, 8, 9\}$ -- two natural clusters, near $1.5$ and near $8.5$.
+  \item \textbf{Same data, same initialization as the $k$-Means trace:} $x \in \{1, 2, 8, 9\}$, $\mu_1^{(0)}=0$, $\mu_2^{(0)}=10$.
+  \item Now we run EM -- the only change is that the hard 0/1 labels become soft responsibilities $\gamma_{nk}$.
   \item Two components, equal weight $\pi_1=\pi_2=0.5$, shared known $\sigma=3$.
-  \item Deliberately bad initialization: $\mu_1^{(0)}=0$, $\mu_2^{(0)}=10$.
   \pause
-  \item Because $\sigma$ is shared, Eq.~\eqref{eq:responsibility} simplifies to the same sigmoid (logistic) curve from earlier lectures, now applied to the gap between squared distances:
+  \item Because $\sigma$ is shared and weights are equal, Eq.~\eqref{eq:responsibility} reduces to the sigmoid applied to the gap in squared distances:
   \[
     \gamma_{n1} = \frac{1}{1+\exp\!\left(-\dfrac{(x_n-\mu_2)^2-(x_n-\mu_1)^2}{2\sigma^2}\right)}.
   \]
+  \item Compare to $k$-Means: that formula returns a number in $(0,1)$ instead of a hard 0 or 1.
 \end{itemize}
 \end{frame}
 
