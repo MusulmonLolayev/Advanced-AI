@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Generate vector Gaussian Mixture Model / EM teaching graphics as PDF (and SVG) files.
+"""Generate GMM & EM lecture figures: 2D, K=3, 6-point worked example.
 
-Uses pandas to build the underlying numeric tables (density curves, the
-worked-example responsibility table, the synthetic 2D dataset) and TikZ/pgfplots
-to render them as vector graphics, compiled with pdflatex. Each PDF is also
-converted to SVG via dvisvgm as a second artifact; the slide deck itself keeps
-including the PDFs, matching every other lecture's figures.
+Pipeline: pandas DataFrame → TikZ/pgfplots string → pdflatex → PDF + SVG.
+
+Figures produced
+----------------
+kmeans_limitation.pdf   – hard k-Means boundary vs GMM soft responsibility
+em_init.pdf             – 6-point dataset with initial component positions
+em_iter_panels.pdf      – 2×2 grid: iterations 0, 1, 2, 3
+covariance_shapes.pdf   – spherical / diagonal / full covariance ellipses
+em_convergence.pdf      – log-likelihood convergence across EM iterations
 """
 
 from __future__ import annotations
@@ -21,220 +25,410 @@ OUT_DIR = BASE_DIR / "figures" / "gmm_em"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# ─── compile helper ───────────────────────────────────────────────────────────
+
 def compile_tikz(content: str, name: str) -> None:
-    """Write TikZ content to a .tex file and compile to PDF."""
+    """Write TikZ content to a .tex file and compile to PDF + SVG."""
     tex_path = OUT_DIR / f"{name}.tex"
     pdf_path = OUT_DIR / f"{name}.pdf"
-
     tex_path.write_text(content)
-
     result = subprocess.run(
-        ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-output-directory", str(OUT_DIR), str(tex_path)],
-        capture_output=True,
-        text=True,
-        cwd=str(OUT_DIR),
+        ["pdflatex", "-interaction=nonstopmode", "-halt-on-error",
+         "-output-directory", str(OUT_DIR), str(tex_path)],
+        capture_output=True, text=True, cwd=str(OUT_DIR),
     )
-
     if result.returncode == 0:
         print(f"✓ {name}.pdf")
         svg_path = OUT_DIR / f"{name}.svg"
         svg_result = subprocess.run(
             ["dvisvgm", "--pdf", str(pdf_path), "-o", str(svg_path)],
-            capture_output=True,
-            text=True,
-            cwd=str(OUT_DIR),
+            capture_output=True, text=True, cwd=str(OUT_DIR),
         )
-        if svg_result.returncode == 0:
-            print(f"✓ {name}.svg")
-        else:
-            print(f"✗ {name}.svg - conversion failed")
-            print(svg_result.stderr[-1500:] if svg_result.stderr else "")
+        print(f"✓ {name}.svg" if svg_result.returncode == 0 else f"✗ {name}.svg")
         for ext in [".aux", ".log", ".tex"]:
             (OUT_DIR / f"{name}{ext}").unlink(missing_ok=True)
     else:
-        print(f"✗ {name}.pdf - compilation failed")
-        print(result.stdout[-1500:] if result.stdout else "")
+        print(f"✗ {name}.pdf  — pdflatex failed")
+        print(result.stdout[-2000:] if result.stdout else "")
 
 
-def gaussian_pdf(x: np.ndarray, mu: float, sigma: float) -> np.ndarray:
-    return np.exp(-((x - mu) ** 2) / (2 * sigma**2)) / (sigma * np.sqrt(2 * np.pi))
+# ─── dataset ──────────────────────────────────────────────────────────────────
+
+points_df = pd.DataFrame({
+    "n":    [1,   2,    3,    4,   5,   6],
+    "x1":   [0.,  2.,  10.,   8.,  5.,  5.],
+    "x2":   [0.,  0.,   0.,   0.,  9.,  7.],
+    "comp": [1,   1,    2,    2,   3,   3],   # true component label
+})
+X = points_df[["x1", "x2"]].values   # (6, 2)
+N, D = X.shape
+K = 3
+SIGMA = 4.0   # shared isotropic, fixed throughout
+
+MU_INIT = np.array([[0., 0.], [10., 0.], [5., 10.]])
+PI = np.ones(K) / K
+
+# ─── EM helpers ───────────────────────────────────────────────────────────────
+
+def log_gaussian(xn: np.ndarray, mu: np.ndarray, sigma: float) -> float:
+    """Log N(xn | mu, sigma^2 I)."""
+    diff = xn - mu
+    return -0.5 * (D * np.log(2 * np.pi * sigma**2) + np.dot(diff, diff) / sigma**2)
 
 
-def responsibility1(x: np.ndarray, mu1: float, mu2: float, sigma: float) -> np.ndarray:
-    """Equal-prior, equal-sigma responsibility of component 1 (sigmoid form)."""
-    d1sq = (x - mu1) ** 2
-    d2sq = (x - mu2) ** 2
-    return 1.0 / (1.0 + np.exp(-(d2sq - d1sq) / (2 * sigma**2)))
+def estep(X: np.ndarray, mu: np.ndarray, sigma: float, pi: np.ndarray) -> np.ndarray:
+    """E-step: compute (N, K) responsibility matrix."""
+    n_pts = X.shape[0]
+    log_g = np.array([
+        [np.log(pi[k]) + log_gaussian(X[n], mu[k], sigma) for k in range(K)]
+        for n in range(n_pts)
+    ])
+    log_g -= log_g.max(axis=1, keepdims=True)   # numerical stability
+    g = np.exp(log_g)
+    return g / g.sum(axis=1, keepdims=True)
 
 
-# ============================================================================
-# Figure 0: Intro contrast -- one boundary point, forced choice vs. soft probability
-# ============================================================================
-intro_df = pd.DataFrame(
-    [
-        ("A1", 0.6, 0.8, "A"), ("A2", 1.0, 1.3, "A"),
-        ("A3", 1.4, 0.6, "A"), ("A4", 0.8, 1.6, "A"),
-        ("B1", 4.4, 3.2, "B"), ("B2", 3.8, 3.8, "B"),
-        ("B3", 4.0, 2.8, "B"), ("B4", 4.6, 3.6, "B"),
-    ],
-    columns=["id", "x", "y", "cluster"],
-)
-intro_cA = intro_df.loc[intro_df["cluster"] == "A", ["x", "y"]].mean()
-intro_cB = intro_df.loc[intro_df["cluster"] == "B", ["x", "y"]].mean()
-intro_mid = (intro_cA + intro_cB) / 2.0
-intro_direction = np.array([intro_cB.x - intro_cA.x, intro_cB.y - intro_cA.y])
-intro_perp = np.array([-intro_direction[1], intro_direction[0]])
-intro_perp_unit = intro_perp / np.linalg.norm(intro_perp)
-intro_boundary_a = intro_mid.values + 2.5 * intro_perp_unit
-intro_boundary_b = intro_mid.values - 2.5 * intro_perp_unit
-MX, MY, PIE_R = float(intro_mid.x), float(intro_mid.y), 0.30
+def mstep(X: np.ndarray, gamma: np.ndarray) -> np.ndarray:
+    """M-step: update means (Sigma and pi fixed for this example)."""
+    Nk = gamma.sum(axis=0)            # (K,)
+    return (gamma.T @ X) / Nk[:, None]  # (K, D)
 
 
-def intro_marks() -> str:
-    out = []
-    for _, row in intro_df.iterrows():
-        color = "lightblue" if row["cluster"] == "A" else "lightcoral"
-        out.append(f"\\fill[{color}, draw=black] ({row['x']:.3f},{row['y']:.3f}) circle (3.0pt);\n    ")
-    return "".join(out)
+def log_likelihood(X: np.ndarray, mu: np.ndarray, sigma: float, pi: np.ndarray) -> float:
+    ll = 0.0
+    for n in range(N):
+        comp_ll = [pi[k] * np.exp(log_gaussian(X[n], mu[k], sigma)) for k in range(K)]
+        ll += np.log(sum(comp_ll))
+    return ll
 
 
-intro_panel_marks = intro_marks()
+# Run 4 EM iterations, store trajectory
+mu_traj = [MU_INIT.copy()]
+gamma_traj: list[np.ndarray] = []
+ll_traj = [log_likelihood(X, MU_INIT, SIGMA, PI)]
 
-hard_vs_soft_tex = (
+for _ in range(4):
+    g = estep(X, mu_traj[-1], SIGMA, PI)
+    gamma_traj.append(g)
+    mu_new = mstep(X, g)
+    mu_traj.append(mu_new.copy())
+    ll_traj.append(log_likelihood(X, mu_new, SIGMA, PI))
+
+# ── print trajectory so slide values can be verified ──────────────────────────
+print("=== EM trajectory ===")
+for i, (mu, ll) in enumerate(zip(mu_traj, ll_traj)):
+    print(f"  iter {i}: μ₁={mu[0].round(2)}, μ₂={mu[1].round(2)}, μ₃={mu[2].round(2)}, LL={ll:.3f}")
+
+print("\n=== Responsibilities after iter-0 E-step ===")
+g0 = gamma_traj[0]
+for n in range(N):
+    print(f"  x{n+1}={X[n]}: γ={g0[n].round(4)}")
+
+# ─── geometry helpers ─────────────────────────────────────────────────────────
+
+def circle_coords(cx: float, cy: float, r: float = SIGMA, n: int = 60) -> str:
+    """pgfplots coordinate string for a circle of radius r centred at (cx,cy)."""
+    theta = np.linspace(0, 2 * np.pi, n, endpoint=False)
+    pts = [(cx + r * np.cos(t), cy + r * np.sin(t)) for t in theta]
+    return " ".join(f"({x:.2f},{y:.2f})" for x, y in pts)
+
+
+def covariance_ellipse(cov: np.ndarray, n_std: float = 1.5, n: int = 100) -> tuple[np.ndarray, np.ndarray]:
+    eigvals, eigvecs = np.linalg.eigh(cov)
+    theta = np.linspace(0, 2 * np.pi, n)
+    circle = np.vstack([np.cos(theta), np.sin(theta)])
+    pts = n_std * (eigvecs @ np.diag(np.sqrt(eigvals))) @ circle
+    return pts[0], pts[1]
+
+
+# ─── shared colour definitions ────────────────────────────────────────────────
+
+COLOR_DEFS = r"""
+\definecolor{comp1}{RGB}{30,80,160}
+\definecolor{comp1bg}{RGB}{173,216,230}
+\definecolor{comp2}{RGB}{160,30,30}
+\definecolor{comp2bg}{RGB}{240,128,128}
+\definecolor{comp3}{RGB}{0,120,60}
+\definecolor{comp3bg}{RGB}{144,238,144}
+"""
+
+COMP_FG = ["comp1", "comp2", "comp3"]
+COMP_BG = ["comp1bg", "comp2bg", "comp3bg"]
+MARKERS = ["*", "square*", "triangle*"]
+
+
+# ─── helper: one pgfplots panel for an EM iteration ──────────────────────────
+
+def em_panel(mu: np.ndarray, iter_num: int, width: str = "4.2cm",
+             show_labels: bool = False) -> str:
+    """Return a complete tikzpicture for one EM iteration panel."""
+
+    circles = "".join(
+        f"  \\addplot[{COMP_FG[k]}, densely dashed, line width=0.8, opacity=0.75]"
+        f" coordinates {{ {circle_coords(*mu[k])} }} -- cycle;\n"
+        for k in range(K)
+    )
+
+    means = "".join(
+        f"  \\addplot[only marks, mark=+, mark size=5pt, line width=1.5, {COMP_FG[k]}]"
+        f" coordinates {{({mu[k][0]:.2f},{mu[k][1]:.2f})}};\n"
+        for k in range(K)
+    )
+
+    if show_labels:
+        for k in range(K):
+            cx, cy = mu[k]
+            anchor = "south west" if cy >= 5 else "north west"
+            means += (
+                f"  \\node[{COMP_FG[k]}, font=\\tiny, anchor={anchor}]"
+                f" at (axis cs:{cx:.2f},{cy:.2f}) {{$\\mu_{k+1}$}};\n"
+            )
+
+    data_pts = "".join(
+        f"  \\addplot[only marks, mark={MARKERS[int(r.comp)-1]}, mark size=2.8pt,"
+        f" fill={COMP_BG[int(r.comp)-1]}, draw=black, line width=0.4]"
+        f" coordinates {{({r.x1:.1f},{r.x2:.1f})}};\n"
+        for r in points_df.itertuples()
+    )
+
+    if show_labels:
+        for r in points_df.itertuples():
+            anchor = "south east" if r.x1 <= 5 else "south west"
+            data_pts += (
+                f"  \\node[font=\\tiny, anchor={anchor}]"
+                f" at (axis cs:{r.x1:.1f},{r.x2:.1f}) {{$x_{{{r.n}}}$}};\n"
+            )
+
+    return rf"""
+\begin{{tikzpicture}}
+\begin{{axis}}[
+  width={width}, height={width},
+  xmin=-2, xmax=12, ymin=-2, ymax=12,
+  title={{\small Iteration {iter_num}}},
+  title style={{yshift=-0.4ex}},
+  xlabel={{$x^{{(1)}}$}}, ylabel={{$x^{{(2)}}$}},
+  xlabel style={{font=\tiny, yshift=0.5ex}},
+  ylabel style={{font=\tiny, xshift=0.5ex}},
+  tick label style={{font=\tiny}},
+  xtick={{0,5,10}}, ytick={{0,5,10}},
+  grid=major, grid style={{gray!15}},
+]
+{circles}{means}{data_pts}
+\end{{axis}}
+\end{{tikzpicture}}"""
+
+
+# =============================================================================
+# Figure 1: k-Means hard boundary vs GMM soft responsibility
+# =============================================================================
+# Use 6 working-example points + 1 ambiguous point at (5, 3.5) that is
+# approximately equidistant from all three cluster centres.
+
+ambig = np.array([5.0, 3.5])
+all_pts_df = pd.concat([
+    points_df[["x1","x2","comp"]],
+    pd.DataFrame({"x1":[ambig[0]],"x2":[ambig[1]],"comp":[0]}),  # comp=0 = ambiguous
+], ignore_index=True)
+
+# k-Means: assign ambiguous point to nearest cluster mean (use post-convergence means)
+mu_converged = mu_traj[-1]
+dists_ambig = np.array([np.linalg.norm(ambig - mu_converged[k]) for k in range(K)])
+kmeans_label = int(np.argmin(dists_ambig))   # 0-indexed
+
+# GMM soft: responsibility of ambiguous point
+g_ambig = estep(ambig[None, :], mu_converged, SIGMA, PI)[0]   # (K,)
+print(f"\nAmbiguous point (5,3.5) responsibilities: {g_ambig.round(3)}")
+
+# Sector angles for pie in right panel (cumulative, degrees)
+angles_deg = np.concatenate([[0], np.cumsum(g_ambig) * 360])
+PIE_R = 0.55    # radius of pie glyph in data units
+
+
+def pie_sector(cx: float, cy: float, a1: float, a2: float, color: str, r: float = PIE_R) -> str:
+    """One pie sector in TikZ via addplot fill."""
+    theta = np.linspace(np.radians(a1), np.radians(a2), 30)
+    pts = [(cx, cy)] + [(cx + r * np.cos(t), cy + r * np.sin(t)) for t in theta]
+    coords = " ".join(f"({x:.3f},{y:.3f})" for x, y in pts)
+    return (
+        f"  \\addplot[fill={color}, draw=black, line width=0.4]"
+        f" coordinates {{ {coords} }} -- cycle;\n"
+    )
+
+
+def hard_markers(df: pd.DataFrame) -> str:
+    out = ""
+    for r in df.itertuples():
+        if r.comp == 0:
+            # ambiguous point: forced assignment
+            k = kmeans_label
+            out += (
+                f"  \\addplot[only marks, mark={MARKERS[k]}, mark size=3pt,"
+                f" fill={COMP_BG[k]}, draw=black, line width=0.5]"
+                f" coordinates {{({r.x1},{r.x2})}};\n"
+            )
+        else:
+            k = int(r.comp) - 1
+            out += (
+                f"  \\addplot[only marks, mark={MARKERS[k]}, mark size=2.8pt,"
+                f" fill={COMP_BG[k]}, draw=black, line width=0.4]"
+                f" coordinates {{({r.x1},{r.x2})}};\n"
+            )
+    # forced-label annotation
+    out += (
+        f"  \\node[font=\\tiny, align=center, text=black] at (axis cs:5,1.8)"
+        f" {{forced to\\\\comp. {kmeans_label+1}}};\n"
+    )
+    return out
+
+
+def soft_markers(df: pd.DataFrame) -> str:
+    out = ""
+    for r in df.itertuples():
+        if r.comp == 0:
+            # pie chart for ambiguous point
+            for k in range(K):
+                out += pie_sector(r.x1, r.x2, angles_deg[k], angles_deg[k+1], COMP_BG[k])
+            out += (
+                f"  \\draw[black, line width=0.5] (axis cs:{r.x1},{r.x2})"
+                f" circle [radius={PIE_R}];\n"
+            )
+            out += (
+                f"  \\node[font=\\tiny, align=center, text=black] at (axis cs:5,1.8)"
+                f" {{soft: {g_ambig[0]:.2f}/{g_ambig[1]:.2f}/{g_ambig[2]:.2f}}};\n"
+            )
+        else:
+            k = int(r.comp) - 1
+            out += (
+                f"  \\addplot[only marks, mark={MARKERS[k]}, mark size=2.8pt,"
+                f" fill={COMP_BG[k]}, draw=black, line width=0.4]"
+                f" coordinates {{({r.x1},{r.x2})}};\n"
+            )
+    return out
+
+
+AXIS_COMMON = r"""  xmin=-2, xmax=12, ymin=-2, ymax=12,
+  width=5.2cm, height=5.2cm,
+  xlabel={$x^{(1)}$}, ylabel={$x^{(2)}$},
+  xlabel style={font=\small}, ylabel style={font=\small},
+  tick label style={font=\tiny},
+  xtick={0,5,10}, ytick={0,5,10},
+  grid=major, grid style={gray!15},"""
+
+kmeans_limitation_tex = (
     r"""
 \documentclass[crop]{standalone}
 \usepackage{xcolor}
-\usepackage{tikz}
-\definecolor{lightblue}{RGB}{173,216,230}
-\definecolor{lightcoral}{RGB}{240,128,128}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+"""
+    + COLOR_DEFS
+    + r"""
 \begin{document}
 \begin{tabular}{cc}
-\textbf{$k$-Means: forced choice} & \textbf{GMM: soft probability} \\[3pt]
+\textbf{$k$-Means: forced assignment} & \textbf{GMM: soft responsibility} \\[4pt]
 \begin{tikzpicture}
-  \begin{scope}
-    \clip (-0.5,-0.5) rectangle (5.1,4.3);
-    \draw[dashed, thick, gray] ("""
-    + f"{intro_boundary_a[0]:.3f},{intro_boundary_a[1]:.3f}) -- ({intro_boundary_b[0]:.3f},{intro_boundary_b[1]:.3f}"
-    + r""");
-  \end{scope}
+\begin{axis}[
 """
-    + intro_panel_marks
-    + r"""\fill[lightblue, draw=black, line width=0.8pt] ("""
-    + f"{MX:.3f},{MY:.3f}) circle ({PIE_R:.2f}"
-    + r""");
-  \node[font=\tiny, align=center] at ("""
-    + f"{MX:.3f},{MY - 0.65:.3f}"
-    + r""") {forced to cluster $A$\\(despite 50/50 evidence)};
+    + AXIS_COMMON
+    + r"""
+  title={\small ambiguous point forced to one cluster},
+  title style={font=\footnotesize},
+]
+"""
+    + hard_markers(all_pts_df)
+    + r"""
+\end{axis}
 \end{tikzpicture}
 &
 \begin{tikzpicture}
+\begin{axis}[
 """
-    + intro_panel_marks
-    + r"""\begin{scope}
-    \clip ("""
-    + f"{MX - PIE_R:.3f},{MY - PIE_R:.3f}) rectangle ({MX:.3f},{MY + PIE_R:.3f}"
-    + r""");
-    \fill[lightblue] ("""
-    + f"{MX:.3f},{MY:.3f}) circle ({PIE_R:.2f}"
-    + r""");
-  \end{scope}
-  \begin{scope}
-    \clip ("""
-    + f"{MX:.3f},{MY - PIE_R:.3f}) rectangle ({MX + PIE_R:.3f},{MY + PIE_R:.3f}"
-    + r""");
-    \fill[lightcoral] ("""
-    + f"{MX:.3f},{MY:.3f}) circle ({PIE_R:.2f}"
-    + r""");
-  \end{scope}
-  \draw[black, line width=0.8pt] ("""
-    + f"{MX:.3f},{MY:.3f}) circle ({PIE_R:.2f}"
-    + r""");
-  \node[font=\tiny, align=center] at ("""
-    + f"{MX:.3f},{MY - 0.65:.3f}"
-    + r""") {$p(A)=0.50,\ p(B)=0.50$\\(both kept)};
+    + AXIS_COMMON
+    + r"""
+  title={\small ambiguous point gets fractional probability},
+  title style={font=\footnotesize},
+]
+"""
+    + soft_markers(all_pts_df)
+    + r"""
+\end{axis}
 \end{tikzpicture}
 \end{tabular}
 \end{document}
 """
 )
 
-compile_tikz(hard_vs_soft_tex, "hard_vs_soft_intro")
+compile_tikz(kmeans_limitation_tex, "kmeans_limitation")
 
 
-# ============================================================================
-# Figure 0a: Refresher -- the 1D Gaussian (Normal) distribution
-# ============================================================================
-REF_MU, REF_SIGMA = 0.0, 1.5
-ref_x = np.linspace(-5, 5, 201)
-ref_y = gaussian_pdf(ref_x, REF_MU, REF_SIGMA)
-ref_curve_pts = " ".join(f"({x:.3f},{y:.5f})" for x, y in zip(ref_x, ref_y))
+# =============================================================================
+# Figure 2: Initial dataset — 6 points + initial component positions
+# =============================================================================
 
-band_x = np.linspace(REF_MU - REF_SIGMA, REF_MU + REF_SIGMA, 41)
-band_y = gaussian_pdf(band_x, REF_MU, REF_SIGMA)
-band_pts = " ".join(f"({x:.3f},{y:.5f})" for x, y in zip(band_x, band_y))
+init_panel = em_panel(MU_INIT, iter_num=0, width="6.5cm", show_labels=True)
 
-peak_y = float(gaussian_pdf(np.array([REF_MU]), REF_MU, REF_SIGMA)[0])
-ymax = peak_y * 1.35
-mu_line_top = peak_y * 1.05
-mu_label_y = peak_y * 1.20
-sigma_arrow_y = peak_y * 0.42
-sigma_label_y = peak_y * 0.54
-
-gaussian_1d_tex = rf"""
-\documentclass[crop]{{standalone}}
-\usepackage{{xcolor}}
-\usepackage{{amsmath}}
-\usepackage{{pgfplots}}
-\pgfplotsset{{compat=1.18}}
-\definecolor{{darkblue}}{{RGB}}{{0,0,139}}
-\definecolor{{lightblue}}{{RGB}}{{173,216,230}}
-\begin{{document}}
-\begin{{tikzpicture}}
-  \begin{{axis}}[
-    width=9cm,
-    height=5.0cm,
-    xlabel={{$x$}},
-    ylabel={{density}},
-    grid,
-    grid style=gray!20,
-    xmin=-5, xmax=5,
-    ymin=0, ymax={ymax:.4f},
-  ]
-    \addplot[fill=lightblue, draw=none, opacity=0.6] coordinates {{
-{band_pts} ({REF_MU + REF_SIGMA:.3f},0.0) ({REF_MU - REF_SIGMA:.3f},0.0)
-    }} \closedcycle;
-    \addplot[line width=1.8, color=darkblue] coordinates {{
-{ref_curve_pts}
-    }};
-    \draw[dashed, gray] (axis cs: {REF_MU:.3f},0) -- (axis cs: {REF_MU:.3f},{mu_line_top:.4f});
-    \node[font=\small] at (axis cs: {REF_MU:.3f},{mu_label_y:.4f}) {{$\mu$}};
-    \draw[latex-latex] (axis cs: {REF_MU - REF_SIGMA:.3f},{sigma_arrow_y:.4f}) -- (axis cs: {REF_MU + REF_SIGMA:.3f},{sigma_arrow_y:.4f});
-    \node[font=\small] at (axis cs: {REF_MU:.3f},{sigma_label_y:.4f}) {{$\sigma$}};
-  \end{{axis}}
-\end{{tikzpicture}}
-\end{{document}}
+em_init_tex = (
+    r"""
+\documentclass[crop]{standalone}
+\usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 """
+    + COLOR_DEFS
+    + r"""
+\begin{document}
+"""
+    + init_panel
+    + r"""
+\end{document}
+"""
+)
 
-compile_tikz(gaussian_1d_tex, "gaussian_1d_refresher")
+compile_tikz(em_init_tex, "em_init")
 
 
-# ============================================================================
-# Figure 0b: Refresher -- covariance shapes a multivariate Gaussian "blob"
-# ============================================================================
-def covariance_ellipse(cov: np.ndarray, n_std: float = 1.5, n_points: int = 100) -> tuple[np.ndarray, np.ndarray]:
-    """Points on the n_std-sigma contour ellipse of a 2D covariance matrix."""
-    eigvals, eigvecs = np.linalg.eigh(cov)
-    theta = np.linspace(0, 2 * np.pi, n_points)
-    circle = np.vstack([np.cos(theta), np.sin(theta)])
-    sqrt_cov = eigvecs @ np.diag(np.sqrt(eigvals))
-    pts = n_std * (sqrt_cov @ circle)
-    return pts[0], pts[1]
+# =============================================================================
+# Figure 3: 2×2 grid of EM at iterations 0, 1, 2, 3
+# =============================================================================
 
+panels = [em_panel(mu_traj[i], iter_num=i, width="3.1cm") for i in range(4)]
+
+em_iter_panels_tex = (
+    r"""
+\documentclass[crop]{standalone}
+\usepackage{xcolor}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+"""
+    + COLOR_DEFS
+    + r"""
+\begin{document}
+\begin{tabular}{cccc}
+"""
+    + panels[0]
+    + r" & "
+    + panels[1]
+    + r" & "
+    + panels[2]
+    + r" & "
+    + panels[3]
+    + r"""
+\end{tabular}
+\end{document}
+"""
+)
+
+compile_tikz(em_iter_panels_tex, "em_iter_panels")
+
+
+# =============================================================================
+# Figure 4: Covariance shapes (spherical / diagonal / full)
+# =============================================================================
 
 cov_specs = [
-    ("spherical (isotropic)", np.array([[1.0, 0.0], [0.0, 1.0]])),
-    ("diagonal", np.array([[2.2, 0.0], [0.0, 0.5]])),
-    ("full (correlated)", np.array([[2.0, 1.3], [1.3, 1.2]])),
+    ("spherical ($\\Sigma=\\sigma^2 I$)", np.array([[1.0, 0.0], [0.0, 1.0]])),
+    ("diagonal $\\Sigma$",                np.array([[2.2, 0.0], [0.0, 0.5]])),
+    ("full $\\Sigma$ (correlated)",       np.array([[2.0, 1.3], [1.3, 1.2]])),
 ]
 
 
@@ -245,35 +439,30 @@ def ellipse_panel(label: str, cov: np.ndarray) -> str:
         r"""\begin{tikzpicture}
   \draw[-latex, gray] (-3,0) -- (3,0);
   \draw[-latex, gray] (0,-3) -- (0,3);
-  \draw[line width=1.6, color=darkblue, fill=lightblue, fill opacity=0.35] """
+  \draw[line width=1.6, comp1, fill=comp1bg, fill opacity=0.35] """
         + outline
         + r""" -- cycle;
-  \node[font=\small] at (0,-3.4) {"""
+  \node[font=\small] at (0,-3.5) {"""
         + label
         + r"""};
 \end{tikzpicture}"""
     )
 
 
-cov_panels = [ellipse_panel(label, cov) for label, cov in cov_specs]
+cov_panels = [ellipse_panel(lab, cov) for lab, cov in cov_specs]
 
 covariance_shapes_tex = (
     r"""
 \documentclass[crop]{standalone}
 \usepackage{xcolor}
 \usepackage{tikz}
-\definecolor{darkblue}{RGB}{0,0,139}
-\definecolor{lightblue}{RGB}{173,216,230}
+"""
+    + COLOR_DEFS
+    + r"""
 \begin{document}
 \begin{tabular}{ccc}
 """
-    + cov_panels[0]
-    + r""" &
-"""
-    + cov_panels[1]
-    + r""" &
-"""
-    + cov_panels[2]
+    + cov_panels[0] + r" & " + cov_panels[1] + r" & " + cov_panels[2]
     + r"""
 \end{tabular}
 \end{document}
@@ -283,371 +472,43 @@ covariance_shapes_tex = (
 compile_tikz(covariance_shapes_tex, "covariance_shapes")
 
 
-# ============================================================================
-# Figure 1: 1D mixture density = weighted sum of two Gaussian components
-# ============================================================================
-MU1, MU2, SIGMA = 0.0, 10.0, 3.0
-density_df = pd.DataFrame({"x": np.linspace(-5, 15, 201)})
-density_df["comp1"] = 0.5 * gaussian_pdf(density_df["x"], MU1, SIGMA)
-density_df["comp2"] = 0.5 * gaussian_pdf(density_df["x"], MU2, SIGMA)
-density_df["mixture"] = density_df["comp1"] + density_df["comp2"]
+# =============================================================================
+# Figure 5: Log-likelihood convergence — actual values from the EM run
+# =============================================================================
 
-comp1_pts = " ".join(f"({r.x:.3f},{r.comp1:.5f})" for r in density_df.itertuples())
-comp2_pts = " ".join(f"({r.x:.3f},{r.comp2:.5f})" for r in density_df.itertuples())
-mixture_pts = " ".join(f"({r.x:.3f},{r.mixture:.5f})" for r in density_df.itertuples())
+ll_df = pd.DataFrame({"t": np.arange(len(ll_traj)), "ll": ll_traj})
+ll_pts = " ".join(f"({r.t},{r.ll:.4f})" for r in ll_df.itertuples())
+ymin_plot = ll_traj[0] - 2
+ymax_plot = ll_traj[-1] + 2
 
-mixture_density_tex = (
-    r"""
-\documentclass[crop]{standalone}
-\usepackage{xcolor}
-\usepackage{amsmath}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.18}
-\definecolor{darkblue}{RGB}{0,0,139}
-\definecolor{darkred}{RGB}{139,0,0}
-\definecolor{darkgreen}{RGB}{0,100,0}
-\begin{document}
-\begin{tikzpicture}
-  \begin{axis}[
-    width=10cm,
-    height=4.0cm,
-    xlabel={$x$},
-    ylabel={density},
-    grid,
-    grid style=gray!20,
-    xmin=-5, xmax=15,
-    ymin=0, ymax=0.09,
-    legend pos=north east,
-    legend style={font=\tiny},
+em_convergence_tex = rf"""
+\documentclass[crop]{{standalone}}
+\usepackage{{xcolor}}
+\usepackage{{pgfplots}}
+\pgfplotsset{{compat=1.18}}
+\definecolor{{darkgreen}}{{RGB}}{{0,120,60}}
+\begin{{document}}
+\begin{{tikzpicture}}
+  \begin{{axis}}[
+    width=10cm, height=4.6cm,
+    xlabel={{EM iteration}},
+    ylabel={{log-likelihood $\ell(\theta)$}},
+    grid=major, grid style={{gray!20}},
+    xmin=0, xmax={len(ll_traj)-1},
+    ymin={ymin_plot:.1f}, ymax={ymax_plot:.1f},
+    xtick={{{",".join(str(i) for i in range(len(ll_traj)))}}},
+    tick label style={{font=\small}},
   ]
-    \addplot[line width=1.2, dashed, color=darkblue] coordinates {
+    \addplot[line width=2, color=darkgreen, mark=*, mark size=2] coordinates {{
+{ll_pts}
+    }};
+    \draw[dashed, gray] (axis cs:0,{ll_traj[-1]:.4f}) -- (axis cs:{len(ll_traj)-1},{ll_traj[-1]:.4f});
+    \node[font=\tiny, gray, anchor=west] at (axis cs:0.2,{ll_traj[-1]+0.8:.2f}) {{plateau}};
+  \end{{axis}}
+\end{{tikzpicture}}
+\end{{document}}
 """
-    + comp1_pts
-    + r"""
-    };
-    \addlegendentry{$\pi_1\mathcal{N}(x\mid\mu_1,\sigma^2)$}
-    \addplot[line width=1.2, dashed, color=darkred] coordinates {
-"""
-    + comp2_pts
-    + r"""
-    };
-    \addlegendentry{$\pi_2\mathcal{N}(x\mid\mu_2,\sigma^2)$}
-    \addplot[line width=2.2, color=darkgreen] coordinates {
-"""
-    + mixture_pts
-    + r"""
-    };
-    \addlegendentry{mixture $p(x)$}
-    \draw[dashed, gray] (axis cs: 0,0) -- (axis cs: 0,0.075);
-    \draw[dashed, gray] (axis cs: 10,0) -- (axis cs: 10,0.075);
-    \node[font=\tiny, gray] at (axis cs: 0, 0.080) {$\mu_1$};
-    \node[font=\tiny, gray] at (axis cs: 10, 0.080) {$\mu_2$};
-  \end{axis}
-\end{tikzpicture}
-\end{document}
-"""
-)
-
-compile_tikz(mixture_density_tex, "mixture_density_1d")
-
-
-# ============================================================================
-# Figure 2: E-step responsibilities for the worked example (mu1=0, mu2=10, sigma=3)
-# ============================================================================
-resp_df = pd.DataFrame({"x": [1.0, 2.0, 8.0, 9.0]})
-resp_df["gamma1"] = responsibility1(resp_df["x"], MU1, MU2, SIGMA)
-resp_df["gamma2"] = 1.0 - resp_df["gamma1"]
-
-g1_pts = " ".join(f"(x={int(r.x)},{r.gamma1:.4f})" for r in resp_df.itertuples())
-g2_pts = " ".join(f"(x={int(r.x)},{r.gamma2:.4f})" for r in resp_df.itertuples())
-
-responsibilities_tex = (
-    r"""
-\documentclass[crop]{standalone}
-\usepackage{xcolor}
-\usepackage{amsmath}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.18}
-\definecolor{lightblue}{RGB}{173,216,230}
-\definecolor{lightcoral}{RGB}{240,128,128}
-\begin{document}
-\begin{tikzpicture}
-  \begin{axis}[
-    width=8.5cm,
-    height=4.0cm,
-    ybar stacked,
-    bar width=22pt,
-    symbolic x coords={x=1,x=2,x=8,x=9},
-    xtick=data,
-    xlabel={data point},
-    ylabel={responsibility},
-    ymin=0, ymax=1.18,
-    legend pos=north east,
-    legend style={font=\tiny},
-    enlarge x limits=0.18,
-  ]
-    \addplot[fill=lightblue, draw=black] coordinates {
-"""
-    + g1_pts
-    + r"""
-    };
-    \addlegendentry{$\gamma_{n1}$ (component 1)}
-    \addplot[fill=lightcoral, draw=black] coordinates {
-"""
-    + g2_pts
-    + r"""
-    };
-    \addlegendentry{$\gamma_{n2}$ (component 2)}
-  \end{axis}
-\end{tikzpicture}
-\end{document}
-"""
-)
-
-compile_tikz(responsibilities_tex, "em_responsibilities")
-
-
-# ============================================================================
-# Figure 3: One EM iteration -- curves/points before and after the M-step
-# ============================================================================
-pts_df = resp_df.copy()
-MU1_NEW = float((pts_df["gamma1"] * pts_df["x"]).sum() / pts_df["gamma1"].sum())
-MU2_NEW = float((pts_df["gamma2"] * pts_df["x"]).sum() / pts_df["gamma2"].sum())
-pts_df["gamma1_new"] = responsibility1(pts_df["x"], MU1_NEW, MU2_NEW, SIGMA)
-pts_df["gamma2_new"] = 1.0 - pts_df["gamma1_new"]
-
-curve_x = np.linspace(-5, 15, 161)
-before1 = gaussian_pdf(curve_x, MU1, SIGMA)
-before2 = gaussian_pdf(curve_x, MU2, SIGMA)
-after1 = gaussian_pdf(curve_x, MU1_NEW, SIGMA)
-after2 = gaussian_pdf(curve_x, MU2_NEW, SIGMA)
-
-before1_pts = " ".join(f"({x:.3f},{y:.5f})" for x, y in zip(curve_x, before1))
-before2_pts = " ".join(f"({x:.3f},{y:.5f})" for x, y in zip(curve_x, before2))
-after1_pts = " ".join(f"({x:.3f},{y:.5f})" for x, y in zip(curve_x, after1))
-after2_pts = " ".join(f"({x:.3f},{y:.5f})" for x, y in zip(curve_x, after2))
-
-
-def point_marks(df: pd.DataFrame, g1_col: str) -> str:
-    out = []
-    for _, row in df.iterrows():
-        mix = 100.0 * (1.0 - row[g1_col])
-        out.append(
-            f"\\addplot[only marks, mark=*, mark size=2.6, color=lightblue!{mix:.0f}!lightcoral] "
-            f"coordinates {{({row['x']:.3f},0.005)}};\n    "
-        )
-    return "".join(out)
-
-
-before_marks = point_marks(pts_df, "gamma1")
-after_marks = point_marks(pts_df, "gamma1_new")
-
-em_iterations_tex = (
-    r"""
-\documentclass[crop]{standalone}
-\usepackage{xcolor}
-\usepackage{amsmath}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.18}
-\definecolor{darkblue}{RGB}{0,0,139}
-\definecolor{darkred}{RGB}{139,0,0}
-\definecolor{lightblue}{RGB}{173,216,230}
-\definecolor{lightcoral}{RGB}{240,128,128}
-\begin{document}
-\begin{tabular}{cc}
-"""
-    + f"\\textbf{{Before: }} $\\mu_1={MU1:.2f}, \\mu_2={MU2:.2f}$"
-    + r""" & """
-    + f"\\textbf{{After M-step: }} $\\mu_1={MU1_NEW:.3f}, \\mu_2={MU2_NEW:.3f}$"
-    + r"""\\[3pt]
-\begin{tikzpicture}
-  \begin{axis}[
-    width=6.4cm, height=4.6cm,
-    xlabel={$x$}, ylabel={density},
-    grid, grid style=gray!20,
-    xmin=-5, xmax=15, ymin=0, ymax=0.14,
-  ]
-    \addplot[line width=1.6, color=darkblue] coordinates {
-"""
-    + before1_pts
-    + r"""
-    };
-    \addplot[line width=1.6, color=darkred] coordinates {
-"""
-    + before2_pts
-    + r"""
-    };
-"""
-    + before_marks
-    + r"""
-  \end{axis}
-\end{tikzpicture}
-&
-\begin{tikzpicture}
-  \begin{axis}[
-    width=6.4cm, height=4.6cm,
-    xlabel={$x$}, ylabel={density},
-    grid, grid style=gray!20,
-    xmin=-5, xmax=15, ymin=0, ymax=0.14,
-  ]
-    \addplot[line width=1.6, color=darkblue] coordinates {
-"""
-    + after1_pts
-    + r"""
-    };
-    \addplot[line width=1.6, color=darkred] coordinates {
-"""
-    + after2_pts
-    + r"""
-    };
-"""
-    + after_marks
-    + r"""
-  \end{axis}
-\end{tikzpicture}
-\end{tabular}
-\end{document}
-"""
-)
-
-compile_tikz(em_iterations_tex, "em_iterations")
-
-
-# ============================================================================
-# Figure 4: Monotonic increase of the log-likelihood across EM iterations
-# ============================================================================
-ll_df = pd.DataFrame({"t": np.arange(0, 11)})
-ll_df["loglik"] = -6.535 - 18.465 * np.exp(-0.4 * ll_df["t"])
-ll_pts = " ".join(f"({r.t},{r.loglik:.3f})" for r in ll_df.itertuples())
-
-em_convergence_tex = (
-    r"""
-\documentclass[crop]{standalone}
-\usepackage{xcolor}
-\usepackage{amsmath}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.18}
-\definecolor{darkgreen}{RGB}{0,100,0}
-\begin{document}
-\begin{tikzpicture}
-  \begin{axis}[
-    width=10cm,
-    height=4.6cm,
-    xlabel={EM iteration},
-    ylabel={log-likelihood $\ell$},
-    grid,
-    grid style=gray!20,
-    xmin=0, xmax=10,
-    ymin=-26, ymax=-4,
-  ]
-    \addplot[line width=2, color=darkgreen, mark=*, mark size=1.6] coordinates {
-"""
-    + ll_pts
-    + r"""
-    };
-    \draw[dashed, gray] (axis cs: 0,-6.535) -- (axis cs: 10,-6.535);
-    \node[font=\tiny, gray, anchor=east] at (axis cs: 9.8,-5.0) {plateau: $\ell$ stops increasing};
-  \end{axis}
-\end{tikzpicture}
-\end{document}
-"""
-)
 
 compile_tikz(em_convergence_tex, "em_convergence")
 
-
-# ============================================================================
-# Figure 5: Hard k-means partition vs. soft GMM responsibilities (2D)
-# ============================================================================
-cluster_df = pd.DataFrame(
-    [
-        ("A1", 0.6, 0.8, "A"), ("A2", 1.0, 1.3, "A"), ("A3", 1.4, 0.6, "A"),
-        ("A4", 0.8, 1.6, "A"), ("A5", 1.6, 1.1, "A"),
-        ("B1", 4.4, 3.2, "B"), ("B2", 3.8, 3.8, "B"), ("B3", 4.0, 2.8, "B"),
-        ("B4", 4.6, 3.6, "B"), ("B5", 3.6, 3.1, "B"),
-        ("M1", 2.4, 2.0, "?"), ("M2", 2.8, 2.6, "?"),
-    ],
-    columns=["id", "x", "y", "seed_label"],
-)
-centroids = cluster_df.loc[cluster_df["seed_label"] != "?"].groupby("seed_label")[["x", "y"]].mean()
-cA = centroids.loc["A"]
-cB = centroids.loc["B"]
-GMM_SIGMA_2D = 1.15
-
-cluster_df["d1sq"] = (cluster_df["x"] - cA.x) ** 2 + (cluster_df["y"] - cA.y) ** 2
-cluster_df["d2sq"] = (cluster_df["x"] - cB.x) ** 2 + (cluster_df["y"] - cB.y) ** 2
-cluster_df["gammaB"] = 1.0 / (1.0 + np.exp(-(cluster_df["d1sq"] - cluster_df["d2sq"]) / (2 * GMM_SIGMA_2D**2)))
-cluster_df["hard_is_B"] = cluster_df["d2sq"] < cluster_df["d1sq"]
-
-mid = (cA + cB) / 2.0
-direction = np.array([cB.x - cA.x, cB.y - cA.y])
-perp = np.array([-direction[1], direction[0]])
-perp_unit = perp / np.linalg.norm(perp)
-boundary_a = mid.values + 3.0 * perp_unit
-boundary_b = mid.values - 3.0 * perp_unit
-
-
-def hard_marks(df: pd.DataFrame) -> str:
-    out = []
-    for _, row in df.iterrows():
-        color = "lightcoral" if row["hard_is_B"] else "lightblue"
-        out.append(f"\\fill[{color}, draw=black] ({row['x']:.3f},{row['y']:.3f}) circle (3.2pt);\n    ")
-    return "".join(out)
-
-
-def soft_marks(df: pd.DataFrame) -> str:
-    out = []
-    for _, row in df.iterrows():
-        mix = 100.0 * (1.0 - row["gammaB"])
-        out.append(
-            f"\\fill[lightblue!{mix:.0f}!lightcoral, draw=black] "
-            f"({row['x']:.3f},{row['y']:.3f}) circle (3.2pt);\n    "
-        )
-    return "".join(out)
-
-
-hard_panel_marks = hard_marks(cluster_df)
-soft_panel_marks = soft_marks(cluster_df)
-
-gmm_vs_kmeans_tex = (
-    r"""
-\documentclass[crop]{standalone}
-\usepackage{xcolor}
-\usepackage{tikz}
-\definecolor{lightblue}{RGB}{173,216,230}
-\definecolor{lightcoral}{RGB}{240,128,128}
-\begin{document}
-\begin{tabular}{cc}
-\textbf{k-Means: hard assignment} & \textbf{GMM: soft responsibility} \\[3pt]
-\begin{tikzpicture}
-  \begin{scope}
-    \clip (-0.5,-0.5) rectangle (5.5,4.5);
-    \draw[dashed, thick, gray] ("""
-    + f"{boundary_a[0]:.3f},{boundary_a[1]:.3f}) -- ({boundary_b[0]:.3f},{boundary_b[1]:.3f}"
-    + r""");
-  \end{scope}
-  \draw[-latex] (-0.5,0) -- (5.5,0) node[right, font=\tiny] {$x_1$};
-  \draw[-latex] (0,-0.5) -- (0,4.5) node[above, font=\tiny] {$x_2$};
-"""
-    + hard_panel_marks
-    + r"""
-  \node[font=\tiny] at (1.0,-0.3) {cluster $A$};
-  \node[font=\tiny] at (4.0,-0.3) {cluster $B$};
-\end{tikzpicture}
-&
-\begin{tikzpicture}
-  \draw[-latex] (-0.5,0) -- (5.5,0) node[right, font=\tiny] {$x_1$};
-  \draw[-latex] (0,-0.5) -- (0,4.5) node[above, font=\tiny] {$x_2$};
-"""
-    + soft_panel_marks
-    + r"""
-  \node[font=\tiny, align=center] at (2.6,4.2) {blended color $=$\\mixed responsibility};
-\end{tikzpicture}
-\end{tabular}
-\end{document}
-"""
-)
-
-compile_tikz(gmm_vs_kmeans_tex, "gmm_vs_kmeans")
-
-print("\n✓ All GMM & EM figures generated successfully!")
+print("\n✓ All GMM & EM figures generated.")
