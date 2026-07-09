@@ -15,7 +15,68 @@ By the end of this course, students should be able to:
 
 ## Course structure
 
-The course is organized into four modules. Lecture numbering restarts at 1 within each module.
+The course is organized into eight modules (0–7). Lecture numbering restarts at 1 within each module.
+
+### Module 0: Statistics for Advanced AI (Lectures 1-10)
+
+Primary references:
+- Illowsky & Dean, *Introductory Statistics 2e* (OpenStax) — Lectures 1–5 core probability and distributions
+- Bishop, *PRML* — Lectures 6–7 (MLE, Bayesian inference)
+- Cover & Thomas, *Elements of Information Theory* — Lecture 7
+- Wainwright & Jordan, *Graphical Models, Exponential Families, and Variational Inference* — Lecture 8
+Topics not critical for AI (chi-square tests, two-sample t-tests, ANOVA, study-design methodology)
+are omitted. Hypothesis testing is embedded in L10 (model evaluation), its most relevant context.
+
+1. **Lecture 1 - Data, Probability & Descriptive Statistics**
+   - data types, frequency distributions, histograms, box plots
+   - measures of center and spread (mean, variance, standard deviation, IQR)
+   - sample spaces, events, probability rules (complement, addition, multiplication)
+   - mutual exclusivity vs. independence; empirical vs. classical probability
+2. **Lecture 2 - Conditional Probability, Independence & Bayes' Theorem**
+   - conditional probability and the multiplication rule
+   - statistical independence, tree diagrams, contingency tables
+   - Bayes' theorem: the formula that drives probabilistic ML from Naive Bayes to diffusion models
+3. **Lecture 3 - Discrete Random Variables & Key Distributions**
+   - probability mass function, expectation, variance
+   - Bernoulli and Binomial (binary outputs); Categorical and Multinomial (multi-class outputs, softmax)
+   - Poisson (count data, event modeling); Dirichlet as a prior over Categorical (LDA, topic models)
+4. **Lecture 4 - Continuous Random Variables & the Gaussian**
+   - probability density function, CDF, area-as-probability
+   - uniform, exponential (generative sampling), Beta (conjugate prior for Bernoulli/Binomial)
+   - the Gaussian: 1D standard normal, z-scores, 68-95-99.7 rule
+   - multivariate Gaussian: mean vector, covariance matrix, contour ellipses
+   - why the Gaussian appears everywhere: GMMs, VAEs, weight initialization, Bayesian priors
+5. **Lecture 5 - The Central Limit Theorem & Maximum Likelihood Estimation**
+   - sampling distribution of the mean, standard error, law of large numbers
+   - CLT statement and conditions; why mini-batch gradients and batch normalization rely on this
+   - likelihood function, log-likelihood; MLE derivations for Gaussian and Bernoulli
+   - MLE as the statistical foundation of cross-entropy loss and MSE; bridge to gradient descent
+6. **Lecture 6 - Bayesian Inference & MAP Estimation**
+   - prior, likelihood, posterior; Bayes' rule as an update rule
+   - MAP estimation as regularized MLE (L2 regularization = Gaussian prior)
+   - conjugate priors: Beta–Bernoulli, Dirichlet–Categorical, Gaussian–Gaussian
+   - Bayesian vs. frequentist framing; predictive distributions
+7. **Lecture 7 - Information Theory: Entropy, KL Divergence & Mutual Information**
+   - Shannon entropy: measuring uncertainty in a distribution
+   - cross-entropy as a loss function; KL divergence as a distance between distributions
+   - mutual information: feature selection, VAE objectives, representation learning
+8. **Lecture 8 - The Exponential Family & Sufficient Statistics**
+   - exponential family form: $p(x|\eta) = h(x)\exp(\eta^\top T(x) - A(\eta))$
+   - natural parameters $\eta$, sufficient statistics $T(x)$, log-partition function $A(\eta)$
+   - membership: Gaussian, Bernoulli, Categorical, Poisson, Beta, Dirichlet — unified in one family
+   - moment identities ($\nabla_\eta A = \mathbb{E}[T(x)]$), Fisher-Neyman factorization theorem
+   - connection to GLMs, log-linear models, and variational inference (ELBO with exponential-family posteriors)
+9. **Lecture 9 - Correlation, Regression & Multivariate Statistics**
+   - Pearson correlation, covariance, scatter plots; ordinary least squares, residuals, R²
+   - MLE interpretation of OLS; bridge to regularized regression in Module 1
+   - sample covariance matrix, correlation matrix
+   - eigendecomposition of the covariance matrix; variance along principal directions
+   - statistical preview of PCA before its geometric treatment in Module 1
+10. **Lecture 10 - Statistical Model Evaluation**
+    - train / validation / test splits; the bias-variance tradeoff as a statistical phenomenon
+    - cross-validation, bootstrap confidence intervals on metrics
+    - null/alternative hypotheses, p-values, Type I and Type II errors; A/B testing for model comparisons
+    - calibration (reliability diagrams), permutation tests for statistical significance
 
 ### Module 1: Classical Machine Learning (Lectures 1-14)
 
@@ -32,7 +93,8 @@ The course is organized into four modules. Lecture numbering restarts at 1 withi
    - epsilon neighborhoods, MinPts, core/border/noise points
    - density reachability, density connectivity, outlier screening
 5. **Lecture 5 - Decision Trees**
-   - impurity, splits, tree growth, interpretability
+   - impurity measures: Gini index and information gain (entropy and mutual information applied — Module 0 L10)
+   - recursive splitting, tree growth, pruning, interpretability
 6. **Lecture 6 - Random Forests**
    - bagging, feature subsampling, variance reduction
 7. **Lecture 7 - Forest Variants: Isolation Forest, Extra-Trees, Quantile Forests**
@@ -50,15 +112,18 @@ The course is organized into four modules. Lecture numbering restarts at 1 withi
 11. **Lecture 11 - Practical Gradient Boosting**
     - XGBoost, LightGBM, CatBoost
     - applied tuning of boosted trees
-12. **Lecture 12 - Linear Regression & Regularization**
-    - closed-form and gradient-descent fitting
-    - Ridge, Lasso, Elastic Net
+12. **Lecture 12 - Regularized Regression: Ridge, Lasso & Elastic Net**
+    - OLS as the starting point (derivation in Module 0 L12); the problem of overfitting in high dimensions
+    - Ridge (L2) and its MAP interpretation (Gaussian prior from Module 0 L9); Lasso (L1) and sparsity
+    - Elastic Net; gradient-descent fitting of regularized objectives; the regularization path
 13. **Lecture 13 - Logistic Regression & Linear Classifiers**
-    - logistic regression, SVM margins, softmax
+    - logistic regression: sigmoid, cross-entropy loss as MLE (Module 0 L8 and L10)
+    - SVM margins, softmax for multi-class
     - bridges into the loss-function view used in Module 2
-14. **Lecture 14 - Model Evaluation & Hyperparameter Tuning**
-    - bias-variance tradeoff, cross-validation
-    - ROC/AUC, Bayesian optimization (ties to Gaussian Processes)
+14. **Lecture 14 - Classification Metrics, ROC/AUC & Hyperparameter Optimization**
+    - precision, recall, F1; confusion matrix; ROC curve and AUC
+    - bias-variance tradeoff recap (Module 0 L14); model selection with cross-validation (Module 0 L14)
+    - Bayesian hyperparameter optimization: Gaussian Processes as surrogate models, acquisition functions
 
 ### Module 2: Vision / Deep Neural Networks (Lectures 1-18)
 
@@ -122,17 +187,34 @@ Modules 1 and 2.
 7. **Lecture 7 - Word Embeddings**
    - Word2Vec, GloVe, distributional semantics
 8. **Lecture 8 - Neural Language Models**
-   - RNN-based language models, perplexity
+   - RNN/LSTM/GRU architecture assumed known (Module 2 L7); focus is the language modeling objective
+   - next-token prediction, perplexity as exponentiated cross-entropy (Module 0 L10)
+   - teacher forcing, exposure bias, scheduled sampling
 9. **Lecture 9 - Sequence-to-Sequence & Neural Machine Translation**
-10. **Lecture 10 - Attention Mechanisms in NLP**
-    - alignment, additive/multiplicative attention
-11. **Lecture 11 - Transformers for NLP**
-    - self-attention applied to language, masked-LM objective
-12. **Lecture 12 - Pretrained Language Models I: BERT & Masked LM**
-13. **Lecture 13 - Pretrained Language Models II: GPT & Autoregressive LM**
-14. **Lecture 14 - Named Entity Recognition & Question Answering**
-15. **Lecture 15 - Large Language Models in Practice**
-    - prompting, instruction tuning, RAG, RLHF
+10. **Lecture 10 - Attention for NLP**
+    - Transformer architecture assumed known (Module 2 L8); NLP-specific adaptations
+    - positional encodings for variable-length text; additive vs. multiplicative attention variants
+    - masking strategies: padding masks, causal masks for autoregressive decoding
+11. **Lecture 11 - Pretrained Transformers: Objectives & Architectures**
+    - encoder-only (BERT): masked-LM and next-sentence prediction objectives
+    - decoder-only (GPT): autoregressive LM; encoder-decoder (T5, BART): span corruption
+    - tokenization: BPE, WordPiece, SentencePiece; subword vocabulary trade-offs
+12. **Lecture 12 - Fine-tuning & Adapting Pretrained Models**
+    - full fine-tuning vs. feature extraction; catastrophic forgetting
+    - task-specific heads: classification, span extraction (QA), generation
+    - named entity recognition and extractive question answering as worked examples
+13. **Lecture 13 - Scaling Laws & Large Language Models**
+    - Chinchilla scaling laws: compute-optimal training
+    - emergent abilities, in-context learning, chain-of-thought prompting
+    - instruction tuning (FLAN, InstructGPT); RLHF overview (mathematical foundations in Module 5)
+14. **Lecture 14 - Retrieval-Augmented Generation & Evaluation**
+    - RAG pipeline overview (dense retrieval architecture detail in Module 7)
+    - embedding-based retrieval, chunking strategies, context-window limits
+    - LLM evaluation: BLEU/ROUGE, human preference, HELM, Chatbot Arena
+15. **Lecture 15 - Multimodal Language Models**
+    - vision-language pretraining: CLIP (contrastive), Flamingo, LLaVA
+    - image captioning, visual question answering, text-to-image generation
+    - grounding language in perception: challenges and current frontiers
 
 ### Module 4: Graph Neural Networks (Lectures 1-5)
 
@@ -148,18 +230,100 @@ Modules 1 and 2.
 5. **Lecture 5 - GNN Applications in Practice**
    - recommendation systems (e.g. PinSAGE), molecule property prediction, fraud detection
 
-## Topics considered and intentionally excluded
+### Module 5: Reinforcement Learning & Alignment (being authored separately)
 
-- **Reinforcement Learning** -- requires its own mathematical foundation (MDPs, Bellman
-  equations, dynamic programming) rather than fitting as a single NN-architecture lecture;
-  excluded to keep the course scope disciplined.
-- **Hierarchical clustering** -- lower priority than GMM, since k-means + DBSCAN + GMM already
+MDPs, value functions, policy gradients, PPO, RLHF, DPO. Foundational mathematics treated
+here, not scattered across Modules 1–3. Forward-referenced in Module 1 L14 (Gaussian Processes
+/ Bayesian optimization) and Module 3 L13 (RLHF overview).
+
+### Module 6: Efficient AI & Deployment (Lectures 1-8)
+
+1. **Lecture 1 - Model Compression: Pruning & Quantization**
+   - structured vs. unstructured pruning; magnitude and gradient-based criteria
+   - post-training quantization (PTQ): INT8, INT4, GPTQ; quantization-aware training (QAT)
+   - trade-offs: accuracy, memory footprint, inference latency
+2. **Lecture 2 - Knowledge Distillation**
+   - teacher–student framework; soft targets and temperature scaling
+   - feature-level distillation (intermediate representations); self-distillation
+   - application to LLM compression (DistilBERT, Alpaca-style distillation)
+3. **Lecture 3 - Parameter-Efficient Fine-Tuning: LoRA & QLoRA**
+   - motivation: full fine-tuning cost at LLM scale
+   - low-rank adaptation (LoRA): decomposition, rank selection, merging at inference
+   - QLoRA: 4-bit base model + LoRA adapters; practical memory budgets
+   - adapter methods, prefix tuning, and prompt tuning as alternatives
+4. **Lecture 4 - Inference Optimization: KV Cache, Speculative Decoding & Continuous Batching**
+   - autoregressive decoding bottleneck; key-value cache mechanics
+   - speculative decoding: draft model + verifier; acceptance rate analysis
+   - continuous batching vs. static batching; PagedAttention (vLLM)
+   - FlashAttention: IO-aware exact attention; memory and speed gains
+5. **Lecture 5 - Serving Infrastructure: vLLM, TensorRT & ONNX**
+   - model serving architecture: load balancing, replicas, routing
+   - vLLM: paged KV cache, throughput benchmarks
+   - TensorRT and ONNX: graph optimization, kernel fusion, deployment pipelines
+   - multi-GPU serving: tensor parallelism, pipeline parallelism at inference time
+6. **Lecture 6 - Evaluation & Benchmarking at Scale**
+   - latency vs. throughput trade-offs; time-to-first-token, tokens-per-second
+   - hardware utilization: MFU (model FLOP utilization), memory bandwidth bounds
+   - standard benchmarks: MLPerf, LM-Eval Harness; cost-per-token analysis
+7. **Lecture 7 - Edge Deployment: Mobile, WASM & Embedded**
+   - on-device inference constraints: memory, power, latency SLAs
+   - CoreML, ONNX Runtime Mobile, TFLite; WebAssembly for browser inference
+   - LLM on-device: llama.cpp, MLC-LLM; model selection for edge targets
+8. **Lecture 8 - Responsible Deployment: Monitoring, Drift & Safety Guardrails**
+   - production monitoring: latency/error dashboards, output logging
+   - distribution shift and concept drift detection; model refresh strategies
+   - safety guardrails: input/output filtering, constitutional AI, red-teaming
+   - deployment checklists: bias auditing, rate limiting, fallback policies
+
+### Module 7: AI Agents, Tool Use & Retrieval (Lectures 1-8)
+
+1. **Lecture 1 - What is an Agent? ReAct, Tool Use & Action Loops**
+   - agents vs. pipelines: when a model controls its own next step
+   - ReAct: interleaving reasoning traces and actions; scratchpad pattern
+   - tool use primitives: search, code execution, API calls; action space design
+   - failure modes: infinite loops, hallucinated tool calls, compounding errors
+2. **Lecture 2 - Function Calling & Structured Outputs**
+   - function/tool schemas: JSON Schema, OpenAPI; how models learn to call tools
+   - structured output generation: constrained decoding, grammar-guided sampling
+   - parallel vs. sequential tool calls; tool result injection into context
+3. **Lecture 3 - Memory: In-Context, External & Episodic**
+   - in-context memory: context window limits, prompt compression, summarization
+   - external memory: key-value stores, document stores, episodic buffers
+   - retrieval-augmented memory vs. fine-tuned memory; MemGPT architecture
+4. **Lecture 4 - Multi-Agent Orchestration**
+   - orchestrator–subagent pattern; task decomposition and delegation
+   - message-passing protocols: shared memory vs. structured communication
+   - frameworks: LangGraph, AutoGen, CrewAI; trust and permission boundaries
+   - failure recovery: retry logic, fallback agents, human-in-the-loop checkpoints
+5. **Lecture 5 - Retrieval-Augmented Generation: Architecture End-to-End**
+   - RAG pipeline: query → retrieve → augment → generate
+   - chunking strategies: fixed-size, sentence, semantic, hierarchical
+   - reranking: cross-encoder rerankers, reciprocal rank fusion
+   - advanced RAG: HyDE, multi-hop retrieval, iterative refinement
+6. **Lecture 6 - Dense Retrieval & Embedding Models**
+   - bi-encoder architecture; contrastive training (in-batch negatives, hard negatives)
+   - embedding model families: E5, BGE, GTE, OpenAI Ada; MTEB benchmark
+   - late interaction models: ColBERT; sparse–dense hybrid retrieval (BM25 + dense)
+7. **Lecture 7 - Vector Databases & ANN Search**
+   - approximate nearest neighbor (ANN) algorithms: HNSW, IVF, PQ, ScaNN
+   - vector database landscape: Pinecone, Weaviate, Qdrant, pgvector
+   - indexing trade-offs: recall vs. latency vs. memory; metadata filtering
+   - scaling: sharding, replication, incremental index updates
+8. **Lecture 8 - Agent Evaluation, Safety & Failure Modes**
+   - agent evaluation frameworks: trajectory scoring, tool-call accuracy, task completion
+   - benchmarks: AgentBench, WebArena, SWE-bench; human vs. automated eval
+   - safety: prompt injection attacks, tool misuse, sandboxing code execution
+   - alignment in agentic systems: minimal footprint, reversibility, human oversight
+
+## Topics intentionally excluded
+
+- **Hierarchical clustering** -- lower priority than GMM; k-means + DBSCAN + GMM already
   cover the three major clustering paradigms (partition, density, probabilistic).
 - Most of Bishop's *Pattern Recognition and Machine Learning* (graphical models, MCMC/Gibbs
-  sampling, Probabilistic PCA, Relevance Vector Machines, Bayesian model averaging, etc.) --
-  theoretical/Bayesian-statistics territory, largely superseded in modern practice. Exceptions
-  folded into existing lectures: variational inference (Module 2, Lecture 13), Gaussian
-  Processes (Module 1, Lecture 14), Mixture-of-Experts (Module 3, Lecture 15).
+  sampling, Probabilistic PCA, Relevance Vector Machines, Bayesian model averaging) --
+  theoretical/Bayesian territory largely superseded in modern practice. Exceptions retained:
+  variational inference (Module 2, Lecture 13), Gaussian Processes as a surrogate model
+  (Module 1, Lecture 14), Bayesian inference foundations (Module 0, Lecture 9).
 
 ## Assignment sequence
 

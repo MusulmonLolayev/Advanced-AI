@@ -1,0 +1,416 @@
+\section{Gaussian Mixture Models \& EM}
+
+% ─── Frame 1 ──────────────────────────────────────────────────────────────────
+\begin{frame}{From $k$-Means to GMM: Why Soft Assignments?}
+\begin{columns}[T]
+\column{0.46\textwidth}
+\vspace{0.3em}
+\begin{itemize}
+  \item $k$-Means assigns every point to exactly one cluster -- a hard, all-or-nothing decision.
+  \pause
+  \item A point near a boundary is forced to pick a side, even when evidence is nearly equal.
+  \pause
+  \item A \textbf{GMM} gives each point a \emph{probability} $\gamma_{nk}$ of belonging to each component -- all $K$ components keep a share.
+\end{itemize}
+
+\column{0.54\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/gmm_em/kmeans_limitation.pdf}
+\end{columns}
+\pause
+\vspace{-0.3em}
+\begin{rlintuition}
+  Grey pie (right panel): the ambiguous point is split equally across all three components. $k$-Means must force a choice; a GMM reports the uncertainty.
+\end{rlintuition}
+\end{frame}
+
+% ─── Frame 2 ──────────────────────────────────────────────────────────────────
+\begin{frame}{What a GMM Looks Like}
+\begin{itemize}
+  \item A GMM places $K$ Gaussian ``bells'' in feature space. Each bell $k$ has:
+  \begin{itemize}
+    \item a \textbf{center} $\mu_k \in \mathbb{R}^d$ -- where the bell peaks;
+    \item a \textbf{spread} $\Sigma_k \in \mathbb{R}^{d \times d}$ -- how wide and in which direction;
+    \item a \textbf{weight} $\pi_k \in (0,1)$ -- how common that component is, with $\sum_k \pi_k = 1$.
+  \end{itemize}
+  \pause
+  \item A point close to the center of bell $k$ has high density under that component.
+  \pause
+  \item A point in the overlap region between two bells gets positive density from \emph{both} -- that shared credit is the ``soft'' part.
+\end{itemize}
+\pause
+\begin{rlintuition}
+  Think of $K$ sources, each emitting points from its own Gaussian. We see the mix; the GMM reverse-engineers which source each point came from.
+\end{rlintuition}
+\end{frame}
+
+% ─── Frame 3 ──────────────────────────────────────────────────────────────────
+\begin{frame}{The Generative Story}
+\begin{itemize}
+  \item Imagine generating each data point $x_n$ in two steps:
+  \begin{enumerate}
+    \item \textbf{Roll a weighted $K$-sided die:} draw $z_n \in \{1, \dots, K\}$ with
+    $P(z_n = k) = \pi_k$.
+    \pause
+    \item \textbf{Draw from that component's Gaussian:}
+    $x_n \mid z_n = k\ \sim\ \mathcal{N}(\mu_k,\,\Sigma_k)$.
+  \end{enumerate}
+  \pause
+  \item We only ever observe the resulting point $x_n$ -- the die roll $z_n$ is hidden (\emph{latent}).
+  \pause
+  \item Goal: given $\mathcal{X} = \{x_1, \dots, x_N\}$, estimate
+  $\{\pi_k, \mu_k, \Sigma_k\}_{k=1}^K$ by maximum likelihood.
+\end{itemize}
+\pause
+\begin{rlintuition}
+  Every visible point secretly came from exactly one component, but which one is the part we never see. That missing label is what makes fitting a GMM harder than fitting a single Gaussian.
+\end{rlintuition}
+\end{frame}
+
+% ─── Frame 4 ──────────────────────────────────────────────────────────────────
+\begin{frame}{Covariance: What Shape Is Each Bell?}
+\begin{columns}[T]
+\column{0.52\textwidth}
+\begin{itemize}
+  \item In 2D the spread of a Gaussian cannot be a single number -- it is a $2 \times 2$ matrix $\Sigma_k$.
+  \pause
+  \item \textbf{Spherical} $\Sigma = \sigma^2 I$: equal spread in every direction -- the bell is a perfect circle.
+  \pause
+  \item \textbf{Diagonal} $\Sigma$: different spread along each axis, no correlation -- an axis-aligned ellipse.
+  \pause
+  \item \textbf{Full} $\Sigma$: features are correlated -- a tilted ellipse.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/gmm_em/covariance_shapes.pdf}
+
+\vspace{0.3em}
+{\footnotesize Left: spherical ($\sigma^2 I$). Centre: diagonal. Right: full (tilted).}
+\end{columns}
+\pause
+\vspace{-0.2em}
+\begin{rlintuition}
+  The same $\Sigma$ that described data scatter in PCA now shapes each Gaussian blob in the mixture.
+\end{rlintuition}
+\end{frame}
+
+% ─── Frame 5 ──────────────────────────────────────────────────────────────────
+\begin{frame}{The Multivariate Gaussian}
+\begin{itemize}
+  \item For $x \in \mathbb{R}^d$, the Gaussian density with mean $\mu_k$ and covariance $\Sigma_k$ is:
+  \begin{equation}
+    \mathcal{N}(x \mid \mu_k, \Sigma_k)
+    = \frac{1}{(2\pi)^{d/2}|\Sigma_k|^{1/2}}
+    \exp\!\left(-\tfrac{1}{2}(x - \mu_k)^{\!\top}\Sigma_k^{-1}(x - \mu_k)\right).
+    \label{eq:gaussian-multivariate}
+  \end{equation}
+  \pause
+  \item The exponent $(x - \mu_k)^{\!\top}\Sigma_k^{-1}(x - \mu_k)$ is the squared Mahalanobis distance from $x$ to $\mu_k$: farther away means lower density.
+  \pause
+  \item \textbf{Our worked example:} $d = 2$, $K = 3$, shared isotropic covariance $\Sigma_k = \sigma^2 I$ with $\sigma = 4$.  The formula reduces to an ordinary radial Gaussian in 2D.
+\end{itemize}
+\end{frame}
+
+% ─── Frame 6 ──────────────────────────────────────────────────────────────────
+\begin{frame}{The Mixture Density}
+\begin{itemize}
+  \item Since $z_n$ is hidden, the density of an observed point must average over every component it could have come from:
+  \begin{equation}
+    p(x) = \sum_{k=1}^{K} \pi_k\,\mathcal{N}(x \mid \mu_k, \Sigma_k).
+    \label{eq:gmm-density}
+  \end{equation}
+  \pause
+  \item This is a \emph{weighted sum} of Gaussians -- it can model shapes no single bell can.
+  \pause
+  \item The mixing weights obey $\pi_k \geq 0$ and $\sum_{k=1}^{K}\pi_k = 1$, so $p(x)$ is a valid density.
+  \pause
+  \item \textbf{Parameters to fit:} $\theta = \{\pi_k, \mu_k, \Sigma_k\}_{k=1}^K$ -- that is $K(1 + d + d^2)$ numbers in total (before constraints).
+\end{itemize}
+\end{frame}
+
+% ─── Frame 7 ──────────────────────────────────────────────────────────────────
+\begin{frame}{The Chicken-and-Egg Problem}
+\begin{itemize}
+  \item If we knew every $z_n$: split the data by component label and fit each Gaussian separately -- trivial sample mean and covariance.
+  \pause
+  \item If we knew $\{\pi_k, \mu_k, \Sigma_k\}$: infer $z_n$ via Bayes' rule -- straightforward.
+  \pause
+  \item The catch: we know neither.  Both must be estimated together.
+\end{itemize}
+\pause
+\begin{rlpitfall}
+  Maximum-likelihood for a GMM has no closed-form solution. The EM algorithm exploits the latent-variable structure to alternate between two steps that \emph{each} have a closed form -- sidestepping the chicken-and-egg in the same way $k$-Means does.
+\end{rlpitfall}
+\end{frame}
+
+% ─── Frame 8 ──────────────────────────────────────────────────────────────────
+\begin{frame}{$k$-Means Already Solved the Same Problem}
+\begin{itemize}
+  \item $k$-Means has the identical chicken-and-egg: to assign points you need centers; to update centers you need assignments.
+  \pause
+  \item $k$-Means breaks the deadlock by alternating two \emph{frozen} sub-problems:
+  \begin{enumerate}
+    \item \textbf{Freeze centers, update assignments:} assign every point to its nearest center -- a hard 0/1 label.
+    \item \textbf{Freeze assignments, update centers:} move each center to the mean of its assigned points.
+  \end{enumerate}
+  \pause
+  \item EM uses the \emph{identical} alternating structure -- the only change is that the hard 0/1 label becomes a soft probability $\gamma_{nk} \in (0,1)$.
+\end{itemize}
+\pause
+\begin{rlintuition}
+  EM is $k$-Means with soft labels.  The freeze-one-update-the-other rhythm is the same; only the sharpness of the assignment changes.
+\end{rlintuition}
+\end{frame}
+
+% ─── Frame 9 ──────────────────────────────────────────────────────────────────
+\begin{frame}{$k$-Means Trace: The Hard-Assignment Rhythm}
+\small
+\begin{itemize}
+  \item Data: $x \in \{1, 2, 8, 9\}$.  Initialize: $\mu_1^{(0)} = 0$, $\mu_2^{(0)} = 10$.
+  \item \textbf{Step 1 -- freeze centers, update assignments} (nearest center wins):
+\end{itemize}
+
+\pause
+\begin{center}
+\begin{tabular}{cccl}
+\hline
+$x$ & dist to $\mu_1 = 0$ & dist to $\mu_2 = 10$ & hard label \\
+\hline
+1 & 1 & 9 & cluster 1 \\
+2 & 2 & 8 & cluster 1 \\
+8 & 8 & 2 & cluster 2 \\
+9 & 9 & 1 & cluster 2 \\
+\hline
+\end{tabular}
+\end{center}
+
+\pause
+\begin{itemize}
+  \item \textbf{Step 2 -- freeze assignments, update centers} (ordinary mean within each cluster):
+  \[
+    \mu_1^{(1)} = \tfrac{1+2}{2} = 1.5, \qquad \mu_2^{(1)} = \tfrac{8+9}{2} = 8.5.
+  \]
+  \item One iteration; hard labels give exact cluster means.  Now we run the same rhythm with \emph{soft} probabilities instead of 0/1 labels.
+\end{itemize}
+\end{frame}
+
+% ─── Frame 10 ─────────────────────────────────────────────────────────────────
+\begin{frame}{E-step: Computing Soft Assignments}
+\begin{itemize}
+  \item Fix the current parameters $\{\pi_k, \mu_k, \Sigma_k\}$.
+  \item For each point $x_n$, let component $k$ bid with weight $\pi_k\,\mathcal{N}(x_n \mid \mu_k, \Sigma_k)$.
+  \pause
+  \item The \emph{responsibility} $\gamma_{nk}$ is that component's share of the total bid:
+  \begin{equation}
+    \gamma_{nk}
+    = \frac{\pi_k\,\mathcal{N}(x_n \mid \mu_k, \Sigma_k)}
+           {\displaystyle\sum_{j=1}^{K}\pi_j\,\mathcal{N}(x_n \mid \mu_j, \Sigma_j)}.
+    \label{eq:responsibility}
+  \end{equation}
+  \pause
+  \item By Bayes' rule, $\gamma_{nk} = P(z_n = k \mid x_n)$.  By construction, $\sum_{k=1}^K \gamma_{nk} = 1$ for every $n$.
+\end{itemize}
+\pause
+\begin{rldefinition}
+  $\gamma_{nk}$ is a \emph{soft assignment}: how much of point $n$'s ``mass'' is explained by component $k$, given the current model.  It replaces the hard 0/1 label of $k$-Means.
+\end{rldefinition}
+\end{frame}
+
+% ─── Frame 11 ─────────────────────────────────────────────────────────────────
+\begin{frame}{M-step: Re-estimating the Parameters}
+\begin{itemize}
+  \item Fix responsibilities $\{\gamma_{nk}\}$.  Treat $\gamma_{nk}$ as a fractional count ($N_k$ need not be an integer).
+  \pause
+  \item Weighted effective count and new mean:
+  \begin{align}
+    N_k &= \sum_{n=1}^{N} \gamma_{nk}, \nonumber \\
+    \mu_k &= \frac{1}{N_k}\sum_{n=1}^{N} \gamma_{nk}\, x_n. \label{eq:m-step-mean}
+  \end{align}
+  \pause
+  \item New covariance and mixing weight:
+  \begin{equation}
+    \Sigma_k = \frac{1}{N_k}\sum_{n=1}^{N} \gamma_{nk}\,(x_n-\mu_k)(x_n-\mu_k)^{\!\top},
+    \quad
+    \pi_k = \frac{N_k}{N}.
+    \label{eq:m-step-cov}
+  \end{equation}
+  \pause
+  \item After the M-step: plug new $\theta$ back into the E-step and repeat.
+\end{itemize}
+\end{frame}
+
+% ─── Frame 12 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Our Dataset: 6 Points, $K = 3$}
+\begin{columns}[T]
+\column{0.42\textwidth}
+\small
+\begin{itemize}
+  \item $\mathcal{X} = \{x_1, \dots, x_6\}$, $x_n \in \mathbb{R}^2$:
+\end{itemize}
+
+\vspace{0.3em}
+\begin{center}
+\begin{tabular}{ccc}
+\hline
+$n$ & $x_n^{(1)}$ & $x_n^{(2)}$ \\
+\hline
+1 & 0 & 0 \\
+2 & 2 & 0 \\
+3 & 10 & 0 \\
+4 & 8 & 0 \\
+5 & 5 & 9 \\
+6 & 5 & 7 \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.4em}
+\begin{itemize}
+  \item $K{=}3$, $\sigma{=}4$, $\pi_k{=}\tfrac{1}{3}$.
+  \item {\scriptsize Init: $\mu_1^{(0)}{=}(0,0)$, $\mu_2^{(0)}{=}(10,0)$, $\mu_3^{(0)}{=}(5,10)$.}
+\end{itemize}
+
+\column{0.58\textwidth}
+\centering
+\includegraphics[height=3.9cm]{figures/gmm_em/em_init.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Frame 13 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Iteration 1 --- E-step: Who Owns Each Point?}
+\small
+\begin{itemize}
+  \item Fix current means $\mu_1^{(0)}{=}(0,0)$, $\mu_2^{(0)}{=}(10,0)$, $\mu_3^{(0)}{=}(5,10)$.
+  Compute $\gamma_{nk}$ via Eq.~\eqref{eq:responsibility} for all $n,k$.
+  \pause
+  \item Three representative points (full table has 6 rows, same pattern):
+\end{itemize}
+
+\vspace{0.4em}
+\centering
+\begin{tabular}{cccrrrr}
+\hline
+$n$ & $x_n^{(1)}$ & $x_n^{(2)}$ & $\gamma_{n1}$ & $\gamma_{n2}$ & $\gamma_{n3}$ & winner \\
+\hline
+1 & 0 & 0 & \textbf{0.94} & 0.04 & 0.02 & comp 1 \\
+3 & 10 & 0 & 0.04 & \textbf{0.94} & 0.02 & comp 2 \\
+5 & 5 & 9 & 0.04 & 0.04 & \textbf{0.93} & comp 3 \\
+\hline
+\end{tabular}
+
+\raggedright
+\pause
+\begin{rlintuition}
+  Even with coarse initialization, the nearest component wins clearly.  Soft -- but not ambiguous for these three points.
+\end{rlintuition}
+\end{frame}
+
+% ─── Frame 14 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Iteration 1 --- M-step: Update the Centers}
+\small
+\begin{itemize}
+  \item Effective count for component 1 (sum over all 6 rows):
+  \[
+    N_1 = 0.94 + 0.84 + 0.04 + 0.13 + 0.04 + 0.10 = 2.09.
+  \]
+  \pause
+  \item New center for component 1, feature $x^{(1)}$ (Eq.~\eqref{eq:m-step-mean}):
+  \[
+    \mu_1^{(1),(1)}
+    = \frac{0{\cdot}0.94 + 2{\cdot}0.84 + 10{\cdot}0.04 + 8{\cdot}0.13 + 5{\cdot}0.04 + 5{\cdot}0.10}{2.09}
+    = \frac{3.82}{2.09} \approx 1.83.
+  \]
+  \pause
+  \item All centers before and after one full EM iteration:
+\end{itemize}
+
+\centering
+\begin{tabular}{lcccccc}
+\hline
+ & \multicolumn{2}{c}{Iteration 0} & & \multicolumn{2}{c}{Iteration 1} \\
+\cline{2-3}\cline{5-6}
+$k$ & $x^{(1)}$ & $x^{(2)}$ & & $x^{(1)}$ & $x^{(2)}$ \\
+\hline
+1 & 0.00 & 0.00 & $\to$ & 1.83 & 0.50 \\
+2 & 10.00 & 0.00 & $\to$ & 8.17 & 0.50 \\
+3 & 5.00 & 10.00 & $\to$ & 5.00 & 7.63 \\
+\hline
+\end{tabular}
+\end{frame}
+
+% ─── Frame 15 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Iterations 2--4: EM Converging}
+\centering
+\includegraphics[width=\textwidth]{figures/gmm_em/em_iter_panels.pdf}
+
+\vspace{0.5em}
+\raggedright
+\begin{itemize}
+  \item Each panel is one full EM iteration: E-step (soft assignments) then M-step (update centers).
+  \pause
+  \item Centers march steadily inward toward the natural data clusters; the algorithm converges after a few iterations.
+\end{itemize}
+\end{frame}
+
+% ─── Frame 16 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Why EM Always Improves}
+\begin{itemize}
+  \item \textbf{E-step:} compute responsibilities $\gamma_{nk}$ that \emph{exactly} match the current parameters -- constructing the tightest possible lower bound on the log-likelihood.
+  \pause
+  \item \textbf{M-step:} given those responsibilities, choose parameters that maximize the weighted expected log-likelihood -- by construction the best possible update.
+  \pause
+  \item Combining both: the true data log-likelihood
+  $\mathcal{L}(\theta) = \sum_n \log p(x_n)$ never decreases after any iteration:
+  \[
+    \mathcal{L}(\theta^{(0)}) \leq \mathcal{L}(\theta^{(1)}) \leq \mathcal{L}(\theta^{(2)}) \leq \cdots
+  \]
+  \pause
+  \item This monotone sequence converges -- but only to a \emph{local} maximum, not necessarily the global one.
+\end{itemize}
+\end{frame}
+
+% ─── Frame 17 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Log-Likelihood Convergence}
+\centering
+\includegraphics[width=0.80\textwidth]{figures/gmm_em/em_convergence.pdf}
+
+\vspace{0.35em}
+\raggedright
+\begin{itemize}
+  \item The log-likelihood rises monotonically, then flattens as EM approaches a local maximum.
+  \pause
+  \item Stop when the per-iteration increase falls below a tolerance \texttt{tol} -- or after \texttt{max\_iter} rounds.
+\end{itemize}
+\end{frame}
+
+% ─── Frame 18 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Common Pitfalls \& Key Hyperparameters}
+\begin{rlpitfall}
+  \textbf{Singular covariances:} if a component collapses onto a single point, its density blows up to $\infty$.  Guard with a small floor added to the covariance diagonal (\texttt{reg\_covar}).
+\end{rlpitfall}
+\pause
+\begin{itemize}
+  \item \textbf{Initialization:} EM finds a \emph{local} optimum.  Use \texttt{n\_init} random restarts and keep the run with the highest log-likelihood; seed from $k$-Means for a fast warm start.
+  \pause
+  \item \textbf{Choosing $K$:} log-likelihood always improves with more components.  Use BIC or AIC on held-out data, or rely on domain knowledge.
+  \pause
+  \item \textbf{Key hyperparameters} (\texttt{sklearn.mixture.GaussianMixture}):
+  \begin{itemize}
+    \item \texttt{n\_components} ($K$): number of mixture components.
+    \item \texttt{covariance\_type}: \texttt{spherical}, \texttt{diag}, \texttt{tied}, or \texttt{full}.
+    \item \texttt{n\_init}: number of random restarts.
+    \item \texttt{tol} / \texttt{max\_iter}: convergence tolerance and iteration budget.
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+% ─── Frame 19 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Summary}
+\begin{itemize}
+  \item A GMM models data as a weighted sum of $K$ Gaussians (Eq.~\eqref{eq:gmm-density}); each point gets a soft \emph{responsibility} $\gamma_{nk}$ instead of a hard label.
+  \item EM alternates two closed-form steps: the \textbf{E-step} computes $\gamma_{nk}$ from the current parameters (Eq.~\eqref{eq:responsibility}); the \textbf{M-step} refits $\{\pi_k, \mu_k, \Sigma_k\}$ from those responsibilities (Eq.~\eqref{eq:m-step-mean}--\eqref{eq:m-step-cov}).
+  \item Both steps provably never decrease the data log-likelihood -- EM converges monotonically but only to a \emph{local} optimum; initialization matters.
+  \item $k$-Means is a special case: EM with hard (0/1) assignments and equal, isotropic covariances.
+  \item Practical pitfalls: singular covariances (\texttt{reg\_covar}), initialization sensitivity (\texttt{n\_init} restarts), and model selection for $K$ (BIC/AIC).
+\end{itemize}
+\end{frame}
