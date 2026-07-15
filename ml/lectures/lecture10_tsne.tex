@@ -1,0 +1,236 @@
+% ─── Lecture 10: High-Dimensional Visualisation with t-SNE ──────────────────
+
+% ─── Frame 1 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Why PCA Is Not Enough}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\begin{itemize}
+  \item PCA finds the direction of greatest \emph{linear} variance and projects onto it.
+  \pause
+  \item Three concentric rings share the same centre -- their variance is symmetric.  PC~1 mixes all three classes into the same range.
+  \pause
+  \item No linear projection can pull the rings apart: the structure is \emph{radial}, not linear.
+\end{itemize}
+\column{0.50\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/tsne/tsne_pca_comparison.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Frame 2 ─────────────────────────────────────────────────────────────────
+\begin{frame}{What t-SNE Gives Us}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\begin{itemize}
+  \item \textbf{t-SNE} (van der Maaten \& Hinton, 2008) finds a 2-D layout that preserves \emph{who is near whom}, not distances.
+  \pause
+  \item Right panel: the same three rings are now clearly separated into three arcs.
+  \pause
+  \item The method does not require class labels -- it discovers structure from pairwise distances alone.
+\end{itemize}
+\column{0.50\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/tsne/tsne_pca_comparison.pdf}
+\end{columns}
+\pause
+\begin{rlintuition}
+  t-SNE asks: \emph{if two points are neighbours in high-D, can I place them close together in 2-D?}  It finds the 2-D arrangement that answers ``yes'' for as many pairs as possible.
+\end{rlintuition}
+\end{frame}
+
+% ─── Frame 3 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Step 1: High-D Similarities $P_{ij}$}
+\begin{itemize}
+  \item For each pair $(i,j)$ define the conditional similarity:
+  \[
+    p_{j|i} = \frac{\exp\!\bigl(-\|x_i - x_j\|^2 / 2\sigma_i^2\bigr)}
+                   {\displaystyle\sum_{k \neq i}\exp\!\bigl(-\|x_i - x_k\|^2 / 2\sigma_i^2\bigr)}
+  \]
+  \pause
+  \item Symmetrise to get the joint probability:
+  \[
+    p_{ij} = \frac{p_{j|i} + p_{i|j}}{2N}
+  \]
+  \pause
+  \item $p_{ij}$ is \textbf{large} when $x_i$ and $x_j$ are neighbours; \textbf{small} when they are far apart.
+  \pause
+  \item $\sigma_i$ is chosen automatically per point to hit the user-set \emph{perplexity} (covered in Frame 8).
+\end{itemize}
+\end{frame}
+
+% ─── Frame 4 ─────────────────────────────────────────────────────────────────
+\begin{frame}{The Crowding Problem}
+\begin{columns}[T]
+\column{0.52\textwidth}
+\begin{itemize}
+  \item In high-D: a point can have many equidistant neighbours -- there is ``room'' for all of them.
+  \pause
+  \item In 2-D: there is far less room.  If we use the same Gaussian kernel for the low-D layout, we cannot fit all neighbours at their correct distance -- some get crammed together.
+  \pause
+  \item This \emph{crowding problem} makes the Gaussian kernel unsuitable for the 2-D side.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=0.90\linewidth]{figures/tsne/tsne_crowding.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Frame 5 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Step 2: Low-D Similarities $Q_{ij}$ -- the Student-$t$ Fix}
+\begin{columns}[T]
+\column{0.52\textwidth}
+\begin{itemize}
+  \item Replace the Gaussian with the \textbf{Student-$t$} distribution (1\,dof) for the 2-D side:
+  \[
+    q_{ij} = \frac{(1 + \|y_i - y_j\|^2)^{-1}}
+                  {\sum_{k \neq l}(1 + \|y_k - y_l\|^2)^{-1}}
+  \]
+  \pause
+  \item The heavier tail (dashed) lets a moderate 2-D distance represent a small high-D distance.  Crowding is relieved -- points can spread out naturally.
+  \pause
+  \item Same kernel appears in the gradient: $(1 + \|y_i-y_j\|^2)^{-1}$ is the Student-$t$ weight on each force term.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/tsne/tsne_similarity_kernels.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Frame 6 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Step 3: The KL Divergence Objective}
+\begin{itemize}
+  \item Treat $P = \{p_{ij}\}$ and $Q = \{q_{ij}\}$ as two probability distributions over pairs.  Minimise their KL divergence:
+  \[
+    \mathcal{C} = D_{\mathrm{KL}}(P \| Q)
+               = \sum_{i \neq j} p_{ij} \log \frac{p_{ij}}{q_{ij}}
+  \]
+  \pause
+  \item \textbf{Large penalty} when $p_{ij}$ is large (high-D neighbours) but $q_{ij}$ is small (2-D strangers) -- getting neighbours right is critical.
+  \pause
+  \item \textbf{Small penalty} when $p_{ij}$ is small but $q_{ij}$ is large -- placing non-neighbours close is tolerated.
+  \pause
+  \item KL divergence is \emph{asymmetric}: t-SNE prioritises local structure (nearby points) over global structure (distant points).
+\end{itemize}
+\end{frame}
+
+% ─── Frame 7 ─────────────────────────────────────────────────────────────────
+\begin{frame}{The Gradient: Attraction and Repulsion}
+\begin{itemize}
+  \item The gradient w.r.t.\ the 2-D position $y_i$ decomposes into attractive and repulsive forces:
+  \[
+    \frac{\partial \mathcal{C}}{\partial y_i}
+    = 4\sum_{j \neq i} \underbrace{(p_{ij} - q_{ij})}_{\text{sign = direction}}
+      \underbrace{(y_i - y_j)}_{\text{direction}}
+      \underbrace{(1 + \|y_i - y_j\|^2)^{-1}}_{\text{Student-$t$ weight}}
+  \]
+  \pause
+  \item When $p_{ij} > q_{ij}$: \textbf{attractive} -- pull $y_i$ closer to $y_j$.
+  When $p_{ij} < q_{ij}$: \textbf{repulsive} -- push $y_i$ away from $y_j$.
+  \pause
+  \item \textbf{Early exaggeration}: multiply all $p_{ij}$ by $\alpha = 12$ for the first 250 iterations so clusters form quickly, then revert to the true $p_{ij}$.
+\end{itemize}
+\end{frame}
+
+% ─── Frame 8 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Perplexity: Tuning the Neighbourhood Scale}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\begin{itemize}
+  \item $\sigma_i$ is set automatically so that
+  \[
+    \mathrm{Perp}(P_i) = 2^{H(P_i)} = \text{user target}
+  \]
+  where $H(P_i) = -\!\sum_j p_{j|i}\log_2 p_{j|i}$.
+  \pause
+  \item Perplexity $\approx$ effective number of neighbours per point. Typical range: \textbf{5--50}; default 30.
+  \pause
+  \item Too low: each point sees only its closest few neighbours -- the embedding fragments. \quad
+        Too high: almost every point is a neighbour -- structure collapses.
+\end{itemize}
+\column{0.50\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/tsne/tsne_perplexity.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Frame 9 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Optimisation in Action}
+\begin{columns}[T]
+\column{0.52\textwidth}
+\begin{itemize}
+  \item Gradient descent minimises $D_{\mathrm{KL}}(P \| Q)$; the curve decreases sharply in the first few hundred iterations, then levels off.
+  \pause
+  \item t-SNE is \textbf{non-convex}: different random seeds produce different layouts -- the global arrangement is arbitrary.  Only local neighbourhood relationships are stable.
+  \pause
+  \item For large $N$: Barnes-Hut approximation reduces cost to $\mathcal{O}(N \log N)$ per step.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/tsne/tsne_convergence.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Frame 10 ────────────────────────────────────────────────────────────────
+\begin{frame}{What t-SNE Preserves -- and What It Does Not}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\textbf{Preserved} (\checkmark)
+\begin{itemize}
+  \item Local neighbourhoods -- who is near whom.
+  \item Cluster \emph{membership} -- whether two points belong to the same group.
+  \pause
+  \item Relative proximity \emph{within} a cluster.
+\end{itemize}
+
+\vspace{0.5em}
+\textbf{Not preserved} ($\times$)
+\begin{itemize}
+  \item Distances \emph{between} clusters.
+  \pause
+  \item Cluster sizes (blob area is meaningless).
+  \item Global geometry -- you cannot compare distances across clusters.
+\end{itemize}
+\column{0.50\textwidth}
+\pause
+\begin{rlpitfall}
+  Never interpret the distance between two blobs in a t-SNE plot as a measure of how different those clusters are.  Re-run with a different seed: the blobs will move, but the \emph{composition} of each blob stays the same.
+\end{rlpitfall}
+\end{columns}
+\end{frame}
+
+% ─── Frame 11 ────────────────────────────────────────────────────────────────
+\begin{frame}{Practical Tips}
+\begin{itemize}
+  \item \textbf{Run PCA first.}  Reduce to $\sim$50 dimensions before t-SNE -- it removes noise and speeds up pairwise distance computation.
+  \pause
+  \item \textbf{Try several perplexity values} (10, 30, 50) and compare.  A consistent cluster structure across perplexities is trustworthy; one that appears only at a single perplexity is not.
+  \pause
+  \item \textbf{Run multiple seeds.}  Two runs with different seeds should show the same cluster \emph{membership}; different inter-cluster layouts are normal.
+  \pause
+  \item \textbf{Colour by your cluster labels.}  After running $k$-Means or GMM, colour the t-SNE plot by the assigned label -- a clean t-SNE separation validates the clustering.
+\end{itemize}
+\end{frame}
+
+% ─── Frame 12 ────────────────────────────────────────────────────────────────
+\begin{frame}{Summary: PCA vs.\ t-SNE vs.\ GMM}
+\small
+\begin{center}
+\begin{tabular}{lccc}
+\hline
+ & \textbf{PCA} & \textbf{t-SNE} & \textbf{$k$-Means / GMM} \\
+\hline
+Output & coordinates & coordinates & labels / $\gamma_{nk}$ \\
+Structure captured & linear, global & non-linear, local & cluster membership \\
+Speed & fast $O(ND^2)$ & slow $O(N^2)$ & moderate \\
+Deterministic? & yes & no & no \\
+Preserves distances? & yes (approx.) & \emph{no} & -- \\
+Use for & compression, pre-proc & visualisation & clustering \\
+\hline
+\end{tabular}
+\end{center}
+
+\vspace{0.4em}
+\begin{rlintuition}
+  The typical workflow: run GMM to assign soft labels $\gamma_{nk}$, then visualise with t-SNE coloured by the dominant component.  If the t-SNE blobs match the GMM labels, the model has found real structure.
+\end{rlintuition}
+\end{frame}
