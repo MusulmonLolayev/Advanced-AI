@@ -96,8 +96,6 @@ PCA identifies the directions in the data that carry the greatest variation.
   \item From this point onward, $x_i$ denotes a centered example unless stated otherwise.
   \pause
   \item Without centering, the first principal direction can be influenced by the mean level rather than by true variation.
-  \pause
-  \item \footnotesize Example: if $x_1=(4,2)$ and $x_2=(2,0)$, then $\bar{x}=(3,1)$ and the centered examples are $(1,1)$ and $(-1,-1)$.
 \end{itemize}
 \end{frame}
 
@@ -211,6 +209,7 @@ PCA identifies the directions in the data that carry the greatest variation.
 \end{frame}
 
 \begin{frame}{Why the Largest Eigenvalue Matters}
+\small
 \begin{itemize}
   \item Let $w_j$ be a unit eigenvector of $\Sigma$, so
   \begin{equation}
@@ -221,9 +220,7 @@ PCA identifies the directions in the data that carry the greatest variation.
   \item Evaluate the PCA objective on that eigenvector:
   \begin{equation}
     w_j^\top \Sigma w_j
-    = w_j^\top (\lambda_j w_j)
-    = \lambda_j \|w_j\|_2^2
-    = \lambda_j.
+    = \lambda_j \|w_j\|_2^2 = \lambda_j.
     \label{eq:eigenvalue-variance}
   \end{equation}
   \pause
@@ -231,13 +228,12 @@ PCA identifies the directions in the data that carry the greatest variation.
   \pause
   \item A larger eigenvalue means a larger projected variance along that direction.
   \pause
-  \item If $\lambda_1 \ge \lambda_2 \ge \cdots \ge \lambda_d$, the first principal direction is the eigenvector $w_1$ associated with $\lambda_1$.
-  \pause
-  \item \footnotesize Example: if $\lambda_1=5$ and $\lambda_2=2$, then the variance along $w_1$ is $5$, while along $w_2$ it is $2$.
+  \item Ordering $\lambda_1 \ge \cdots \ge \lambda_d$ orders the principal directions by variance explained; $w_1$ is the best direction.
 \end{itemize}
 \end{frame}
 
 \begin{frame}{Why There Are Several Principal Components}
+\small
 \begin{columns}[T]
 \column{0.56\textwidth}
 \begin{itemize}
@@ -245,21 +241,13 @@ PCA identifies the directions in the data that carry the greatest variation.
   \pause
   \item The second component maximizes variance subject to orthogonality to the first.
   \pause
-  \item In general,
-  \begin{equation}
-    w_k = \arg\max_{\|w\|_2=1,\; w^\top w_j=0\ \forall j<k} w^\top \Sigma w.
-    \label{eq:pk}
-  \end{equation}
-  \pause
-  \item This gives orthogonal directions of decreasing variance.
-  \pause
-  \item \footnotesize Example: $(1,0)^\top(0,1)=0$, so these two directions are orthogonal.
+  \item In general, the $k$-th direction solves $\max_{\|w\|=1,\;w\perp w_j} w^\top\Sigma w$, giving orthogonal directions of decreasing variance.
 \end{itemize}
 
 \pause
 \column{0.44\textwidth}
 \centering
-\includegraphics[width=\textwidth]{figures/pca/pca_axes.pdf}
+\includegraphics[width=\textwidth,height=4.5cm,keepaspectratio]{figures/pca/pca_axes.pdf}
 \end{columns}
 \end{frame}
 
@@ -284,6 +272,7 @@ PCA identifies the directions in the data that carry the greatest variation.
 \end{frame}
 
 \begin{frame}{Projection, Reconstruction, and Error}
+\small
 \begin{itemize}
   \item After choosing the first $k$ principal directions, collect them in
   \[
@@ -304,14 +293,7 @@ PCA identifies the directions in the data that carry the greatest variation.
   \pause
   \item If $k$ is small, reconstruction keeps the main structure but discards weaker directions.
   \pause
-  \item The reconstruction-error score
-  \begin{equation}
-    \|x-\hat{x}\|_2^2,
-    \label{eq:reconstruction-error}
-  \end{equation}
-  is useful for denoising and anomaly detection.
-  \pause
-  \item \footnotesize Example: if $x=(3,1)$ and $w_1=(1,0)$, then $z=w_1^\top x=3$, $\hat{x}=(3,0)$, and $\|x-\hat{x}\|_2^2=1$.
+  \item The reconstruction error $\|x-\hat{x}\|_2^2$ is useful for denoising and anomaly detection.
 \end{itemize}
 \end{frame}
 
@@ -385,32 +367,22 @@ PCA identifies the directions in the data that carry the greatest variation.
 
 \begin{frame}{SVD as a Computational Route to PCA}
 \begin{itemize}
-  \item Instead of first forming
-  \[
-    \Sigma = \frac{1}{n-1}X_c^\top X_c,
-  \]
-  libraries often work directly with $X_c$ through \eqref{eq:svd-pca}.
+  \item Instead of first forming $\Sigma = \frac{1}{n-1}X_c^\top X_c$, libraries work directly with $X_c$ through the SVD.
   \pause
-  \item Substituting the SVD into $X_c^\top X_c$ gives
+  \item Substituting the SVD $X_c = USV^\top$ into $X_c^\top X_c$ gives
   \begin{equation}
-    X_c^\top X_c = V S^2 V^\top,
+    X_c^\top X_c = V S^2 V^\top.
     \label{eq:xtx}
   \end{equation}
   \pause
   \item Therefore
   \[
-    \Sigma = \frac{1}{n-1}X_c^\top X_c
-           = V \frac{S^2}{n-1} V^\top.
+    \Sigma = \frac{1}{n-1}X_c^\top X_c = V \frac{S^2}{n-1} V^\top.
   \]
   \pause
-  \item This has the same form as the eigen-decomposition of the covariance matrix.
+  \item This is the eigen-decomposition of $\Sigma$: the columns of $V$ are the principal directions, and $\lambda_j = s_j^2/(n-1)$.
   \pause
-  \item Therefore the columns of $V$ are the principal directions, and
-  \[
-    \lambda_j = \frac{s_j^2}{n-1}.
-  \]
-  \pause
-  \item Numerical libraries usually prefer this route because it works directly with $X_c$ and avoids an extra covariance-matrix construction.
+  \item Libraries prefer this route because it works directly with $X_c$, avoiding an explicit covariance-matrix construction.
 \end{itemize}
 \end{frame}
 
