@@ -51,7 +51,7 @@ Averaging many noisy but independent predictions is more stable than one perfect
   \pause
   \item Omission probability per example:
   \begin{equation}
-    P\bigl((x_i,y_i)\notin (X^{(b)},y^{(b)})\bigr)=\Bigl(1-\frac{1}{n}\Bigr)^{\!n}\approx\frac{1}{e}.
+    P(\text{miss}) = \Bigl(1-\tfrac{1}{n}\Bigr)^{n}\approx\tfrac{1}{e}.
     \label{eq:oob-probability}
   \end{equation}
   \pause
@@ -199,13 +199,12 @@ Averaging many noisy but independent predictions is more stable than one perfect
 \begin{itemize}
   \item Each bootstrap leaves out $\approx 37\%$ of examples (Eq.~\eqref{eq:oob-probability}). These ``out-of-bag'' (OOB) samples are unseen by that tree.
   \pause
-  \item For each example $(x_i,y_i)$, aggregate predictions only from trees that did not see it:
+  \item For each example $x_i$, aggregate predictions only from trees that did not see it:
   \[
     \hat{y}_{\text{OOB}}(x_i)
-    =
-    \arg\max_{c}
-    \sum_{b:\;(x_i,y_i)\notin (X^{(b)},y^{(b)})}
-    \mathbf{1}\{\hat{y}^{(b)}(x_i)=c\}.
+    = \arg\max_{c}
+    \sum_{b:\,x_i \notin X^{(b)}}
+    \mathbf{1}[\hat{y}^{(b)}(x_i)=c].
   \]
   \pause
   \item OOB error = fraction of training examples where $\hat{y}_{\text{OOB}}(x_i)\neq y_i$.
