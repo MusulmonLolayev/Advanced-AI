@@ -19,6 +19,10 @@ The course is organized into eight modules (0–7). Lecture numbering restarts a
 
 ### Module 0: Statistics for Advanced AI (Lectures 1-10)
 
+Authored under `statistics/` (own `main.tex`, `lectures/`, `theme/`, `scripts/` — mirrors `ml/`'s
+layout but is an independent deck, not shared with it). Lecture 1 is drafted
+(`statistics/lectures/lecture01_data_probability.tex`); Lectures 2-10 below are outline only so far.
+
 Primary references:
 - Illowsky & Dean, *Introductory Statistics 2e* (OpenStax) — Lectures 1–5 core probability and distributions
 - Bishop, *PRML* — Lectures 6–7 (MLE, Bayesian inference)

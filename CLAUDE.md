@@ -4,12 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository overview
 
-This is the authored course material for an "Advanced AI" course, living entirely under `ml/`. Two parallel tracks share topics but are otherwise independent:
+This is the authored course material for an "Advanced AI" course, split into one top-level directory per module's track:
 
-- **Lecture slides** (`ml/main.tex`, `ml/lectures/*.tex`, `ml/theme/*.tex`) — a single Beamer deck.
-- **Assignments** (`ml/assignments/assignmentN_<topic>/`) — self-contained Python labs, each with its own NumPy implementation package, Jupyter notebook, LaTeX lab handout, and self-check script; `ml/assignments/main.tex` compiles all `labN.tex` handouts into one booklet.
+- **`ml/`** — Module 1 (Classical Machine Learning). Two parallel tracks share topics but are otherwise independent:
+  - **Lecture slides** (`ml/main.tex`, `ml/lectures/*.tex`, `ml/theme/*.tex`) — a single Beamer deck.
+  - **Assignments** (`ml/assignments/assignmentN_<topic>/`) — self-contained Python labs, each with its own NumPy implementation package, Jupyter notebook, LaTeX lab handout, and self-check script; `ml/assignments/main.tex` compiles all `labN.tex` handouts into one booklet.
+- **`statistics/`** — Module 0 (Statistics for Advanced AI). Same Beamer-deck layout as `ml/` (`statistics/main.tex`, `statistics/lectures/*.tex`, `statistics/theme/*.tex`, `statistics/scripts/`), but with its own copy of the theme/macros files rather than sharing `ml/theme/` — the two module tracks are meant to stay independently editable, same as assignments not sharing a package. No assignments track exists for this module yet.
 
-`course-map.md` (repo root) is the authoritative source for the full course structure (8 modules, 0-7), scope, and what's intentionally excluded — read it before adding or reordering material. Only Module 1 (Classical ML) and Module 0 (Statistics) currently have authored lecture decks under `ml/lectures/`; Modules 2-7 exist only as the outline in `course-map.md` so far. Assignments currently only cover Module 1.
+`course-map.md` (repo root) is the authoritative source for the full course structure (8 modules, 0-7), scope, and what's intentionally excluded — read it before adding or reordering material. Only Module 1 (`ml/lectures/`) and Module 0 (`statistics/lectures/`) currently have authored lecture decks; Modules 2-7 exist only as the outline in `course-map.md` so far. Assignments currently only cover Module 1.
 
 Two project-scoped Claude Code skills capture the established authoring workflow in detail — read them (or let them trigger) instead of re-deriving the process:
 - **`pandas-vector-graphics`** (`.claude/skills/pandas-vector-graphics/`) — how lecture figures are built: pandas/numpy for the numbers, rendered to vector PDF+SVG (never raster). Most existing scripts render via TikZ/pgfplots compiled with `pdflatex`; `generate_tsne_graphics.py` (lecture 10) instead renders directly with matplotlib (`fig.savefig(...)`) — matplotlib is the preferred path for new chart-type figures (scatter/line/bar plots, comparisons) since it avoids hand-built TikZ coordinate strings; TikZ remains better suited to schematic diagrams with custom geometry. Don't retrofit the other existing TikZ scripts without being asked.
@@ -17,26 +19,26 @@ Two project-scoped Claude Code skills capture the established authoring workflow
 
 ## Building the slides
 
-The full deck is `ml/main.tex`, which `\input`s every lecture `.tex` file in `ml/lectures/` in order (all lectures build together now, not one-at-a-time). To build:
+Each module's deck is its own `main.tex`, which `\input`s every lecture `.tex` file in that module's `lectures/` directory in order (all lectures in a deck build together, not one-at-a-time). To build:
 
 ```bash
-cd ml
+cd ml            # or: cd statistics
 pdflatex main.tex   # or latexmk -pdf main.tex
 ```
 
-Follow the `latex-slide-fit` skill's two-pass-compile + warning-grep + rasterize-and-read loop after editing any frame — a successful compile does not mean the slide is readable.
+Follow the `latex-slide-fit` skill's two-pass-compile + warning-grep + rasterize-and-read loop after editing any frame — a successful compile does not mean the slide is readable. This applies the same way in `statistics/` as in `ml/`.
 
-Shared theme and macros are in `ml/theme/rl-theme.tex` and `ml/theme/rl-macros.tex` — reuse macros from there instead of hardcoding TikZ/math styling in a lecture file, to keep notation consistent across lectures.
+Each module has its own theme/macros copy — `ml/theme/rl-theme.tex`+`ml/theme/rl-macros.tex` and `statistics/theme/rl-theme.tex`+`statistics/theme/rl-macros.tex` — reuse macros from the matching module's theme file instead of hardcoding TikZ/math styling in a lecture file, to keep notation consistent within that module's lectures. The two copies are intentionally independent (not `\input` from a shared location); a branding/macro change made in one does not propagate to the other unless applied by hand.
 
 ## Generating lecture figures
 
-Each lecture's figures are generated by a matching script in `ml/scripts/` (e.g. `generate_forest_variants_graphics.py` for lecture 7), which builds the underlying numbers with pandas/numpy, renders them via TikZ/pgfplots, compiles with `pdflatex`, and converts to SVG with `dvisvgm` — writing both into `ml/figures/<topic>/` (gitignored build artifacts; only each topic directory's `.gitignore` is committed). Run a script directly:
+Each lecture's figures are generated by a matching script in the module's `scripts/` directory (e.g. `ml/scripts/generate_forest_variants_graphics.py` for `ml` lecture 7), which builds the underlying numbers with pandas/numpy, renders them (TikZ/pgfplots compiled with `pdflatex`, or matplotlib directly — see the `pandas-vector-graphics` skill), and writes into that module's `figures/<topic>/` (gitignored build artifacts; only each topic directory's `.gitignore` is committed). Run a script directly:
 
 ```bash
-python3 ml/scripts/generate_<topic>_graphics.py
+python3 ml/scripts/generate_<topic>_graphics.py            # or statistics/scripts/...
 ```
 
-and regenerate the matching figures whenever a lecture's numbers/examples change. See the `pandas-vector-graphics` skill before writing a new `generate_*_graphics.py` script. Some newer scripts (e.g. `generate_tsne_graphics.py`) additionally depend on `scikit-learn`/`pandas` beyond the core `requirements.txt`/`environment-data.yml` deps — install as needed when running them.
+and regenerate the matching figures whenever a lecture's numbers/examples change. See the `pandas-vector-graphics` skill before writing a new `generate_*_graphics.py` script. Some newer scripts (e.g. `generate_tsne_graphics.py`) additionally depend on `scikit-learn`/`pandas` beyond the core `requirements.txt`/`environment-data.yml` deps — install as needed when running them. `statistics/scripts/` has no scripts yet — no figures have been generated for that deck so far.
 
 ## Assignments
 

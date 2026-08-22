@@ -1,0 +1,140 @@
+\section{Data, Probability \& Descriptive Statistics}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Distinguish data types (categorical vs. numerical, discrete vs. continuous) and read frequency distributions, histograms, and box plots.
+  \pause
+  \item Compute and interpret measures of center (mean, median, mode) and spread (variance, standard deviation, IQR).
+  \pause
+  \item Define sample spaces and events, and apply the complement, addition, and multiplication rules of probability.
+  \pause
+  \item Distinguish mutual exclusivity from independence, and empirical from classical probability.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading Resources}
+\begin{itemize}
+  \item Primary reference for Module 0, Lectures 1--5: Illowsky \& Dean, \textit{Introductory Statistics 2e} (OpenStax), free at \url{https://openstax.org/details/books/introductory-statistics-2e}.
+  \pause
+  \item We omit topics not critical for AI: chi-square tests, two-sample $t$-tests, ANOVA, and study-design methodology.
+  \pause
+  \item Hypothesis testing is deferred to Lecture 10 (Statistical Model Evaluation), its most relevant context for this course.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Statistics Before Machine Learning}
+\begin{itemize}
+  \item Every ML model is trained on a \textbf{sample} and evaluated by \textbf{estimating} how well it will generalize.
+  \pause
+  \item Loss functions (cross-entropy, MSE) are maximum-likelihood objectives in disguise --- Lecture 5.
+  \pause
+  \item Bayes' theorem underlies methods from Naive Bayes to diffusion models --- Lecture 2.
+  \pause
+  \item This module builds the probability and estimation vocabulary that Modules 1--3 assume.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Data Types}
+\begin{columns}[T]
+\column{0.48\textwidth}
+\textbf{Categorical (qualitative)}
+\begin{itemize}
+  \item nominal: no natural order (e.g. color, model architecture name)
+  \pause
+  \item ordinal: ordered, unequal spacing (e.g. rating: low/medium/high)
+\end{itemize}
+
+\pause
+\column{0.48\textwidth}
+\textbf{Numerical (quantitative)}
+\begin{itemize}
+  \item discrete: countable (e.g. number of tokens)
+  \pause
+  \item continuous: measured on a scale (e.g. inference latency)
+\end{itemize}
+\end{columns}
+
+\pause
+\begin{rlintuition}
+The data type determines which summary statistics and plots are valid: means and standard deviations only make sense for numerical data; categorical data is summarized with counts and proportions.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Measures of Center}
+\begin{rldefinition}
+For a sample $x_1, \dots, x_n$:
+\[
+\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i
+\qquad
+\text{median} = \text{middle value of sorted } x_i
+\]
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The mean is sensitive to outliers; the median is robust to them.
+  \pause
+  \item The mode is the most frequent value --- the only measure of center defined for categorical data.
+  \pause
+  \item Skewed distributions (e.g. income, latency) are usually better summarized by the median.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Measures of Spread}
+\begin{rldefinition}
+\[
+s^2 = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2
+\qquad
+s = \sqrt{s^2}
+\]
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item $s^2$ is the sample variance; dividing by $n-1$ (Bessel's correction) gives an unbiased estimator of the population variance.
+  \pause
+  \item The interquartile range $\text{IQR} = Q_3 - Q_1$ is a robust spread measure, used to flag outliers ($< Q_1 - 1.5\,\text{IQR}$ or $> Q_3 + 1.5\,\text{IQR}$).
+  \pause
+  \item Box plots visualize $Q_1$, median, $Q_3$, and outliers in one figure.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Sample Spaces, Events \& Probability Rules}
+\begin{rldefinition}
+The \textbf{sample space} $\Omega$ is the set of all possible outcomes. An \textbf{event} $A \subseteq \Omega$ is a subset of outcomes. A probability function $P$ assigns $P(A) \in [0,1]$ with $P(\Omega) = 1$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Complement rule:} $P(A^c) = 1 - P(A)$.
+  \pause
+  \item \textbf{Addition rule:} $P(A \cup B) = P(A) + P(B) - P(A \cap B)$.
+  \pause
+  \item \textbf{Multiplication rule:} $P(A \cap B) = P(A)\,P(B \mid A)$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Mutual Exclusivity vs. Independence}
+\begin{itemize}
+  \item $A$ and $B$ are \textbf{mutually exclusive} if $A \cap B = \emptyset$, so $P(A \cap B) = 0$.
+  \pause
+  \item $A$ and $B$ are \textbf{independent} if $P(A \cap B) = P(A)\,P(B)$, equivalently $P(B \mid A) = P(B)$.
+  \pause
+  \item These are not the same: two mutually exclusive events with nonzero probability are always dependent, since $P(A\cap B) = 0 \neq P(A)P(B)$.
+\end{itemize}
+\pause
+\begin{rlpitfall}
+Confusing ``mutually exclusive'' with ``independent'' is a common error. If two events can never happen together, learning that one happened tells you the other definitely did not --- that is strong dependence, not independence.
+\end{rlpitfall}
+\end{frame}
+
+\begin{frame}{Empirical vs. Classical Probability}
+\begin{itemize}
+  \item \textbf{Classical probability}: $P(A) = |A| / |\Omega|$ when all outcomes are equally likely (e.g. a fair die).
+  \pause
+  \item \textbf{Empirical probability}: $P(A) \approx \frac{\text{count of } A \text{ in observed data}}{\text{total observations}}$, estimated from a sample.
+  \pause
+  \item Machine learning almost always relies on empirical probability: class frequencies in a training set, token frequencies in a corpus, click-through rates in logged data.
+\end{itemize}
+\pause
+\begin{rlquestion}
+If a spam classifier is trained on a dataset where 90\% of emails are spam, is the empirical $P(\text{spam})$ estimated from that dataset a good estimate of $P(\text{spam})$ for real-world email traffic?
+\end{rlquestion}
+\end{frame}
