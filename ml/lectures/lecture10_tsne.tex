@@ -18,6 +18,71 @@
 \end{frame}
 
 % ─── Frame 2 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Notation Recap}
+\begin{rldefinition}
+  \begin{itemize}
+    \item Dataset: $\{x_1,\dots,x_N\} \subset \mathbb{R}^D$ -- the original high-dimensional points.
+    \item Embedding: $\{y_1,\dots,y_N\} \subset \mathbb{R}^d$ -- the points we solve for, with $d \ll D$ (usually $d=2$, for plotting).
+    \item $N$: number of points. \quad $D$: original dimensionality. \quad $d$: embedding dimensionality.
+  \end{itemize}
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Every method on the next few slides asks the same question -- \emph{choose $y_1,\dots,y_N$ so the geometry of the $y_i$ mirrors the geometry of the $x_i$} -- they only disagree on what ``geometry'' means.
+  \pause
+  \item \textbf{Distances}: $d^*_{ij} = \|x_i - x_j\|$ (high-D), \ $d_{ij} = \|y_i - y_j\|$ (low-D).
+  \pause
+  \item \textbf{Similarities} (probabilities): $p_{ij}$, $p_{j|i}$ (high-D), \ $q_{ij}$, $q_{j|i}$ (low-D) -- defined from Frame~4 onward.
+\end{itemize}
+\end{frame}
+
+% ─── Frame 3 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Before t-SNE: Sammon Projection (1969)}
+\begin{columns}[T]
+\column{0.55\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Sammon projection} (Sammon, 1969; in Ayvazyan et al., \emph{Applied Statistics}, 1985, appendix): the first nonlinear alternative to PCA. No probabilities -- matches distances $d^*_{ij}, d_{ij}$ directly, minimising a weighted \emph{stress}:
+  \[
+    E = \frac{1}{\sum_{i<j} d^*_{ij}} \sum_{i<j} \frac{\bigl(d^*_{ij} - d_{ij}\bigr)^2}{d^*_{ij}}
+  \]
+  \pause
+  \item $1/d^*_{ij}$ weights \textbf{nearby} pairs more -- same local-over-global priority t-SNE makes later (Frame~10).
+\end{itemize}
+\column{0.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/tsne/tsne_sammon_comparison.pdf}
+\pause
+
+{\tiny Rings recovered: this 8-D data is a near-isometric linear copy of the 2-D rings -- exactly what distance-matching is built for.}
+\end{columns}
+\end{frame}
+
+% ─── Frame 4 ─────────────────────────────────────────────────────────────────
+\begin{frame}{SNE (2002): Distances Become Probabilities}
+\begin{columns}[T]
+\column{0.55\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{SNE} (Hinton \& Roweis, 2002) replaced Sammon's distances with probabilities: $p_{j|i}$ in high-D (next frame), and a \textbf{Gaussian} $q_{j|i}$ in low-D:
+  \[
+    q_{j|i} = \frac{\exp\!\bigl(-\|y_i - y_j\|^2\bigr)}{\displaystyle\sum_{k \neq i}\exp\!\bigl(-\|y_i - y_k\|^2\bigr)}
+  \]
+  \pause
+  \item Both sides Gaussian $\Rightarrow$ SNE inherits crowding (Frame~8).
+  \pause
+  \item \textbf{t-SNE = SNE + 2 fixes}: symmetrise into joint $p_{ij}$ (Frame~6), swap low-D Gaussian for Student-$t$ (Frame~9).
+\end{itemize}
+\column{0.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/tsne/tsne_sne_comparison.pdf}
+\pause
+
+{\tiny Same $p_{ij}$, same data -- only the low-D kernel changed. Gaussian $Q$ crushes most points into one clump; Student-$t$ $Q$ spreads them out.}
+\end{columns}
+\end{frame}
+
+% ─── Frame 5 ─────────────────────────────────────────────────────────────────
 \begin{frame}{What t-SNE Gives Us}
 \begin{columns}[T]
 \column{0.50\textwidth}
@@ -38,7 +103,7 @@
 \end{rlintuition}
 \end{frame}
 
-% ─── Frame 3 ─────────────────────────────────────────────────────────────────
+% ─── Frame 6 ─────────────────────────────────────────────────────────────────
 \begin{frame}{Step 1: High-D Similarities $P_{ij}$}
 \begin{itemize}
   \item For each pair $(i,j)$ define the conditional similarity:
@@ -47,18 +112,38 @@
                    {\displaystyle\sum_{k \neq i}\exp\!\bigl(-\|x_i - x_k\|^2 / 2\sigma_i^2\bigr)}
   \]
   \pause
-  \item Symmetrise to get the joint probability:
+  \item $p_{j|i} \neq p_{i|j}$ in general: $\sigma_i \neq \sigma_j$ (each bandwidth fits its own point's local density), and the two conditionals normalise over different neighbour sets. \textbf{Symmetrise} to get one joint probability per pair:
   \[
     p_{ij} = \frac{p_{j|i} + p_{i|j}}{2N}
   \]
   \pause
   \item $p_{ij}$ is \textbf{large} when $x_i$ and $x_j$ are neighbours; \textbf{small} when they are far apart.
   \pause
-  \item $\sigma_i$ is chosen automatically per point to hit the user-set \emph{perplexity} (covered in Frame 8).
+  \item $\sigma_i$ is chosen automatically per point to hit the user-set \emph{perplexity} (covered in Frame 12).
 \end{itemize}
 \end{frame}
 
-% ─── Frame 4 ─────────────────────────────────────────────────────────────────
+% ─── Frame 7 ─────────────────────────────────────────────────────────────────
+\begin{frame}{Worked Example: Computing $P_{ij}$ by Hand}
+\begin{columns}[T]
+\column{0.38\textwidth}
+\centering
+\includegraphics[width=0.82\linewidth]{figures/tsne/tsne_worked_example.pdf}
+\column{0.62\textwidth}
+\footnotesize
+\begin{itemize}
+  \item Two tight pairs plus outlier $x_3$; fix $\sigma_i = 2$.
+  \pause
+  \item $d(x_1,x_2)=1.00$, $d(x_1,x_3)=3.00$, $d(x_1,x_4)=7.07$.
+  \pause
+  \item $p_{2|1} = 0.730 \neq p_{1|2} = 0.750$ -- the Frame~6 asymmetry, made concrete.
+  \pause
+  \item Symmetrised: $p_{12} = 0.148$ (near) vs.\ $p_{14} = 0.0004$ (far).
+\end{itemize}
+\end{columns}
+\end{frame}
+
+% ─── Frame 8 ─────────────────────────────────────────────────────────────────
 \begin{frame}{The Crowding Problem}
 \begin{columns}[T]
 \column{0.52\textwidth}
@@ -75,7 +160,7 @@
 \end{columns}
 \end{frame}
 
-% ─── Frame 5 ─────────────────────────────────────────────────────────────────
+% ─── Frame 9 ─────────────────────────────────────────────────────────────────
 \begin{frame}{Step 2: Low-D Similarities $Q_{ij}$ -- the Student-$t$ Fix}
 \begin{columns}[T]
 \column{0.52\textwidth}
@@ -96,7 +181,7 @@
 \end{columns}
 \end{frame}
 
-% ─── Frame 6 ─────────────────────────────────────────────────────────────────
+% ─── Frame 10 ────────────────────────────────────────────────────────────────
 \begin{frame}{Step 3: The KL Divergence Objective}
 \begin{itemize}
   \item Treat $P = \{p_{ij}\}$ and $Q = \{q_{ij}\}$ as two probability distributions over pairs.  Minimise their KL divergence:
@@ -110,10 +195,12 @@
   \item \textbf{Small penalty} when $p_{ij}$ is small but $q_{ij}$ is large -- placing non-neighbours close is tolerated.
   \pause
   \item KL divergence is \emph{asymmetric}: t-SNE prioritises local structure (nearby points) over global structure (distant points).
+  \pause
+  \item \textbf{Toy example} (Frame~7 data, squeezed onto a bad 1-D line $y$): $p_{13}=0.077$ but $q_{13}=0.045$ on that line $\Rightarrow$ term $=0.041$ -- the single largest penalty, driving $x_3$ to move. Total $D_{\mathrm{KL}}(P\|Q)=0.169$ for this layout.
 \end{itemize}
 \end{frame}
 
-% ─── Frame 7 ─────────────────────────────────────────────────────────────────
+% ─── Frame 11 ────────────────────────────────────────────────────────────────
 \begin{frame}{The Gradient: Attraction and Repulsion}
 \begin{itemize}
   \item The gradient w.r.t.\ the 2-D position $y_i$ decomposes into attractive and repulsive forces:
@@ -131,7 +218,7 @@
 \end{itemize}
 \end{frame}
 
-% ─── Frame 8 ─────────────────────────────────────────────────────────────────
+% ─── Frame 12 ────────────────────────────────────────────────────────────────
 \begin{frame}{Perplexity: Tuning the Neighbourhood Scale}
 \begin{columns}[T]
 \column{0.50\textwidth}
@@ -153,7 +240,7 @@
 \end{columns}
 \end{frame}
 
-% ─── Frame 9 ─────────────────────────────────────────────────────────────────
+% ─── Frame 13 ────────────────────────────────────────────────────────────────
 \begin{frame}{Optimisation in Action}
 \begin{columns}[T]
 \column{0.52\textwidth}
@@ -170,7 +257,7 @@
 \end{columns}
 \end{frame}
 
-% ─── Frame 10 ────────────────────────────────────────────────────────────────
+% ─── Frame 14 ────────────────────────────────────────────────────────────────
 \begin{frame}{What t-SNE Preserves -- and What It Does Not}
 \begin{columns}[T]
 \column{0.50\textwidth}
@@ -198,7 +285,7 @@
 \end{columns}
 \end{frame}
 
-% ─── Frame 11 ────────────────────────────────────────────────────────────────
+% ─── Frame 15 ────────────────────────────────────────────────────────────────
 \begin{frame}{Practical Tips}
 \begin{itemize}
   \item \textbf{Run PCA first.}  Reduce to $\sim$50 dimensions before t-SNE -- it removes noise and speeds up pairwise distance computation.
@@ -211,7 +298,7 @@
 \end{itemize}
 \end{frame}
 
-% ─── Frame 12 ────────────────────────────────────────────────────────────────
+% ─── Frame 16 ────────────────────────────────────────────────────────────────
 \begin{frame}{Summary: PCA vs.\ t-SNE vs.\ GMM}
 \small
 \begin{center}

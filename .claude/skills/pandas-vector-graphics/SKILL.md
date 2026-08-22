@@ -1,25 +1,78 @@
 ---
 name: pandas-vector-graphics
-description: Generates lecture/teaching graphics for this repo using Python + pandas for the underlying numeric data and TikZ/pgfplots (compiled via pdflatex) for rendering, with PDF and SVG as the only output formats — never a rasterized PNG/JPEG. Use this skill whenever creating or editing a ml/scripts/generate_*_graphics.py figure-generation script, or whenever asked to make a new chart/diagram/plot for a lecture slide in this course.
+description: Generates lecture/teaching graphics for this repo using Python + pandas for the underlying numeric data, rendered to vector PDF+SVG — never a rasterized PNG/JPEG. Two renderers are in use: TikZ/pgfplots (compiled via pdflatex) for most existing scripts, and matplotlib (direct fig.savefig) for chart-type figures going forward. Use this skill whenever creating or editing a ml/scripts/generate_*_graphics.py figure-generation script, or whenever asked to make a new chart/diagram/plot for a lecture slide in this course.
 ---
 
 # Pandas -> Vector Graphics (PDF/SVG)
 
 Every figure that ships in a lecture slide (`ml/figures/<topic>/*.pdf`) in
 this course is produced by a `ml/scripts/generate_<topic>_graphics.py`
-script, never hand-drawn or pulled from an external source. The pipeline is
-always: **pandas DataFrame holds the numbers -> TikZ/pgfplots template
-renders them -> pdflatex compiles to PDF -> dvisvgm converts the same PDF to
-SVG.** The deliverable is a vector PDF (the slides `\includegraphics` it) and
-a vector SVG (kept alongside for non-LaTeX use) — raster formats (PNG, JPEG)
-are not committed and are not an acceptable final output for a course figure.
-A PNG screenshot of a figure is only ever a debugging/QA aid (see the
-`latex-slide-fit` skill) — it is never what you write to
+script, never hand-drawn or pulled from an external source. The data half is
+always the same: **pandas DataFrame (or numpy, assembled into one) holds the
+numbers.** Rendering that data uses one of two paths:
+
+- **TikZ/pgfplots via pdflatex** — the original and still most common path
+  (every script except `generate_tsne_graphics.py` as of this writing). See
+  "The TikZ path" below.
+- **matplotlib, saved directly to PDF/SVG** — the preferred path for new
+  chart-type figures (scatter plots, line charts, small-multiples panels,
+  bar charts): no TikZ coordinate-string building, no `pdflatex` subprocess,
+  numerically identical output rendered more directly. `generate_tsne_graphics.py`
+  is the reference implementation — read it end to end before writing a new
+  matplotlib-based script. Use TikZ instead when a figure needs custom
+  schematic geometry (annotated diagrams, hand-placed shapes/arrows tied to
+  specific coordinates) that doesn't map cleanly onto a matplotlib chart type.
+
+Either way, the deliverable is a vector PDF (the slides `\includegraphics`
+it) and a vector SVG (kept alongside for non-LaTeX use) — raster formats
+(PNG, JPEG) are not committed and are not an acceptable final output for a
+course figure. A PNG screenshot of a figure is only ever a debugging/QA aid
+(see the `latex-slide-fit` skill) — it is never what you write to
 `ml/figures/<topic>/`.
+
+Don't retrofit an existing TikZ script to matplotlib unless asked — the two
+paths coexist per-script, not per-repo.
+
+## The matplotlib path
+
+```python
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+def save_fig(fig, name):
+    fig.savefig(OUT_DIR / f"{name}.pdf", bbox_inches="tight", facecolor="white")
+    fig.savefig(OUT_DIR / f"{name}.svg", bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"✓ {name}.pdf")
+    print(f"✓ {name}.svg")
+```
+
+Build each figure with `fig, ax = plt.subplots(figsize=(...))` (or
+`plt.subplots(1, N, ...)` for side-by-side panels), plot from the
+DataFrame/array directly (`ax.scatter`, `ax.plot`, `Circle` patches for
+schematic shapes), then call `save_fig(fig, "<topic>_<name>")`. No
+intermediate `.tex`/`.aux` files exist for this path, so there's nothing to
+clean up on success and nothing to inspect on failure beyond the normal
+Python traceback.
+
+**Aspect ratio matters more here than with TikZ**: a matplotlib figure's
+`figsize` directly sets the output PDF's page size (check with
+`pdfinfo <file>.pdf | grep 'Page size'`), and a mismatch between that aspect
+ratio and the `\includegraphics` column width it's placed into is the most
+common cause of Beamer overflow for these figures (see `latex-slide-fit`).
+For a figure going into a half-width two-column frame, prefer a wide/short
+`figsize` (e.g. landscape multi-panel `plt.subplots(1, N, ...)`) over a
+tall/narrow one.
+
+## The TikZ path
 
 This pipeline was established in `ml/scripts/generate_boosting_graphics.py`
 and extended in `ml/scripts/generate_gmm_em_graphics.py` — read one of those
-end to end as a working reference before writing a new script.
+end to end as a working reference before writing a new TikZ-based script.
+It is: **pandas DataFrame holds the numbers -> TikZ/pgfplots template
+renders them -> pdflatex compiles to PDF -> dvisvgm converts the same PDF to
+SVG.**
 
 ## Why pandas for the data
 
@@ -29,9 +82,10 @@ numerical example's table, a synthetic dataset's coordinates — is built as a
 when a plain Python list would "work." This keeps the data construction
 inspectable and consistent with how the rest of the course's examples are
 verified (compute the DataFrame, print it, sanity-check the numbers by hand
-or by running the script standalone, *then* wire it into the TikZ template).
-Do not skip straight to hardcoding coordinate strings — derive them from a
-DataFrame/array even for a four-point worked example.
+or by running the script standalone, *then* wire it into the TikZ template
+or pass it straight to matplotlib). Do not skip straight to hardcoding
+coordinate strings — derive them from a DataFrame/array even for a
+four-point worked example.
 
 ## File layout
 
@@ -187,12 +241,15 @@ wrong axis, off-by-one in a sum) will still compile a fine-looking plot.
 ## After generating
 
 1. Run the script: `python3 ml/scripts/generate_<topic>_graphics.py` — every
-   figure should print `✓ <name>.pdf` and `✓ <name>.svg`; a `✗` means stop
-   and read the captured `pdflatex` stdout before continuing.
+   figure should print `✓ <name>.pdf` and `✓ <name>.svg`; a `✗` (TikZ path)
+   means stop and read the captured `pdflatex` stdout before continuing, and
+   a Python traceback (matplotlib path) means stop and fix it there.
 2. Rasterize the new PDF standalone (e.g.
    `mutool draw -o /tmp/check.png -r 200 ml/figures/<topic>/<name>.pdf`) and
    `Read` it to sanity-check the figure looks like what you intended *before*
    wiring it into a lecture frame — this is much faster to iterate on than
-   debugging it through a full Beamer recompile.
+   debugging it through a full Beamer recompile. For a matplotlib figure,
+   also check `pdfinfo <file>.pdf | grep 'Page size'` against the frame's
+   `\includegraphics` column width (see "Aspect ratio matters more here" above).
 3. Only after the standalone figure looks right, embed it in the `.tex`
    lecture frame and follow the `latex-slide-fit` skill to make sure it fits.
