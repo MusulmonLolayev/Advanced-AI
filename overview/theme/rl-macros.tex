@@ -1,0 +1,36 @@
+% Packages
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{positioning}
+
+
+\pgfplotsset{compat=1.18}
+
+% -------------------------
+% RL Teaching Blocks
+% -------------------------
+
+\newenvironment{rlintuition}{
+  \begin{block}{Intuition}
+}{
+  \end{block}
+}
+
+\newenvironment{rldefinition}{
+  \begin{block}{Definition}
+}{
+  \end{block}
+}
+
+\newenvironment{rlpitfall}{
+  \begin{alertblock}{Common Pitfall}
+}{
+  \end{alertblock}
+}
+
+\newenvironment{rlquestion}{
+  \begin{block}{Think About This}
+}{
+  \end{block}
+}

@@ -1,0 +1,159 @@
+% ─── Course Overview ──────────────────────────────────────────────────────
+
+\begin{frame}{Course Goal}
+By the end of this course, students should be able to:
+\begin{itemize}
+  \item reason about data and uncertainty using probability, estimation, and information theory (e.g. MLE, Bayesian inference);
+  \pause
+  \item understand and implement classical machine learning both geometrically and computationally (e.g. k-NN, PCA, clustering, decision trees);
+  \pause
+  \item build and train deep neural networks for vision and language (e.g. CNNs, Transformers);
+  \pause
+  \item apply graph-based learning to relational data (e.g. graph neural networks);
+  \pause
+  \item understand reinforcement learning and alignment methods (e.g. policy gradients, RLHF);
+  \pause
+  \item deploy models efficiently and build agentic systems that use tools and retrieval (e.g. quantization, LoRA, RAG).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{How This Course Is Organized}
+\begin{itemize}
+  \item The course is split into \textbf{8 modules (0--7)}. Lecture numbering restarts at 1 within each module.
+  \pause
+  \item Modules are authored \textbf{independently} -- each has its own lecture-slide deck, and some have their own assignment sequence.
+  \pause
+  \item Every module follows the same two-track pattern:
+  \begin{itemize}
+    \item \textbf{Lecture slides} -- short derivation $\rightarrow$ numerical example $\rightarrow$ graphic.
+    \item \textbf{Assignments} -- self-contained Python labs with a from-scratch NumPy implementation.
+  \end{itemize}
+  \pause
+  \item Modules are \emph{not} authored in strict numeric order -- later lectures sometimes forward-reference material from another module (called out explicitly when it happens).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The 8 Modules at a Glance}
+\small
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{itemize}
+  \item \textbf{Module 0} -- Statistics for Advanced AI (10 lectures)
+  \pause
+  \item \textbf{Module 1} -- Classical Machine Learning (14 lectures)
+  \pause
+  \item \textbf{Module 2} -- Vision / Deep Neural Networks (18 lectures)
+  \pause
+  \item \textbf{Module 3} -- Natural Language Processing (15 lectures)
+\end{itemize}
+\pause
+\column{0.5\textwidth}
+\begin{itemize}
+  \item \textbf{Module 4} -- Graph Neural Networks (5 lectures)
+  \pause
+  \item \textbf{Module 5} -- Reinforcement Learning \& Alignment
+  \pause
+  \item \textbf{Module 6} -- Efficient AI \& Deployment (8 lectures)
+  \pause
+  \item \textbf{Module 7} -- AI Agents, Tool Use \& Retrieval (8 lectures)
+\end{itemize}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Module 0: Statistics for Advanced AI}
+\footnotesize
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{enumerate}
+  \item Data, Probability \& Descriptive Statistics
+  \item Conditional Probability, Independence \& Bayes' Theorem
+  \item Discrete Random Variables \& Key Distributions
+  \item Continuous Random Variables \& the Gaussian
+  \item CLT \& Maximum Likelihood Estimation
+\end{enumerate}
+\column{0.5\textwidth}
+\begin{enumerate}
+  \setcounter{enumi}{5}
+  \item Bayesian Inference \& MAP Estimation
+  \item Information Theory: Entropy, KL, Mutual Information
+  \item Exponential Family \& Sufficient Statistics
+  \item Correlation, Regression \& Multivariate Statistics
+  \item Statistical Model Evaluation
+\end{enumerate}
+\end{columns}
+\pause
+\begin{rlintuition}
+Builds the probability and estimation vocabulary that every later module assumes -- Bayes' rule, MLE, entropy, and regression all reappear from Module 1 onward.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Module 1: Classical Machine Learning}
+\footnotesize
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{enumerate}
+  \item Introduction to ML and k-NN
+  \item PCA
+  \item k-Means Clustering
+  \item DBSCAN
+  \item Decision Trees
+  \item Random Forests
+  \item Forest Variants (Isolation Forest, Extra-Trees, Quantile Forests)
+\end{enumerate}
+\column{0.5\textwidth}
+\begin{enumerate}
+  \setcounter{enumi}{7}
+  \item Boosting
+  \item Gaussian Mixture Models \& EM
+  \item High-Dimensional Visualization (t-SNE)
+  \item Practical Gradient Boosting (XGBoost, LightGBM, CatBoost)
+  \item Regularized Regression: Ridge, Lasso \& Elastic Net
+  \item Logistic Regression \& Linear Classifiers
+  \item Classification Metrics, ROC/AUC \& Hyperparameter Optimization
+\end{enumerate}
+\end{columns}
+\pause
+\begin{rlintuition}
+Each lecture topic here has a matching hands-on lab -- a from-scratch NumPy implementation.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Modules 2--4: Deep Learning Foundations}
+\begin{itemize}
+  \item \textbf{Module 2 -- Vision / Deep Neural Networks:} follows the Stanford CS231n sequence -- backprop, CNNs, RNNs, attention/Transformers, detection/segmentation, generative models, diffusion.
+  \pause
+  \item \textbf{Module 3 -- Natural Language Processing:} classical NLP first (N-grams, HMMs, TF-IDF), then neural -- embeddings, Transformers, pretraining objectives (BERT/GPT/T5), scaling laws, RAG.
+  \pause
+  \item \textbf{Module 4 -- Graph Neural Networks:} why standard NNs fail on graphs, message passing, GCN/GraphSAGE/GAT, and applications (recommendation, molecules, fraud detection).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Modules 5--7: Advanced AI Systems}
+\begin{itemize}
+  \item \textbf{Module 5 -- Reinforcement Learning \& Alignment:} MDPs, value functions, policy gradients, PPO, RLHF, DPO. Its foundational math is forward-referenced from Modules 1 and 3.
+  \pause
+  \item \textbf{Module 6 -- Efficient AI \& Deployment:} pruning/quantization, distillation, LoRA/QLoRA, KV cache and speculative decoding, serving infrastructure, edge deployment.
+  \pause
+  \item \textbf{Module 7 -- AI Agents, Tool Use \& Retrieval:} ReAct and tool use, function calling, memory, multi-agent orchestration, RAG architecture end-to-end, vector databases, agent evaluation and safety.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Assignments}
+\begin{itemize}
+  \item Each lab is a self-contained Python package: a from-scratch NumPy implementation, a student-facing Jupyter notebook, a LaTeX handout, and an \texttt{assert}-based self-check script.
+  \pause
+  \item Module 1's lab sequence: \textbf{1.}~k-NN, \textbf{2.}~PCA, \textbf{3.}~k-Means, \textbf{4.}~DBSCAN, \textbf{5.}~Decision Trees, \textbf{6.}~Random Forests, \textbf{7.}~Forest Variants.
+  \pause
+  \item All lab handouts compile into one combined assignment booklet.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Questions?}
+\centering
+\vspace{1cm}
+{\Large Thank you.}
+
+\vspace{0.5cm}
+\normalsize
+See \texttt{course-map.md} for the full syllabus and scope notes.
+\end{frame}
