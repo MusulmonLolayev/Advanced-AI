@@ -1,7 +1,8 @@
 # Advanced AI - Machine Learning Course Plan
 
-This is the working course plan for the authored material in `ml/`.
-It reflects the current lecture and assignment sequence, not the older textbook-first outline.
+This is the working course plan for the authored material in `ml/` (Module 1), `statistics/`
+(Module 0), and `overview/` (a standalone course-intro deck). It reflects the current lecture and
+assignment sequence, not the older textbook-first outline.
 
 ## Course goal
 
@@ -84,6 +85,10 @@ are omitted. Hypothesis testing is embedded in L10 (model evaluation), its most 
 
 ### Module 1: Classical Machine Learning (Lectures 1-14)
 
+Authored under `ml/`. Lectures 1-10 are drafted (`ml/lectures/`), each with a matching lab
+(`ml/assignments/assignment1_knn/` through `assignment7_forest_variants/` cover Lectures 1-7;
+Lectures 8-10 have no lab yet). Lectures 11-14 below are outline only so far.
+
 1. **Lecture 1 - Introduction to Machine Learning and k-NN**
    - classification, regression, retrieval, anomaly scoring
    - distance, scaling, and the nearest-neighbor rule
@@ -97,7 +102,7 @@ are omitted. Hypothesis testing is embedded in L10 (model evaluation), its most 
    - epsilon neighborhoods, MinPts, core/border/noise points
    - density reachability, density connectivity, outlier screening
 5. **Lecture 5 - Decision Trees**
-   - impurity measures: Gini index and information gain (entropy and mutual information applied — Module 0 L10)
+   - impurity measures: Gini index and information gain (entropy and mutual information applied — Module 0 L7)
    - recursive splitting, tree growth, pruning, interpretability
 6. **Lecture 6 - Random Forests**
    - bagging, feature subsampling, variance reduction
@@ -117,16 +122,16 @@ are omitted. Hypothesis testing is embedded in L10 (model evaluation), its most 
     - XGBoost, LightGBM, CatBoost
     - applied tuning of boosted trees
 12. **Lecture 12 - Regularized Regression: Ridge, Lasso & Elastic Net**
-    - OLS as the starting point (derivation in Module 0 L12); the problem of overfitting in high dimensions
-    - Ridge (L2) and its MAP interpretation (Gaussian prior from Module 0 L9); Lasso (L1) and sparsity
+    - OLS as the starting point (derivation in Module 0 L9); the problem of overfitting in high dimensions
+    - Ridge (L2) and its MAP interpretation (Gaussian prior from Module 0 L6); Lasso (L1) and sparsity
     - Elastic Net; gradient-descent fitting of regularized objectives; the regularization path
 13. **Lecture 13 - Logistic Regression & Linear Classifiers**
-    - logistic regression: sigmoid, cross-entropy loss as MLE (Module 0 L8 and L10)
+    - logistic regression: sigmoid, cross-entropy loss as MLE (Module 0 L5 and L7)
     - SVM margins, softmax for multi-class
     - bridges into the loss-function view used in Module 2
 14. **Lecture 14 - Classification Metrics, ROC/AUC & Hyperparameter Optimization**
     - precision, recall, F1; confusion matrix; ROC curve and AUC
-    - bias-variance tradeoff recap (Module 0 L14); model selection with cross-validation (Module 0 L14)
+    - bias-variance tradeoff recap (Module 0 L10); model selection with cross-validation (Module 0 L10)
     - Bayesian hyperparameter optimization: Gaussian Processes as surrogate models, acquisition functions
 
 ### Module 2: Vision / Deep Neural Networks (Lectures 1-18)
@@ -192,7 +197,7 @@ Modules 1 and 2.
    - Word2Vec, GloVe, distributional semantics
 8. **Lecture 8 - Neural Language Models**
    - RNN/LSTM/GRU architecture assumed known (Module 2 L7); focus is the language modeling objective
-   - next-token prediction, perplexity as exponentiated cross-entropy (Module 0 L10)
+   - next-token prediction, perplexity as exponentiated cross-entropy (Module 0 L7)
    - teacher forcing, exposure bias, scheduled sampling
 9. **Lecture 9 - Sequence-to-Sequence & Neural Machine Translation**
 10. **Lecture 10 - Attention for NLP**
