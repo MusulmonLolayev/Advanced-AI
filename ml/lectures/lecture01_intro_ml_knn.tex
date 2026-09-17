@@ -14,74 +14,6 @@
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Reading Resources}
-\begin{itemize}
-  \item We do not follow a single textbook strictly.
-  \pause
-  \item Core theory reference: \textit{Foundations of Machine Learning} (Mohri et al.).
-  \pause
-  \item Statistical learning reference: \textit{The Elements of Statistical Learning} (Hastie, Tibshirani, Friedman).
-  \pause
-  \item Probabilistic modeling reference: \textit{Pattern Recognition and Machine Learning} (Bishop).
-  \pause
-  \item Broad machine learning reference: \textit{Machine Learning: A Probabilistic Perspective} (Murphy).
-  \pause
-  \item Deep learning reference: \textit{Deep Learning} (Goodfellow, Bengio, Courville).
-  \pause
-  \item Practical references: scikit-learn docs (\url{https://scikit-learn.org/stable/}) and PyTorch docs (\url{https://pytorch.org/docs/stable/}).
-  \pause
-  \item We also use selected papers, lecture notes, benchmark datasets, and practical case studies.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Advanced AI Covers Different Kinds of Topics}
-\begin{itemize}
-  \item Some topics are \textbf{classic foundations}: regression, classification, nearest neighbors, generalization, kernels, clustering.
-  \pause
-  \item Some topics are \textbf{specialized methods}: probabilistic models, structured prediction, search, graphical models, sequence models.
-  \pause
-  \item Some topics are \textbf{harder modern systems}: deep learning, representation learning, large-scale retrieval, generative models, reinforcement learning.
-  \pause
-  \item The course therefore cannot be organized as ``finish one book from page 1 to the end''.
-  \pause
-  \item Instead, we build a route from core ideas to harder models, using multiple references when needed.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{How We Navigate This Course}
-\begin{columns}[T]
-\column{0.48\textwidth}
-\textbf{What we prioritize first}
-\begin{itemize}
-  \item concepts that define a learning problem
-  \pause
-  \item algorithms with clear geometric or statistical intuition
-  \pause
-  \item methods that can be implemented from scratch
-  \pause
-  \item examples that connect theory to real applications
-\end{itemize}
-
-\pause
-\column{0.48\textwidth}
-\textbf{How books are used}
-\begin{itemize}
-  \item Mohri et al.: learning theory and formal guarantees
-  \pause
-  \item Bishop: modeling intuition and probabilistic methods
-  \pause
-  \item scikit-learn docs: practical usage and standard workflows
-  \pause
-  \item selected papers: newer methods beyond the books
-\end{itemize}
-\end{columns}
-
-\pause
-\begin{block}{Course principle}
-We start from methods that are simple enough to analyze carefully, then revisit the same questions for stronger and more complex models.
-\end{block}
-\end{frame}
-
 \begin{frame}{What Is Machine Learning?}
 \begin{rldefinition}
 Machine learning studies algorithms that learn patterns from data and improve
@@ -138,9 +70,10 @@ Use rule-based control in structured environments; use ML when recognition under
 
 \begin{frame}{Manufacturing Example: Rule-based vs Machine Learning}
 \centering
-\includegraphics[height=5.5cm]{figures/intro/manufacturing_rule_vs_ml.pdf}
+\includegraphics[height=5.0cm]{figures/intro/manufacturing_rule_vs_ml.pdf}
 
-\vspace{0.4em}
+\vspace{0.2em}
+\small
 \begin{itemize}
   \item Left: fixed parts and fixed routing logic.
   \pause
