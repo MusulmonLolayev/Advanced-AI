@@ -1,0 +1,197 @@
+\section{Lecture 2, Part 1: Structured Outputs}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 2}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Structured Outputs}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say why ``reply in JSON'' is a probability rather than a guarantee, and price the difference.
+  \pause
+  \item Explain how constrained decoding makes an invalid token unsamplable, and what an automaton index buys (Willard \& Louf, 2023).
+  \pause
+  \item Name precisely what constraining does \emph{not} fix.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Isn't ``Reply in JSON'' Enough?}
+\begin{itemize}
+  \item Asking politely works most of the time. \emph{Most of the time} is exactly the problem.
+  \pause
+  \item A trajectory is not one call but $n$. If each output is well-formed with probability $q$, the whole run parses with $q^{n}$ -- the same multiplicative arithmetic that governed reliability in Lecture 1.
+  \pause
+  \item \textbf{Numerical:} $q = 0.98$ sounds like a solved problem. Over a $10$-step trajectory, $0.98^{10} = 0.82$ -- about one run in five dies on formatting alone, having done nothing wrong.
+  \pause
+  \item And each failure is not free: a retry re-sends the whole prefix, at the uncached rate, for a turn that produced no information.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Three Levels of Enforcement}
+\begin{itemize}
+  \item \textbf{Ask.} Put the schema in the prompt and hope. Zero engineering; fails silently and at a rate you are not measuring.
+  \pause
+  \item \textbf{Validate and retry.} Parse the output against the schema; on failure, hand the validation error back as an observation and let the agent correct itself. Recovers -- but pays a full extra turn each time.
+  \pause
+  \item \textbf{Constrain.} Make an invalid token impossible to sample in the first place. There is no failure to recover from, so there is no retry.
+  \pause
+  \item These compose rather than compete: \textbf{constrain the syntax, validate the semantics}. No decoder can check that article $182$ exists; only your code can.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Constrained Decoding}
+\begin{rldefinition}
+\textbf{Constrained decoding} -- before sampling each token, set the score of every token that cannot continue a valid output to $-\infty$. \emph{Here:} directly after \texttt{\{"article\_id": "} only digit tokens survive.
+
+\smallskip
+\textbf{Mask} -- the vector over the vocabulary saying which tokens are still legal. \emph{Here:} it is recomputed at every step, because what is legal depends on what has already been emitted.
+
+\smallskip
+\textbf{Guide} -- the thing the mask is derived from: a regular expression, or a grammar. \emph{Here:} the JSON Schema from Part~0 is compiled into one automatically.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Nothing about the model changes. This is sampling-time surgery on the distribution the model already produced.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Masking One Token}
+\small
+The model has emitted
+\begin{center}
+\texttt{\{"article\_id": "18}
+\end{center}
+and is choosing the next token. The guide says: inside a digit string, either another digit or the closing quote. Tokens that begin with a space are shown indented, as the tokenizer stores them.
+\vspace{0.4em}
+
+\centering
+\small
+\begin{tabular}{l|c|l}
+Candidate token & Model's score & After masking \\
+\hline
+\texttt{2}        & $-0.4$ & $-0.4$ \\
+\texttt{"}        & $-1.9$ & $-1.9$ \\
+\texttt{\ the}    & $-3.1$ & $-\infty$ \\
+\texttt{\}}       & $-4.0$ & $-\infty$ \\
+\texttt{\ Article}& $-4.6$ & $-\infty$ \\
+\end{tabular}
+
+\vspace{0.5em}
+\pause
+\raggedright
+\small
+Sampling then happens over the survivors only. The model does not become \emph{unlikely} to write prose in the middle of an identifier -- it becomes \textbf{unable} to.
+\end{frame}
+
+% ─── Willard & Louf ─────────────────────────────────────────────────────────
+\begin{frame}{Regular Expressions, Automata, and an Index}
+\begin{columns}[T]
+\column{0.48\textwidth}
+\small
+\begin{itemize}
+  \item Willard \& Louf (2023) reframe guided generation as \textbf{walking a finite-state machine}: what has been emitted so far is a state, and each vocabulary token either is a legal edge out of it or is not.
+  \pause
+  \item \textbf{The naive cost:} test every token in the vocabulary against the guide, at every step. Vocabularies run past $100{,}000$ tokens.
+\end{itemize}
+\column{0.50\textwidth}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  st/.style={draw=RLBlue, fill=RLGray, circle, inner sep=1.2pt, minimum size=6.5mm},
+  acc/.style={draw=RLGreen, fill=RLGray, circle, double, inner sep=1.2pt,
+              minimum size=6.5mm},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  \node[st]  (a) at (0,0)    {$q_0$};
+  \node[st]  (b) at (1.55,0) {$q_1$};
+  \node[st]  (c) at (3.1,0)  {$q_2$};
+  \node[acc] (d) at (4.65,0) {$q_3$};
+  \draw[->] (a) -- node[lbl,above] {\texttt{"}} (b);
+  \draw[->] (b) -- node[lbl,above] {digit} (c);
+  \draw[->] (c) -- node[lbl,above] {\texttt{"}} (d);
+  \draw[->] (c) to[loop below] node[lbl,below] {digit} (c);
+\end{tikzpicture}
+
+\vspace{0.4em}
+\scriptsize The guide for an article identifier -- at least one digit, then close. In $q_2$ the legal set is \{digits, \texttt{"}\}, and it is the same set every time the walk returns to $q_2$.
+\end{columns}
+\pause
+\vspace{0.3em}
+\begin{itemize}
+  \small
+  \item \textbf{Their construction:} because the legal set depends only on the \emph{state}, pre-compute it once per state and store an index. At generation time the mask is a lookup, so the overhead stops growing with vocabulary size -- guided generation runs at close to unguided speed. Implemented in the \texttt{outlines} library.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Grammars, Because JSON Is Not Regular}
+\begin{itemize}
+  \item A finite-state machine cannot count. JSON nests to arbitrary depth -- \texttt{\{"a": \{"b": [1, 2]\}\}} -- and matching every brace to its partner needs memory that a fixed set of states does not have.
+  \pause
+  \item So the guide is a \textbf{context-free grammar}, and the machine that walks it is a pushdown automaton: the same state machine, plus a stack recording which brackets are still open.
+  \pause
+  \item The indexing idea survives intact. The state is now the pair (machine state, stack top), and the allowed-token set is still a lookup from it.
+  \pause
+  \item This is what \textbf{grammar-guided sampling} means in practice -- \texttt{llama.cpp}'s GBNF and \texttt{outlines} both take a grammar and hand back a mask.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{What Constraining Does Not Buy You}
+\begin{rlpitfall}
+Constrained decoding guarantees \textbf{shape}, never \textbf{truth}. \texttt{\{"article\_id": "999", "quote": "..."\}} is flawless JSON, matches the schema perfectly, and cites an article that does not exist.
+\end{rlpitfall}
+\pause
+\begin{itemize}
+  \item \textbf{What you can still push into the type:} make \texttt{article\_id} an enum over the identifiers that actually exist. A nonexistent citation then becomes unsamplable too -- this is the enum rule from Part~0, applied where it pays most.
+  \pause
+  \item \textbf{What no decoder can reach:} whether the quoted sentence really appears in that article, and whether it supports the claim it is attached to. That is verification, not decoding.
+  \pause
+  \item It arrives twice more in this module: as the verifier subagent in the capstone's Sprint~3, and as the groundedness measure in Lecture 8.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Structured Citations Are Sprint 1}
+\begin{itemize}
+  \item The capstone's first deliverable is an agent whose every claim carries a machine-checkable citation. That is a schema, not a prompt instruction.
+  \pause
+  \item \textbf{Constrain the citation object:} \texttt{claim} a string, \texttt{quote} a string, \texttt{article\_id} an enum over the $7{,}368$ article identifiers in the corpus.
+  \pause
+  \item ``Did it cite something that exists?'' then stops being a measurement and becomes a guarantee -- and your evaluation budget moves to the question that actually matters: \emph{does the quote support the claim?}
+  \pause
+  \item Magesh et al.\ (2024) found $17$--$33\%$ hallucination in commercial tools that were already doing retrieval. Shape is the cheap half of that problem. Support is the expensive half.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item A \textbf{tool schema} turns a request the model wrote in prose into a name and typed arguments your code can dispatch on -- and it is the model's only documentation.
+  \pause
+  \item Push every closed set into the type. \textbf{Enums beat sentences}, exactly as arguments beat extra tools in Lecture 1.
+  \pause
+  \item Models come to call tools by being \textbf{told} (prompt), \textbf{trained} (Toolformer), or \textbf{trained around a retriever} (Gorilla) -- the last because APIs change after training day.
+  \pause
+  \item \textbf{Constrained decoding} masks illegal tokens before sampling; an index over automaton states makes the mask a lookup rather than a scan (Willard \& Louf, 2023).
+  \pause
+  \item Constrain the syntax, \textbf{validate the semantics}. Valid JSON is not a true citation.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading}
+\begin{itemize}
+  \item Patil, Zhang, Wang \& Gonzalez (2023). \textit{Gorilla: Large Language Model Connected with Massive APIs.} --- APIBench, retriever-aware training, and AST-based hallucination scoring.
+  \pause
+  \item Willard \& Louf (2023). \textit{Efficient Guided Generation for Large Language Models.} --- guided generation as an automaton walk, and the vocabulary index that makes it cheap.
+  \pause
+  \item \textit{JSON Schema} and \textit{OpenAPI} specifications --- the two formats every provider's tool-calling interface is built on. Read the \texttt{enum}, \texttt{required} and \texttt{description} keywords properly; they are the whole lecture.
+  \pause
+  \item \textbf{Next lecture:} the trace stops fitting. Context limits, compression, and what an agent should remember once the scratchpad is full.
+\end{itemize}
+\end{frame}

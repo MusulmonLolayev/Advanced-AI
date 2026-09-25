@@ -290,6 +290,13 @@ here, not scattered across Modules 1–3. Forward-referenced in Module 1 L14 (Ga
 
 ### Module 7: AI Agents, Tool Use & Retrieval (Lectures 1-8)
 
+Authored under `agents/` (own `main.tex`, `lectures/`, `theme/`, `scripts/`). All eight lectures
+are drafted: the deck opens with a module intro outside the part numbering, then Lecture 1 as a
+single part and Lectures 2-8 each split into two part files, 209 frames in total. Lectures are
+jurisdiction-neutral — they teach algorithms and cite papers — while one Uzbek Labor Code article
+runs through the whole module as the worked example (chunked in L5, embedded in L6, indexed in L7,
+attacked in L8), and the capstone below is where jurisdiction-specific work lives.
+
 1. **Lecture 1 - What is an Agent? ReAct, Tool Use & Action Loops**
    - agents vs. pipelines: when a model controls its own next step
    - ReAct: interleaving reasoning traces and actions; scratchpad pattern
@@ -384,8 +391,13 @@ eval table, not the demo; red-team appendix. Grade the harness as heavily as the
 team's demo looks convincing, which is exactly what Magesh et al. (2024) demonstrated empirically.
 
 **Two traps that are lessons, not accidents.** The corpus uses U+02BB and U+02BC for the okina in
-*oʻ/gʻ* and the tutuq belgisi, never ASCII apostrophes — naive normalization silently destroys a
-lexical index, which is the concrete answer to "why did retrieval fail" in L6. And only about half
+*oʻ/gʻ* and the tutuq belgisi, never ASCII apostrophes. Unicode normalization is *not* the problem —
+both are category Lm (modifier letters) and NFC/NFD/NFKC/NFKD all leave them unchanged. The problem
+is tokenization: `\w+` keeps U+02BB inside the word, giving one token `oʻrtacha`, but splits on the
+ASCII apostrophe, giving `o` + `rtacha`. So a keyboard-typed query and the corpus produce different
+token streams and match nothing, and because the two glyphs look nearly identical the failure is
+silent. The bug is normalizing corpus and query *differently* — the concrete answer to "why did
+retrieval fail" in L6. And only about half
 of lex.uz acts have a Latin-script version, the rest being Russian or Cyrillic, which forces the
 cross-lingual retrieval discussion honestly. No Uzbek-specific retrieval evaluation exists in the
 literature, so a team that produces one has done something new; it also justifies treating BM25 as
@@ -436,9 +448,12 @@ workable payment method is available locally.
    decoding (Willard & Louf, 2023); JSON Schema / OpenAPI tool specs.
 3. **Memory** — MemGPT (Packer et al., 2023); Lost in the Middle (Liu et al., 2023).
 4. **Multi-agent orchestration** — AutoGen (Wu et al., 2023); Generative Agents (Park et al.,
-   2023); LangGraph documentation on orchestrator-subagent graphs.
+   2023); LangGraph documentation on orchestrator-subagent graphs; *At Equal Inference Cost,
+   Multi-Agent Structure Does Not Beat a Single Frozen Agent* (Dylan et al., 2026,
+   arXiv:2609.04217) — the fixed-model-call comparison that most multi-agent papers skip.
 5. **RAG end-to-end** — RAG (Lewis et al., 2020); Fusion-in-Decoder (Izacard & Grave, 2021);
-   HyDE (Gao et al., 2022); Self-RAG (Asai et al., 2023).
+   HyDE (Gao et al., 2022); Self-RAG (Asai et al., 2023); cross-encoder reranking (Nogueira & Cho,
+   2019); reciprocal rank fusion (Cormack, Clarke & Buettcher, 2009).
 6. **Dense retrieval & embeddings** — DPR (Karpukhin et al., 2020); ColBERT (Khattab & Zaharia,
    2020); BGE-M3 (Chen et al., 2024); MTEB (Muennighoff et al., 2022); BM25 (Robertson &
    Zaragoza, 2009) as the baseline that must be beaten.

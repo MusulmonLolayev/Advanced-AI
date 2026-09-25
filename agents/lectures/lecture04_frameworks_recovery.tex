@@ -1,0 +1,189 @@
+\section{Lecture 4, Part 1: Frameworks \& Failure Recovery}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 4}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Frameworks \& Failure Recovery}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say what abstraction each of the three common frameworks imposes, and what that abstraction makes hard.
+  \pause
+  \item Place a trust boundary between agents, and justify where you put it.
+  \pause
+  \item Design a recovery path -- retry, fallback, escalate -- and say which failures each one can and cannot fix.
+\end{itemize}
+\end{frame}
+
+% ─── Frameworks ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Framework at All?}
+\begin{itemize}
+  \item \textbf{Why:} Part 0's pattern is a hundred lines of Python. What a framework sells is not the loop -- it is everything around it: persisting state between turns, resuming a run that died, streaming partial output, and seeing what happened afterwards.
+  \pause
+  \item \textbf{The cost is an abstraction you must accept.} Each framework has one central idea, and everything you build must be expressible in it.
+  \pause
+  \item \textbf{The honest advice for a first project:} write the loop yourself. You will understand where the tokens went, and Part 0 showed that is the thing that decides the design.
+  \pause
+  \item Reach for a framework when you need durability -- a run that survives a crash -- or when several people must extend the same system without reading all of it.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Three Frameworks, Three Abstractions}
+\small
+\begin{itemize}
+  \item \textbf{AutoGen} (Wu et al., 2023) -- the abstraction is a \emph{conversation}. Agents are ``conversable'': they send messages to each other, and a chat manager decides who speaks next. Humans and tools are participants in the same conversation, which is what makes human-in-the-loop natural here.
+  \pause
+  \item \textbf{LangGraph} -- the abstraction is a \emph{graph over shared state}. Nodes are functions or model calls, edges are transitions, and a typed state object flows through and accumulates. The orchestrator is a routing node that picks the next worker.
+  \pause
+  \item \textbf{CrewAI} -- the abstraction is a \emph{team}: agents are given roles and goals, tasks are assigned to them, and a process (sequential or hierarchical) decides the order.
+\end{itemize}
+\pause
+\begin{rlintuition}
+Conversation, graph, team. Pick the one whose central noun matches how your problem actually decomposes --- fighting the abstraction costs more than writing the loop would have.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Generative Agents: Memory as the Coordination Substrate}
+\begin{itemize}
+  \item Park et al.\ (2023) ran $25$ agents in a sandbox town, where coordination emerged without any orchestrator at all -- agents heard things, remembered them, and acted.
+  \pause
+  \item Each agent keeps a \textbf{memory stream} of observations, retrieved by three scores combined: \emph{recency} (exponential decay since last access), \emph{importance} (assigned when the memory was written), and \emph{relevance} (embedding similarity to the current situation).
+  \pause
+  \item \textbf{Reflection} periodically reads recent memories and writes higher-level conclusions back into the stream, so the agent reasons over what it concluded rather than raw observations.
+  \pause
+  \item \textbf{Why it belongs in this lecture:} it is the alternative to Part 0. Coordination through a shared world and per-agent memory, rather than through explicit delegation -- and the mechanism is Lecture 3's, not this one's.
+\end{itemize}
+\end{frame}
+
+% ─── Trust boundaries ───────────────────────────────────────────────────────
+\begin{frame}{Trust and Permission Boundaries}
+\begin{rldefinition}
+A \textbf{trust boundary} is a line across which a message is treated as data rather than instruction. \emph{Here:} corpus text never changes what the agent was told to do.
+
+\smallskip
+A \textbf{permission boundary} is the set of tools an agent may actually reach. \emph{Here:} the verifier can read one article and return a verdict. It has no \texttt{search}, and no way to write anything.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Lecture 1 put the security boundary between \emph{requesting} a call and \emph{executing} one. Multi-agent systems multiply that boundary: every subagent is a new place where retrieved text meets a tool.
+  \pause
+  \item \textbf{Give each subagent the smallest action space that lets it finish.} Not just defensive habit --- it is Lecture 1's action-space rule, where selection error grew with the tool count.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: The Verifier Must Not Search}
+\begin{itemize}
+  \item Our verifier receives a draft sentence and the article it cites, and answers \texttt{supported} or \texttt{not supported}.
+  \pause
+  \item \textbf{Give it \texttt{search} and it will use it.} Asked to check a claim the article does not support, a verifier with a search tool goes looking for an article that \emph{does} --- and returns \texttt{supported}, truthfully, about a different article.
+  \pause
+  \item The check you wanted was ``does \emph{this} article support \emph{this} sentence''. The check you got was ``is this sentence true somewhere in the corpus''. Both are reasonable; only one detects a wrong citation.
+  \pause
+  \item \textbf{The boundary is the specification.} Restricting the action space is how you state which question is being answered --- prompt wording alone will not hold under pressure.
+\end{itemize}
+\end{frame}
+
+% ─── Recovery ───────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Failure Recovery?}
+\begin{itemize}
+  \item Lecture 1 gave three levers on reliability: fewer steps, better steps, and recovery. Part 0 showed delegation makes the first two \emph{worse}. Recovery is the only one left, so it has to carry the design.
+  \pause
+  \item \textbf{Recovery needs a detector.} $p^{k}$ assumes a failed step is silently absorbed; a system that can notice failure escapes the formula. That is what the verifier bought us -- $0.80$ to $0.94$.
+  \pause
+  \item \textbf{But only for failures it can see.} A verifier detects an unsupported claim. It cannot detect that the retriever never found the right article in the first place -- that failure looks identical to ``no such rule exists''.
+  \pause
+  \item So the design question is not ``do we retry?'' but \textbf{which failures are observable, and by whom?}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Retry, Fallback, Escalate}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  node distance=6mm,
+  st/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+             minimum height=6mm, minimum width=22mm, align=center},
+  ok/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+             minimum height=6mm, minimum width=18mm, align=center},
+  esc/.style={draw=RLOrange, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+              minimum height=6mm, minimum width=22mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=2pt}
+]
+  \node[st] (try)  at (0,0)    {attempt};
+  \node[st] (chk)  at (3.6,0)  {verifier};
+  \node[ok] (done) at (7.4,0)  {accept};
+  \node[st] (rt)   at (3.6,-1.6) {retry, $\le 2$};
+  \node[esc] (es)  at (8.4,-1.6) {abstain\\or escalate};
+  \draw[->] (try) -- (chk);
+  \draw[->] (chk) -- node[lbl,above] {supported} (done);
+  \draw[->] (chk) -- node[lbl,right] {not supported} (rt);
+  \draw[->] (rt) -- node[lbl,left] {} (try);
+  \draw[->] (rt) -- node[lbl,above,pos=0.55] {budget spent} (es);
+\end{tikzpicture}
+
+\vspace{0.5em}
+\footnotesize
+\textbf{Retry} fixes randomness --- a different sample may succeed. \textbf{Fallback} fixes a bad
+component --- a different retriever, a stronger model. \textbf{Escalation} is for what neither
+fixes: the honest ``I could not support this'', which is the behaviour Sprint 4 measures.
+\end{frame}
+
+\begin{frame}{Human-in-the-Loop Checkpoints}
+\begin{itemize}
+  \item A checkpoint is worth its interruption only where the agent \emph{cannot} tell it is wrong. Asking a human to confirm what the verifier already checked buys nothing and trains people to click through.
+  \pause
+  \item \textbf{Put checkpoints where an action is irreversible.} Lecture 1 separated requesting a call from executing one precisely so that a human can sit in the gap; this is where that pays off.
+  \pause
+  \item \textbf{Escalate with the trajectory, not the conclusion.} ``I could not support this claim'' plus the three articles that were considered is reviewable in seconds. The conclusion alone is not.
+  \pause
+  \item In AutoGen's framing a human is simply another participant in the conversation, which is why the pattern falls out naturally there (Wu et al., 2023).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Only the Verifier Pays for Itself}
+\begin{itemize}
+  \item Part 0 measured the two things we can compute, and multi-agent lost both: $1.6\times$ the bill under caching, and $0.44$ against $0.54$ on reliability.
+  \pause
+  \item The verifier still wins, because it changes the \emph{shape} of the calculation rather than its inputs -- $0.80 \to 0.94$ comes from detection, which $p^{k}$ does not model at all.
+  \pause
+  \item \textbf{The general rule:} an agent that only produces is another multiplicand. An agent that can \emph{reject} is a different term in the equation. Add the second kind.
+  \pause
+  \item This is also why Lecture 8 grades trajectories rather than answers, and why Sprint 4's deleted-span holdout measures abstention: a system that cannot say ``no support'' has no recovery path at all.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item A \textbf{subagent} is a tool that runs its own loop. Its real product is \emph{context isolation} -- what the caller does not have to see.
+  \pause
+  \item \textbf{Splitting reduces tokens but raises the bill}, because each subagent brings its own prefix and a cold cache. Compute this before designing, not after.
+  \pause
+  \item \textbf{Delegation adds steps}, so $p^{k}$ gets worse. Multi-agent is not free reliability; it is usually a reliability cost.
+  \pause
+  \item \textbf{Shared state or structured messages} -- the first is easy and leaks context, the second preserves isolation and makes you specify it.
+  \pause
+  \item \textbf{Add an agent that can say no.} Detection is the only thing that escapes the multiplication, and it is why the capstone's Sprint 3 adds exactly one subagent.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading}
+\begin{itemize}
+  \item Wu, Bansal, Zhang, Wu, Zhang, Zhu, Li, Jiang, Zhang \& Wang (2023). \textit{AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation Framework.} arXiv:2308.08155. --- conversation as the organising abstraction.
+  \pause
+  \item Park, O'Brien, Cai, Morris, Liang \& Bernstein (2023). \textit{Generative Agents: Interactive Simulacra of Human Behavior.} UIST. --- coordination through memory rather than delegation.
+  \pause
+  \item LangGraph documentation, \textit{Workflows and Agents} --- the orchestrator--worker graph over typed shared state.
+  \pause
+  \item Dylan, Brennan, Murphy, O'Sullivan, Kelly \& Walsh (2026). \textit{At Equal Inference Cost, Multi-Agent Structure Does Not Beat a Single Frozen Agent.} arXiv:2609.04217. --- the comparison held at a fixed budget of model calls.
+  \pause
+  \item \textbf{Next lecture:} retrieval-augmented generation end to end --- what the retriever subagent was actually doing, and how the corpus becomes something searchable.
+\end{itemize}
+\end{frame}

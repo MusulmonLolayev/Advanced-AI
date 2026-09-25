@@ -1,0 +1,190 @@
+\section{Lecture 2, Part 0: Function Calling}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 2}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Function Calling}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Write a tool schema, and say what each field buys you that a sentence of prose does not.
+  \pause
+  \item Name the three routes by which a model comes to call tools, and what each costs (Patil et al., 2023).
+  \pause
+  \item Decide whether a set of calls should be issued in parallel or in sequence, and shape the result that comes back.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Does the Model Need a Schema at All?}
+\begin{itemize}
+  \item Lecture 1 ended on a boundary: the model \emph{requests} a call, and your code decides whether to honour it. But a request is only text, and text has to be parsed.
+  \pause
+  \item \textbf{Without a schema} the model writes ``I should look up the working-time article'' -- and now your code is guessing which function that means, and with what arguments.
+  \pause
+  \item \textbf{With a schema} it emits a name and typed arguments: \texttt{search(query="normal working time", code="labor")}. Your code dispatches on the name; no prose is parsed.
+  \pause
+  \item The schema is also the \emph{only} documentation the model ever gets. It is read at inference time, from the prompt -- so a bad description is a bug the compiler cannot catch.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Tool Schema, JSON Schema, OpenAPI}
+\begin{rldefinition}
+\textbf{Tool schema} -- a machine-readable declaration of one tool: its name, what it is for, and the shape of its arguments. \emph{Here:} \texttt{search} takes a query string and an optional document filter.
+
+\smallskip
+\textbf{JSON Schema} -- the vocabulary those arguments are described in: \texttt{type}, \texttt{required}, \texttt{enum}, \texttt{description}. \emph{Here:} the filter is an \texttt{enum} over the $25$ documents in the corpus, so ``Labour Codex'' is not expressible.
+
+\smallskip
+\textbf{OpenAPI} -- a description of a whole service: every endpoint, its parameters, its responses. \emph{Here:} if the corpus sits behind an HTTP API, one OpenAPI document generates every tool schema mechanically.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item A tool schema is a JSON Schema with a name attached. OpenAPI is what you use when somebody else already wrote the service.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Worked Example: The Search Tool, Declared}
+\footnotesize
+The \texttt{search} tool from Lecture 1, written out as the model actually receives it:
+\vspace{0.3em}
+
+\scriptsize
+\begin{semiverbatim}
+\{ "name": "search",
+  "description": "Full-text search over the legislation corpus.
+                  Returns article IDs and matching sentences.",
+  "parameters": \{
+    "type": "object",
+    "properties": \{
+      "query": \{ "type": "string",
+                 "description": "Words expected in the article text." \},
+      "code":  \{ "type": "string",
+                 "enum": ["constitution", "labor", "tax", ...],
+                 "description": "Restrict to one document. Omit to search all." \}
+    \},
+    "required": ["query"]
+  \} \}
+\end{semiverbatim}
+\pause
+\footnotesize Now impossible: a missing \texttt{query}, a numeric \texttt{query}, a \texttt{code} outside the $25$ documents.
+\end{frame}
+
+\begin{frame}{Why an Enum Beats a Sentence}
+\begin{itemize}
+  \item Anything you can move out of prose and into the type stops being a guess the model has to make.
+  \pause
+  \item \textbf{As a free string:} \texttt{"code": \{"type": "string"\}} invites ``Labor Code'', ``Labour Code'', ``LC'', ``Mehnat kodeksi'' -- four spellings of one document, three of which your lookup will miss.
+  \pause
+  \item \textbf{As an enum:} only the $25$ exact identifiers are legal, and once we constrain decoding (Part 1) nothing else can even be sampled.
+  \pause
+  \item Lecture 1's design rule was \emph{prefer arguments to tools}. Its companion here is \textbf{prefer enums to free strings} -- and more generally, push every closed set you already know into the schema.
+\end{itemize}
+\end{frame}
+
+% ─── How models learn to call ───────────────────────────────────────────────
+\begin{frame}{How Does a Model Learn to Call Tools?}
+\begin{itemize}
+  \item Three routes, in increasing order of what they cost you to set up.
+  \pause
+  \item \textbf{Described in the prompt.} The schemas are pasted into the system prompt and the model follows them as instructions. No training at all -- and these schemas are exactly the prefix $S$ from Lecture 1's cost formula.
+  \pause
+  \item \textbf{Fine-tuned.} Toolformer (Schick et al., 2023), from Lecture 1: the model is trained on self-generated calls that improved its own prediction, so it learns \emph{when} to call. Nothing is described at inference time.
+  \pause
+  \item \textbf{Retrieved, then trained around the retriever.} Gorilla (Patil et al., 2023): fetch the relevant documentation at call time and put it in the prompt -- but train the model \emph{with} that retriever already in place.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Gorilla: Why Train Around the Retriever?}
+\begin{itemize}
+  \item \textbf{The problem:} a model fine-tuned on an API memorises it as it stood on training day. Real APIs move -- versions bump, arguments get renamed -- and the memorised call silently breaks.
+  \pause
+  \item \textbf{APIBench} (Patil et al., 2023) is built to expose this: every call in TorchHub ($94$) and TensorHub ($696$), plus $925$ HuggingFace models -- $1{,}715$ calls that must be written exactly right.
+  \pause
+  \item \textbf{Retriever-aware training} puts the retrieved documentation into the prompt during training, so the model learns to \emph{read} the doc rather than recall it. When the doc changes at test time, the behaviour changes with it.
+  \pause
+  \item \textbf{Measured by AST matching:} the emitted call is parsed into a syntax tree and matched against the reference sub-tree, so an invented-but-plausible API scores as wrong, not as nearly right. Patil et al.\ report their fine-tuned model beating GPT-4 at writing API calls.
+\end{itemize}
+\end{frame}
+
+% ─── Parallel vs sequential ─────────────────────────────────────────────────
+\begin{frame}{Parallel or Sequential?}
+\begin{columns}[T]
+\column{0.46\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{The test:} could you write down every argument \emph{before} seeing any result? If yes, the calls are independent and belong in one turn.
+  \pause
+  \item Three searches issued sequentially cost three prefix re-reads. Issued together they cost one.
+  \pause
+  \item But parallel calls cannot react to each other. The usual shape is a \textbf{fan-out, then one sequential step}.
+\end{itemize}
+\column{0.52\textwidth}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  turn/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=2.5pt,
+               minimum height=4.2mm, minimum width=9mm, align=center},
+  call/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=2.5pt,
+               minimum height=4.2mm, minimum width=9mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  \node[lbl,anchor=west] at (-0.2,2.55) {\textbf{Sequential} -- one call per turn};
+  \node[turn] (s1) at (0.6,1.9)  {model};
+  \node[call] (c1) at (2.3,1.9)  {call};
+  \node[turn] (s2) at (4.0,1.9)  {model};
+  \node[call] (c2) at (5.7,1.9)  {call};
+  \draw[->] (s1) -- (c1);
+  \draw[->] (c1) -- (s2);
+  \draw[->] (s2) -- (c2);
+
+  \node[lbl,anchor=west] at (-0.2,1.35) {\textbf{Parallel} -- three calls, one turn};
+  \node[turn] (p1) at (0.6,-0.15)  {model};
+  \node[call] (q1) at (3.0,0.55)   {call};
+  \node[call] (q2) at (3.0,-0.15)  {call};
+  \node[call] (q3) at (3.0,-0.85)  {call};
+  \node[turn] (p2) at (5.4,-0.15)  {model};
+  \draw[->] (p1) -- (q1);
+  \draw[->] (p1) -- (q2);
+  \draw[->] (p1) -- (q3);
+  \draw[->] (q1) -- (p2);
+  \draw[->] (q2) -- (p2);
+  \draw[->] (q3) -- (p2);
+\end{tikzpicture}
+\end{columns}
+\pause
+\vspace{0.5em}
+\footnotesize The ReAct loop of Lecture 1 is the sequential row; parallelism is for when the dependence disappears.
+\end{frame}
+
+\begin{frame}{Injecting the Result Back}
+\begin{itemize}
+  \item The result re-enters the trace as another message, tagged with the identifier of the call it answers -- so that when several are in flight the model can tell which reply belongs to which request.
+  \pause
+  \item \textbf{Return a value, not a sentence.} \texttt{\{"article\_id": "182", "text": "..."\}} can be checked, indexed and cited. ``I found that the limit is 40 hours'' can only be re-parsed.
+  \pause
+  \item \textbf{Lecture 1's rule applies here:} the tool result is what makes $a$ large in $a\,n(n-1)/2$. Return the article number and the matching sentence, not the article.
+  \pause
+  \item \textbf{An error is a result.} \texttt{\{"error": "no results"\}} is an observation the agent can act on; a raised exception is a run that ended. Every tool needs a failure reply it can return in-band.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: The Schema Is Part of the Cache Prefix}
+\begin{itemize}
+  \item Tool schemas sit at the very front of every prompt in the trajectory. They \emph{are} the $S$ in Lecture 1's $nS + a\,n(n-1)/2$ -- paid once per turn, every turn.
+  \pause
+  \item \textbf{Numerical:} a $400$-token schema block over a $10$-step trajectory is $4{,}000$ billed input tokens before the agent has done anything.
+  \pause
+  \item Worse, the schema block is the \emph{start} of the cached prefix. Reordering your tools, or regenerating the JSON with different whitespace, invalidates the KV cache from that byte onward -- and the whole trajectory reverts to the uncached rate.
+  \pause
+  \item \textbf{Capstone, Sprint 1:} freeze the tool schemas before the first evaluation run. A mid-run edit makes the two halves of the run non-comparable \emph{and} costs about five times as much.
+\end{itemize}
+\end{frame}

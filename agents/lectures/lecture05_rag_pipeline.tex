@@ -1,0 +1,230 @@
+\section{Lecture 5, Part 0: The RAG Pipeline}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 5}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large The RAG Pipeline}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item State the four stages of a RAG pipeline and say what can go wrong at each one (Lewis et al., 2020).
+  \pause
+  \item Cut one article four different ways and predict which cut makes a given question answerable.
+  \pause
+  \item Explain why chunking, not the model, sets the ceiling on retrieval quality.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Retrieval At All?}
+\begin{itemize}
+  \item \textbf{Why:} everything a model knows was frozen into its weights at training time. That store is large, unattributable, and impossible to correct without retraining.
+  \pause
+  \item A legal agent needs the opposite properties: the corpus changes when the law changes, and every claim must name the article it came from.
+  \pause
+  \item \textbf{The fix is to stop asking the model to remember.} Put the text in the prompt and ask it to read. Lewis et al.\ (2020) call the weights \emph{parametric} memory and the retrieved index \emph{non-parametric} memory, and show that pairing them beats either alone on knowledge-intensive tasks.
+  \pause
+  \item \textbf{What this buys, concretely:} update the corpus and the answers change with no retraining; every sentence can carry an article number; and when nothing relevant is retrieved, the agent can say so.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Retrieval-Augmented Generation}
+\begin{rldefinition}
+\textbf{RAG} -- answer a query by first \emph{retrieving} passages from a corpus, then generating an answer conditioned on them. \emph{Here:} retrieve Labor Code articles, then write a cited sentence.
+
+\smallskip
+\textbf{Chunk} -- the unit the corpus is cut into and the unit retrieval returns. \emph{Here:} one article, or one numbered clause inside it.
+
+\smallskip
+\textbf{Context} -- the retrieved chunks as they appear in the prompt. \emph{Here:} three articles pasted above the question.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Lewis et al.\ (2020) trained retriever and generator jointly. Nearly every production system since keeps the two separate and swappable -- which is what makes the pipeline on the next slide worth drawing.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Four Stages}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  stage/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+                minimum height=7mm, minimum width=19mm, align=center},
+  store/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+                minimum height=7mm, minimum width=19mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=2pt}
+]
+  \node[stage] (q)  at (0,0)    {query};
+  \node[stage] (r)  at (3.1,0)  {retrieve};
+  \node[stage] (au) at (6.2,0)  {augment};
+  \node[stage] (g)  at (9.3,0)  {generate};
+  \node[store] (c)  at (3.1,-1.7) {chunked\\corpus};
+  \draw[->] (q) -- (r);
+  \draw[->] (r) -- node[lbl,above] {top $k$} (au);
+  \draw[->] (au) -- node[lbl,above] {prompt} (g);
+  \draw[->] (c) -- (r);
+\end{tikzpicture}
+
+\vspace{0.5em}
+\small
+\begin{itemize}
+  \item \textbf{Retrieve} -- rank chunks against the query and keep the top $k$. \emph{Fails by:} returning nothing relevant.
+  \pause
+  \item \textbf{Augment} -- paste those chunks into the prompt with their article numbers. \emph{Fails by:} losing the citation, or overflowing the window.
+  \pause
+  \item \textbf{Generate} -- answer using only what was pasted. \emph{Fails by:} answering from parametric memory anyway.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Where the Under-18 Limit Actually Lives}
+\small
+\begin{itemize}
+  \item Lecture~1 left a loose end. The agent answered ``40 hours'' from Article~182, searched for the under-18 rule, got three candidates, and \emph{abstained} because none stated a limit.
+  \pause
+  \item It was right to abstain. Here is the actual layout of the corpus:
+\end{itemize}
+\pause
+\centering
+\footnotesize
+\begin{tabular}{@{}lll@{}}
+\textbf{Article} & \textbf{Says} & \textbf{Answers the question?} \\
+\hline
+Art.~182 & normal working time: $40$ h / week & the first half only \\
+Art.~183 & reduced hours for some categories, full pay & names no category, no number \\
+Art.~185 & daily limit: $8$ h in a five-day week & no \\
+\textcolor{RLGreen}{\textbf{Art.~415--416}} & \textcolor{RLGreen}{\textbf{16--18: 36\,h; 15--16: 24\,h}} & \textcolor{RLGreen}{\textbf{yes}} \\
+\end{tabular}
+\pause
+
+\vspace{0.4em}
+\small
+\begin{itemize}
+  \item The answer is not in the working-time chapter at all -- it is more than two hundred articles away, in the chapter on the labour of minors. \textbf{Article~183 is a decoy:} it matches the query's wording closely and contains no number.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Does Chunking Decide Your Ceiling?}
+\begin{itemize}
+  \item \textbf{Why:} retrieval can only ever hand back a chunk. If the sentence that answers the question is split across two chunks, \emph{no} ranking function recovers it -- neither chunk contains the answer, so neither can be scored as containing it.
+  \pause
+  \item That makes chunking the one decision downstream components cannot repair. A better reranker reorders what the first stage found; it cannot conjure a clause that was cut in half.
+  \pause
+  \item \textbf{The tension is fixed:} large chunks retrieve reliably but dilute the match and waste context; small chunks match precisely but lose the surrounding text that makes them interpretable.
+  \pause
+  \item \textbf{Concretely:} ``employees aged sixteen to eighteen'' and ``thirty-six hours per week'' are the two halves of one clause. Put a boundary between them and the corpus no longer answers the question.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Four Ways to Cut One Article}
+\centering
+\begin{tikzpicture}[
+  font=\tiny,
+  x=1.05cm, y=1cm,
+  piece/.style={draw=RLBlue!60, fill=RLGray, minimum height=4.6mm, inner sep=1pt,
+                align=center, anchor=south west},
+  good/.style={piece, draw=RLGreen, line width=0.7pt, fill=RLGreen!12},
+  bad/.style={piece, draw=RLOrange, line width=0.7pt, fill=RLOrange!22},
+  rowlbl/.style={font=\tiny, anchor=east, inner sep=2pt}
+]
+  \def\rowh{0.46}
+  % --- the article itself ---
+  \node[rowlbl] at (-0.12,2.72) {\textbf{Art.~415}};
+  \node[piece, minimum width=1.85cm] at (0,2.6)  {heading};
+  \node[piece, minimum width=3.05cm] at (1.8,2.6) {1. aged 16--18 $\rightarrow$ 36 h/wk};
+  \node[piece, minimum width=2.85cm] at (4.8,2.6) {2. aged 15--16 $\rightarrow$ 24 h/wk};
+  \node[piece, minimum width=2.45cm] at (7.6,2.6) {3. students $\rightarrow$ half};
+
+  % --- fixed size ---
+  \node[rowlbl] at (-0.12,1.92) {fixed-size};
+  \node[bad,  minimum width=2.55cm] at (0,1.8)   {heading + ``aged 16--18\dots''};
+  \node[bad,  minimum width=2.55cm] at (2.5,1.8) {``\dots36 h/wk'' + cl.~2};
+  \node[piece,minimum width=2.55cm] at (5.0,1.8) {cl.~2 + cl.~3};
+  \node[piece,minimum width=2.55cm] at (7.5,1.8) {cl.~3};
+
+  % --- sentence ---
+  \node[rowlbl] at (-0.12,1.22) {sentence};
+  \node[bad,  minimum width=1.85cm] at (0,1.1)   {heading alone};
+  \node[good, minimum width=3.05cm] at (1.8,1.1) {clause 1};
+  \node[piece,minimum width=2.85cm] at (4.8,1.1) {clause 2};
+  \node[piece,minimum width=1.35cm] at (7.6,1.1) {cl.~3a};
+  \node[piece,minimum width=1.10cm] at (8.9,1.1) {cl.~3b};
+
+  % --- semantic ---
+  \node[rowlbl] at (-0.12,0.52) {semantic};
+  \node[good, minimum width=4.90cm] at (0,0.4)   {heading + clause 1};
+  \node[piece,minimum width=2.85cm] at (4.8,0.4) {clause 2};
+  \node[piece,minimum width=2.45cm] at (7.6,0.4) {clause 3};
+
+  % --- hierarchical ---
+  \node[rowlbl] at (-0.12,-0.18) {hierarchical};
+  \node[good, minimum width=3.05cm] at (1.8,-0.3) {heading $+$ clause 1};
+  \node[piece,minimum width=2.85cm] at (4.8,-0.3) {heading $+$ clause 2};
+  \node[piece,minimum width=2.45cm] at (7.6,-0.3) {heading $+$ cl.~3};
+  \node[piece,minimum width=10.4cm, draw=RLGreen] at (0,-0.95) {parent: the whole article};
+\end{tikzpicture}
+
+\vspace{0.4em}
+\footnotesize
+Query: \emph{``how many hours may a 17-year-old work?''} --- \textcolor{RLGreen}{\textbf{green}} chunks answer it alone, \textcolor{RLOrange}{\textbf{orange}} chunks cannot.
+\end{frame}
+
+\begin{frame}{What Each Cut Does to One Query}
+\small
+\begin{itemize}
+  \item \textbf{Fixed-size} -- cut every $N$ characters. Cheap, uniform, and blind: the boundary lands between \emph{``aged sixteen to eighteen''} and \emph{``thirty-six hours''}, so neither chunk answers the query. Overlapping windows reduce this but do not remove it.
+  \pause
+  \item \textbf{Sentence} -- cut at sentence ends. Clause~1 survives intact, so the query is answerable. But the heading becomes a chunk of its own that states no rule, and a two-sentence clause still splits.
+  \pause
+  \item \textbf{Semantic} -- merge adjacent sentences while they stay on one topic, cut when the topic shifts. The heading is absorbed into the clause it introduces. Costs an embedding pass over the corpus at build time.
+  \pause
+  \item \textbf{Hierarchical} -- store the clause \emph{and} its parent article, and prepend the heading to every child. Retrieval matches the small unit; the prompt can carry the large one.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Legal Text Suits Hierarchical Chunking}
+\begin{itemize}
+  \item Most corpora make you \emph{guess} at structure. Legislation hands it to you: every article has a number, a heading, and numbered sub-clauses, and the corpus ships them as fields rather than as formatting.
+  \pause
+  \item So the parent--child split needs no model and no heuristic -- \texttt{article\_id} is the parent, the numbered clause is the child, and \texttt{chapter} is the grandparent.
+  \pause
+  \item \textbf{The heading carries the scope.} ``36 hours per week'' means nothing alone; prepended with \emph{``Working time of employees under eighteen''} it becomes retrievable by a query that never uses the word ``thirty-six''.
+  \pause
+  \item \textbf{The same trick fails elsewhere.} On prose with no reliable headings -- a manual, a transcript -- hierarchical chunking needs a model to infer the levels, and then it is only as good as that inference.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Augmentation: What Actually Reaches the Model}
+\begin{itemize}
+  \item Retrieval returns chunks; \textbf{augmentation} decides how they appear in the prompt. Three choices, all of which change the answer:
+  \pause
+  \item \textbf{Carry the identifier.} Paste \texttt{[Art.~415]} beside each chunk. A citation the model cannot see is a citation it will invent -- and Lecture~8 grades exactly that.
+  \pause
+  \item \textbf{Order deliberately.} Liu et al.\ (2023) found accuracy drops when the needed passage sits in the middle of a long context rather than at either end. With $k$ around $5$ this is small; at $k = 50$ it is not.
+  \pause
+  \item \textbf{Budget the window.} Chunks compete with the scratchpad for space, and Lecture~1 showed the scratchpad already grows quadratically. Returning the clause plus its heading instead of the whole article is the same lever as capping the observation.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Chunking Is the Sprint 2 Lever}
+\begin{itemize}
+  \item Sprint~2 is scored as \textbf{recall@$k$} on a held-out query set, against your Sprint~1 baseline. Recall@$k$ asks one thing: was the gold article among the $k$ chunks returned?
+  \pause
+  \item Every later component is bounded by that number. A cross-encoder reranker reorders the $k$ you retrieved; if the gold article is not in them, the reranker's ceiling is zero.
+  \pause
+  \item \textbf{So change chunking first.} It is the cheapest edit in the stack -- no model, no training, one rebuild of the index -- and it is the only one that raises the ceiling rather than dividing it up.
+  \pause
+  \item \textbf{Measure it honestly:} rebuild the index under each strategy and report recall@$k$ for all of them. ``We chose hierarchical chunking'' is not a result; a table with four rows is.
+\end{itemize}
+\pause
+\begin{rlintuition}
+Retrieval quality has a ceiling set at index-build time and a floor set at query time. Lecture~5 is about the ceiling; the rest of the module is about closing the gap to it.
+\end{rlintuition}
+\end{frame}

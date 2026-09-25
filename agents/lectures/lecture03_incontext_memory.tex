@@ -1,0 +1,172 @@
+\section{Lecture 3, Part 0: In-Context Memory}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 3}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large In-Context Memory}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say why a longer context window does not make memory a solved problem.
+  \pause
+  \item Choose between truncation, summarisation and compression, and state what each one costs.
+  \pause
+  \item Apply the checkpoint rule: rewrite history when the \emph{window} binds, not when the bill does.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Does a Longer Context Not Solve Memory?}
+\begin{itemize}
+  \item Lecture 1 ended with the scratchpad pressed against the edge of the context window. The obvious fix is a bigger window. It helps, and it settles nothing.
+  \pause
+  \item \textbf{Cost.} The bill for a trajectory is $nS + a\,n(n-1)/2$. A bigger window raises the ceiling; it does not touch the slope.
+  \pause
+  \item \textbf{Attention is not uniform.} The same fact is used less reliably when it sits in the middle of a long prompt than at either end (Liu et al., 2023) -- so a window you fill is not a window you use.
+  \pause
+  \item \textbf{Finite is still finite.} Whatever the size, a long session reaches it. And when the session ends, everything in the window is gone -- which is Part 1's problem.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{What Actually Sits in the Window}
+\begin{rldefinition}
+\textbf{Fixed prefix} $S$ -- system prompt plus tool schemas. Never changes during a run, so it is cacheable byte for byte. \emph{Here:} $1{,}200$ tokens.
+
+\smallskip
+\textbf{Trace} -- every thought, action and observation so far, append-only. \emph{Here:} $a$ tokens added per turn.
+
+\smallskip
+\textbf{Free space} -- what is left. When it reaches zero the run stops, whatever the agent was in the middle of.
+\end{rldefinition}
+\pause
+\centering
+\begin{tikzpicture}[font=\scriptsize]
+  \def\barw{9.4}
+  \def\barh{0.42}
+  \foreach \row/\frac/\lab in {0/0.0375/{turn 1}, 1/0.4125/{turn 5}, 2/0.975/{turn 11}} {
+    \pgfmathsetmacro{\yy}{-\row*0.62}
+    \node[anchor=east, inner sep=2pt] at (-0.15,\yy+\barh/2) {\lab};
+    \draw[draw=gray!60] (0,\yy) rectangle (\barw,\yy+\barh);
+    \fill[RLBlue!85] (0,\yy) rectangle (0.0375*\barw,\yy+\barh);
+    \fill[RLGreen!75] (0.0375*\barw,\yy) rectangle (\frac*\barw,\yy+\barh);
+  }
+  \node[anchor=west, inner sep=2pt] at (\barw+0.15,-0.62*2+\barh/2) {\scriptsize full};
+  \node[anchor=west, font=\scriptsize] at (0.1,0.78) {\textcolor{RLBlue}{$\blacksquare$}~prefix~$S$};
+  \node[anchor=west, font=\scriptsize] at (2.1,0.78) {\textcolor{RLGreen}{$\blacksquare$}~trace};
+  \node[anchor=west, font=\scriptsize] at (3.9,0.78) {$\square$~free};
+\end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Worked Example: Where the Session Runs Out}
+\small
+\begin{itemize}
+  \item A $32{,}000$-token window, $S = 1{,}200$. Turn $t$ sends $S + (t-1)a$, so the run survives while $S + (t-1)a \le 32{,}000$.
+  \pause
+  \item \textbf{Uncapped observations} -- the tool returns five full articles, $a \approx 3{,}000$:
+  $t \le \tfrac{32{,}000 - 1{,}200}{3{,}000} + 1 = \mathbf{11}$ turns.
+  \pause
+  \item \textbf{Capped observations} -- article number and the matching sentence only, $a = 500$:
+  $t \le \tfrac{32{,}000 - 1{,}200}{500} + 1 = \mathbf{62}$ turns.
+  \pause
+  \item Capping the observation bought $5.6\times$ the trajectory length. Lecture 1 recommended the same lever to control the \emph{bill} -- it turns out to be the main lever on \emph{length} too, and it costs nothing to pull.
+\end{itemize}
+\end{frame}
+
+% ─── Position ───────────────────────────────────────────────────────────────
+\begin{frame}{Why Does Position in the Context Matter?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Liu et al.\ (2023) put the one passage that answers a question at each possible position in a long prompt, and measured whether the answer came out right.
+  \pause
+  \item Accuracy is highest when that passage sits at the \textbf{very start or the very end}, and sags in the \textbf{middle} -- the ``lost in the middle'' effect.
+  \pause
+  \item The whole curve also drops as the prompt grows. A model advertised with a longer window is not automatically better at \emph{using} it.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/memory/memory_lost_in_the_middle.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Ordering Is Free}
+\begin{itemize}
+  \item Position is something you control. Reordering costs no tokens and no model call, which makes it the cheapest retrieval improvement available.
+  \pause
+  \item \textbf{Rule:} put the retrieved article next to the question it answers -- in practice, last. Do not bury it under six older observations.
+  \pause
+  \item \textbf{But not the prefix.} Lecture 1: reordering anything near the front invalidates the cache from that byte onward. The system prompt and tool schemas stay put.
+  \pause
+  \item Those two rules never actually collide -- the passage you most want read is the one you just retrieved, and it is already at the end.
+\end{itemize}
+\end{frame}
+
+% ─── Making room ────────────────────────────────────────────────────────────
+\begin{frame}{Three Ways to Make Room}
+\begin{rldefinition}
+\textbf{Truncation} -- drop the oldest turns outright. Costs nothing, and loses exactly what you dropped, including the fact you will need in two turns.
+
+\smallskip
+\textbf{Summarisation} -- replace old turns with a model-written pr\'ecis. Keeps the gist; costs an extra model call; and the pr\'ecis is itself model output, so it can be wrong in ways the original was not.
+
+\smallskip
+\textbf{Compression} -- shrink without a model call: drop duplicate observations, strip tool boilerplate, collapse repeated failed actions into one ``already tried'' line. Safe, but there is a floor to how much it can win.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Reach for them in order of \emph{risk} rather than saving, reversing the list above: compression first (it invents nothing), then truncation (honest about what is gone), summarisation last.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Cache Tax of Every Rewrite}
+\begin{itemize}
+  \item All three rewrite the history, so all three change the prompt from the edit point onward -- and the cached prefix dies there. This is the cost Lecture 1 deferred.
+  \pause
+  \item \textbf{Worked numbers} ($S=1{,}200$, $a=500$, DeepSeek off-peak rates):
+  \begin{itemize}
+    \item \emph{No rewrite:} turn $11$ sends $6{,}200$ tokens $= 5{,}700$ cached $+\ 500$ new $\Rightarrow \$0.000092$.
+    \item \emph{After a rewrite:} $4{,}500$ tokens of history compressed into a $600$-token summary leaves $1{,}800$ tokens, \emph{all} at the uncached rate $\Rightarrow \$0.000270$.
+  \end{itemize}
+  \pause
+  \item So the rewrite turn costs about $2.9\times$ a normal turn -- and you kept $13\%$ of what the history said.
+  \pause
+  \item Both of those are prices worth paying eventually. Neither is worth paying early.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{When to Summarise: The Checkpoint Rule}
+\begin{itemize}
+  \item \textbf{Rule:} rewrite history when the \emph{window} binds, not when the bill does.
+  \pause
+  \item \textbf{Why:} while free space remains, appending is nearly free -- the old tokens are a cache hit at $\$0.003$ per million. Summarising them costs a model call plus full rate on everything after. Paying that to save money is backwards.
+  \pause
+  \item \textbf{Where:} at a natural boundary -- a finished sub-task, an answered sub-question -- so the summary has something coherent to compress. Summarising mid-thought produces a pr\'ecis of half an argument.
+  \pause
+  \item \textbf{What never gets summarised:} the system prompt and the tool schemas. They are not history, and they are the only part guaranteed cacheable.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Summarising at a Checkpoint}
+\small
+\textbf{Session:} a user asks about the working-week limit, then keeps going -- overtime, night work, rest days -- each answer needing its own retrieval.
+\smallskip
+\pause
+\begin{itemize}
+  \item By turn $10$ the trace holds four answered sub-questions and $4{,}500$ tokens of observations, most of them articles already cited and no longer needed in full.
+  \pause
+  \item \textbf{Checkpoint reached:} the fourth sub-question is answered, and free space is running low. Compress those four exchanges into $600$ tokens -- the questions, the article numbers cited, and the one-line holding of each.
+  \pause
+  \item \textbf{Kept:} \texttt{Art.~182 -- normal working time $\le 40$ h/week (cited, answered)}. \textbf{Dropped:} the full text of Article 182 and the three near-miss passages the search also returned.
+  \pause
+  \item The agent can still cite what it has cited. It can no longer quote what it did not keep -- which is exactly why the summary must record \emph{article numbers}, not just conclusions.
+\end{itemize}
+\end{frame}

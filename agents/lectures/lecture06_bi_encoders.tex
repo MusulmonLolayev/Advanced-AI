@@ -1,0 +1,255 @@
+\section{Lecture 6, Part 0: Bi-Encoders \& Contrastive Training}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 6}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Bi-Encoders \& Contrastive Training}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Score a document with BM25 by hand, and say what $k_1$ and $b$ each control (Robertson \& Zaragoza, 2009).
+  \pause
+  \item Explain why a bi-encoder is the only design that scales to a whole corpus, and what it gives up against a cross-encoder.
+  \pause
+  \item Describe how in-batch and hard negatives train an embedding model (Karpukhin et al., 2020).
+\end{itemize}
+\end{frame}
+
+% ─── BM25 first: the baseline that must be beaten ───────────────────────────
+\begin{frame}{Why Start With Keyword Search?}
+\begin{itemize}
+  \item \textbf{Why:} the literature moved to dense retrieval, so it is tempting to skip the sparse baseline. Do not. On statute text a keyword index is fast, needs no training, no GPU and no model download -- and it is often hard to beat.
+  \pause
+  \item Legal drafting is \emph{formulaic}. An article about working hours really does contain the words ``working time'' and ``hours per week'', because the drafter was required to be unambiguous.
+  \pause
+  \item So BM25 is not the straw man in this lecture. It is the number your embedding model has to beat before it has earned its place in the pipeline.
+  \pause
+  \item \textbf{And it is the honest starting point:} you can build it in an afternoon, measure it, and only then find out whether the hard part is worth doing.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{BM25}
+\begin{rldefinition}
+\textbf{BM25} scores a document against a query by adding up, for each query term, how often it appears in \emph{this} document and how rare it is across the corpus:
+\vspace{-0.3em}
+\[
+  \mathrm{score}(D,Q) \;=\; \sum_{q \in Q} \underbrace{\mathrm{IDF}(q)}_{\text{how rare}}
+  \cdot \underbrace{\frac{f(q,D)\,(k_1+1)}{f(q,D) + k_1\!\left(1 - b + b\frac{|D|}{\mathrm{avgdl}}\right)}}_{\text{how often, with diminishing returns}}
+\]
+\vspace{-0.6em}
+
+\textbf{$f(q,D)$} -- times the term occurs here. \emph{``week'' occurs once in Article 182.}\\
+\textbf{IDF} -- rarity, $\ln\!\big(1 + \frac{N - n(q) + 0.5}{n(q)+0.5}\big)$. \emph{``week'' is in 1 of 5 articles; ``working'' in 3.}\\
+\textbf{$k_1$} -- how fast repeats stop helping, typically $1.2$--$2.0$.\\
+\textbf{$b$} -- how much to punish long documents, typically $0.75$.
+\end{rldefinition}
+\end{frame}
+
+\begin{frame}{Worked Example: Ranking Five Articles}
+\small
+\textbf{Query:} \texttt{working time hours per week}. Five provisions, average length $15.2$ tokens.
+\smallskip
+\pause
+
+\centering
+\begin{tabular}{l|r|l}
+Article & BM25 & what it is about \\
+\hline
+\textbf{182} & \textbf{5.85} & normal working time, 40 hours per week \\
+183          & 1.46          & reduced working time for some categories \\
+241          & 0.54          & annual leave \\
+220          & 0.00          & payment of wages \\
+99           & 0.00          & form of the employment contract \\
+\end{tabular}
+
+\vspace{0.6em}
+\raggedright
+\pause
+\begin{itemize}
+  \item The ranking is driven by \textbf{rarity}, not by counts: $\mathrm{IDF}(\text{``week''}) = 1.386$ against $\mathrm{IDF}(\text{``working''}) = 0.539$, because ``working'' appears in three of the five articles and ``week'' in one.
+  \pause
+  \item Two articles score exactly $0$ -- they share no query term at all. A sparse index does not rank them badly; it never sees them.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Does BM25 Damp Repeated Terms?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Why:} an article that says ``working time'' ten times is not ten times more about working time. Raw counts would let one long, repetitive document dominate every query.
+  \pause
+  \item The $k_1$ term saturates: at $k_1 = 1.2$ the first occurrence buys $0.46$ of the maximum, the second takes it to $0.63$, and the tenth only to $0.89$.
+  \pause
+  \item $b$ does the matching job for length -- dividing by $|D|/\mathrm{avgdl}$ so a long article cannot win on sheer size.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/retrieval/retrieval_bm25_saturation.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Real Event: The Query That Returns Nothing}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Same corpus, two queries with the \emph{same meaning}.
+  \pause
+  \item \texttt{working time hours week} $\rightarrow$ Article 182 at $4.53$, comfortably first.
+  \pause
+  \item \texttt{how long is the standard workweek} $\rightarrow$ after stopwords are removed the content words are \texttt{standard} and \texttt{workweek}. Neither appears anywhere in the corpus, so \textbf{every article scores exactly $0$}.
+  \pause
+  \item Article 182 is not ranked badly here. It is \emph{unreachable}: no threshold, no reranker and no amount of $k$ will surface a document the index scored zero.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/retrieval/retrieval_lexical_gap.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{The Apostrophe That Breaks Your Index}
+\begin{rlpitfall}
+Uzbek Latin writes \emph{o\textquoteleft} and \emph{g\textquoteleft} with \textbf{U+02BB}, and the tutuq belgisi with \textbf{U+02BC}. Both are Unicode category \texttt{Lm} -- \emph{letters}. The ASCII \texttt{\char39} (U+0027) is category \texttt{Po} -- punctuation. Three marks that look alike, three different codepoints -- which is why this failure is silent.
+\end{rlpitfall}
+\pause
+\small
+\centering
+\begin{tabular}{l|l|c}
+the word, written as & \texttt{\textbackslash w+} splits it into & matches? \\
+\hline
+\texttt{o\textquoteleft rtacha} \;(U+02BB, the corpus) & one token \;\texttt{o\textquoteleft rtacha} & --- \\
+\texttt{o\char39 rtacha} \;(U+0027, what users type)          & two tokens \;\texttt{o} \;\texttt{rtacha} & \textcolor{red!65!black}{\textbf{no}} \\
+\texttt{o\textquoteright rtacha} \;(U+2019, pasted from Word) & two tokens \;\texttt{o} \;\texttt{rtacha} & \textcolor{red!65!black}{\textbf{no}} \\
+\end{tabular}
+
+\vspace{0.5em}
+\raggedright
+\pause
+\begin{itemize}
+  \item \textbf{Normalisation does not fix this.} NFC, NFD, NFKC and NFKD all leave U+02BB exactly as it was -- it is a letter in its own right, not a decorated form of anything.
+  \pause
+  \item The bug is \textbf{normalising the corpus and the query differently}. Fold both sides with one rule, and test that a keyboard-typed query still finds its article.
+\end{itemize}
+\end{frame}
+
+% ─── Bi-encoders ────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Bi-Encoder?}
+\begin{itemize}
+  \item \textbf{Why:} the obvious fix for the lexical gap is to let a model read the query and the article \emph{together} and judge the match. That is a \textbf{cross-encoder}, and it is the most accurate thing we know how to build.
+  \pause
+  \item It is also unusable as a first stage. Judging a pair requires one forward pass, and the pair changes with every query -- so nothing can be precomputed.
+  \pause
+  \item For the capstone corpus that is \textbf{7{,}368 model passes for one question}. At the other end of the room, a user is waiting.
+  \pause
+  \item A \textbf{bi-encoder} gives that up deliberately: encode the query and the article \emph{separately}, so every article can be encoded once, offline, and a query becomes one pass plus a pile of dot products.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Bi-Encoder vs.\ Cross-Encoder}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  enc/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=3.5pt,
+              minimum height=5.5mm, minimum width=17mm, align=center},
+  txt/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+              minimum height=5mm, minimum width=15mm, align=center},
+  res/.style={draw=RLOrange, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+              minimum height=5mm, minimum width=15mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  % --- bi-encoder ---
+  \node[lbl, anchor=west] at (-0.4,2.9) {\textbf{Bi-encoder} -- encoded apart, compared by a dot product};
+  \node[txt] (q1) at (0.6,2.0)  {query};
+  \node[txt] (d1) at (0.6,0.85) {article};
+  \node[enc] (e1) at (3.3,2.0)  {encoder};
+  \node[enc] (e2) at (3.3,0.85) {encoder};
+  \node[lbl] (v1) at (5.7,2.0)  {$\mathbf{q}\in\mathbb{R}^{d}$};
+  \node[lbl] (v2) at (5.7,0.85) {$\mathbf{a}\in\mathbb{R}^{d}$};
+  \node[res] (s1) at (8.3,1.42) {$\mathbf{q}\cdot\mathbf{a}$};
+  \draw[->] (q1) -- (e1);  \draw[->] (d1) -- (e2);
+  \draw[->] (e1) -- (v1);  \draw[->] (e2) -- (v2);
+  \draw[->] (v1) -- (s1);  \draw[->] (v2) -- (s1);
+  \node[lbl, anchor=west, text=RLGreen] at (0.0,0.15)
+    {the article side runs \emph{once}, offline -- nothing on it depends on the query};
+
+  % --- cross-encoder ---
+  \node[lbl, anchor=west] at (-0.4,-0.9) {\textbf{Cross-encoder} -- read together, one pass per pair};
+  \node[txt] (p) at (1.4,-1.9) {query $\oplus$ article};
+  \node[enc] (e3) at (4.6,-1.9) {encoder};
+  \node[res] (s2) at (7.6,-1.9) {score};
+  \draw[->] (p) -- (e3);   \draw[->] (e3) -- (s2);
+  \node[lbl, anchor=west, text=red!65!black] at (8.6,-1.9) {$\times N$};
+\end{tikzpicture}
+
+\vspace{0.3em}
+\footnotesize Everything else in this lecture follows from that gap: the corpus is encoded once and kept, so a query costs one model pass plus arithmetic.
+\end{frame}
+
+\begin{frame}{Embedding, Bi-Encoder, Cosine Similarity}
+\begin{rldefinition}
+\textbf{Embedding} -- a fixed-length vector standing for a piece of text, built so that nearness in the vector space means nearness in meaning. \emph{Here:} Article 182 becomes one vector of $d$ numbers.
+
+\smallskip
+\textbf{Bi-encoder} -- two encoder passes that never see each other's input, scored by a dot product. \emph{Here:} one tower for questions, one for articles.
+
+\smallskip
+\textbf{Cosine similarity} -- the dot product of unit-length vectors, $\cos\theta = \frac{\mathbf{q}\cdot\mathbf{a}}{\lVert\mathbf{q}\rVert\lVert\mathbf{a}\rVert}$: the angle between them, ignoring length. \emph{Why:} a long article should not outscore a short one for being long.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Normalise once at index time and cosine \emph{is} the dot product -- which is why libraries ask you to store unit vectors.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Cost of Each Design}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Bi-encoder:} $N$ encoder passes \emph{once, offline}, then per query one pass plus $N$ dot products. A dot product is arithmetic, not a model.
+  \pause
+  \item \textbf{Cross-encoder:} $N$ encoder passes \emph{per query}, every query, forever.
+  \pause
+  \item At $N = 7{,}368$ that is one pass against $7{,}368$. At a million articles it is one against a million.
+  \pause
+  \item \textbf{So use both.} A bi-encoder retrieves the top few dozen, a cross-encoder reorders only those -- the reranking stage of Lecture 5. Accuracy where it is affordable.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/retrieval/retrieval_encoder_cost.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Contrastive training ───────────────────────────────────────────────────
+\begin{frame}{Why Does Contrastive Training Work?}
+\begin{itemize}
+  \item \textbf{Why:} an untrained encoder has no reason to put a \emph{question} near the \emph{article that answers it} -- they do not look alike. That correspondence has to be taught.
+  \pause
+  \item \textbf{The training signal:} take pairs (question, article that answers it). Pull each pair together, push everything else apart. Nothing else is needed -- no relevance grades, no ranking labels.
+  \pause
+  \item \textbf{In-batch negatives} make ``everything else'' free. In a batch of $64$ pairs, each question already has its own article plus $63$ others sitting in the same batch. Score all $64$, apply cross-entropy, and the correct one must win.
+  \pause
+  \item So a batch of $64$ costs $128$ encoder passes and yields $64$ classification problems over $64$ candidates each. \textbf{Bigger batches are better training} here -- more negatives per step, at no extra encoding cost.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Hard Negatives Matter}
+\begin{itemize}
+  \item \textbf{The flaw in free negatives:} a random other article in the batch is about annual leave or contract form. Telling them apart from a working-hours question is trivial, so after a while the gradient carries almost nothing.
+  \pause
+  \item \textbf{Hard negatives} are articles that \emph{look} right and are not -- fetch the BM25 top results for the question and take the ones that are not the gold article. Article 183, ``reduced working time'', is exactly this for our query.
+  \pause
+  \item Karpukhin et al.\ (2020) train DPR this way -- gold pair, one BM25 hard negative, plus in-batch negatives -- and report beating BM25 by $9$--$19$ points of top-$20$ retrieval accuracy across open-domain QA benchmarks.
+  \pause
+  \item \textbf{Note what that implies for you:} the sparse index you built first is not thrown away when you train a dense model. It is what \emph{generates the training data}.
+\end{itemize}
+\end{frame}

@@ -1,0 +1,173 @@
+\section{Lecture 3, Part 1: External \& Episodic Memory}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 3}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large External \& Episodic Memory}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Name the three kinds of store that live outside the context window, and what each is for.
+  \pause
+  \item Explain MemGPT's paging analogy, and who issues the page-in and page-out (Packer et al., 2023).
+  \pause
+  \item Decide what an agent should write down -- and argue why the write policy is harder than the read.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Memory Outside the Window?}
+\begin{itemize}
+  \item Part 0 made the window go further. It cannot make it survive. Two things still fall off the end.
+  \pause
+  \item \textbf{Too big to hold.} The corpus is $7{,}368$ articles, roughly a million words. It was never going in the prompt; that is why there is a \texttt{search} tool at all.
+  \pause
+  \item \textbf{Longer-lived than the run.} When the session ends the window is discarded. Tomorrow's session starts knowing nothing -- including what it already told this user yesterday.
+  \pause
+  \item So memory splits in two: what the model can \emph{see} this turn, and what it can \emph{fetch}. Everything in this lecture is about moving items between those two.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Three Stores Outside the Window}
+\begin{rldefinition}
+\textbf{Key--value store} -- small named facts, fetched by key, not searched. \emph{Here:} \texttt{preferred\_language = uz}, \texttt{jurisdiction = UZ}. Cheap, exact, tiny.
+
+\smallskip
+\textbf{Document store} -- the corpus itself, searched by content. \emph{Here:} the $7{,}368$ articles behind \texttt{search(query)}. Lectures 5--7 are entirely about making this fast and accurate.
+
+\smallskip
+\textbf{Episodic buffer} -- past turns and past sessions, kept in order and searchable by time or topic. \emph{Here:} ``what did I already tell this user about working hours?''
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The document store holds things that are \emph{true}; the episodic buffer holds things that \emph{happened}. Confusing the two is how an agent ends up citing its own past sentence as law.
+\end{itemize}
+\end{frame}
+
+% ─── MemGPT ─────────────────────────────────────────────────────────────────
+\begin{frame}{MemGPT: The Model Pages Its Own Memory}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  blk/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+              minimum height=5mm, minimum width=38mm, align=center},
+  ext/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+              minimum height=5mm, minimum width=38mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=2pt}
+]
+  % Group frames drawn explicitly: the tikz `fit' library is not loaded by the
+  % module theme, and this diagram is not worth loading one for. Both frames
+  % share a top edge so their captions sit on one line.
+  \draw[draw=gray!55, rounded corners=3pt] (-2.15,-0.45) rectangle (2.15,1.95);
+  \node[lbl] at (0,2.22) {\textbf{Main context} -- seen this turn};
+  \node[blk] (sys)  at (0,1.5)  {system instructions};
+  \node[blk] (wrk)  at (0,0.75) {working context};
+  \node[blk] (fifo) at (0,0)    {message queue $+$ summary};
+
+  \draw[draw=gray!55, rounded corners=3pt] (5.6,0.3) rectangle (9.9,1.95);
+  \node[lbl] at (7.75,2.22) {\textbf{External context} -- searchable};
+  \node[ext] (rec) at (7.75,1.45) {recall: full event log};
+  \node[ext] (arc) at (7.75,0.7)  {archival: written notes};
+
+  \draw[->, RLBlue]  (2.25,1.28) -- node[lbl,above] {page out when full} (5.5,1.28);
+  \draw[->, RLGreen] (5.5,0.55)  -- node[lbl,below] {page in on search}  (2.25,0.55);
+\end{tikzpicture}
+
+\vspace{0.5em}
+\footnotesize
+The analogy is virtual memory: main context is RAM, external context is disk. The twist is \emph{who} does the paging --- not the operating system, but the model itself, by emitting ordinary tool calls (Packer et al., 2023). A ``memory pressure'' warning is inserted into the context when free space runs low, and the model decides what to evict.
+\end{frame}
+
+\begin{frame}{Worked Example: The Session After}
+\small
+\begin{itemize}
+  \item \textbf{Monday.} The user asks about the working week. The agent answers with Article~182, and writes one episodic entry: \emph{asked about weekly hours; cited Art.~182; answered}.
+  \pause
+  \item \textbf{Thursday.} New session, empty window. The user asks: ``and what about the night shift?'' -- ``and'' referring to a conversation the model has no memory of.
+  \pause
+  \item The agent searches the episodic buffer for this user, recovers Monday's entry, and can now resolve what ``and'' points at. Without it, the only honest reply is ``the night shift compared with what?''
+  \pause
+  \item \textbf{The trap:} that entry says Article~182 \emph{was cited}, not what it says. It is a record of an event, not a source of law. Before quoting a limit, the agent re-retrieves the article -- the memory tells it where to look, never what to claim.
+\end{itemize}
+\end{frame}
+
+% ─── RAG memory vs fine-tuning ──────────────────────────────────────────────
+\begin{frame}{Retrieved Memory or Trained-In Memory?}
+\begin{itemize}
+  \item There is a second way to make a model ``know'' something: put it in the weights. Fine-tuning is memory too -- with a very different cost profile.
+  \pause
+  \item \textbf{Retrieved:} updated the instant you write the store, and every claim can be traced to the passage it came from. Costs a lookup and the context tokens it occupies.
+  \pause
+  \item \textbf{Trained in:} no retrieval at inference, and the knowledge is always ``there''. But updating means another training run, and nothing can be pointed at afterwards.
+  \pause
+  \item For this module the choice is settled by the brief: the capstone must \textbf{cite an article ID}. \emph{You cannot cite a weight.} Fine-tuning is how you teach the agent to behave; retrieval is how it knows anything it is willing to assert.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Memory Is Retrieval Wearing a Hat}
+\begin{itemize}
+  \item Once memory lives outside the window, ``what do I remember?'' becomes ``what does my search return?'' -- the same question the retrieval lectures answer.
+  \pause
+  \item The episodic buffer is a document store whose documents are your own past turns. It is chunked, embedded and indexed like any other corpus (Lectures 5--7).
+  \pause
+  \item Which means a forgetting bug and a retrieval bug are the same bug, and the same metric catches both: did the right item come back in the top $k$?
+  \pause
+  \item It also means the ``lost in the middle'' result from Part 0 applies to recalled memories exactly as it does to retrieved articles. Fetching the right memory and then burying it mid-prompt wastes the fetch.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Hard Part Is the Write Policy}
+\begin{itemize}
+  \item Reading is a retrieval problem with a metric. Writing is a judgement call with no obvious one -- and a bad write is permanent in a way a bad read is not.
+  \pause
+  \item \textbf{Default to forgetting.} Write only what is stable, expensive to recompute, and stated rather than guessed.
+  \pause
+  \item \textbf{Never store an inference as a fact.} ``User works in manufacturing'', inferred from one question, becomes a false premise for every future session -- and nothing will ever contradict it, because nothing re-checks it.
+  \pause
+  \item \textbf{Give every entry a provenance.} Which session, which turn, and whether it came from the user, from a tool, or from the model. Lecture 8 grades claims by whether they trace to a source; a memory with no provenance can never pass.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{In the Capstone: Sprint 3}
+\begin{itemize}
+  \item This lecture and the next are Sprint 3: \textbf{multi-turn memory, plus a verifier subagent} that checks each claim against the article it cites.
+  \pause
+  \item Concretely: keep a session log, summarise at checkpoints by the Part 0 rule, and store one episodic entry per answered question -- question, article IDs cited, verdict.
+  \pause
+  \item \textbf{What it buys you in the evaluation:} follow-up questions become answerable, and the verifier gets a record of what was claimed to check against.
+  \pause
+  \item \textbf{What to watch:} a memory that asserts law rather than pointing at it will quietly raise your hallucination rate, and the harness in Sprint 4 will find it. That is the intended lesson, not an accident.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item A longer window buys room, not memory: cost still grows quadratically, attention still sags in the middle, and the session still ends.
+  \pause
+  \item In-context, you have three moves -- truncate, summarise, compress -- and all three cost the cached prefix. Spend that when the \textbf{window} binds, not the bill.
+  \pause
+  \item Outside the window: a \textbf{key--value store} for small facts, a \textbf{document store} for the corpus, an \textbf{episodic buffer} for what happened.
+  \pause
+  \item \textbf{MemGPT} makes the model its own memory manager, paging between the two tiers with ordinary tool calls.
+  \pause
+  \item Memory records \emph{events}; the corpus holds \emph{claims}. Keep those apart, or the agent will cite itself.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading}
+\begin{itemize}
+  \item Packer et al.\ (2023). \textit{MemGPT: Towards LLMs as Operating Systems.} --- the paging architecture, and self-directed memory edits.
+  \pause
+  \item Liu, Lin, Hewitt, Paranjape, Bevilacqua, Petroni \& Liang (2023). \textit{Lost in the Middle: How Language Models Use Long Contexts.} TACL. --- why where a fact sits changes whether it is used.
+  \pause
+  \item \textbf{Next lecture:} when one agent is not enough -- task decomposition, the orchestrator--subagent pattern, and what happens to memory when several agents share it.
+\end{itemize}
+\end{frame}

@@ -1,0 +1,263 @@
+\section{Lecture 8, Part 0: Evaluating an Agent}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 8}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Evaluating an Agent}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Separate \emph{correct} from \emph{grounded}, and classify any answer into the four cases that distinction creates.
+  \pause
+  \item Score a whole trajectory -- tool-call accuracy, step accuracy, task completion -- rather than only its last line.
+  \pause
+  \item Measure groundedness with no labels at all, using a deleted-span holdout, and say how many queries your number actually needs.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Does a Working Demo Prove Nothing?}
+\begin{itemize}
+  \item \textbf{Why:} a demo is \emph{one sampled trajectory}, chosen after the fact because it worked. It is the single least informative observation you can make about a stochastic system.
+  \pause
+  \item Lecture 1 gave the arithmetic: a $k$-step trajectory succeeds with $p^{k}$. At $p = 0.95$ and $k = 10$ that is $0.599$ -- so roughly three demos in five look flawless on a system that fails two times in five.
+  \pause
+  \item Worse, you chose which demo to show. Conditioning on success and then reporting success measures nothing.
+  \pause
+  \item \textbf{So the deliverable is not the agent.} It is the harness that reports what the agent does on queries nobody hand-picked.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: What Magesh et al.\ Measured}
+\begin{columns}[T]
+\column{0.47\textwidth}
+\small
+\begin{itemize}
+  \item Three commercial legal research tools -- all retrieval-augmented, all marketed as having \emph{eliminated} hallucination.
+  \pause
+  \item Magesh et al.\ (2024) preregistered a study: $202$ legal queries through each tool, every response hand-scored by experts.
+  \pause
+  \item Reported hallucination: \textbf{$17$--$33\%$} of responses -- better than a model with no retrieval, and nothing like the claim.
+\end{itemize}
+\column{0.51\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/agent_eval/agent_eval_hallucination_gap.pdf}
+
+\vspace{0.2em}
+\footnotesize The band is the reported range across the three products.
+\end{columns}
+\pause
+\begin{rlintuition}
+Retrieval reduces hallucination; it does not remove it. Three shipping products were sold on the stronger claim.
+\end{rlintuition}
+\end{frame}
+
+% ─── The vocabulary ─────────────────────────────────────────────────────────
+\begin{frame}{Correct, Grounded, or Neither}
+\begin{rldefinition}
+\textbf{Correct} -- the statement is true. \emph{Here:} the working week really is capped at 40 hours.
+
+\smallskip
+\textbf{Grounded} -- the cited source actually says it. \emph{Here:} open Article 182 and the 40-hour limit is there in the text.
+
+\smallskip
+These are \emph{independent}. Magesh et al.'s typology separates them for exactly this reason: an answer can be true while citing something that does not support it, and it can be faithfully drawn from a real retrieved article while misreading it.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Only one of the four combinations is acceptable, and \textbf{the dangerous one is ``correct but ungrounded''} -- it survives every spot check a busy reader performs.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Four Answers to One Question}
+\footnotesize
+\textbf{Question:} ``What is the maximum normal working week?'' \quad
+\textbf{Ground truth:} 40 hours, Labor Code Article 182.
+\smallskip
+
+\scriptsize
+\begin{tabular}{@{}p{0.50\textwidth}p{0.20\textwidth}p{0.22\textwidth}@{}}
+\textbf{Answer returned} & \textbf{Classification} & \textbf{Caught by} \\[3pt]
+\hline\\[-6pt]
+``40 hours per week [Art.~182]'' & correct, grounded & --- \\[4pt]
+\pause
+``40 hours per week'', citing a neighbouring article that says nothing about hours
+  & \textcolor{RLBlue}{\textbf{correct, ungrounded}} & only opening the citation \\[4pt]
+\pause
+``41 hours per week [Art.~182]'' -- Article 182 was retrieved, and misread
+  & incorrect, grounded & reading the article \\[4pt]
+\pause
+``40 hours per week [Art.~1182]'' -- no such article exists in the corpus
+  & incorrect, ungrounded & an ID existence check \\
+\end{tabular}
+\pause
+
+\smallskip
+\footnotesize
+Rows three and four are cheap to catch automatically. Row two is not: every surface signal is right, and a reader who trusts the citation format never opens it.
+\end{frame}
+
+% ─── Trajectory scoring ─────────────────────────────────────────────────────
+\begin{frame}{Why Grade the Trajectory, Not the Answer?}
+\begin{itemize}
+  \item \textbf{Why:} the final answer is \emph{one bit} per run -- it worked or it did not. A $k$-step trajectory gives you $k$ observations from the same run.
+  \pause
+  \item That matters statistically. Lecture 1's $p$ is a \emph{per-step} quantity, and you cannot estimate a per-step rate from a per-run outcome without many runs.
+  \pause
+  \item It also matters diagnostically. Two agents that both fail a task can fail in unrelated ways: one issued a malformed call on turn 1, the other retrieved perfectly and then misread what it found. Only the trajectory tells them apart.
+  \pause
+  \item And a trajectory that \emph{fails the task} can still be entirely well-behaved -- if the corpus genuinely lacks the answer, the correct trajectory abstains.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Three Things to Score in a Trajectory}
+\begin{rldefinition}
+\textbf{Tool-call accuracy} -- what fraction of emitted calls were well-formed \emph{and} appropriate. \emph{Here:} did it call \texttt{search} with a query that could plausibly find the rule?
+
+\smallskip
+\textbf{Step accuracy} -- what fraction of steps moved the task forward. A syntactically perfect call that re-runs a query already tried is a failed step.
+
+\smallskip
+\textbf{Task completion} -- did the final answer meet the goal, including \emph{abstaining} when it should.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Report all three. Tool-call accuracy alone rewards an agent that emits beautiful calls forever; task completion alone hides where the run went wrong.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Scoring Lecture 1's Trace}
+\footnotesize
+The three-turn trace from Lecture 1: find the working-week limit, then check whether it differs for employees under 18.
+\smallskip
+
+\scriptsize
+\begin{tabular}{@{}p{0.09\textwidth}p{0.55\textwidth}p{0.28\textwidth}@{}}
+\textbf{Turn} & \textbf{What happened} & \textbf{Score} \\[3pt]
+\hline\\[-6pt]
+1 & \texttt{search} for the general rule; Article 182 returned and used & good call, step advanced \\[4pt]
+2 & \texttt{search} for the under-18 rule; three candidates, none supporting & good call, step \emph{stalled} \\[4pt]
+3 & \texttt{answer}: 40 hours [Art.~182]; \emph{no supporting article found} for the second half & correct abstention \\
+\end{tabular}
+\pause
+
+\smallskip
+\footnotesize
+\textbf{Tool-call accuracy $3/3$. Step accuracy $2/3$. Task completion: partial -- and correctly so.}
+
+\pause
+A scorer that only read the last line would record a failure. The trajectory shows an agent that did everything right and reported an honest gap, which is the behaviour we are trying to produce.
+\end{frame}
+
+% ─── Groundedness without labels ────────────────────────────────────────────
+\begin{frame}{Why Do We Need Abstention?}
+\begin{itemize}
+  \item \textbf{Why:} every query you can ask has an answer the model \emph{can} produce. Whether the corpus supports it is a separate question, and the model has no privileged access to that.
+  \pause
+  \item An agent with no abstention behaviour has a hallucination rate bounded below by the fraction of your queries the corpus cannot answer -- whatever the retrieval stack does.
+  \pause
+  \item So ``I did not find support for this'' must be a \emph{first-class outcome}, not a failure path -- which is exactly how Lecture 1's worked trace ended: the final \texttt{answer} reported the gap instead of filling it.
+  \pause
+  \item Which leaves one problem: measuring abstention normally needs someone to label which queries are unanswerable.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Deleted-Span Holdout}
+\begin{columns}[T]
+\column{0.52\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{The trick:} take queries you \emph{know} are answerable, and delete the supporting article from the index. Now you know the answer is unreachable -- with no annotation at all.
+  \pause
+  \item A correct agent abstains. An agent that answers anyway has just demonstrated it was not reading the retrieved text.
+  \pause
+  \item \textbf{Report two rates, always.} Abstention on the deleted set, and \emph{false} abstention on the intact set -- an agent that abstains on everything scores perfectly on the first.
+\end{itemize}
+\column{0.46\textwidth}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  box/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+              minimum height=5mm, minimum width=22mm, align=center},
+  gone/.style={draw=RLOrange, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+               minimum height=5mm, minimum width=22mm, align=center},
+  good/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+               minimum height=5mm, minimum width=22mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  \node[box]  (q)  at (0,2.5)  {query};
+  \node[gone] (idx) at (0,1.3) {index\\ \emph{Art.\ 182 removed}};
+  \node[good] (ab) at (-1.5,-0.2) {abstain};
+  \node[box]  (an) at (1.6,-0.2) {answer};
+  \draw[->] (q) -- (idx);
+  \draw[->] (idx) -- node[lbl,left,pos=0.55] {\textcolor{RLGreen}{correct}} (ab);
+  \draw[->] (idx) -- node[lbl,right,pos=0.55] {ungrounded} (an);
+  \node[lbl, align=center, text width=34mm] at (0,-1.35)
+    {every answer here is by construction unsupported};
+\end{tikzpicture}
+\end{columns}
+\end{frame}
+
+\begin{frame}{How Many Queries Is Enough?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item A measured hallucination rate is an \emph{estimate}, with a standard error -- Module 0, Lecture 10.
+  \pause
+  \item At a true rate near $20\%$, a $20$-query smoke test gives $\pm 17.5$ points: the interval runs from $2.5\%$ to $37.5\%$. It cannot tell an excellent agent from a broken one.
+  \pause
+  \item $200$ queries buys $\pm 5.5$ points -- which is the precision the $202$-query study above was working at.
+  \pause
+  \item \textbf{Consequence:} a $0.3$-point improvement between two runs of your agent is not an improvement. It is noise.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/agent_eval/agent_eval_sample_size.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Benchmarks and judges ──────────────────────────────────────────────────
+\begin{frame}{Benchmarks: What They Do and Do Not Tell You}
+\begin{itemize}
+  \item \textbf{AgentBench} (Liu et al., 2023) -- eight interactive environments (operating system, database, knowledge graph, web shopping, and others), built to measure LLMs \emph{as agents} rather than as text generators.
+  \pause
+  \item \textbf{WebArena} (Zhou et al., 2023) -- self-hostable clones of realistic websites with long-horizon tasks. The headline is the gap: the best agent evaluated succeeded on a small fraction of tasks where humans succeeded on most.
+  \pause
+  \item \textbf{SWE-bench} (Jimenez et al., 2023) -- $2{,}294$ real GitHub issue--patch pairs from $12$ Python repositories, graded by whether the repository's own tests pass.
+  \pause
+  \item \textbf{What they are for:} calibrating your expectations of the field. \textbf{What they are not:} evidence about \emph{your} agent on \emph{your} corpus. For that you need your own harness -- which is the point of LegalBench (Guha et al., 2023) and LegalBench-RAG (ZeroEntropy, 2024) for the legal side.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Human Judges, Model Judges}
+\begin{itemize}
+  \item \textbf{Automated} -- a second model scores the output. \textbf{RAGAS} (Es et al., 2023) does this reference-free: faithfulness (is the answer supported by the retrieved context), answer relevance, context relevance. Cheap, instant, runs on every commit.
+  \pause
+  \item \textbf{Human} -- an expert reads the response with the sources open. Slow, expensive, and the only thing that settles a disagreement.
+  \pause
+  \item Magesh et al.\ is credible \emph{because} it is the second kind. A model judge scoring legal groundedness shares the failure mode it is meant to detect.
+  \pause
+  \item \textbf{Use both:} automated scoring everywhere, on a human-scored subset you have calibrated it against. Report the agreement rate; if your judge and your experts agree $70\%$ of the time, your automated number carries that uncertainty.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Grade the Harness, Not the Demo}
+\begin{itemize}
+  \item The capstone is graded on the evaluation harness as heavily as on the agent. That is not an administrative choice -- it follows from everything above.
+  \pause
+  \item A team with a weaker model and a rigorous harness \emph{knows} where their system fails and can say so with an interval attached. A team with a frontier model and a demo knows nothing.
+  \pause
+  \item Magesh et al.\ is the empirical proof: three shipping products, engineering teams behind each, all marketed as having eliminated a failure mode that was occurring in up to a third of responses.
+  \pause
+  \item \textbf{Sprint 4 deliverable:} the harness, the abstention numbers on both the intact and deleted-span sets, and the confidence interval on every rate you report.
+\end{itemize}
+\end{frame}

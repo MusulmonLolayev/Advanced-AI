@@ -1,0 +1,217 @@
+\section{Lecture 5, Part 1: Improving Retrieval Quality}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 5}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Improving Retrieval Quality}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say why a second ranking stage exists, and what a cross-encoder can do that a first-stage retriever cannot.
+  \pause
+  \item Combine two ranked lists with reciprocal rank fusion, by hand.
+  \pause
+  \item Choose between HyDE, multi-hop retrieval and retrieval-on-demand by naming the failure each one repairs (Gao et al., 2022; Asai et al., 2023).
+\end{itemize}
+\end{frame}
+
+% ─── Reranking ──────────────────────────────────────────────────────────────
+\begin{frame}{Why Isn't First-Stage Retrieval Enough?}
+\begin{itemize}
+  \item \textbf{Why:} the first stage must score \emph{every} chunk in the corpus, so it is built for speed. That budget buys a scoring function that looks at the query and the chunk \emph{separately} and compares the two summaries.
+  \pause
+  \item Scoring them separately is what makes the index possible -- chunk scores can be precomputed -- and it is also what loses the interaction. ``Reduced working time'' and ``employees under eighteen'' both match Article~183 strongly on their own; only reading them \emph{against} the article reveals it states no limit.
+  \pause
+  \item \textbf{So use two stages.} Retrieve $50$ candidates cheaply, then rescore those $50$ expensively. You pay the expensive model $50$ times per query instead of $7{,}368$ times.
+  \pause
+  \item \textbf{The asymmetry is the whole design:} recall is the first stage's job and cannot be recovered later; precision is the second stage's job and is cheap to buy.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Retrieve-then-Rerank Funnel}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  band/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+               minimum height=7mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=2pt, align=center}
+]
+  \node[band, minimum width=2.9cm] (all)  at (0,0)    {$7{,}368$ chunks};
+  \node[band, minimum width=2.2cm] (top50) at (4.3,0)  {top $50$};
+  \node[band, minimum width=1.6cm] (top5)  at (8.3,0)  {top $5$};
+  \node[band, minimum width=1.9cm, draw=RLGreen] (gen) at (11.2,0) {generator};
+  \draw[->] (all)   -- node[lbl,above=3.2mm] {first stage} (top50);
+  \draw[->] (top50) -- node[lbl,above=3.2mm] {cross-encoder} (top5);
+  \draw[->] (top5)  -- (gen);
+\end{tikzpicture}
+
+\vspace{0.8em}
+\small
+\begin{itemize}
+  \item \textbf{The cost asymmetry is the point.} The first stage scores all $7{,}368$ chunks, so it must be cheap. The cross-encoder scores only $50$, so it can afford a forward pass each.
+  \pause
+  \item \textbf{Recall is set at the first arrow:} if the gold article is not among the $50$, nothing downstream can find it.
+  \pause
+  \item \textbf{Precision is set at the second:} the reranker's job is to get the gold article into the $5$ the generator actually reads.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Two Ways to Score a Query Against a Chunk}
+\begin{rldefinition}
+\textbf{First-stage retriever} -- encodes the query and each chunk \emph{independently} and compares the two summaries. Chunk side is precomputed once, so scoring the whole corpus is cheap. Lecture~6 builds one.
+
+\smallskip
+\textbf{Cross-encoder} -- feeds query and chunk to the model \emph{together}, as one sequence, and outputs a single relevance score. Nothing can be precomputed: every (query, chunk) pair costs a forward pass.
+
+\smallskip
+\emph{Here:} the first stage proposes Art.~183 and Art.~415; the cross-encoder reads ``how many hours may a 17-year-old work?'' \emph{alongside} each one and notices only Art.~415 contains a number.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Nogueira \& Cho (2019) introduced this reranking design for passage ranking, and it remains the standard second stage.
+\end{itemize}
+\end{frame}
+
+% ─── RRF ────────────────────────────────────────────────────────────────────
+\begin{frame}{Reciprocal Rank Fusion}
+\begin{rldefinition}
+\textbf{Reciprocal rank fusion (RRF)} -- score each document by its reciprocal rank summed over every list it appears in, with $k = 60$ by convention (Cormack, Clarke \& Buettcher, 2009):
+\vspace{-0.4em}
+\[
+  \mathrm{RRF}(d) \;=\; \sum_{\ell \in \text{lists}} \frac{1}{k + \mathrm{rank}_{\ell}(d)} .
+\]
+\vspace{-1.2em}
+
+\emph{Here:} fuse a keyword ranking with Lecture~6's dense ranking.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Why ranks, not scores:} two retrievers return numbers on incomparable scales -- a similarity in $[0,1]$ against an unbounded term-weight sum. Ranks need no calibration.
+  \pause
+  \item \textbf{Why the $+\,k$:} it flattens the top, so first rather than third is worth little. Agreement across lists beats dominance within one.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Fusing Two Rankings}
+\small
+Two retrievers rank four candidate articles for \emph{``how many hours may a 17-year-old work?''}
+\smallskip
+
+\centering
+\footnotesize
+\begin{tabular}{@{}llcccl@{}}
+& & \textbf{List A} & \textbf{List B} & & \\
+\textbf{Article} & & rank & rank & \textbf{RRF score} & \\
+\hline
+Art.~258 & remuneration for reduced hours & $1$ & --      & $1/61 = 0.0164$ & \\
+Art.~183 & reduced hours, full pay        & $2$ & $3$     & $1/62 + 1/63 = 0.0320$ & \\
+\textcolor{RLGreen}{Art.~415} & \textcolor{RLGreen}{16--18: 36 h/wk} & $3$ & $1$ & \textcolor{RLGreen}{$1/63 + 1/61 = 0.0323$} & \\
+Art.~182 & normal working time            & $4$ & $2$     & $1/64 + 1/62 = 0.0318$ & \\
+\end{tabular}
+\pause
+
+\vspace{0.5em}
+\begin{itemize}
+  \item \textbf{Art.~258 was ranked first by List A and finishes last.} It appears in no other list, so it scores once. One first place is worth about \emph{half} of two middling places.
+  \pause
+  \item \textbf{Art.~415 was never first in List A and wins.} Two retrievers that disagree about the order still agree it is relevant, and that agreement is what RRF rewards.
+\end{itemize}
+\end{frame}
+
+% ─── HyDE ───────────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need HyDE?}
+\begin{itemize}
+  \item \textbf{Why:} queries and documents are written in different registers. A student asks \emph{``how many hours may a 17-year-old work?''}; the statute says \emph{``reduced working time is established for employees aged sixteen to eighteen''}. They share almost no words.
+  \pause
+  \item \textbf{HyDE} (Gao et al., 2022) closes the gap from the query side: ask a model to \emph{write} a hypothetical answer, then retrieve using that text instead of the question. The invented answer is in the register of the corpus even when its facts are wrong.
+  \pause
+  \item \textbf{The counter-intuitive part:} the hypothetical document does not need to be correct. It is never shown to the user and never cited -- it is only a better-shaped query. Gao et al.\ show this works with no relevance labels at all.
+  \pause
+  \item \textbf{When it hurts:} if the model's invention is confidently off-topic it drags retrieval with it. Fusing the HyDE ranking with the original-query ranking -- by RRF -- keeps the upside and caps the downside.
+\end{itemize}
+\end{frame}
+
+% ─── Multi-hop ──────────────────────────────────────────────────────────────
+\begin{frame}{Multi-Hop Retrieval: Following a Cross-Reference}
+\begin{itemize}
+  \item Some questions cannot be answered by any single chunk, however well you cut the corpus. The under-18 question is one: Article~183 establishes \emph{that} reduced hours exist; Article~415 says \emph{how many}.
+  \pause
+  \item \textbf{Multi-hop retrieval} runs retrieval again using what the first pass returned -- the agent loop of Lecture~1, with \texttt{search} as the tool. Hop~1 finds Art.~183; the thought ``this names a category but no number'' drives hop~2.
+  \pause
+  \item \textbf{This is why an agent beats a pipeline here.} A fixed pipeline retrieves once. Nothing in one pass of Art.~183 tells a pipeline that a second search is needed.
+  \pause
+  \item \textbf{Free ground truth:} the corpus stores \texttt{cross\_references}, so article~A citing article~B gives a two-hop query whose gold answer set is known without an annotator. Build your multi-hop evaluation from that field.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Self-RAG: Deciding Whether to Retrieve At All}
+\begin{itemize}
+  \item Everything so far retrieves once per query, always. Both halves of that are wrong: some queries need several passes, and some need none -- retrieving for ``summarise what you just told me'' only adds noise.
+  \pause
+  \item \textbf{Self-RAG} (Asai et al., 2023) trains the model to emit \textbf{reflection tokens} alongside its text, drawn from an expanded vocabulary. A \texttt{[Retrieve]} token decides on demand whether to search at all.
+  \pause
+  \item Three further tokens critique what came back and what was written with it: whether the passage is \emph{relevant}, whether the output is \emph{supported} by it, and whether the answer is \emph{useful}.
+  \pause
+  \item \textbf{Why this belongs in a legal agent:} ``supported by the retrieved passage'' is exactly the property Lecture~8 grades. Self-RAG makes the model state that judgement in the trace, where a harness can read it -- rather than leaving it to be inferred from the final sentence.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Fusion-in-Decoder: Using More Passages Than Fit}
+\begin{itemize}
+  \item Pasting $k$ chunks into one prompt costs attention quadratic in the total length, which is what caps $k$ at a handful.
+  \pause
+  \item \textbf{Fusion-in-Decoder} (Izacard \& Grave, 2021) encodes each retrieved passage \emph{separately} -- each paired with the question -- then concatenates the encoder outputs and lets the decoder attend across all of them at once.
+  \pause
+  \item Encoding becomes linear in the number of passages and fully parallel, so the same model can read far more: they report Fusion-in-Decoder at $100$ passages reaching $51.4\%$ exact match on Natural Questions, against $47.5\%$ for the RAG-Sequence model of Lewis et al.
+  \pause
+  \item \textbf{The caveat for this module:} it needs an encoder--decoder you can modify, so it is unavailable behind a hosted chat API. Know it as the reason ``just paste more passages'' is not the only answer to low recall.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: recall@\texorpdfstring{$k$}{k} Is the Score}
+\begin{itemize}
+  \item Sprint~2 reports recall@$k$ against the Sprint~1 baseline. Each technique in this lecture moves a different term, and confusing them wastes a sprint:
+  \pause
+  \item \textbf{Chunking} raises the ceiling -- it changes what \emph{can} be retrieved. \textbf{Fusion and HyDE} raise first-stage recall -- more gold articles inside the $50$. \textbf{Reranking} raises precision -- it cannot add a gold article, only promote one already there.
+  \pause
+  \item \textbf{Multi-hop} changes what counts as answerable at all, and needs its own evaluation set built from \texttt{cross\_references}.
+  \pause
+  \item \textbf{Report them as an ablation, not a story.} One row per configuration, recall@$5$ and recall@$50$ side by side. The gap between those two columns tells you whether to work on the retriever or on the reranker.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item \textbf{RAG} replaces remembering with reading: retrieve, augment, generate -- and every claim can then name its source.
+  \pause
+  \item \textbf{Chunking sets the ceiling.} A clause split in half is unretrievable by any ranking function, and legal text hands you the parent--child structure for free.
+  \pause
+  \item \textbf{Two stages, two jobs:} the first stage owns recall and cannot be corrected later; the cross-encoder owns precision and is cheap because it only ever sees $50$ candidates.
+  \pause
+  \item \textbf{RRF} fuses rankings without calibrating scores, and rewards agreement across retrievers over dominance within one.
+  \pause
+  \item \textbf{HyDE} repairs vocabulary mismatch, \textbf{multi-hop} repairs answers split across articles, and \textbf{Self-RAG} repairs retrieving when you should not have.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading}
+\begin{itemize}
+  \item Lewis, Perez, Piktus, Petroni, Karpukhin, Goyal, K\"uttler, Lewis, Yih, Rockt\"aschel, Riedel \& Kiela (2020). \textit{Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.} NeurIPS. --- parametric and non-parametric memory.
+  \pause
+  \item Izacard \& Grave (2021). \textit{Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering.} EACL. --- Fusion-in-Decoder.
+  \pause
+  \item Gao, Ma, Lin \& Callan (2022). \textit{Precise Zero-Shot Dense Retrieval without Relevance Labels.} --- HyDE.
+  \pause
+  \item Asai, Wu, Wang, Sil \& Hajishirzi (2023). \textit{Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection.} ICLR 2024.
+  \pause
+  \item \textbf{Next lecture:} what the first stage actually is --- bi-encoders, contrastive training, and why BM25 is a baseline worth beating.
+\end{itemize}
+\end{frame}

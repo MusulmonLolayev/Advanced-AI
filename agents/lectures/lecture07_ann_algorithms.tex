@@ -1,0 +1,332 @@
+\section{Lecture 7, Part 0: Approximate Nearest Neighbour Search}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 7}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Approximate Nearest Neighbour Search}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say when an approximate index is needed at all, and compute the corpus size at which exact search stops being fast enough.
+  \pause
+  \item Explain how IVF, product quantization and HNSW each cut the work, and name exactly where each one loses recall.
+  \pause
+  \item Derive why HNSW's layer assignment is geometric, and read a recall-versus-work curve as an engineering budget.
+\end{itemize}
+\end{frame}
+
+% ─── The scale wall ─────────────────────────────────────────────────────────
+\begin{frame}{Why Is Exact Search Too Slow?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Lecture 6 turned every article into a vector. Finding the closest one is a dot product against \emph{every} stored vector -- $N$ of them, each $D$-dimensional.
+  \pause
+  \item That is $O(ND)$ per query, and it is entirely predictable. At $D = 1024$: about $2$\,ms at $7{,}368$ vectors, $30$\,ms at $10^5$, close to $300$\,ms at $10^6$.
+  \pause
+  \item \textbf{Nothing is wrong with the code.} The work is linear in $N$, so a corpus $100\times$ larger costs $100\times$ more -- there is no constant factor left to win.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/ann/ann_scale_wall.pdf}
+
+\vspace{0.2em}
+\scriptsize Measured on one laptop core, \texttt{float32}, $D = 1024$.
+\end{columns}
+\end{frame}
+
+\begin{frame}{Worked Example: Our Corpus Does Not Need an Index}
+\begin{itemize}
+  \item $7{,}368$ articles at $D = 1024$ in \texttt{float32} is $7368 \times 1024 \times 4 = 30.2$\,MB. It fits in cache-friendly RAM on any laptop.
+  \pause
+  \item A brute-force scan answers in roughly $2$\,ms with \textbf{recall $= 1.000$ by construction} -- there is no approximation, so there is nothing to lose.
+  \pause
+  \item An HNSW index over the same $7{,}368$ vectors might reach $0.3$\,ms. You would have bought $1.7$\,ms and paid for it with a build step, a dependency, and a recall below $1$.
+  \pause
+  \item \textbf{Rule of thumb:} below roughly $10^5$ vectors, scan exhaustively. This lecture is about $10^6$ to $10^9$, where that stops being an option.
+\end{itemize}
+\pause
+\begin{rlpitfall}
+Reaching for HNSW on a $7{,}000$-vector corpus adds a recall loss for no latency gain. Knowing when \emph{not} to index is part of knowing how to index.
+\end{rlpitfall}
+\end{frame}
+
+\begin{frame}{Nearest Neighbours, Exactly and Approximately}
+\begin{rldefinition}
+\textbf{Exact $k$-NN} -- return the $k$ stored vectors with the highest similarity to the query. \emph{Here:} the $10$ articles whose embeddings are closest to ``maximum working hours per week''.
+
+\smallskip
+\textbf{Approximate $k$-NN (ANN)} -- return $k$ vectors that are \emph{probably} those, having examined far fewer than $N$ candidates.
+
+\smallskip
+\textbf{Recall@$k$} -- of the $k$ true nearest neighbours, the fraction the index actually returned. \emph{Here:} recall@$10 = 0.9$ means nine of the ten correct articles came back and one was missed.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Every index in this lecture trades among the same three resources: \textbf{recall}, \textbf{latency}, and \textbf{memory}. You may pick two.
+\end{itemize}
+\end{frame}
+
+% ─── IVF ────────────────────────────────────────────────────────────────────
+\begin{frame}{IVF: Only Look in the Nearby Cells}
+\small
+Cluster the corpus once with $k$-means into \texttt{nlist} cells. At query time, find the nearest centroids and scan \emph{only} the vectors filed under them.
+\vspace{0.2em}
+
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  cellbox/.style={draw=RLBlue!55, line width=0.5pt},
+  probed/.style={draw=RLBlue, line width=0.9pt, fill=RLOrange!35},
+  cen/.style={circle, fill=RLBlue, inner sep=1.4pt},
+  pt/.style={circle, fill=RLGreen!85, inner sep=0.7pt},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  % probed cells shaded first, so grid lines draw on top
+  \fill[RLOrange!40] (2.1,0) rectangle (3.95,1.7);
+  \fill[RLOrange!16] (2.1,1.7) rectangle (3.95,3.3);
+  % outer box and cell boundaries
+  \draw[cellbox] (0,0) rectangle (6,3.3);
+  \draw[cellbox] (2.1,0) -- (2.1,3.3);
+  \draw[cellbox] (3.95,0) -- (3.95,3.3);
+  \draw[cellbox] (0,1.7) -- (6,1.7);
+  % centroids
+  \node[cen] at (1.05,2.5) {}; \node[cen] at (3.02,2.5) {}; \node[cen] at (4.95,2.5) {};
+  \node[cen] at (1.05,0.85) {}; \node[cen] at (3.02,0.85) {}; \node[cen] at (4.95,0.85) {};
+  % scattered vectors
+  \foreach \x/\y in {0.5/2.9, 1.4/2.8, 0.8/2.1, 1.6/2.3, 0.6/1.2, 1.5/0.5, 1.7/1.3,
+                     2.5/3.0, 3.6/2.9, 2.7/2.0, 3.6/2.2, 2.4/1.2, 3.5/0.5, 3.0/1.4,
+                     4.4/2.9, 5.4/2.7, 4.6/2.0, 5.5/2.2, 4.5/1.1, 5.4/0.6, 5.0/1.5}
+    \node[pt] at (\x,\y) {};
+  % query
+  \node[circle, fill=red!75!black, inner sep=1.7pt] (q) at (3.25,1.05) {};
+  \node[lbl, anchor=west] at (3.42,1.05) {query};
+  \node[lbl, anchor=south west, font=\tiny] at (2.15,0.03) {probed};
+  \node[lbl, anchor=south west, font=\tiny] at (2.15,1.73) {2nd probe};
+\end{tikzpicture}
+
+\vspace{0.1em}
+\footnotesize
+\texttt{nprobe} sets how many cells are opened. Recall is lost exactly when a true neighbour sits in a cell you did not open.
+\end{frame}
+
+\begin{frame}{Worked Example: What IVF Buys and Costs}
+\begin{itemize}
+  \item A common heuristic is $\texttt{nlist} \approx \sqrt{N}$, so each cell holds about $\sqrt{N}$ vectors. At $N = 10^6$: $1{,}000$ cells of $1{,}000$ vectors each.
+  \pause
+  \item Query cost is the coarse step plus the scan: $\texttt{nlist} + \texttt{nprobe}\times\frac{N}{\texttt{nlist}}$ distance computations. With $\texttt{nprobe} = 8$ that is $1{,}000 + 8{,}000 = 9{,}000$ instead of $1{,}000{,}000$ -- about a $110\times$ saving.
+  \pause
+  \item \textbf{Memory cost: none.} IVF stores the same vectors, merely grouped, plus \texttt{nlist} centroids. It buys latency with recall alone.
+  \pause
+  \item \textbf{Where recall goes:} a true neighbour near a cell boundary is filed on the far side. Raising \texttt{nprobe} recovers it and gives back the saving.
+\end{itemize}
+\end{frame}
+
+% ─── PQ ─────────────────────────────────────────────────────────────────────
+\begin{frame}{Product Quantization: A Vector in $64$ Bytes}
+\small
+Split each vector into $M$ subvectors. Run $k$-means with $256$ centroids \emph{inside each subspace}, and store only which centroid each piece landed on -- one byte per piece.
+\vspace{0.3em}
+
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  seg/.style={draw=RLBlue, fill=RLGray, minimum width=13mm, minimum height=5mm, inner sep=1pt},
+  code/.style={draw=RLGreen, fill=RLOrange!25, minimum width=13mm, minimum height=5mm, inner sep=1pt},
+  book/.style={draw=RLGreen!70, fill=RLGray, minimum width=13mm, minimum height=4mm, inner sep=1pt, font=\tiny},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  \node[lbl, anchor=east] at (-0.15,0) {one vector, $D=1024$};
+  \node[seg] (s1) at (0.8,0) {dims 1--16};
+  \node[seg] (s2) at (2.25,0) {17--32};
+  \node[seg] (s3) at (3.7,0) {33--48};
+  \node[lbl] (dots) at (4.95,0) {$\cdots$};
+  \node[seg] (s4) at (6.2,0) {1009--1024};
+
+  \node[book] (b1) at (0.8,-1.15) {codebook 1};
+  \node[book] (b2) at (2.25,-1.15) {codebook 2};
+  \node[book] (b3) at (3.7,-1.15) {codebook 3};
+  \node[book] (b4) at (6.2,-1.15) {codebook 64};
+  \foreach \i in {1,2,3,4} \draw[->, RLGreen] (s\i) -- (b\i);
+
+  \node[code] (c1) at (0.8,-2.3) {\texttt{0x2A}};
+  \node[code] (c2) at (2.25,-2.3) {\texttt{0xB1}};
+  \node[code] (c3) at (3.7,-2.3) {\texttt{0x07}};
+  \node[lbl] at (4.95,-2.3) {$\cdots$};
+  \node[code] (c4) at (6.2,-2.3) {\texttt{0x9C}};
+  \foreach \i in {1,2,3,4} \draw[->, RLGreen] (b\i) -- (c\i);
+
+  \node[lbl, anchor=west] at (7.05,-2.3) {$64$ bytes total};
+  \node[lbl, anchor=west] at (7.05,0) {$4096$ bytes};
+\end{tikzpicture}
+
+\vspace{0.2em}
+\footnotesize
+Each codebook holds $256$ centroids, so one byte names a piece. $M = 64$ pieces $\Rightarrow$ $64$ bytes per vector.
+\end{frame}
+
+\begin{frame}{Worked Example: What PQ Costs and Saves}
+\begin{itemize}
+  \item \textbf{Memory.} A \texttt{float32} vector at $D = 1024$ is $D \times 4 = 4096$ bytes. With $M = 64$ it becomes $64$ bytes -- a $64\times$ reduction. At $10^9$ vectors that is $4096$\,GB down to $64$\,GB.
+  \pause
+  \item \textbf{The codebooks are free.} $64$ subspaces $\times\ 256$ centroids $\times\ 16$ dims $\times\ 4$ bytes $= 1$\,MiB, once, for the whole corpus.
+  \pause
+  \item \textbf{Speed, via a lookup table.} Compute the query's similarity to all $256$ centroids in each subspace up front: a $64 \times 256$ table of $64$\,KB, small enough to stay in cache. Every stored vector then costs $64$ lookups and adds -- no multiplications at all.
+  \pause
+  \item \textbf{Where recall goes:} the stored vector \emph{is} its centroid now. Two articles quantized to the same code are indistinguishable, and the error is permanent.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Recall/Work Trade-Off, Measured}
+\begin{columns}[T]
+\column{0.48\textwidth}
+\small
+\begin{itemize}
+  \item IVF at $\texttt{nprobe} = 1$ scans $0.8\%$ of the corpus and recovers only $30\%$ of the true top ten. At $\texttt{nprobe} = 16$ it scans $11\%$ and recovers $94\%$.
+  \pause
+  \item PQ alone is worse than either -- at $32\times$ compression it recovers about a quarter. \textbf{So nobody uses PQ alone:} it produces a \emph{shortlist}, which is then re-scored with the exact vectors.
+  \pause
+  \item Re-ranking $2.5\%$ of the corpus exactly recovers $94\%$, at a thirty-second of the memory.
+\end{itemize}
+\column{0.50\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/ann/ann_recall_tradeoff.pdf}
+
+\vspace{0.2em}
+\scriptsize Measured on $20{,}000$ synthetic clustered vectors, $300$ queries, against exhaustive ground truth. The \emph{shape} transfers; absolute recall on real embeddings will differ.
+\end{columns}
+\end{frame}
+
+\begin{frame}{Reading That Curve Honestly}
+\begin{itemize}
+  \item The two curves are not a fair race. PQ's cheap pass still touches \emph{every} vector -- it is only cheap per vector. IVF skips most vectors entirely but stores them at full width.
+  \pause
+  \item So they trade different resources: \textbf{PQ spends recall to save memory}; \textbf{IVF spends recall to save computation}. The $x$-axis counts only the exact distance computations, which is why PQ looks cheaper than it is.
+  \pause
+  \item In practice the two compose -- \texttt{IVFPQ} files PQ codes into IVF cells, so you skip most cells \emph{and} store the survivors compressed. FAISS (Johnson et al., 2019) is where most people first meet the combination.
+\end{itemize}
+\end{frame}
+
+% ─── HNSW ───────────────────────────────────────────────────────────────────
+\begin{frame}{HNSW: A Skip List Over a Proximity Graph}
+\small
+Build a graph whose edges join near neighbours, then stack sparser copies above it. Search enters at the top, walks greedily downhill, and drops a layer when it can get no closer.
+\vspace{0.2em}
+
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  nd/.style={circle, draw=RLBlue, fill=RLGray, inner sep=1.1pt},
+  hot/.style={circle, draw=RLBlue, fill=RLOrange, inner sep=1.4pt},
+  lnk/.style={draw=RLGreen!70, line width=0.4pt},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  % layer 2
+  \node[lbl, anchor=east] at (-0.2,3.4) {layer $2$};
+  \node[hot] (e) at (1.0,3.4) {};
+  \node[nd]  (a2) at (4.2,3.4) {};
+  \draw[lnk] (e) -- (a2);
+  \node[lbl, anchor=west] at (4.5,3.4) {$\sim N/M^2$ nodes};
+
+  % layer 1
+  \node[lbl, anchor=east] at (-0.2,1.9) {layer $1$};
+  \node[hot] (b1) at (1.0,1.9) {};
+  \node[nd] (b2) at (2.4,1.9) {};
+  \node[hot] (b3) at (3.5,1.9) {};
+  \node[nd] (b4) at (5.2,1.9) {};
+  \draw[lnk] (b1) -- (b2) -- (b3) -- (b4);
+  \draw[RLBlue, line width=0.9pt, ->] (b1) to[bend left=22] (b3);
+  \node[lbl, anchor=south, RLBlue] at (2.25,2.35) {walk};
+  \node[lbl, anchor=west] at (5.5,1.9) {$\sim N/M$ nodes};
+
+  % layer 0
+  \node[lbl, anchor=east] at (-0.2,0.4) {layer $0$};
+  \foreach \i/\x in {1/0.6, 2/1.4, 3/2.2, 4/2.9, 6/4.3, 7/5.0, 8/5.8}
+    \node[nd] (c\i) at (\x,0.4) {};
+  \node[hot] (t) at (3.6,0.4) {};
+  \draw[lnk] (c1) -- (c2) -- (c3) -- (c4) -- (t) -- (c6) -- (c7) -- (c8);
+  \draw[lnk] (c2) to[bend right=28] (c4);
+  \draw[lnk] (c4) to[bend right=28] (c6);
+  \node[lbl, anchor=west] at (6.1,0.4) {all $N$ nodes};
+
+  % descent
+  \draw[->, RLBlue, dashed] (e) -- (b1);
+  \draw[->, RLBlue, dashed] (b3) -- (t);
+  \node[lbl, anchor=east, RLBlue] at (0.9,2.65) {descend};
+  \node[lbl, anchor=west, RLBlue] at (3.65,1.15) {descend};
+\end{tikzpicture}
+
+\vspace{0.1em}
+\footnotesize
+Orange marks the path: enter at the top, move to the closest neighbour until none is closer, then drop.
+\end{frame}
+
+\begin{frame}{Why the Layer Assignment Is Geometric}
+\begin{itemize}
+  \item Each inserted node is given a maximum level $\ell = \lfloor -\ln(U)\, m_L \rfloor$ with $U \sim \mathrm{Uniform}(0,1)$. Then
+  \vspace{-0.4em}
+  \[
+    P(\ell \ge j) \;=\; P\!\left(U \le e^{-j/m_L}\right) \;=\; e^{-j/m_L}.
+  \]
+  \vspace{-1.2em}
+  \pause
+  \item Choosing $m_L = 1/\ln M$ makes this exactly $M^{-j}$: \textbf{each layer up keeps one node in $M$}. Layer sizes are $N,\; N/M,\; N/M^2, \dots$
+  \pause
+  \item So the top layer is reached when $N M^{-j} \approx 1$, i.e.\ $j \approx \log_M N$. At $M = 16$, $N = 10^6$: $\log_{16}(10^6) = 4.98$, about five layers, with $62{,}500$ nodes on layer~1.
+  \pause
+  \item That is precisely a skip list: each layer is an express lane with a fraction $1/M$ of the stops, so the descent costs $O(\log N)$ hops instead of $O(N)$ comparisons (Malkov \& Yashunin, 2018).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{What HNSW Costs}
+\begin{itemize}
+  \item \textbf{Memory.} Layer $0$ allows up to $2M$ links per node, the layers above $M$; the geometric tail adds almost nothing. At $M = 16$ that is about $33$ links per node, $4$ bytes each -- roughly $132$ bytes.
+  \pause
+  \item On $10^6$ vectors of $D = 1024$: the graph costs $0.13$\,GB on top of $4.10$\,GB of vectors -- about $3\%$ overhead. HNSW is cheap in memory but does \emph{not} compress; that is what PQ is for.
+  \pause
+  \item \textbf{Search is tuned by \texttt{efSearch}}, the size of the candidate list kept at layer $0$. Larger means more of the graph explored, higher recall, more time -- the same dial as IVF's \texttt{nprobe}.
+  \pause
+  \item \textbf{Where recall goes:} greedy descent can settle in a local optimum and never reach the true neighbour's neighbourhood. A wider candidate list makes that rarer, never impossible.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{ScaNN: Quantization Aimed at Ranking}
+\begin{itemize}
+  \item Plain PQ minimises \emph{reconstruction} error -- how far the centroid sits from the original vector. But we never wanted the vector back; we wanted its \emph{ranking} against a query.
+  \pause
+  \item Guo et al.\ (2020) observe that those are not the same objective. For maximum inner-product search, error \emph{along} the datapoint's direction distorts the score much more than error perpendicular to it.
+  \pause
+  \item Their \textbf{anisotropic} quantization weights the two directions differently when fitting the codebook, buying accuracy on exactly the comparisons that decide the top-$k$.
+  \pause
+  \item \textbf{The general lesson, well beyond ScaNN:} optimise the quantity you are actually scored on. It is the same move as Lecture 8's insistence on scoring trajectories rather than final answers.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Where Each Method Loses Recall}
+\centering
+\small
+\begin{tabular}{@{}l|l|l@{}}
+\textbf{Method} & \textbf{Saves} & \textbf{Loses a neighbour when\ldots} \\
+\hline
+IVF & computation & it sits in an unprobed cell \\[2pt]
+PQ & memory & its code collides with another vector's \\[2pt]
+HNSW & computation & greedy descent stalls before reaching it \\[2pt]
+IVFPQ & both & either of the first two happens \\
+\end{tabular}
+
+\vspace{0.8em}
+\begin{itemize}
+  \item \textbf{None of them can tell you what they missed.} Recall is measurable only against exhaustive ground truth, which is why you compute it once on a sample rather than trusting a default.
+  \pause
+  \item That single habit -- build the exact answer for a few hundred queries, then tune the index against it -- is the whole of index selection.
+\end{itemize}
+\end{frame}

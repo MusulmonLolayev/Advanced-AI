@@ -1,0 +1,252 @@
+\section{Lecture 4, Part 0: Orchestrator \& Subagents}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 4}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Orchestrator \& Subagents}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say what an orchestrator delegates, and what a subagent gets that a tool does not.
+  \pause
+  \item Decide whether a second agent is worth it, using the cost and reliability arithmetic of Lecture 1 rather than intuition.
+  \pause
+  \item Choose between shared state and structured messages, and say what each one makes hard.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Second Agent?}
+\begin{itemize}
+  \item \textbf{Why:} a tool returns a value. A \emph{subagent} returns a value \emph{and} runs its own loop to get there -- it can search twice, notice the first result was wrong, and try again, all without the caller seeing any of it.
+  \pause
+  \item \textbf{The real motive is context, not cleverness.} Our drafting step does not need the forty retrieved snippets that produced the citation -- only the sentence and the article ID. A subagent lets the snippets live and die inside the retriever.
+  \pause
+  \item \textbf{Concretely:} checking ``does Article 182 say 40 hours?'' needs \emph{one} article. Answering ``what is the maximum working week?'' needs the whole search history. Force both into one trajectory and the verifier re-reads everything the retriever ever saw.
+  \pause
+  \item So the question is never ``would more agents be better?'' It is: \emph{does this subtask need its own context, and is that worth a second trajectory?}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Orchestrator, Subagent, Delegation}
+\begin{rldefinition}
+\textbf{Orchestrator} -- the agent that owns the task and decides who does the next piece. \emph{Here:} the agent that receives ``what is the maximum working week for under-18s?''
+
+\smallskip
+\textbf{Subagent} -- an agent invoked by another agent, with its own prompt, its own action space and its own trajectory. \emph{Here:} a retriever whose only tool is \texttt{search}.
+
+\smallskip
+\textbf{Delegation} -- handing a subtask down together with \emph{only} the context needed for it. \emph{Here:} the retriever is sent the question, not the draft.
+
+\smallskip
+\textbf{Handoff} -- what comes back. Keep it small and typed: an article ID and one sentence, not a transcript.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item From the orchestrator's side a subagent \emph{is} a tool -- one that happens to be expensive and non-deterministic.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Orchestrator--Subagent Pattern}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  orch/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+               minimum height=7mm, minimum width=28mm, align=center},
+  sub/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+              minimum height=6mm, minimum width=22mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=2pt, align=center}
+]
+  \node[orch] (o) at (0,2.3) {orchestrator};
+  \node[sub] (s1) at (-4.3,0) {retriever};
+  \node[sub] (s2) at (0,0)    {drafter};
+  \node[sub] (s3) at (4.3,0)  {verifier};
+  \draw[<->] (o) -- (s1);
+  \draw[<->] (o) -- (s2);
+  \draw[<->] (o) -- (s3);
+  \node[lbl, anchor=north] at (-4.3,-0.45)
+    {\textcolor{RLBlue}{down:} question\\\textcolor{RLGreen}{up:} article + sentence};
+  \node[lbl, anchor=north] at (0,-0.45)
+    {\textcolor{RLBlue}{down:} snippets\\\textcolor{RLGreen}{up:} draft + citations};
+  \node[lbl, anchor=north] at (4.3,-0.45)
+    {\textcolor{RLBlue}{down:} draft + article\\\textcolor{RLGreen}{up:} supported / not};
+\end{tikzpicture}
+
+\vspace{0.6em}
+\footnotesize
+Each subagent runs its \emph{own} ReAct loop, with its own scratchpad, its own action space, and a
+context the others never see. Nothing here is new machinery --- each box is the Lecture 1 loop, and
+the only addition is that one loop can start another.
+\end{frame}
+
+\begin{frame}{Worked Example: Retriever, Drafter, Verifier}
+\footnotesize
+\textbf{Task:} ``What is the maximum normal working week?'' --- the same question as Lecture 1, now split.
+\smallskip
+
+\scriptsize
+\begin{tabular}{@{}p{1.9cm}p{0.76\textwidth}@{}}
+\textcolor{RLBlue}{\textbf{Orchestrator}} & Needs a grounded sentence. Delegates retrieval. \\[2pt]
+\textcolor{RLGreen}{\textbf{Retriever}}    & Runs its own loop: searches, gets nothing useful, narrows the query, searches again. Returns \emph{only} \texttt{Art.~182 -- "normal working time may not exceed 40 hours per week"}. Its four search results are discarded. \\
+\end{tabular}
+\pause
+
+\begin{tabular}{@{}p{1.9cm}p{0.76\textwidth}@{}}
+\textcolor{RLBlue}{\textbf{Orchestrator}} & Has one article and one sentence. Delegates drafting. \\[2pt]
+\textcolor{RLGreen}{\textbf{Drafter}}      & Sees the sentence and nothing else --- no search history, no rejected candidates. Returns \texttt{"The normal working week may not exceed 40 hours [Art.~182]."} \\
+\end{tabular}
+\pause
+
+\begin{tabular}{@{}p{1.9cm}p{0.76\textwidth}@{}}
+\textcolor{RLBlue}{\textbf{Orchestrator}} & Delegates verification. \\[2pt]
+\textcolor{RLGreen}{\textbf{Verifier}}     & Sees the draft and Article 182's text --- \emph{not} the question, and not the drafter's reasoning. Asks one thing: does this article support this sentence? Returns \texttt{supported}. \\
+\end{tabular}
+\pause
+
+\smallskip
+\footnotesize The verifier's ignorance is the point. It cannot be talked into agreeing by reasoning it has already read.
+\end{frame}
+
+\begin{frame}{What Splits Cleanly, and What Does Not}
+\begin{itemize}
+  \item \textbf{Splits well --- independent subtasks.} Three articles to check means three verifier calls that never see each other: sequential work becomes parallel.
+  \pause
+  \item \textbf{Splits well --- context that must not leak.} A verifier that never sees the reasoning behind a claim is a different check from one that does; the isolation \emph{is} the feature.
+  \pause
+  \item \textbf{Splits badly --- tightly coupled steps.} If one subagent must ask another a follow-up, you have not decomposed the task --- you have added a protocol to one conversation.
+  \pause
+  \item \textbf{Splits badly --- anything needing the full history.} Summarising a trajectory for a subagent pays to compress context you already had, and loses the detail.
+\end{itemize}
+\pause
+\begin{rlintuition}
+The test is not ``different skills?'' but ``different \emph{context}?'' Skills are a prompt away; context is what costs money.
+\end{rlintuition}
+\end{frame}
+
+% ─── Message passing ────────────────────────────────────────────────────────
+\begin{frame}{Two Ways to Pass Messages}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  ag/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+             minimum height=5mm, minimum width=13mm, align=center},
+  st/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+             minimum height=6mm, minimum width=20mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=2pt, align=center}
+]
+  % --- shared state ---
+  \node[lbl, anchor=north] at (-3.4,2.5) {\textbf{Shared state}};
+  \node[st] (state) at (-3.4,1.0) {one state object};
+  \node[ag] (a1) at (-5.4,-0.6) {A};
+  \node[ag] (a2) at (-3.4,-0.6) {B};
+  \node[ag] (a3) at (-1.4,-0.6) {C};
+  \draw[<->] (state) -- (a1);
+  \draw[<->] (state) -- (a2);
+  \draw[<->] (state) -- (a3);
+  \node[lbl, anchor=north, text width=4.6cm] at (-3.4,-1.2)
+    {every agent reads and writes the same object};
+
+  % --- structured messages ---
+  \node[lbl, anchor=north] at (3.4,2.5) {\textbf{Structured messages}};
+  \node[ag] (b1) at (1.4,1.0) {A};
+  \node[ag] (b2) at (3.4,1.0) {B};
+  \node[ag] (b3) at (5.4,1.0) {C};
+  \draw[->] (b1) -- node[lbl,above] {msg} (b2);
+  \draw[->] (b2) -- node[lbl,above] {msg} (b3);
+  \node[lbl, anchor=north, text width=4.6cm] at (3.4,-1.2)
+    {each agent sees only what it was sent};
+\end{tikzpicture}
+
+\vspace{0.4em}
+\footnotesize
+\textbf{Shared state} is easy to write and easy to debug --- and it destroys the isolation that made
+subagents worth having. \textbf{Structured messages} preserve isolation but force you to define, up
+front, exactly what each agent is allowed to know.
+\end{frame}
+
+% ─── The cost of a subagent ────────────────────────────────────────────────
+\begin{frame}{What Does a Subagent Cost?}
+\small
+\begin{itemize}
+  \item Lecture 1: one trajectory of $n$ steps is billed $nS + a\,\frac{n(n-1)}{2}$. Splitting it attacks the \emph{quadratic} term --- three short trajectories each re-read far less than one long one.
+  \pause
+  \item Compare a $12$-step single agent against an orchestrator plus three subagents of $4$ steps each ($S=1200$, $a=500$; a subagent's summary back to the orchestrator is larger, $800$):
+\end{itemize}
+\pause
+\centering
+\footnotesize
+\begin{tabular}{l|rr}
+ & \textbf{single agent} & \textbf{orchestrator + 3 subagents} \\
+\hline
+Input tokens billed & $47{,}400$ & $33{,}000$ \\
+\end{tabular}
+
+\vspace{0.5em}
+\small
+\begin{itemize}
+  \item Splitting uses \textbf{30\% fewer tokens}. On raw token count, the multi-agent design wins --- which is exactly the argument people usually stop at.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Prefix Caching Inverts the Answer}
+\small
+\begin{itemize}
+  \item Lecture 1 also showed that almost all of a trajectory's tokens are a \emph{cache hit}, billed at \$0.003 rather than \$0.15 per million. Only the first turn of a given prefix pays full price.
+  \pause
+  \item \textbf{A subagent has its own system prompt, so it has its own prefix --- and a cold cache.} Four agents means four cold starts instead of one.
+\end{itemize}
+\pause
+\centering
+\footnotesize
+\begin{tabular}{l|rr}
+ & \textbf{single agent} & \textbf{orch.\ + 3 subagents} \\
+\hline
+Tokens billed at full rate & $6{,}700$  & $11{,}700$ \\
+Tokens billed as cache hits & $40{,}700$ & $21{,}300$ \\
+Cost of one trajectory      & \$0.00113  & \$0.00182 \\
+Across a 500-query evaluation & \textbf{\$0.56} & \textbf{\$0.91} \\
+\end{tabular}
+
+\vspace{0.4em}
+\small
+\begin{itemize}
+  \item \textbf{Fewer tokens, $1.6\times$ the bill.} Caching rewards long identical prefixes, and splitting the work is precisely what destroys them.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{More Agents Means More Steps}
+\begin{itemize}
+  \item Lecture 1: a $k$-step trajectory succeeds with $p^{k}$ if steps are independent. Delegation does not remove steps --- it \emph{adds} them, because the orchestrator's own turns are steps too.
+  \pause
+  \item Our split: $12$ subagent steps plus $4$ orchestrator turns is $16$ steps, not $12$. At $p = 0.95$ that is $0.95^{12} = 0.54 \longrightarrow 0.95^{16} = 0.44$.
+  \pause
+  \item So on the two measures we can compute --- cost under caching, and reliability --- the multi-agent version is \emph{worse on both}. That should be the default expectation, not a surprise.
+  \pause
+  \item \textbf{Measured, not just argued:} holding the number of model calls \emph{fixed} --- the comparison most papers skip --- Dylan et al.\ (2026) find an evolved Planner--Executor--Critic team no better than a single agent on ALFWorld: $0.769$ against $0.754$, $p = 0.80$, for $1.8\times$ the calls.
+  \pause
+  \item \textbf{Unless a subagent does something a step cannot:} catch an error. A verifier is not another step in the chain; it is a step that can reject the previous one.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{When Is a Second Agent Worth It?}
+\begin{itemize}
+  \item \textbf{The verifier earns its place.} Suppose the drafter is right $80\%$ of the time and a verifier catches a bad draft $90\%$ of the time, after which one retry gets another $80\%$:
+  \[
+    0.80 \;\longrightarrow\; 0.80 + 0.20 \times 0.90 \times 0.80 = \mathbf{0.94}.
+  \]
+  \pause
+  \item That is a bigger gain than any prompt change is likely to buy, and it is the one structural reason to add an agent: \textbf{the new agent can say no}.
+  \pause
+  \item \textbf{Three questions before adding an agent.} Does this subtask need context the others must not see? Can it fail in a way something else could detect? Would running it in parallel actually shorten the wall clock?
+  \pause
+  \item If all three answers are no, you have bought a bigger bill and a lower success rate. \textbf{Sprint 3} adds exactly one subagent --- the verifier --- for exactly this reason.
+\end{itemize}
+\end{frame}

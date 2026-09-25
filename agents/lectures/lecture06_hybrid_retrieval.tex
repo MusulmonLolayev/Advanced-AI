@@ -1,0 +1,190 @@
+\section{Lecture 6, Part 1: Model Families \& Hybrid Retrieval}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 6}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Model Families \& Hybrid Retrieval}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Read an MTEB leaderboard and say what it does \emph{not} tell you about your corpus (Muennighoff et al., 2022).
+  \pause
+  \item Explain what late interaction buys over a single vector, and what it costs to store (Khattab \& Zaharia, 2020).
+  \pause
+  \item Combine a sparse and a dense ranking, and justify why hybrid is the default rather than a compromise.
+\end{itemize}
+\end{frame}
+
+% ─── Model families ─────────────────────────────────────────────────────────
+\begin{frame}{Why Are There So Many Embedding Models?}
+\begin{itemize}
+  \item \textbf{Why:} the bi-encoder recipe from Part 0 -- encode separately, train contrastively -- is not one model. It is a template, and every family fills it differently.
+  \pause
+  \item \textbf{E5} (Wang et al., 2022) trains on weakly-supervised pairs mined at scale, and asks you to prefix inputs with \texttt{query:} or \texttt{passage:} so one model can play both towers.
+  \pause
+  \item \textbf{GTE} (Li et al., 2023) uses multi-stage contrastive training, broad pretraining followed by supervised fine-tuning.
+  \pause
+  \item \textbf{BGE-M3} (Chen et al., 2024) is multilingual and \emph{multi-functional}: one model emitting a dense vector, sparse term weights and multi-vector output at once -- so hybrid retrieval needs one model rather than three.
+  \pause
+  \item \textbf{Hosted APIs} (OpenAI's embedding models among them) trade control for convenience: no weights to run, but no offline mode and no ability to inspect what changed between versions.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{How to Read MTEB}
+\begin{rldefinition}
+\textbf{MTEB} -- the Massive Text Embedding Benchmark (Muennighoff et al., 2022): one leaderboard covering eight task families, including retrieval, clustering, classification and semantic similarity, across dozens of datasets and many languages. \emph{Why it exists:} a model tuned for semantic similarity can be mediocre at retrieval, and a single average hides that.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Read the retrieval column, not the average.} You are building a retriever. The other seven task families are someone else's problem.
+  \pause
+  \item \textbf{Check the sequence limit.} A model truncating at 512 tokens will silently cut long articles in half, and the half it keeps may not be the half that answers the question.
+  \pause
+  \item \textbf{Check the cost of a point.} A model one point better on a leaderboard but four times the dimension costs four times the index memory -- Lecture 7 puts a number on that.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why MTEB Cannot Answer Your Question}
+\begin{itemize}
+  \item \textbf{Why:} a leaderboard measures the datasets it contains. Yours is not one of them.
+  \pause
+  \item \textbf{The domain gap.} Legal drafting is unlike web text in every way that matters for retrieval: fixed phrasing, heavy cross-reference, long sentences, and words that are ordinary elsewhere and technical here.
+  \pause
+  \item \textbf{The language gap.} BGE-M3 reports support for over a hundred languages. Whether that support is \emph{good} for Uzbek is not something any published evaluation currently answers -- no Uzbek-specific retrieval benchmark exists.
+  \pause
+  \item \textbf{So measure it.} A team that reports recall@$k$ for two or three embedding models on an Uzbek legal corpus has produced a number nobody has published. That is a genuine contribution, and it is a sprint's work.
+\end{itemize}
+\end{frame}
+
+% ─── Late interaction ───────────────────────────────────────────────────────
+\begin{frame}{Why Does One Vector Per Article Lose Information?}
+\begin{itemize}
+  \item \textbf{Why:} a bi-encoder compresses a whole article into $d$ numbers \emph{before} it knows the question. Everything the question cared about had to survive that compression.
+  \pause
+  \item An article covering working hours, the employer's scheduling duty, and exceptions becomes one point. A question about any one of those three is compared against the average of all three.
+  \pause
+  \item A cross-encoder has no such problem -- it reads the question first -- but Part 0 showed it cannot be a first stage.
+  \pause
+  \item \textbf{Late interaction} is the compromise: keep one vector \emph{per token}, still encoded independently, and postpone the comparison to a cheap operation over those vectors.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{ColBERT: Late Interaction}
+\begin{rldefinition}
+\textbf{Late interaction} (Khattab \& Zaharia, 2020) -- encode query and document separately into \emph{per-token} vectors, then score with \textbf{MaxSim}: for each query token take its best match anywhere in the document, and add those up:
+\vspace{-0.3em}
+\[
+  \mathrm{score}(Q,D) \;=\; \sum_{i \in Q} \max_{j \in D} \; \mathbf{q}_i \cdot \mathbf{d}_j
+\]
+\vspace{-0.6em}
+
+\emph{Here:} the query token ``hours'' finds ``hours'' in Article 182 directly, instead of hoping the article's one average vector leaned that way.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Still a bi-encoder where it counts: the document side never sees the query, so it is precomputed once. Only the \emph{comparison} is deferred -- hence ``late''.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{What Late Interaction Costs}
+\begin{itemize}
+  \item \textbf{The arithmetic:} the capstone corpus is $7{,}368$ articles and about $971{,}000$ words -- roughly $132$ words per article.
+  \pause
+  \item One vector per \emph{article}, at $d = 1024$ in \texttt{float16}: $7{,}368 \times 1024 \times 2$ bytes $\approx$ \textbf{15\,MB}. That fits anywhere.
+  \pause
+  \item One vector per \emph{token}, on the same corpus and the same $d$: roughly $1.4$ million vectors $\approx$ \textbf{2.8\,GB} -- about $185\times$ more, for the same text.
+  \pause
+  \item That is the trade in one line: late interaction buys back the detail a single vector threw away, and pays for it in index size. ColBERTv2 (Santhanam et al., 2022) exists mainly to make that bill smaller through compression.
+  \pause
+  \item \textbf{For a corpus this size, either is affordable.} Make the choice on measured recall, not on instinct -- and note that $185\times$ becomes decisive the moment the corpus does.
+\end{itemize}
+\end{frame}
+
+% ─── Hybrid ─────────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Both Sparse and Dense?}
+\begin{itemize}
+  \item \textbf{Why:} the two methods fail at different things, and neither failure is rare.
+  \pause
+  \item \textbf{Sparse fails on paraphrase.} Part 0's second query scored zero on every article, because the user's words were not the drafter's words.
+  \pause
+  \item \textbf{Dense fails on exact tokens.} ``Article 182'', a date, a statute number, a rare compound -- these are precisely what a $1024$-dimensional average is worst at preserving, and precisely what a legal query is most likely to contain.
+  \pause
+  \item \textbf{They also fail independently}, which is the useful part. A query that defeats one is usually handled by the other, so the union of their top-$k$ has markedly better recall than either alone.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Combining Two Rankings}
+\begin{itemize}
+  \item \textbf{The obvious approach does not work.} BM25 returns an unbounded score built from IDF sums; cosine returns something in $[-1,1]$. Adding them means letting the corpus statistics decide the weighting, differently for every query.
+  \pause
+  \item \textbf{Fuse ranks, not scores.} Reciprocal rank fusion combines lists using only the position a document reached in each -- no calibration, no tuning, nothing to go stale. Lecture 5 covers it as a reranking stage.
+  \pause
+  \item \textbf{Or score, then rerank.} Take the union of both top-$k$ lists and let a cross-encoder order the survivors. Expensive per document, but there are now only a few dozen.
+  \pause
+  \item \textbf{BGE-M3's argument} for doing all this in one model is that its dense and sparse outputs come from the same encoder, so they are at least trained together rather than bolted together.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: BM25 Is the Number to Beat}
+\begin{itemize}
+  \item Sprint 2 of the capstone is scored as recall@$k$ against your Sprint 1 baseline. That baseline is a sparse index, and on statute text it will be \emph{good}.
+  \pause
+  \item \textbf{Expect dense retrieval to lose at first.} An off-the-shelf multilingual model, on formulaic legal text in a language it was barely trained on, against a keyword index on a corpus where the drafter chose the words deliberately -- BM25 winning is the normal result, not a bug in your code.
+  \pause
+  \item \textbf{The finding is the deliverable.} ``Dense retrieval did not beat BM25 here, and here is the recall table'' is a better report than an unmeasured claim that it did.
+  \pause
+  \item \textbf{And hybrid is usually the honest answer} -- not a hedge, but the design the two failure modes actually imply.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Choosing a Model for the Capstone}
+\begin{itemize}
+  \item \textbf{Embeddings are a separate decision from generation.} The agent's language model is a hosted API; the embedding model need not be.
+  \pause
+  \item \textbf{Local is viable here.} Encoding $7{,}368$ articles -- about $1.4$ million tokens -- is a one-time job of roughly an hour on a laptop CPU. After that, queries are free, offline and unversioned by anyone else.
+  \pause
+  \item \textbf{A hosted embedding API} costs cents for the same corpus, and removes the download. It also means your index silently depends on someone else's model version.
+  \pause
+  \item \textbf{Whatever you pick, pin it and record it.} An embedding model change invalidates every vector in your index -- and a recall number computed under a different model is not comparable to last sprint's.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item \textbf{BM25} scores rarity times damped frequency, normalised by length. On statute text it is a strong baseline, not a warm-up.
+  \pause
+  \item Its one fatal gap is \textbf{paraphrase}: a query sharing no content word scores zero everywhere, and zero is unrecoverable.
+  \pause
+  \item A \textbf{bi-encoder} closes that gap by encoding both sides separately -- the only design where the corpus can be encoded once instead of once per query.
+  \pause
+  \item Embedding models are \textbf{trained contrastively}: in-batch negatives make the easy comparisons free, hard negatives supply the ones that still teach something.
+  \pause
+  \item \textbf{Late interaction} recovers per-token detail at roughly $185\times$ the index size on this corpus.
+  \pause
+  \item \textbf{Hybrid retrieval is the default}, because sparse and dense fail on different queries -- and a leaderboard cannot tell you which failure dominates on \emph{your} corpus.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading}
+\begin{itemize}
+  \item Robertson \& Zaragoza (2009). \textit{The Probabilistic Relevance Framework: BM25 and Beyond.} --- the baseline, and where $k_1$ and $b$ come from.
+  \pause
+  \item Karpukhin et al.\ (2020). \textit{Dense Passage Retrieval for Open-Domain Question Answering.} EMNLP. --- the bi-encoder recipe and hard negatives.
+  \pause
+  \item Khattab \& Zaharia (2020). \textit{ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT.} SIGIR.
+  \pause
+  \item Chen et al.\ (2024). \textit{BGE M3-Embedding: Multi-Lingual, Multi-Functionality, Multi-Granularity Text Embeddings.} --- the model this project is most likely to use.
+  \pause
+  \item Muennighoff et al.\ (2022). \textit{MTEB: Massive Text Embedding Benchmark.} --- and its limits on a corpus like yours.
+  \pause
+  \item \textbf{Next lecture:} those vectors are useless until you can search a million of them in milliseconds -- HNSW, IVF and product quantization.
+\end{itemize}
+\end{frame}

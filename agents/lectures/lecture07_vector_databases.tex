@@ -1,0 +1,230 @@
+\section{Lecture 7, Part 1: Vector Databases in Practice}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 7}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Vector Databases in Practice}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say what a vector database provides that a bare index does not, and pick a deployment shape for a given project.
+  \pause
+  \item Explain why combining a metadata filter with an approximate index is harder than doing either alone.
+  \pause
+  \item Choose an index for a corpus size, and justify the choice with a number rather than a habit.
+\end{itemize}
+\end{frame}
+
+% ─── Why a database ─────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Database, Not Just an Index?}
+\begin{itemize}
+  \item An index answers one question: \emph{which vectors are closest?} A working system needs several more, and none of them is about geometry.
+  \pause
+  \item \textbf{Which article was that?} A vector has no text. Something must map index position $4{,}211$ back to Labor Code Article~182 and its wording.
+  \pause
+  \item \textbf{Only search the Labor Code.} Retrieval is nearly always filtered by something -- a code, a chapter, a date. That is a predicate, not a distance.
+  \pause
+  \item \textbf{The corpus changed.} An amended article must be re-embedded and replaced without rebuilding everything and without a window where it is missing.
+  \pause
+  \item \textbf{Survive a restart.} An in-memory index disappears. Rebuilding $10^9$ vectors is not a recovery plan.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{What a Vector Database Adds}
+\begin{rldefinition}
+A \textbf{vector database} is an ANN index plus the things around it that make it a system:
+
+\smallskip
+\textbf{Payload storage} -- the vector travels with its metadata. \emph{Here:} \texttt{\{article\_id, code, chapter, text\}} returned with the hit.
+
+\smallskip
+\textbf{Filtered search} -- a predicate evaluated \emph{together} with the similarity search, not after it.
+
+\smallskip
+\textbf{Mutability} -- insert, update and delete against a live index, with the index staying queryable throughout.
+
+\smallskip
+\textbf{Durability and scale} -- persistence, replication for availability, sharding for size.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item FAISS (Johnson et al., 2019) is an index \emph{library}, not a database: it gives you the first capability of Part~0 and none of these four.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Four Deployment Shapes}
+\small
+\begin{itemize}
+  \item \textbf{A library in your process} -- FAISS, \texttt{hnswlib}. No server, no network hop, and no durability or filtering unless you write it. Right for a benchmark harness.
+  \pause
+  \item \textbf{An extension to a database you already run} -- \texttt{pgvector} makes vectors a PostgreSQL column type, so they sit in an ordinary table beside your relational data, with SQL, joins, transactions and your existing backups.
+  \pause
+  \item \textbf{A dedicated open-source engine} -- Qdrant, Weaviate. Purpose-built for vectors, self-hostable or offered as a managed service.
+  \pause
+  \item \textbf{A managed service} -- Pinecone runs the infrastructure for you; you do not operate the cluster.
+\end{itemize}
+\pause
+\begin{rlpitfall}
+Index support, filtering semantics and pricing in this space change faster than any slide. Treat these as \emph{architectural shapes}, and check the current documentation before committing a project to one.
+\end{rlpitfall}
+\end{frame}
+
+% ─── Filtering ──────────────────────────────────────────────────────────────
+\begin{frame}{Why Metadata Filtering Is Harder Than It Looks}
+\small
+``Nearest ten articles \emph{in the Labor Code}'' looks like one query. Three ways to run it; two are traps.
+\vspace{0.1em}
+
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  stage/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+                minimum height=5.5mm, minimum width=24mm, align=center},
+  bad/.style={draw=red!70!black, fill=RLOrange!25, rounded corners=2pt, inner sep=3pt,
+              minimum height=5.5mm, minimum width=24mm, align=center},
+  good/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+               minimum height=5.5mm, minimum width=24mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  \node[lbl, anchor=west] at (-0.2,2.55) {\textbf{Post-filter} -- search, then discard};
+  \node[stage] (p1) at (1.6,1.9) {ANN top-$10$};
+  \node[bad]   (p2) at (5.4,1.9) {keep matches: $\sim\!0.5$ left};
+  \draw[->] (p1) -- (p2);
+
+  \node[lbl, anchor=west] at (-0.2,1.05) {\textbf{Pre-filter} -- restrict, then search};
+  \node[stage] (q1) at (1.6,0.4) {select matching ids};
+  \node[bad]   (q2) at (5.4,0.4) {exact scan of those};
+  \draw[->] (q1) -- (q2);
+
+  \node[lbl, anchor=west] at (-0.2,-0.45) {\textbf{Filtered search} -- one traversal};
+  \node[good] (r1) at (1.6,-1.1) {walk the index};
+  \node[good] (r2) at (5.4,-1.1) {accept only matches};
+  \draw[->] (r1) -- (r2);
+  \draw[->, RLGreen] (r2) to[bend left=25]
+       node[lbl, below=0pt, RLGreen, font=\tiny] {continue} (r1);
+\end{tikzpicture}
+
+\vspace{0.2em}
+\footnotesize
+Post-filtering returns too few results; pre-filtering abandons the index. Only the third keeps both -- and it is the hard one to implement.
+\end{frame}
+
+\begin{frame}{Worked Example: Filtering to One Code}
+\begin{itemize}
+  \item Suppose the filter keeps $5\%$ of the corpus, and you want ten results.
+  \pause
+  \item \textbf{Post-filter.} Ask the index for the top $10$, then drop non-matches: on average $10 \times 0.05 = 0.5$ survive. You asked for ten and will usually get zero or one. Over-fetching to $200$ gives about ten -- until a user picks a narrower code and it silently breaks again.
+  \pause
+  \item \textbf{Pre-filter.} Collect the matching ids first, then compare against all of them exactly. Correct, and at $5\%$ of $7{,}368$ that is $368$ vectors -- trivial. At $5\%$ of $10^9$ it is $50$ million, and you have re-created the problem Part~0 solved.
+  \pause
+  \item \textbf{Filtered search.} Traverse the graph but admit only matching nodes as candidates. The catch: HNSW's connectivity assumed \emph{all} nodes were present, so as the filter narrows, the surviving subgraph fragments and recall falls.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Has No Universal Answer}
+\begin{itemize}
+  \item The right strategy depends on \textbf{selectivity}, and selectivity is a property of the query, not of the system.
+  \pause
+  \item \textbf{Very selective} (a single article, one chapter): pre-filter. The candidate set is small enough to scan exactly, and you get recall $1.0$ for free.
+  \pause
+  \item \textbf{Barely selective} (documents from this decade): post-filter with modest over-fetch. Almost everything passes, so little is wasted.
+  \pause
+  \item \textbf{In between} -- which is most real queries: filtered search, and you must \emph{measure} the recall it gives, because this is the regime where it degrades.
+  \pause
+  \item \textbf{Practical move:} estimate selectivity from stored counts at query time and pick a strategy per query. Systems that do this well are doing query planning, which is exactly what a database has always been for.
+\end{itemize}
+\end{frame}
+
+% ─── Updates and scale ──────────────────────────────────────────────────────
+\begin{frame}{Why Graph Indexes Resist Deletion}
+\begin{itemize}
+  \item Inserting into HNSW is natural -- the construction algorithm \emph{is} repeated insertion, so a new article joins at its own level and links to its neighbours.
+  \pause
+  \item Deleting is not. A node is also a \emph{route}: other nodes reach their neighbours by passing through it. Removing it can disconnect parts of the graph that had nothing to do with the deleted vector.
+  \pause
+  \item \textbf{The standard workaround is a tombstone:} mark the node deleted, keep it as a stepping stone, and filter it from results. Correct, but the index keeps growing and search keeps paying for vectors nobody can see.
+  \pause
+  \item Hence periodic compaction -- rebuild the index from live vectors, swap it in. \textbf{An amended article is not a rare event in legislation}, so a capstone team that plans no rebuild path has a design gap, not a bug.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Sharding and Replication}
+\begin{itemize}
+  \item \textbf{Replication} copies a shard to several nodes. It buys availability and read throughput; it does not help a corpus that does not fit.
+  \pause
+  \item \textbf{Sharding} splits the corpus across nodes. Each shard searches its own slice, and the coordinator merges the per-shard top-$k$ into a global top-$k$.
+  \pause
+  \item That merge is only correct because top-$k$ is decomposable: the global best $k$ must be among the per-shard best $k$. \textbf{Recall, however, is not preserved} -- each shard's ANN search has its own recall, and a true neighbour missed locally is missed globally.
+  \pause
+  \item \textbf{Consequence worth remembering:} sharding a corpus lowers end-to-end recall even with every parameter unchanged. Re-measure after you shard.
+\end{itemize}
+\end{frame}
+
+% ─── Decision ───────────────────────────────────────────────────────────────
+\begin{frame}{Choosing an Index}
+\centering
+\small
+\begin{tabular}{@{}l|l|l@{}}
+\textbf{Corpus} & \textbf{Index} & \textbf{Why} \\
+\hline
+$< 10^5$ & exact scan & milliseconds already; recall $1.0$ free \\[2pt]
+$10^5$--$10^7$ & HNSW & best recall per millisecond; memory fits \\[2pt]
+$> 10^7$, RAM-bound & IVFPQ & compression is the binding constraint \\[2pt]
+$> 10^8$ & IVFPQ, sharded & no single node holds it \\
+\end{tabular}
+
+\vspace{0.7em}
+\begin{itemize}
+  \item \textbf{Read the table by what runs out first.} Below $10^5$ nothing is scarce. In the middle, time is scarce and memory is not. Past $10^7$, memory becomes scarce and PQ is the only lever that addresses it.
+  \pause
+  \item Every row assumes you measured recall against exhaustive ground truth on a query sample. Without that number the choice is a preference, not a decision.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Sprint 2}
+\begin{itemize}
+  \item Sprint~2 is scored as recall@$k$ on the retrieval stack against your Sprint~1 baseline. This lecture contributes exactly one honest sentence to that report.
+  \pause
+  \item At $7{,}368$ articles, \textbf{that sentence is ``we scan exhaustively, so retrieval recall is $1.0$ and every point we lose is lost in chunking or embedding''}. That is a strong result, not an admission -- it isolates the two components that actually move your score.
+  \pause
+  \item Where Part~0 does earn its place in the capstone: the \emph{filter} discussion. ``Search only the Labor Code'' is a real query shape, and getting it wrong by post-filtering silently returns too few articles.
+  \pause
+  \item \textbf{Even sentence-level chunking will not force your hand.} $971{,}000$ words at roughly $20$ per sentence is about $50{,}000$ vectors -- still under $10^5$. The larger \texttt{lex.uz} variant in the project spec ($54{,}173$ article rows, $7.4\times$ this corpus) is where an index starts to earn its place.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item Exact search costs $O(ND)$ and is genuinely fine below about $10^5$ vectors. Know that number before reaching for an index.
+  \pause
+  \item \textbf{IVF} skips cells to save computation; \textbf{PQ} quantizes subspaces to save memory; \textbf{HNSW} walks a layered proximity graph in $O(\log N)$ hops. Each loses recall in a different, nameable way.
+  \pause
+  \item HNSW's layers are geometric because $m_L = 1/\ln M$ makes each layer keep one node in $M$ -- a skip list over a graph.
+  \pause
+  \item A \textbf{vector database} is the index plus payloads, filtering, mutability and durability. Filtering interacts badly with approximation, and the right strategy depends on selectivity.
+  \pause
+  \item \textbf{Recall is measurable only against exhaustive ground truth.} Compute it once on a sample; never inherit a default.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading}
+\begin{itemize}
+  \item Malkov \& Yashunin (2018). \textit{Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs.} IEEE TPAMI. --- the layered graph and its geometric levels.
+  \pause
+  \item J\'egou, Douze \& Schmid (2011). \textit{Product Quantization for Nearest Neighbor Search.} IEEE TPAMI. --- subspace codebooks and the lookup-table distance.
+  \pause
+  \item Guo, Sun, Lindgren, Geng, Simcha, Chern \& Kumar (2020). \textit{Accelerating Large-Scale Inference with Anisotropic Vector Quantization.} ICML. --- quantize for ranking, not reconstruction.
+  \pause
+  \item Johnson, Douze \& J\'egou (2019). \textit{Billion-Scale Similarity Search with GPUs.} IEEE Big Data. --- FAISS, where IVF and PQ are usually first met in combination.
+  \pause
+  \item \textbf{Next lecture:} whether any of this works -- trajectory-level evaluation, prompt injection, and the sandbox.
+\end{itemize}
+\end{frame}
