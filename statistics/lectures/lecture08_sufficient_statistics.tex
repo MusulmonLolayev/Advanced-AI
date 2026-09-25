@@ -1,0 +1,171 @@
+\section{Lecture 8, Part 1: Sufficient Statistics}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 8}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Sufficient Statistics}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say what a sufficient statistic is, and check a candidate with the factorization test.
+  \pause
+  \item Explain why conjugate updating in Lecture 6 was always ``add counts''.
+  \pause
+  \item Name what you may throw away from a dataset without losing anything about $\theta$ -- and what you may not.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Sufficient Statistics?}
+\begin{itemize}
+  \item \textbf{Why:} Lecture 5 fitted $p$ from $200$ coffee orders and the answer was $\hat{p} = 66/200$. Two hundred records went in; \emph{one number} came out.
+  \pause
+  \item \textbf{The uncomfortable question:} we still hold those $200$ records -- who bought what, in which order, on which morning. Did throwing all of that away cost us anything about $p$?
+  \pause
+  \item \textbf{The answer is no, and it is exact, not approximate.} Any two records with the same total of $66$ give the same likelihood curve, hence the same estimate, the same interval, and the same posterior.
+  \pause
+  \item So $66$ is not a summary of the data. For the question ``what is $p$?'' it \emph{is} the data.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Sufficient Statistic}
+\begin{rldefinition}
+A statistic $T$ is \textbf{sufficient} for $\theta$ when the data tells you nothing more about $\theta$ once you know $T$. Formally, $p(x \mid T(x), \theta)$ does not depend on $\theta$.
+
+\smallskip
+\textbf{Bernoulli:} the number of successes. \emph{$66$ pastry orders} -- the order they arrived in is irrelevant to $p$.\\
+\textbf{Poisson:} the total count. \emph{Arrivals summed over all windows.}\\
+\textbf{Gaussian:} the two sums $\sum x_i$ and $\sum x_i^{2}$ -- enough to recover $\bar{x}$ and $\hat{\sigma}^2$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Part 0 already proved it for the whole family.} The log-likelihood was $\eta^{\top}\sum_i T(x_i) - nA(\eta)$: the data reaches $\eta$ \emph{only} through $\sum_i T(x_i)$. Nothing else can matter, because nothing else is there.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Three Records, One Likelihood Curve}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Three ten-morning records, $20$ orders a morning: steady, one sell-out day, or slowly building. All total $66$ of $200$.
+  \pause
+  \item \textbf{The lower panel plots all three log-likelihoods.} You see one curve because they \emph{are} one curve: $\ell(p) = 66\log p + 134\log(1-p)$.
+  \pause
+  \item Same peak, same curvature. The shape of the record was never in the answer.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=0.96\linewidth]{figures/expfamily/expfamily_sufficiency.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Fisher-Neyman ──────────────────────────────────────────────────────────
+\begin{frame}{The Factorization Test}
+\begin{rldefinition}
+\textbf{Fisher--Neyman factorization.} $T$ is sufficient for $\theta$ exactly when the density splits into two pieces --
+\[
+p(x \mid \theta) = \underbrace{g\big(T(x),\, \theta\big)}_{\text{touches } \theta \text{ only via } T} \;\times\; \underbrace{h(x)}_{\text{no } \theta \text{ at all}} .
+\]
+\emph{Reading it:} if you can push every appearance of $\theta$ into a factor that sees the data only through $T$, then $T$ carries all the information.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{This is why the exponential family has such tidy statistics.} Its definition \emph{is} the factorization: $h(x)$ is the second piece and $\exp(\eta^{\top}T(x) - A(\eta))$ is the first.
+  \pause
+  \item So membership in the family hands you the sufficient statistic for free -- just read off $T$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: What a Gaussian Needs}
+\begin{itemize}
+  \item Lecture 5 measured $40$ espresso shots and reported $\hat{\mu} = 29.88$\,ml, $\hat{\sigma} = 1.27$\,ml. Expanding the square in the density:
+  \[
+    \prod_i e^{-\frac{(x_i-\mu)^2}{2\sigma^2}}
+    = \exp\Big( -\tfrac{1}{2\sigma^2}\textstyle\sum_i x_i^{2} + \tfrac{\mu}{\sigma^{2}}\sum_i x_i - \tfrac{n\mu^{2}}{2\sigma^{2}} \Big).
+  \]
+  \pause
+  \item The data appears \emph{only} as $\sum_i x_i$ and $\sum_i x_i^{2}$. Here that is $1195.2$ and $35777.1$.
+  \pause
+  \item \textbf{Two numbers replace forty measurements} -- and would replace forty thousand. The sufficient statistic does not grow with the sample.
+  \pause
+  \item \textbf{But be careful what you are sufficient \emph{for}.} Those two numbers fix $\hat{\mu}$ and $\hat{\sigma}$, and say nothing about whether the shots were normally distributed at all. Checking the \emph{model} needs the raw data back.
+\end{itemize}
+\end{frame}
+
+% ─── The Lecture 6 promise ──────────────────────────────────────────────────
+\begin{frame}{Why Conjugacy Worked}
+\begin{itemize}
+  \item Lecture 6 showed that updating a Beta or a Dirichlet was pure counting, and left the reason open. Here it is.
+  \pause
+  \item The posterior is prior times likelihood, and the likelihood is the exponential form:
+  \[
+    p(\eta \mid x_{1:n}) \;\propto\; p(\eta)\,\exp\Big( \eta^{\top}\textstyle\sum_i T(x_i) - n A(\eta) \Big).
+  \]
+  \pause
+  \item \textbf{The data enters through exactly two numbers:} $\sum_i T(x_i)$ and $n$. A prior that already stores a pretend $\sum T$ and a pretend $n$ therefore updates by \emph{adding} to them -- and stays in its own family.
+  \pause
+  \item \textbf{So ``a prior is worth $n$ observations'' was literal.} Beta$(8,2)$ stores $8$ successes out of $10$; the $22$ on-time mornings simply add. Nothing was analogy.
+\end{itemize}
+\end{frame}
+
+% ─── AI payoffs ─────────────────────────────────────────────────────────────
+\begin{frame}{Why This Matters: A Counter Instead of a Dataset}
+\begin{itemize}
+  \item If $\sum_i T(x_i)$ and $n$ are all that any estimate can use, you never have to store the data. Keep the running totals, discard each record as it passes, and the answer is \emph{identical} to the one you would get from the whole archive.
+  \pause
+  \item \textbf{Streaming estimation:} a shop tracking its pastry rate keeps two integers, not a database. The same trick runs on a sensor with no disk.
+  \pause
+  \item \textbf{In AI:} batch normalization keeps a running mean and variance -- precisely the Gaussian sufficient statistics -- rather than replaying the training set.
+  \pause
+  \item \textbf{Federated learning} turns on the same fact: a device can send $\sum T$ and $n$ instead of the records themselves, and the server's estimate loses nothing.
+  \pause
+  \item \textbf{The limit is real, though.} Sufficiency is always \emph{for a model}. Change the question -- outliers, drift, a different family -- and yesterday's counters no longer answer it.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why an AI Course Teaches the Exponential Family}
+\begin{itemize}
+  \item \textbf{It explains the output layer.} Sigmoid and softmax are the inverse maps from $\eta$ back to probabilities, and ``logit'' is the natural parameter's real name.
+  \pause
+  \item \textbf{It explains the training signal.} Fitting is matching expected statistics to observed ones, so the gradient is \emph{observed} $T$ minus \emph{expected} $T$ -- the recipe behind log-linear and energy-based models.
+  \pause
+  \item \textbf{It is the definition of a generalized linear model.} Predict $\eta$ with a linear function of the inputs and map back: identity link gives linear regression, logit link gives logistic regression, log link gives Poisson regression. One recipe, three familiar methods.
+  \pause
+  \item \textbf{It is what makes variational inference tractable.} Restricting an approximate posterior to an exponential family is what turns its training objective into arithmetic you can differentiate (Module 2, Lecture 13).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Where This Goes Next}
+\begin{itemize}
+  \item \textbf{Lecture 9 -- regression:} least squares is the Gaussian member with $\eta$ a linear function of the inputs -- the first generalized linear model.
+  \pause
+  \item \textbf{Back to Lecture 7:} the KL divergence between two members of one family has a closed form built entirely from $A$ -- no integration needed.
+  \pause
+  \item \textbf{Module 1, Lecture 13 -- logistic regression:} the Bernoulli member with $\eta = w^{\top}x$. Its loss, its link and its gradient are all on the previous slides.
+  \pause
+  \item \textbf{Module 2 -- variational autoencoders:} Gaussian encoders and exponential-family posteriors, for exactly the tractability reason above.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item A distribution is in the \textbf{exponential family} if $p(x\mid\eta) = h(x)\exp(\eta^{\top}T(x) - A(\eta))$. Bernoulli, Poisson, Gaussian, Categorical, Beta and Dirichlet all are; a mixture is not.
+  \pause
+  \item The \textbf{natural parameter} of a Bernoulli is the logit, and the inverse map for a Categorical is the softmax -- so a classifier's last layer is this family in disguise.
+  \pause
+  \item $A'(\eta) = E[T(X)]$ and $A''(\eta) = \mathrm{Var}(T(X))$. That is why the Poisson's mean equals its variance, and it is where every mean in Lecture 5 came from.
+  \pause
+  \item \textbf{Maximum likelihood is moment matching:} pick $\hat\eta$ so the model's expected statistic equals the observed average. One line replaces three separate derivations.
+  \pause
+  \item A \textbf{sufficient statistic} is everything the data can say about $\theta$. It explains why conjugate updating was counting, and why a running total can replace an archive -- for that model, and no other.
+\end{itemize}
+\end{frame}

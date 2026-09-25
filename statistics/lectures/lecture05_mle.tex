@@ -1,0 +1,218 @@
+\section{Lecture 5, Part 1: Maximum Likelihood Estimation}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 5}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Maximum Likelihood Estimation}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Write down a likelihood for data you have seen, and explain why we maximise its logarithm instead.
+  \pause
+  \item Derive the maximum likelihood estimates for a Bernoulli and for a Gaussian.
+  \pause
+  \item Show that cross-entropy loss and squared error are negative log-likelihoods, not arbitrary choices.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Maximum Likelihood?}
+\begin{itemize}
+  \item \textbf{Why:} every distribution so far arrived with its parameters already filled in -- $p = 0.3$, $\lambda = 4$, $\mu$ and $\sigma$. Nobody ever said where those numbers came from.
+  \pause
+  \item \textbf{The question:} given data, which parameter value makes that data least surprising? That single question is enough to produce every estimate in this lecture.
+  \pause
+  \item \textbf{Numerical example:} of $200$ orders, $66$ contained a pastry. Was $p = 0.25$? Possible, but it would make $66$ a bit of a fluke. $p = 0.33$ makes what we saw the most ordinary thing in the world.
+  \pause
+  \item Maximum likelihood turns ``least surprising'' into arithmetic -- and, as the end of this lecture shows, into the loss functions used to train neural networks.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Likelihood Function}
+\begin{rldefinition}
+The \textbf{likelihood} $L(\theta)$ is the probability of the data you actually observed, read as a function of the unknown parameter $\theta$ rather than of the data.
+\[
+L(\theta) = \prod_{i=1}^{n} p(x_i \mid \theta)
+\]
+\emph{Coffee shop:} with $66$ pastry orders out of $200$, $L(p) = p^{66}(1-p)^{134}$ -- one factor of $p$ per order that had a pastry, one factor of $1-p$ per order that did not.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{The direction is the point.} With $\theta$ fixed, $p(x \mid \theta)$ is a distribution over data; with the \emph{data} fixed it is a curve over $\theta$ -- and that curve is not a probability distribution.
+  \pause
+  \item The \textbf{maximum likelihood estimate} $\hat{\theta}$ is the value at which that curve peaks.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Do We Take the Logarithm?}
+\begin{itemize}
+  \item \textbf{Three reasons, all practical.} Write $\ell(\theta) = \log L(\theta) = \sum_i \log p(x_i \mid \theta)$.
+  \pause
+  \item \textbf{It does not move the peak.} $\log$ is strictly increasing, so whatever maximises $L$ maximises $\ell$.
+  \pause
+  \item \textbf{It rescues the arithmetic.} Our $200$ orders give $L(\hat{p}) \approx 10^{-55}$. At a few thousand data points the product underflows to exactly zero in floating point, and the maximum is lost. The log of that same number is a perfectly ordinary $-126.84$.
+  \pause
+  \item \textbf{It turns a product into a sum,} which differentiates term by term -- and a sum over examples is exactly what a training loop accumulates over a batch.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Fitting $p$ From 200 Orders}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item $66$ of $200$ orders had a pastry. Top: the likelihood, scaled so its peak is $1$. Bottom: its logarithm.
+  \pause
+  \item Both peak at $\hat{p} = 0.33$. The log-likelihood there is $-126.84$; the likelihood itself is about $10^{-55}$, which is why the top curve had to be rescaled to be visible at all.
+  \pause
+  \item \textbf{How sharp is the peak?} Relative to $\hat{p}$, $p = 0.30$ is $0.66$ times as likely, $p = 0.40$ only $0.12$, and $p = 0.25$ just $0.04$.
+  \pause
+  \item \textbf{Read it:} the data does not pick one value and forbid the rest -- it grades them. Lecture 6 turns that grading into a posterior distribution.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/clt_mle/clt_mle_bernoulli_likelihood.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Derivations ────────────────────────────────────────────────────────────
+\begin{frame}{Worked Example: The Bernoulli MLE}
+\begin{itemize}
+  \item $k$ successes in $n$ trials. Take the log, differentiate, set to zero:
+\end{itemize}
+\[
+\ell(p) = k \log p + (n-k)\log(1-p),
+\qquad
+\frac{d\ell}{dp} = \frac{k}{p} - \frac{n-k}{1-p} = 0 .
+\]
+\pause
+\begin{itemize}
+  \item Cross-multiplying gives $k(1-p) = (n-k)p$, so $k = np$ and
+  \[
+    \boxed{\;\hat{p} = \frac{k}{n}\;}
+  \]
+  \pause
+  \item \textbf{The estimate is just the observed proportion} -- $66/200 = 0.33$. The answer everyone would have guessed, now \emph{derived} rather than assumed.
+  \pause
+  \item That is the reassuring case. The same machine also answers questions where nobody has an intuition.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: The Gaussian MLE}
+\begin{itemize}
+  \item For $x_1, \dots, x_n$ drawn from $\mathcal{N}(\mu, \sigma^2)$:
+\end{itemize}
+\[
+\ell(\mu, \sigma^2) = -\frac{n}{2}\log(2\pi\sigma^2) \;-\; \frac{1}{2\sigma^2}\sum_{i=1}^n (x_i - \mu)^2 .
+\]
+\pause
+\begin{itemize}
+  \item Only the last term involves $\mu$, and it is minimised by the average, so $\hat{\mu} = \bar{x}$. Differentiating in $\sigma^2$ then gives
+  \[
+    \hat{\mu} = \bar{x}, \qquad \hat{\sigma}^2 = \frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})^2 .
+  \]
+  \pause
+  \item \textbf{Note the $\tfrac{1}{n}$:} Lecture 1's $s^2$ divided by $n-1$, so maximum likelihood runs slightly small -- a known, accepted bias.
+  \pause
+  \item \textbf{Worth seeing now:} maximising a Gaussian likelihood \emph{is} minimising squared error -- two slides from now.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Which Bell Curve Fits?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item $40$ espresso shots measured in millilitres; ticks along the axis are the individual shots.
+  \pause
+  \item The MLE fit is $\hat{\mu} = 29.88$, $\hat{\sigma} = 1.27$, with log-likelihood $-66.3$.
+  \pause
+  \item Shift the centre to $28.6$ and it falls to $-81.8$; keep the centre but widen to $\sigma = 3.2$ and it falls to $-86.4$. Both are worse, and the numbers say by how much.
+  \pause
+  \item \textbf{Read it:} ``maximum likelihood'' is literally a search over curves. Every candidate gets a score, and $\hat{\theta}$ is the winner.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/clt_mle/clt_mle_gaussian_fit.pdf}
+\end{columns}
+\end{frame}
+
+% ─── The AI payoff ──────────────────────────────────────────────────────────
+\begin{frame}{Why This Matters: Cross-Entropy \emph{Is} a Log-Likelihood}
+\begin{itemize}
+  \item A classifier outputs $p_i$, its predicted chance that example $i$ is class $1$. The labels $y_i \in \{0,1\}$ are Bernoulli, so
+  \[
+    L = \prod_{i=1}^{n} p_i^{\,y_i}(1-p_i)^{1-y_i},
+    \qquad
+    -\ell = -\sum_{i=1}^{n}\Big[y_i \log p_i + (1-y_i)\log(1-p_i)\Big].
+  \]
+  \pause
+  \item \textbf{That right-hand side is binary cross-entropy loss}, exactly as written in every deep learning framework. Not approximately -- identically, with no constant left over.
+  \pause
+  \item With $k$ classes the Bernoulli becomes a Categorical and the same step gives $-\sum_i \sum_c y_{ic}\log p_{ic}$: categorical cross-entropy.
+  \pause
+  \item \textbf{Repeat this one:} \emph{training a classifier with cross-entropy is maximum likelihood estimation of a Categorical, done by gradient descent.}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Squared Error \emph{Is} a Log-Likelihood}
+\begin{itemize}
+  \item Now a regression model predicting $f(x_i)$, with the residual assumed Gaussian: $y_i \sim \mathcal{N}(f(x_i), \sigma^2)$ for a fixed $\sigma$. From the Gaussian log-likelihood two slides back,
+  \[
+    -\ell = \underbrace{\frac{n}{2}\log(2\pi\sigma^2)}_{\text{does not involve } f}
+    \;+\; \frac{1}{2\sigma^2}\sum_{i=1}^{n}\big(y_i - f(x_i)\big)^2 .
+  \]
+  \pause
+  \item The first term is a constant and the second is a positive multiple of the mean squared error, so minimising $-\ell$ over the model \emph{is} minimising MSE.
+  \pause
+  \item \textbf{So the two default losses are one idea.} Cross-entropy for a Bernoulli or Categorical output, squared error for a Gaussian one -- both are $-\ell$ for the distribution you assumed.
+  \pause
+  \item \textbf{And the assumption is visible.} Squared error commits you to Gaussian residuals -- which is why it chases outliers, and why heavier-tailed assumptions give gentler losses.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{From Likelihood to Gradient Descent}
+\begin{itemize}
+  \item Bernoulli and Gaussian both had closed-form answers. A neural network does not -- there is no formula for the $\hat{\theta}$ that maximises its likelihood.
+  \pause
+  \item But $\ell(\theta) = \sum_i \log p(x_i \mid \theta)$ is still a sum over examples, still differentiable, and still has a peak. So climb it: step in the direction of $\nabla_\theta \ell$, which is descending $-\ell$.
+  \pause
+  \item \textbf{That gradient is a sum over examples, so Part 0 applies directly:} average it over a mini-batch and you get an unbiased estimate with standard error $\sigma_g/\sqrt{B}$.
+  \pause
+  \item \textbf{The two halves of this lecture meet here.} Maximum likelihood says \emph{what} to optimise; the central limit theorem says \emph{why} you may do it on a handful of examples at a time.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Where This Goes Next}
+\begin{itemize}
+  \item \textbf{Lecture 6 -- Bayesian inference:} maximum likelihood asks which $\theta$ best explains the data. Adding a prior asks which $\theta$ is most plausible \emph{given} the data, and gives MAP estimation.
+  \pause
+  \item \textbf{Lecture 7 -- information theory:} cross-entropy has a second reading, as the cost in bits of encoding the truth with the wrong distribution. Same formula, different story.
+  \pause
+  \item \textbf{Lecture 10 -- model evaluation:} the standard error is what puts an interval around a reported accuracy, and what decides whether two models really differ.
+  \pause
+  \item \textbf{Module 1 onward:} every loss function you meet will be worth testing against one question -- \emph{which distribution is this the negative log-likelihood of?}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item $\bar{x}$ is a random variable. It is centred on $\mu$, and its standard error is $\sigma/\sqrt{n}$ -- so four times the data buys half the error, at every scale.
+  \pause
+  \item The central limit theorem: for independent draws from any distribution with finite variance, $\bar{x}$ becomes normal. Heavy tails make it slow, and ``$n \ge 30$'' is a rule of thumb, not a guarantee.
+  \pause
+  \item The likelihood is the probability of the observed data read as a function of the parameter; we maximise its log, because the log has the same peak, survives in floating point, and turns products into sums.
+  \pause
+  \item $\hat{p} = k/n$ for a Bernoulli; $\hat{\mu} = \bar{x}$ and $\hat{\sigma}^2 = \tfrac{1}{n}\sum(x_i - \bar{x})^2$ for a Gaussian.
+  \pause
+  \item \textbf{Cross-entropy and squared error are negative log-likelihoods} -- of a Categorical and of a Gaussian. Mini-batch training is maximum likelihood plus the square-root law.
+\end{itemize}
+\end{frame}

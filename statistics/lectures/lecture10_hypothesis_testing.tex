@@ -1,0 +1,224 @@
+\section{Lecture 10, Part 1: Hypothesis Testing \& Calibration}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 10}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Hypothesis Testing \& Calibration}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item State a null hypothesis for a model comparison, and read a $p$-value as the answer to a specific question.
+  \pause
+  \item Run a permutation test, and say why it needs no formula for the metric being compared.
+  \pause
+  \item Tell accuracy from calibration, and read a reliability diagram.
+\end{itemize}
+\end{frame}
+
+% ─── p-values through model comparison ──────────────────────────────────────
+\begin{frame}{Why Do We Need a $p$-Value?}
+\begin{itemize}
+  \item \textbf{Why:} two things always score differently. The question is never ``is B ahead of A?'' -- it is ``is B ahead by more than shuffling the customers around would produce anyway?''
+  \pause
+  \item \textbf{Everyday example:} the shop prints two menu layouts. Of $60$ customers shown menu A, $21$ buy a pastry ($35\%$). Of $60$ shown menu B, $30$ buy ($50\%$).
+  \pause
+  \item Fifteen percentage points looks decisive. But if the layouts were identical and we simply split $120$ customers into two groups at random, how often would we see a gap that big by luck alone?
+  \pause
+  \item That question has a number as its answer, and the number is the $p$-value. Without it, ``B is better'' is a description of one afternoon, not a finding.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Null and Alternative Hypotheses}
+\begin{rldefinition}
+The \textbf{null hypothesis} $H_0$ is the boring explanation: nothing is going on, and what we saw is ordinary variation. \emph{Here: the two menus have the same buy rate, and which customer saw which menu was irrelevant.}
+
+\smallskip
+The \textbf{alternative} $H_1$ is what we would need evidence for. \emph{Here: the menus genuinely differ.}
+
+\smallskip
+The \textbf{$p$-value} is the probability of seeing a result at least as extreme as ours \emph{if $H_0$ were true}. \emph{Here: if the menus were identical, how often would the gap reach $15$ points?}
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item A small $p$-value means the boring explanation struggles to produce what we saw. It does not say how big the effect is, or that it matters.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Permutation Test}
+\begin{itemize}
+  \item \textbf{The idea:} if the menu made no difference, then each customer's decision to buy was going to happen regardless of which label they were given. The labels are interchangeable.
+  \pause
+  \item So: pool all $120$ customers, \textbf{shuffle the labels}, split into two groups of $60$, and recompute the gap. That is one draw from ``what luck alone produces''.
+  \pause
+  \item Repeat thousands of times. The histogram of shuffled gaps \emph{is} the distribution under $H_0$ -- built, not assumed.
+  \pause
+  \item \textbf{Why this is worth knowing:} it needs no formula for the thing being compared. Swap buy rates for a median, an F1 score or an AUC and the same shuffle works unchanged. No normal approximation, no sample-size condition.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Two Menu Layouts}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item $20{,}000$ shuffles of the same $120$ customers. The grey histogram is every gap chance alone produced.
+  \pause
+  \item Our $+0.15$ sits inside it, not beyond it: a gap that big turned up in $\mathbf{13.8\%}$ of shuffles, so $p = 0.14$.
+  \pause
+  \item \textbf{Read it:} $35\%$ against $50\%$ on $60$ customers each is what an identical pair of menus produces about one afternoon in seven.
+  \pause
+  \item \textbf{What would settle it:} the same gap on about $90$ customers per menu reaches $p < 0.05$. The effect did not change -- the evidence did.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/evaluation/evaluation_permutation.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{What a $p$-Value Is Not}
+\begin{rlpitfall}
+$p = 0.14$ does \emph{not} mean there is a $14\%$ chance the menus are the same. The $p$-value is computed \emph{assuming} $H_0$ -- it is $P(\text{data} \mid H_0)$, never $P(H_0 \mid \text{data})$. Lecture 2 called swapping those two the prosecutor's fallacy.
+\end{rlpitfall}
+\pause
+\begin{itemize}
+  \item \textbf{A large $p$ is not proof of no effect.} It means this much data could not distinguish the menus. Absence of evidence, not evidence of absence.
+  \pause
+  \item \textbf{A small $p$ is not a big effect.} With $200{,}000$ customers per menu, a gap of $0.4$ points clears $p < 0.05$ -- statistically certain and commercially pointless.
+  \pause
+  \item \textbf{$0.05$ is a convention, not a law of nature.} Nothing changes about the world between $p = 0.049$ and $p = 0.051$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Type I and Type II Errors}
+\begin{itemize}
+  \item Deciding from a test means two ways to be wrong, and they trade against each other:
+\end{itemize}
+\centering
+\small
+\begin{tabular}{l|cc}
+                        & $H_0$ is true       & $H_0$ is false      \\
+\hline
+Reject $H_0$            & \textbf{Type I} (false alarm) & correct \\
+Do not reject $H_0$     & correct             & \textbf{Type II} (missed it) \\
+\end{tabular}
+
+\vspace{0.4em}
+\raggedright
+\begin{itemize}
+  \item[] \pause
+  \item \textbf{This is Lecture 2's screening table under new names.} A Type I error is a false positive; a Type II error is a false negative. The medical test that flagged $495$ healthy people made $495$ Type I errors. \pause
+  \item The threshold controls the trade: demanding $p < 0.01$ instead of $p < 0.05$ makes false alarms rarer and misses more commoner. \pause
+  \item \textbf{And the base rate still rules.} If most of the ideas you test are duds, most of your ``significant'' results are false alarms -- exactly the arithmetic of Lecture 2.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Testing Many Models}
+\begin{itemize}
+  \item \textbf{The promise, cashed:} tuning a model means trying many configurations and keeping the best on validation data. Every comparison is a test, and every test gets its own chance of a false alarm.
+  \pause
+  \item \textbf{Numerical example:} at a $5\%$ threshold, the chance of \emph{at least one} false alarm across $m$ independent tests is $1 - 0.95^{m}$:
+\end{itemize}
+\centering
+\small
+\begin{tabular}{l|cccc}
+Tests $m$              & $1$ & $10$ & $20$ & $50$ \\
+\hline
+$P(\ge 1$ false alarm$)$ & $0.05$ & $0.40$ & $0.64$ & $0.92$ \\
+\end{tabular}
+
+\vspace{0.4em}
+\raggedright
+\begin{itemize}
+  \item[] \pause
+  \item Try fifty hyperparameter settings and something will look brilliant on validation data essentially every time. \pause
+  \item \textbf{Repeat this one:} \emph{the best of many validation scores is biased upward, so the winner must be re-measured on the untouched test set.} This is the real reason for the three-way split.
+\end{itemize}
+\end{frame}
+
+% ─── Calibration ────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Calibration?}
+\begin{itemize}
+  \item \textbf{Why:} most useful predictions are not a label but a \emph{probability} -- ``$70\%$ chance of rain'', ``$90\%$ sure this is a cat''. Accuracy grades the label and ignores the number attached to it.
+  \pause
+  \item \textbf{Everyday example:} two forecasters both say ``$70\%$ chance of rain'' on the same $100$ days. It rains on $70$ of them for the first and on $45$ for the second. Both were ``right'' on the rainy days. Only one of them meant anything by $70\%$.
+  \pause
+  \item A forecast is \textbf{calibrated} when the stated probability matches the observed frequency: of all the days labelled $70\%$, about $70\%$ should rain.
+  \pause
+  \item This is checkable without knowing anything about how the forecast was made -- just group the predictions by what was claimed and count what happened.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Two Forecasters}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item $400$ predictions at each stated level: what they said against what happened. Perfect calibration is the diagonal.
+  \pause
+  \item \textbf{Honest:} stated $0.95$ happened $0.958$ of the time; average gap $0.01$.
+  \pause
+  \item \textbf{Overconfident:} a stated $0.95$ happens only $\mathbf{0.76}$ of the time, and a stated $0.05$ still happens $0.22$ of the time. Average gap $0.12$.
+  \pause
+  \item This is a \textbf{reliability diagram}; the average vertical gap is the \emph{calibration error}. Both could have identical accuracy.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=0.86\linewidth]{figures/evaluation/evaluation_reliability.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Confident and Wrong}
+\begin{itemize}
+  \item \textbf{The promise, cashed:} a classifier's softmax output is read as a probability all the time -- to decide when to escalate to a human, when to abstain, how to combine several models.
+  \pause
+  \item \textbf{Repeat this one:} \emph{a model that is $90\%$ confident should be right $90\%$ of the time.} Modern networks routinely are not: they are accurate and badly overconfident at once, which is the red curve.
+  \pause
+  \item Fixing it does not require retraining. \textbf{Temperature scaling} divides the scores by a single number chosen on validation data, which flattens or sharpens the whole curve until it sits on the diagonal (Module 2).
+  \pause
+  \item \textbf{Where it bites:} any system that acts on a confidence threshold. An overconfident model never escalates, because it is never in doubt.
+\end{itemize}
+\end{frame}
+
+% ─── Closing the module ─────────────────────────────────────────────────────
+\begin{frame}{Where Module 0 Goes Next}
+\small
+\begin{itemize}
+  \item \textbf{Bayes' theorem} (L2) $\rightarrow$ Naive Bayes for text, \textbf{Module 3, Lecture 6}.
+  \pause
+  \item \textbf{Maximum likelihood} (L5) $\rightarrow$ cross-entropy as the loss of a classifier, \textbf{Module 1, Lecture 13}, and every loss function after it.
+  \pause
+  \item \textbf{Bayesian inference and MAP} (L6) $\rightarrow$ Ridge as a Gaussian prior and Lasso as a Laplace one, \textbf{Module 1, Lecture 12}.
+  \pause
+  \item \textbf{Entropy and information gain} (L7) $\rightarrow$ how a decision tree chooses a split, \textbf{Module 1, Lecture 5}.
+  \pause
+  \item \textbf{Covariance and its eigenvectors} (L9) $\rightarrow$ PCA, \textbf{Module 1, Lecture 2}.
+  \pause
+  \item \textbf{Today} $\rightarrow$ ROC/AUC, cross-validation and hyperparameter search, \textbf{Module 1, Lecture 14}.
+\end{itemize}
+\pause
+\begin{rlintuition}
+Nothing here was preparation for its own sake: every lecture derives something you are about to use.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item Training error measures effort, not quality. Only held-out data estimates performance, and the test set is spent the moment you choose on it.
+  \pause
+  \item Error on fresh data $=$ bias $+$ variance $+$ noise. Training error always falls with capacity, so it can never tell you when to stop.
+  \pause
+  \item Cross-validation reuses scarce data and shows how much the score wobbles; the bootstrap puts an interval on any metric, formula or not.
+  \pause
+  \item A $p$-value answers ``how often would chance alone do this?'' -- and a permutation test answers it by shuffling, assuming nothing.
+  \pause
+  \item Accuracy grades the label; calibration grades the confidence. A model can be excellent at one and useless at the other.
+\end{itemize}
+\end{frame}

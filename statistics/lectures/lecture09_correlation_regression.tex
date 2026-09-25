@@ -1,0 +1,208 @@
+\section{Lecture 9, Part 0: Correlation \& Regression}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 9}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Correlation \& Regression}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Measure how two quantities move together with covariance, and make that measurement unit-free with the correlation $r$.
+  \pause
+  \item Fit a straight line by ordinary least squares, read its slope, and use its residuals to ask whether a line was the right shape.
+  \pause
+  \item Interpret $R^2$, and explain why fitting a line by least squares is maximum likelihood estimation in disguise.
+\end{itemize}
+\end{frame}
+
+% ─── Covariance and correlation ─────────────────────────────────────────────
+\begin{frame}{Why Do We Need Correlation?}
+\begin{itemize}
+  \item Everything so far described \emph{one} quantity at a time -- a mean, a spread, a distribution. But the useful questions are almost always about a \emph{pair}: do warm days sell more iced coffee, do extra study hours raise the mark, does a longer commute mean a later arrival?
+  \pause
+  \item Lecture 4 already produced the number for this. The covariance of temperature and iced coffees over $300$ trading days was $49.6$ -- positive, so they rise together.
+  \pause
+  \item \textbf{But $49.6$ what?} Its units are $^\circ$C$\,\cdot\,$cups. Record the temperature in Fahrenheit and the same relationship reports $89.3$ instead. A number whose size depends on the units cannot say whether a relationship is \emph{strong}.
+  \pause
+  \item So we need the covariance rescaled into something comparable across quantities. That is the correlation.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Covariance and Correlation}
+\begin{rldefinition}
+\textbf{Covariance} -- the average product of the two deviations from their means: positive when the pair rises together, negative when one rises as the other falls.
+\[
+  s_{xy} = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})(y_i - \bar{y}) = 49.6\ ^\circ\text{C}\cdot\text{cups}.
+\]
+\textbf{Correlation} -- that covariance divided by both standard deviations, which cancels the units and traps the answer in $[-1,1]$:
+$r = s_{xy}/(s_x s_y) = 49.6/(5.65 \times 11.33) = 0.77$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item $r = +1$ is a perfect rising line, $r = -1$ a perfect falling one, $r = 0$ no \emph{straight-line} relationship. Here $0.77$ is strong and positive.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Hot Days and Iced Coffee}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item The grey crosshair marks the mean point $(21.8\,^\circ$C$,\ 39.5$ cups$)$ and cuts the plot into four quadrants.
+  \pause
+  \item \textbf{Why the covariance comes out positive:} a warm, busy day sits upper-right, where both deviations are positive, so their product is positive. A cold, quiet day sits lower-left, where both are negative -- and a negative times a negative is positive again.
+  \pause
+  \item Days in the other two quadrants contribute negative products. The covariance is just the average, so it is positive when the upper-right and lower-left days win.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/regression/regression_scatter_corr.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Regression ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Line, Not Just a Number?}
+\begin{itemize}
+  \item $r = 0.77$ says the relationship is strong and positive. It does \emph{not} say how much.
+  \pause
+  \item The shop's actual question is: \emph{tomorrow is forecast $3^\circ$ warmer -- how many more cups should I prepare?} A correlation cannot answer that; it has no units left to answer it with.
+  \pause
+  \item A \textbf{line} can. Its slope is a rate -- cups per degree -- and it also predicts at temperatures we have never recorded.
+  \pause
+  \item Fitting that line is the smallest possible act of machine learning: choose parameters so the predictions miss the data as little as possible.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Ordinary Least Squares}
+\begin{rldefinition}
+\textbf{Ordinary least squares} -- of all lines $\hat{y} = a + bx$, take the one whose vertical gaps to the data are smallest in total, measured by the sum of \emph{squared} gaps:
+\[
+  (a, b) = \arg\min_{a,b} \sum_{i=1}^{n}\big(y_i - a - b x_i\big)^2 .
+\]
+Minimising gives closed forms, not a search: $b = s_{xy}/s_x^2$ and $a = \bar{y} - b\,\bar{x}$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item That second formula says the line \textbf{always passes through the mean point} $(\bar{x}, \bar{y})$, so the slope alone fixes it.
+  \pause
+  \item \textbf{Why squared gaps?} They make the minimisation solvable in closed form and punish one big miss more than several small ones. Shortly, Lecture 5 supplies the real reason.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Fitting the Line by Hand}
+\begin{itemize}
+  \item Everything needed is already in Lecture 4's covariance matrix: $s_x^2 = 31.9$, $s_{xy} = 49.6$, with $\bar{x} = 21.81\,^\circ$C and $\bar{y} = 39.49$ cups.
+  \pause
+  \item \textbf{Slope:} $b = \dfrac{s_{xy}}{s_x^2} = \dfrac{49.6}{31.9} = 1.5548$ cups per degree. \textbf{Intercept:} $a = \bar{y} - b\bar{x} = 39.49 - 1.5548(21.81) = 5.6$ cups, giving
+  \[ \hat{y} = 5.6 + 1.55\,x \]
+  \pause
+  \item \textbf{Reading the slope:} each extra degree sells about $1.55$ more iced coffees, so a forecast $3^\circ$ warmer means roughly $5$ extra cups. That is the shop's answer.
+  \pause
+  \item \textbf{Predicting:} at $25^\circ$C, $\hat{y} = 5.6 + 1.55(25) = 44$ cups. The intercept $5.6$ is a formality -- it is sales at $0^\circ$C, far outside anything observed.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: The Fitted Line and Its Residuals}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item A \textbf{residual} is what the line missed by: $e_i = y_i - \hat{y}_i$. The red segments are the twelve largest.
+  \pause
+  \item \textbf{Example:} one day reached $22.4^\circ$C and sold $28$ cups against a predicted $40.5$, so $e = 28 - 40.5 = -12.5$. Least squares forces the residuals to average exactly zero, so only their size matters: here $7.2$ cups.
+  \pause
+  \item \textbf{The lower panel is the real test.} Residuals against temperature show no leftover pattern -- no curve, no fanning -- so a line was the right shape. An arc there would mean real structure was missed.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/regression/regression_fit_residuals.pdf}
+\end{columns}
+\end{frame}
+
+% ─── R-squared ──────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need $R^2$?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{rldefinition}
+\footnotesize
+$R^2$ -- the share of the outcome's variation the line accounts for: compare the gaps to a flat line at $\bar{y}$ with the gaps to the fitted line.
+\[
+  R^2 = 1 - \frac{\mathrm{SS}_{\text{res}}}{\mathrm{SS}_{\text{tot}}}
+      = 1 - \frac{15{,}348}{38{,}385} = 0.60 .
+\]
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Knowing the temperature removes $60\%$ of the guesswork about the day's sales.
+  \pause
+  \item With one predictor, $R^2$ is exactly $r^2$ -- to full precision $r = 0.7747$, and $0.7747^2 = 0.60$.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/regression/regression_r_squared.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Least Squares \emph{Is} Maximum Likelihood}
+\begin{itemize}
+  \item Nothing so far justified \emph{squared} gaps. Lecture 5 did. Assume each day's sales are the line plus Gaussian noise, $y_i \sim \mathcal{N}(a + b x_i,\ \sigma^2)$, and the negative log-likelihood was
+  \[
+    -\ell = \underbrace{\tfrac{n}{2}\log(2\pi\sigma^2)}_{\text{no } a, b \text{ in here}} \;+\; \frac{1}{2\sigma^2}\sum_{i=1}^{n}\big(y_i - a - b x_i\big)^2 .
+  \]
+  \pause
+  \item Only the second term involves $a$ and $b$, and $1/2\sigma^2$ is a positive constant. \textbf{So maximising the likelihood and minimising the squared gaps are the same act} -- least squares was never an arbitrary penalty. The residual spread estimates the noise: $\hat{\sigma} \approx 7.2$ cups.
+  \pause
+  \item \textbf{Why an AI course teaches this:} this is the smallest trained model in the course -- two parameters, fitted by maximum likelihood. Everything later swaps $a + bx$ for greater capacity and keeps the recipe: \emph{write the negative log-likelihood, then minimise it}. Add a penalty on $b$ and you have ridge and lasso (Module 1, Lecture 12).
+\end{itemize}
+\end{frame}
+
+% ─── What correlation misses ────────────────────────────────────────────────
+\begin{frame}{Real Event: What the Correlation Cannot See}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Same $300$ days, now \emph{total} drinks. Cold days sell hot drinks, hot days iced, mild days fewest of either.
+  \pause
+  \item \textbf{$r = -0.06$}, and a straight line explains $R^2 = 0.00$. On those two numbers you would report ``temperature does not affect total sales''.
+  \pause
+  \item Look at the picture: the relationship is strong and obvious, and a curve explains $R^2 = 0.55$. \textbf{$r$ measures one thing only -- straight-line association} -- so a relationship that falls and then rises averages out to nothing, and $r$ reports the nothing.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/regression/regression_nonlinear.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Anscombe's Quartet, Revisited}
+\begin{itemize}
+  \item Lecture 1 closed with four datasets sharing ``mean $x = 9.0$, correlation $\approx 0.816$, and the same regression line $y = 3.00 + 0.5x$'' -- every one of those terms was used before it was defined. Now they all have definitions.
+  \pause
+  \item Those four share $r = 0.816$, so they also share $R^2 = 0.816^2 = 0.67$: each line appears to account for two-thirds of the variation. Only one of the four earns it.
+  \pause
+  \item \textbf{What the residual plot would have caught.} Set~II's residuals trace a clean arc -- the wrong shape, exactly like the total-drinks slide. Sets~III and~IV have one point carrying the whole fit, which stands out as a single huge residual.
+  \pause
+  \item \textbf{So the working rule is:} the slope, $r$ and $R^2$ are a summary, never a verdict. Plot the fit and plot the residuals before believing any of them.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Correlation Is Not Causation}
+\begin{itemize}
+  \item The shop's iced coffee sales correlate strongly with the sunglasses sold by the shop next door. Neither causes the other: the hot weather causes both. A third quantity driving two others is a \textbf{confounder}.
+  \pause
+  \item Nothing in $r$, the slope or $R^2$ can detect this. They are computed from two columns of numbers and know nothing about what produced them.
+  \pause
+  \item \textbf{Lecture 2 showed the sharper version.} In Simpson's paradox, conditioning on the department \emph{reversed} the admissions comparison. A correlation computed on pooled data can point the wrong way entirely.
+  \pause
+  \item \textbf{The practical split:} for \emph{prediction}, correlation is enough -- sunglasses next door genuinely help forecast iced coffee. For \emph{intervention}, it is useless: handing out free sunglasses will not sell one extra cup.
+\end{itemize}
+\end{frame}

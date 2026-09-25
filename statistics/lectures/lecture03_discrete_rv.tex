@@ -1,0 +1,175 @@
+\section{Lecture 3, Part 0: Discrete Random Variables}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 3}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Discrete Random Variables}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Write a quantity that depends on chance as a \textbf{random variable}, and list what it can be with a probability mass function.
+  \pause
+  \item Compute the \textbf{expectation} and \textbf{variance} of a random variable, and say how each relates to the sample mean and sample variance of Lecture 1.
+  \pause
+  \item Predict what happens to both when the variable is shifted or rescaled.
+\end{itemize}
+\end{frame}
+
+% ─── Random variables ───────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Random Variable?}
+\begin{itemize}
+  \item \textbf{Why:} so far every probability has been attached to an \emph{event} -- ``the die is even'', ``the student takes the bus''. But most questions are about a \emph{number}: how many, how long, how much.
+  \pause
+  \item Writing ``the number of customers who buy a pastry'' in full each time is unworkable. Give it a letter, $X$, and we can add it, average it, and compare it.
+  \pause
+  \item \textbf{Everyday:} roll two dice and let $X$ be the sum. Rolling is chance; $X$ is the number chance produced. Board games are decided by $X$, not by which die showed what.
+  \pause
+  \item \textbf{Discrete} means the possible values can be listed: $0, 1, 2, \dots$ Lecture 4 does the continuous case, where they cannot.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Random Variables and the Probability Mass Function}
+\begin{rldefinition}
+A \textbf{random variable} $X$ attaches a number to every outcome. \emph{Two dice:} the outcome is the pair $(3,4)$, and $X$, their sum, is $7$.
+
+\smallskip
+Its \textbf{probability mass function} $p(x) = P(X = x)$ lists how likely each value is. Every $p(x) \ge 0$, and they add to $1$ because $X$ must take \emph{some} value.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Running example -- a coffee shop.} Let $X$ be the number of pastries in one order:
+  \[
+    p(0) = 0.7, \qquad p(1) = 0.2, \qquad p(2) = 0.1,
+    \qquad \textstyle\sum_x p(x) = 1 .
+  \]
+  \pause
+  \item This is the frequency distribution of Lecture 1 with one change: those were \emph{counts} from a sample we measured, these are \emph{probabilities} for a customer we have not served yet.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Why 7 Wins at Board Games}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Each bar is $p(x)$; the number above it is how many of the $36$ equally likely pairs give that sum.
+  \pause
+  \item There is one way to roll $2$ ($1{+}1$) but six ways to roll $7$ ($1{+}6$, $2{+}5$, \dots, $6{+}1$), so $p(7) = \tfrac{6}{36} = \tfrac16$ -- six times more likely than $2$.
+  \pause
+  \item \textbf{Why it is a real event:} Monopoly's orange properties sit six to nine squares past Jail -- the stretch a player leaving Jail is most likely to reach -- and backgammon openings are built on the same table.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/discrete_rv/discrete_rv_two_dice_pmf.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Expectation ────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Expectation?}
+\begin{rldefinition}
+The \textbf{expectation} $E[X]$ is the average value of $X$ in the long run, with each value weighted by how likely it is:
+\[
+E[X] = \sum_x x\,p(x) .
+\]
+It is also written $\mu$ -- the same Greek letter Lecture 1 used for a population mean, because that is exactly what it is.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Coffee shop:} $E[X] = 0(0.7) + 1(0.2) + 2(0.1) = 0.4$ pastries per order -- so $100$ customers should buy about $40$ pastries.
+  \pause
+  \item \textbf{Note:} $0.4$ is not a possible order. An expectation is a long-run average, not a prediction of any single case -- like ``$1.8$ children per family''.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Is the Raffle Ticket Worth It?}
+\begin{itemize}
+  \item A school sells $500$ raffle tickets at \$2 each. One ticket wins a \$400 bicycle.
+  \pause
+  \item Let $X$ be your \emph{net} gain. You either win the bicycle having paid \$2, or you just lose the \$2:
+  \[
+    p(398) = \tfrac{1}{500}, \qquad p(-2) = \tfrac{499}{500}.
+  \]
+  \pause
+  \item $E[X] = 398 \cdot \tfrac{1}{500} - 2 \cdot \tfrac{499}{500} = \tfrac{398 - 998}{500} = -\tfrac{600}{500} = -\$1.20$.
+  \pause
+  \item \textbf{Reading it:} every ticket costs the buyer \$1.20 on average, and the school keeps \$600 of the \$1000 raised. No single buyer ever loses \$1.20 -- they lose \$2 or win \$398 -- yet the school can budget on it exactly.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Expectation Is Where the Sample Mean Lands}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Lecture 1's $\bar{x}$ was computed \emph{from data we had}. $E[X]$ is a property of the \emph{process}, fixed before any data exists.
+  \pause
+  \item Roll a die again and again, keeping the running $\bar{x}$. Three independent runs wander at first, then settle on $E[X] = 3.5$.
+  \pause
+  \item After $10$ rolls the three runs read $4.10$, $3.60$, $3.90$; after $2000$ they read $3.54$, $3.51$, $3.49$.
+  \pause
+  \item \textbf{Why this matters:} it is why measuring more data helps at all. Lecture 5 makes the rate precise -- the law of large numbers and the CLT.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/discrete_rv/discrete_rv_running_mean.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Variance ───────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need the Variance of a Random Variable?}
+\begin{rldefinition}
+The \textbf{variance} is the expected squared distance from the mean, written $\sigma^2$:
+\[
+\mathrm{Var}(X) = E\!\left[(X - \mu)^2\right] = E[X^2] - \mu^2 ,
+\qquad \sigma = \sqrt{\mathrm{Var}(X)} .
+\]
+The second form is the one to compute with: square the values, average them, subtract the square of the mean.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Coffee shop:} $E[X^2] = 0^2(0.7) + 1^2(0.2) + 2^2(0.1) = 0.6$, so $\mathrm{Var}(X) = 0.6 - 0.4^2 = 0.44$ and $\sigma \approx 0.66$.
+  \pause
+  \item Same idea as Lecture 1's $s^2$, and same reason: the mean alone cannot tell a steady process from an erratic one.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Two Raffles, Same Expectation}
+\begin{itemize}
+  \item \textbf{Raffle A} (from the previous slide): one \$400 prize among $500$ tickets, $E[X] = -\$1.20$.
+  \pause
+  \item \textbf{Raffle B}: same $500$ tickets at \$2, but \emph{fifty} \$8 prizes. Net gain is $+\$6$ with probability $\tfrac{50}{500} = 0.1$, else $-\$2$:
+  $E[X] = 6(0.1) - 2(0.9) = -\$1.20$ -- \emph{identical}.
+  \pause
+  \item But $\mathrm{Var}_A = 320.8 - 1.44 = 319.36$, giving $\sigma_A \approx \$17.87$, while $\mathrm{Var}_B = 7.2 - 1.44 = 5.76$, giving $\sigma_B = \$2.40$.
+  \pause
+  \item \textbf{Why:} the expectation says what the school raises; the variance says what the \emph{buyer} experiences. Raffle A is a lottery, Raffle B is a mild discount -- and no expectation can tell them apart.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Shifting and Scaling}
+\begin{rldefinition}
+For constants $a$ and $b$:
+\[
+E[aX + b] = a\,E[X] + b ,
+\qquad
+\mathrm{Var}(aX + b) = a^2\,\mathrm{Var}(X) .
+\]
+Adding $b$ moves the whole distribution without stretching it, so the spread is untouched; the $a^2$ appears because variance is measured in squared units.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Coffee shop:} a pastry costs \$2, so pastry revenue is $R = 2X$ with $E[R] = \$0.80$ and $\sigma_R = 2(0.66) = \$1.33$.
+  \pause
+  \item Every order also includes a \$3 coffee, so the bill is $T = 2X + 3$: $E[T] = \$3.80$, and $\mathrm{Var}(T) = 1.76$ -- exactly $\mathrm{Var}(R)$, because a fixed \$3 adds no uncertainty.
+\end{itemize}
+\end{frame}
+
+% ═══════════════════════════════════════════════════════════════════════════

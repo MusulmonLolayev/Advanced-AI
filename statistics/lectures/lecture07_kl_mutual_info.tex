@@ -1,0 +1,186 @@
+\section{Lecture 7, Part 1: KL Divergence \& Mutual Information}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 7}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large KL Divergence \& Mutual Information}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Compute a KL divergence and read it as the avoidable part of a cross-entropy.
+  \pause
+  \item Explain why KL is not a distance, and what goes wrong if you treat it as one.
+  \pause
+  \item Use mutual information to say how much one answer tells you about another -- and recognise it as the criterion a decision tree splits on.
+\end{itemize}
+\end{frame}
+
+% ─── KL divergence ──────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need KL Divergence?}
+\begin{itemize}
+  \item \textbf{Why:} Part 0 ended with cross-entropy splitting into a floor you cannot move and a penalty you can. We want a name and a number for the second part alone.
+  \pause
+  \item \textbf{Everyday version:} the uniform forecaster paid $2.00$ bits a day where the truth cost $1.75$. The $1.75$ was the weather's fault. The extra $0.25$ was \emph{his}.
+  \pause
+  \item Subtracting the floor leaves a pure measure of \emph{how wrong the belief is}, with the world's own uncertainty removed. That is the KL divergence.
+  \pause
+  \item It answers questions the raw loss cannot: has my model moved closer to the truth, how far did this evidence shift my belief, and how far has a fine-tuned model drifted from the one it started as.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{KL Divergence}
+\begin{rldefinition}
+The \textbf{Kullback--Leibler divergence} $D_{\mathrm{KL}}(p \,\|\, q)$ is the cross-entropy minus the floor -- the extra cost of believing $q$ when the truth is $p$:
+\[
+D_{\mathrm{KL}}(p \,\|\, q) \;=\; H(p,q) - H(p) \;=\; \sum_i p_i \log_2 \frac{p_i}{q_i} .
+\]
+\emph{Weather:} the uniform forecaster has $2.00 - 1.75 = 0.25$ bits; the always-sunny one has $2.57 - 1.75 = 0.82$ bits.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{It is zero only for a perfect belief.} $D_{\mathrm{KL}} \ge 0$ always, and $= 0$ exactly when $q = p$ -- which is another way of saying the truth is its own cheapest description.
+  \pause
+  \item \textbf{Minimising cross-entropy is minimising KL.} They differ by $H(p)$, which does not depend on the model at all, so the two have the same minimiser.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: How Much Did 100 Mornings Tell You?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Lecture 6's $7{:}40$ bus: prior Beta$(8,2)$, one morning at a time, plotting $D_{\mathrm{KL}}(\text{posterior} \,\|\, \text{prior})$.
+  \pause
+  \item \textbf{This is learning, measured.} At zero mornings the posterior \emph{is} the prior and the KL is exactly $0$. After $10$ mornings it is $0.66$ bits; after $100$, $1.76$.
+  \pause
+  \item \textbf{The jaggedness is real:} a late bus after a run of on-time ones pushes the posterior back toward the prior.
+  \pause
+  \item \textbf{Read it:} the prior was worth $10$ mornings, so the first ten roughly doubled what you knew -- the next $1.1$ bits took ninety more.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/information_theory/info_kl_learning.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why KL Is Not a Distance}
+\begin{itemize}
+  \item A distance is symmetric: the gap from A to B equals the gap from B to A. \textbf{KL is not.}
+  \pause
+  \item \textbf{The same two weather beliefs, swapped:} with $p$ the true climate and $q$ the always-sunny forecaster,
+  \[
+    D_{\mathrm{KL}}(p \,\|\, q) = 0.82 \text{ bits}, \qquad
+    D_{\mathrm{KL}}(q \,\|\, p) = 0.54 \text{ bits}.
+  \]
+  \pause
+  \item \textbf{Why the order matters:} $D_{\mathrm{KL}}(p \| q)$ averages over outcomes that \emph{really happen}, so it punishes $q$ for calling a real storm nearly impossible. Reverse it and those days barely count.
+  \pause
+  \item \textbf{The practical consequence:} minimising $D_{\mathrm{KL}}(p \| q)$ forces $q$ to put mass wherever the truth has any, giving a cautious, spread-out fit. Minimising $D_{\mathrm{KL}}(q \| p)$ lets $q$ pick one peak and ignore the rest. Two different answers from the same two distributions.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: KL Is the Leash}
+\begin{itemize}
+  \item \textbf{Keeping a tuned model near its starting point.} Instruction tuning and RLHF add a KL penalty between the tuned model and the base model, so chasing a reward cannot pull the model into gibberish. The strength of that penalty is a dial you set (Module 5).
+  \pause
+  \item \textbf{Knowledge distillation.} A small model is trained to match a large one's full output distribution, not just its top answer. The objective is the KL between them -- which is why distillation transfers more than labels alone (Module 6, Lecture 2).
+  \pause
+  \item \textbf{Variational autoencoders.} The ELBO is a reconstruction term minus a KL between the encoder's distribution and a standard Gaussian prior -- the term that stops the latent space from scattering (Module 2).
+  \pause
+  \item \textbf{Repeat this one:} \emph{a KL term in a loss is always a leash -- it says ``fit the data, but do not wander far from this reference distribution''.}
+\end{itemize}
+\end{frame}
+
+% ─── Mutual information ─────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Mutual Information?}
+\begin{itemize}
+  \item \textbf{Why:} entropy scores one uncertain thing. Most questions involve two -- and what we want to know is whether looking at one \emph{reduces} our uncertainty about the other.
+  \pause
+  \item \textbf{Everyday version:} you want to know whether it will rain today. Glancing at the sky at $7$am tells you something. Checking whether today's date is even tells you nothing. Both are ``information'' in loose talk; only one of them is.
+  \pause
+  \item Lecture 2 defined independence as $P(A \cap B) = P(A)P(B)$ -- a yes/no verdict. Here we want the \emph{amount}: not ``are these related?'' but ``by how much?''
+  \pause
+  \item \textbf{The recipe:} measure your uncertainty about rain before looking, measure what is left after, and subtract.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Mutual Information}
+\begin{rldefinition}
+The \textbf{conditional entropy} $H(Y \mid X)$ is how uncertain $Y$ still is once $X$ is known: the entropy of $Y$ within each answer, averaged over answers. The \textbf{mutual information} is the drop:
+\[
+I(X; Y) \;=\; H(Y) - H(Y \mid X) .
+\]
+\emph{Weather:} rain-or-storm has $H(Y) = 0.81$ bits; a grey sky at $7$am leaves $0.60$, so $I = 0.21$ bits.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Never negative}, and exactly $0$ when $X$ and $Y$ are independent -- the quantitative version of Lecture 2's test.
+  \pause
+  \item \textbf{Symmetric}, unlike KL: what the sky says about rain equals what rain says about the sky.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Which Morning Question Should You Ask?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item You may check one thing before leaving. The dashed line is $H(\text{wet}) = 0.81$ bits -- all there is to learn.
+  \pause
+  \item \textbf{Grey sky: $0.212$ bits.} It moves $P(\text{wet})$ from $0.25$ to $0.57$ when grey, and to $0.08$ when clear.
+  \pause
+  \item \textbf{Wind from the west: $0.022$ bits.} Related, but it only shifts $P(\text{wet})$ to $0.33$. A tenth as useful.
+  \pause
+  \item \textbf{Even-numbered date: exactly $0$} -- independent of the weather. \textbf{That ranking is feature selection}: how many bits does each candidate input actually buy?
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/information_theory/info_information_gain.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Information Gain \emph{Is} Mutual Information}
+\begin{itemize}
+  \item A decision tree, at every node, asks: which question should I split on? It scores each candidate by \textbf{information gain} -- the entropy before the split, minus the average entropy of the two branches.
+  \pause
+  \item \textbf{That is the formula on the previous slide, unchanged.} $H(Y) - H(Y \mid X)$. The tree in Module 1, Lecture 5 is running exactly the calculation that ranked ``grey sky'' above ``wind'' above ``even date''.
+  \pause
+  \item So the guessing game from Part 0 was not an analogy. \textbf{A decision tree is twenty questions, played greedily}, and entropy is what tells it which question to ask next.
+  \pause
+  \item \textbf{Elsewhere in AI:} mutual information scores which features to keep before training, and contrastive objectives like InfoNCE maximise a bound on the mutual information between two views of the same thing -- which is how modern representations are learned without labels (Modules 2 and 3).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Where This Goes Next}
+\begin{itemize}
+  \item \textbf{Lecture 8 -- the exponential family:} entropy reappears as the quantity a distribution maximises subject to what you know. The Gaussian, the Bernoulli and the Poisson all fall out of that single principle.
+  \pause
+  \item \textbf{Lecture 10 -- model evaluation:} a model's average negative log-likelihood on held-out data is its cross-entropy against reality, which is what perplexity reports.
+  \pause
+  \item \textbf{Module 1, Lecture 5 -- decision trees:} information gain, exactly as defined here.
+  \pause
+  \item \textbf{Modules 2, 5 and 6:} the KL term in a VAE, the KL leash in RLHF, and the KL objective in distillation -- one quantity, three places.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item \textbf{Entropy} $H(p) = -\sum p_i \log_2 p_i$ is the average number of yes/no questions needed to pin down an outcome. It is $0$ for certainty and largest for a uniform distribution.
+  \pause
+  \item \textbf{Cross-entropy} $H(p,q) = -\sum p_i \log_2 q_i$ is what you pay using belief $q$ when reality is $p$. It is never below $H(p)$, and with $p$ a one-hot label it is the loss from Lecture 5.
+  \pause
+  \item \textbf{KL divergence} is the difference, $H(p,q) - H(p)$: the avoidable part. Zero only when $q = p$, never negative, and \emph{not} symmetric.
+  \pause
+  \item \textbf{Mutual information} $I(X;Y) = H(Y) - H(Y \mid X)$ is how many bits $X$ buys you about $Y$. Zero exactly when they are independent.
+  \pause
+  \item \textbf{One sentence to keep:} \emph{your loss is a cross-entropy, its floor is the world's own uncertainty, and everything above that floor is a KL divergence you can still remove.}
+\end{itemize}
+\end{frame}

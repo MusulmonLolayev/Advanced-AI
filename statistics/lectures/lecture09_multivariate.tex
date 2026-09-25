@@ -1,0 +1,174 @@
+\section{Lecture 9, Part 1: Multivariate Statistics}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 9}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Multivariate Statistics}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Read a covariance matrix and a correlation matrix, and say why the second exists.
+  \pause
+  \item Interpret the eigenvectors of a covariance matrix as directions in the data and its eigenvalues as the variance along them.
+  \pause
+  \item Explain what principal component analysis does, and why standardizing first usually matters.
+\end{itemize}
+\end{frame}
+
+% ─── From pairs to a matrix ────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Whole Matrix?}
+\begin{itemize}
+  \item Part 0 handled \emph{one} pair. Real records have more columns: the shop logs the temperature, the iced coffees \emph{and} the hot drinks every day.
+  \pause
+  \item With $k$ quantities there are $\tfrac{k(k-1)}{2}$ pairs -- $3$ for three columns, $45$ for ten, $4950$ for a hundred. Quoting them one at a time stops working almost immediately.
+  \pause
+  \item \textbf{So collect them in a square table.} Lecture 4 already built it for two columns; nothing changes except its size.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Covariance Matrix and the Correlation Matrix}
+\begin{rldefinition}
+The \textbf{covariance matrix} $\Sigma$ of $k$ quantities is $k \times k$: the diagonal entry $\Sigma_{ii}$ is the variance of quantity $i$, and the off-diagonal $\Sigma_{ij}$ is the covariance of $i$ with $j$. It is symmetric, because $\Sigma_{ij} = \Sigma_{ji}$.
+The \textbf{correlation matrix} is the same table with every entry divided by both standard deviations, so its diagonal is all $1$s and every entry sits in $[-1,1]$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item For the shop's three columns -- temperature ($^\circ$C), iced coffees, hot drinks:
+  \[
+    \Sigma =
+    \begin{pmatrix}
+      31.9 & 49.6 & -69.5 \\
+      49.6 & 128.4 & -107.4 \\
+      -69.5 & -107.4 & 206.0
+    \end{pmatrix}
+  \]
+  \pause
+  \item Is $-107.4$ a stronger link than $49.6$? \textbf{The covariance matrix cannot say} -- its entries carry three different unit pairs. That is exactly why the correlation matrix exists.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Reading a Correlation Matrix}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Now the entries are comparable. \textbf{Temperature and hot drinks, $-0.86$}, is the strongest relationship in the table -- stronger than temperature and iced coffee at $+0.77$.
+  \pause
+  \item \textbf{Iced and hot drinks correlate $-0.66$}, yet neither causes the other. The temperature drives both, in opposite directions -- the confounder from the end of Part 0, now visible in the table.
+  \pause
+  \item The diagonal is always $1$ (everything is perfectly correlated with itself) and the matrix is symmetric, so only the three entries above the diagonal carry information.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/regression/regression_corr_matrix.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Eigendecomposition ────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need the Eigenvectors of $\Sigma$?}
+\begin{itemize}
+  \item Look again at the scatter from Part 0. The cloud is a tilted ellipse, and its natural axes are \emph{along} the cloud and \emph{across} it -- neither of which is the temperature axis or the cups axis.
+  \pause
+  \item Describing a day as (temperature, cups) therefore spends two numbers on something largely redundant: knowing one already tells you most of the other, which is what $r = 0.77$ said.
+  \pause
+  \item \textbf{So ask a sharper question:} is there a single direction that captures most of the variation? If there is, one number per day might be almost as good as two.
+  \pause
+  \item $\Sigma$ already knows the answer -- it is the matrix that drew the ellipse in Lecture 4. Getting it out is an eigenvalue problem.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Eigenvectors of a Covariance Matrix}
+\begin{rldefinition}
+An \textbf{eigenvector} of $\Sigma$ is a direction $v$ that $\Sigma$ only stretches, never rotates: $\Sigma v = \lambda v$. Its \textbf{eigenvalue} $\lambda$ is the stretch factor -- and for a covariance matrix, $\lambda$ is the \emph{variance of the data measured along $v$}.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Decomposing the temperature-and-iced-coffee block of that matrix gives
+  \[
+    \lambda_1 = 149.3,\quad v_1 = (0.39,\ 0.92)
+    \qquad
+    \lambda_2 = 11.0,\quad v_2 = (-0.92,\ 0.39)
+  \]
+  \pause
+  \item $v_1 \cdot v_2 = 0$: the two directions are perpendicular. A symmetric matrix always obliges.
+  \pause
+  \item \textbf{And the variance is conserved:} $\lambda_1 + \lambda_2 = 160.3$, which is exactly $31.9 + 128.4$, the sum of the original variances. The decomposition does not create or destroy variation -- it \emph{redistributes} it onto better axes.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: The Two Principal Directions}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item $v_1$ runs up the long axis of the cloud, $67^\circ$ from the temperature axis: the ``warm and busy $\leftrightarrow$ cold and quiet'' direction.
+  \pause
+  \item $v_2$ is perpendicular -- how unusual a day is \emph{for its temperature}, which is the residual of Part 0 in another guise.
+  \pause
+  \item \textbf{The arrows are drawn $2\sqrt{\lambda}$ long}, because $\lambda$ is a variance and $\sqrt{\lambda}$ a standard deviation: $12.2$ along $v_1$ against $3.3$ along $v_2$.
+  \pause
+  \item \textbf{The split:} $93.2\%$ of all the variation lies along $v_1$, and only $6.8\%$ across it.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/regression/regression_pca_axes.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: That Was PCA}
+\begin{itemize}
+  \item Replace each day's two numbers with a \emph{single} number -- how far along $v_1$ it sits -- and you keep $93.2\%$ of the variation and throw away $6.8\%$. Two columns become one, at a measured price.
+  \pause
+  \item \textbf{That is principal component analysis, in full.} Eigendecompose the covariance matrix, sort the eigenvalues, keep the top few directions, project the data onto them. Module 1, Lecture 2 derives the same thing geometrically -- as the projection that loses the least -- and arrives here.
+  \pause
+  \item The eigenvalue shares are the ``explained variance'' plot you will meet there: keep enough components to reach $90\%$ or $95\%$, and read off how many you needed.
+  \pause
+  \item \textbf{Why an AI course teaches this:} a dataset with $1000$ correlated columns rarely has $1000$ directions worth of information. PCA measures how many it really has, and that same eigendecomposition is what whitening, the covariance ellipses of Gaussian mixture models, and spectral methods on graphs all rest on.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{A Warning: PCA Follows the Units}
+\begin{itemize}
+  \item $v_1 = (0.39, 0.92)$ leans heavily toward cups. That is not because cups matter more -- it is because cups \emph{vary over bigger numbers}: variance $128.4$ against temperature's $31.9$.
+  \pause
+  \item Record the same temperatures in Fahrenheit and their variance is multiplied by $1.8^2 = 3.24$; the axes swing, and the ``$93.2\%$'' changes. \textbf{A covariance matrix answers in whatever units you handed it.}
+  \pause
+  \item \textbf{The fix is to standardize first} -- replace each column by its z-scores from Lecture 4. Every variance becomes $1$, and the covariance matrix of the standardized data \emph{is} the correlation matrix.
+  \pause
+  \item Doing that here gives eigenvalues $1 + r = 1.77$ and $1 - r = 0.23$, a $88.7\%/11.3\%$ split rather than $93.2\%/6.8\%$. Same data, honest answer -- standardize unless the columns are already in comparable units.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Where This Goes Next}
+\begin{itemize}
+  \item \textbf{Lecture 10 -- model evaluation:} the $R^2 = 0.60$ here was measured on the very days the line was fitted to, which flatters it. Held-out data and cross-validation are how to get an honest number.
+  \pause
+  \item \textbf{Module 1, Lecture 2 -- PCA:} the same eigendecomposition, derived geometrically as the projection that loses the least.
+  \pause
+  \item \textbf{Module 1, Lecture 12 -- ridge and lasso:} least squares plus a penalty on the coefficients. Lecture 6 already showed that penalty is a prior in disguise.
+  \pause
+  \item \textbf{Module 1, Lecture 13 -- logistic regression:} the same recipe with a Bernoulli outcome instead of a Gaussian one, so cross-entropy replaces squared error.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item \textbf{Covariance} says which way a pair moves together; \textbf{correlation} $r = s_{xy}/(s_x s_y)$ says how strongly, unit-free and inside $[-1,1]$.
+  \pause
+  \item \textbf{Least squares} fits $\hat{y} = a + bx$ with $b = s_{xy}/s_x^2$ through the mean point -- and it \emph{is} maximum likelihood under Gaussian noise, which is why the gaps are squared.
+  \pause
+  \item \textbf{$R^2$} is the share of variation the line accounts for, and equals $r^2$ for a single predictor. Residual plots, not $R^2$, are what reveal a wrong shape.
+  \pause
+  \item \textbf{$r$ sees straight lines only} -- a U-shaped relationship can give $r = -0.06$ with a curve explaining $55\%$ -- and no correlation, however strong, establishes causation.
+  \pause
+  \item \textbf{The covariance matrix} holds every pair at once; its \textbf{eigenvectors} are the directions the data actually varies along and its \textbf{eigenvalues} the variance along them. Keeping the largest few is PCA -- after standardizing, unless the columns share units.
+\end{itemize}
+\end{frame}

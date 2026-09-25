@@ -1,0 +1,163 @@
+\section{Lecture 2, Part 1: Bayes' Theorem}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 2}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Bayes' Theorem}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Use the law of total probability to build an overall probability out of group-by-group pieces.
+  \pause
+  \item State Bayes' theorem, derive it from the multiplication rule, and use it to turn $P(B \mid A)$ into $P(A \mid B)$.
+  \pause
+  \item Name the three pieces -- prior, likelihood, posterior -- that the rest of the course reuses.
+  \pause
+  \item Explain why the base rate decides what a positive test result actually means.
+\end{itemize}
+\end{frame}
+
+% ─── Law of total probability ───────────────────────────────────────────────
+\begin{frame}{The Law of Total Probability}
+\begin{rldefinition}
+Split the sample space into groups $A_1, \dots, A_k$ that never overlap and together cover everything -- a \textbf{partition}, such as ``owns a bike'' and ``no bike''. Then
+\[
+P(B) = \sum_{i=1}^{k} P(B \mid A_i)\,P(A_i).
+\]
+\smallskip
+\textbf{In words:} work out the chance of $B$ separately inside each group, then average those answers, weighting each group by how big it is.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Students:} $P(\text{bus}) = 0.25 \times 0.6 + 0.75 \times 0.4 = 0.15 + 0.30 = 0.45$ -- exactly the $45/100$ sitting in the table's margin.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Total Probability Is a Weighted Average}
+\centering
+\includegraphics[width=0.62\textwidth]{figures/conditional_bayes/conditional_bayes_total_probability.pdf}
+
+\vspace{0.25em}
+\footnotesize
+Bar width is group size and shading is that group's bus rate, so the orange \emph{area} is the $45$ bus takers. The overall $0.45$ must land between $0.25$ and $0.75$, nearer $0.25$ because the bike group is bigger.
+\end{frame}
+
+% ─── Bayes ──────────────────────────────────────────────────────────────────
+\begin{frame}{Bayes' Theorem}
+\begin{rldefinition}
+\textbf{Bayes' theorem} turns one conditional probability into the other:
+\[
+P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)} .
+\]
+\textbf{Two-line derivation:} the multiplication rule written both ways round gives $P(A \cap B) = P(A)P(B \mid A)$ and $P(A \cap B) = P(B)P(A \mid B)$; set them equal and divide by $P(B)$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The denominator comes from the law of total probability: $P(B) = P(B \mid A)P(A) + P(B \mid A^c)P(A^c)$.
+  \pause
+  \item \textbf{Check it on the students:} $P(\text{bike} \mid \text{bus}) = \frac{0.25 \times 0.6}{0.45} = \frac{0.15}{0.45} = \tfrac13$, and the table agrees -- of the $45$ bus takers, $15$ own a bike.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Prior, Likelihood, Posterior}
+\begin{itemize}
+  \item The three pieces of Bayes' theorem carry names that reappear in every later module:
+  \begin{itemize}
+    \item $P(A)$ -- the \textbf{prior}: what we believed before seeing any evidence.
+    \item $P(B \mid A)$ -- the \textbf{likelihood}: how well the cause $A$ explains the evidence $B$.
+    \item $P(A \mid B)$ -- the \textbf{posterior}: what we believe once we have seen it.
+  \end{itemize}
+  \pause
+  \item \textbf{Everyday:} before looking outside, $P(\text{rain})$ is the prior. ``The pavement is wet'' is the evidence. $P(\text{wet} \mid \text{rain})$ is high, so the posterior $P(\text{rain} \mid \text{wet})$ rises -- but not to certainty, because a street cleaner also leaves wet pavement.
+  \pause
+  \item Bayes' theorem is the rule for updating a belief with evidence, which is exactly what learning from data means.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Do We Need Bayes' Theorem?}
+\begin{itemize}
+  \item \textbf{Why:} the conditional probability we can \emph{measure} is almost always the reverse of the one we actually \emph{want}.
+  \pause
+  \item A test is checked on people already known to be ill, which gives $P(\text{positive} \mid \text{ill})$ -- a property of the test. The patient wants $P(\text{ill} \mid \text{positive})$, which also depends on how common the illness is.
+  \pause
+  \item \textbf{The two are not interchangeable:} $P(\text{wet grass} \mid \text{it rained})$ is close to $1$, while $P(\text{it rained} \mid \text{wet grass})$ is far lower -- sprinklers exist.
+  \pause
+  \item Same shape everywhere: a fire alarm's $P(\text{alarm} \mid \text{fire})$ versus $P(\text{fire} \mid \text{alarm})$; a filter's $P(\text{``free prize''} \mid \text{spam})$ versus $P(\text{spam} \mid \text{``free prize''})$.
+\end{itemize}
+\pause
+\begin{rlpitfall}
+Swapping the two has a name -- the \textbf{prosecutor's fallacy}. ``Only $1$ innocent person in a million would match'' is $P(\text{match} \mid \text{innocent})$, not $P(\text{innocent} \mid \text{match})$.
+\end{rlpitfall}
+\end{frame}
+
+\begin{frame}{Real Event: What a Positive Test Really Means}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Base rate:} $1$ person in $100$ has the disease -- how common it is before any test. Of $10{,}000$ people, $100$ are ill and $9{,}900$ healthy.
+  \pause
+  \item The test \emph{never misses}: all $100$ ill test positive. But it wrongly flags $5$ in every $100$ healthy people -- $495$ more.
+  \pause
+  \item $100 + 495 = 595$ positives, only $100$ ill: $P(\text{ill} \mid \text{positive}) = \tfrac{100}{595} \approx \tfrac16 \approx 17\%$.
+  \pause
+  \item \textbf{Why:} $5\%$ of a huge group beats $100\%$ of a tiny one -- healthy people outnumber ill $99$ to $1$, so about \emph{five} false alarms per real case.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/conditional_bayes/conditional_bayes_screening.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Base Rates}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Nothing about the test changes along this curve -- only how common the disease is.
+  \pause
+  \item At $1$ in $1000$ the same positive result means a $2\%$ chance; at $1$ in $10$ it means $69\%$.
+  \pause
+  \item \textbf{Why screening a healthy population is hard:} when almost everybody is well, even a small false-alarm rate produces more false positives than real cases -- so a positive screen is followed by a second, different test.
+  \pause
+  \item \textbf{Later in this course:} the same arithmetic is why accuracy is a useless score for rare events -- always answering ``healthy'' here would be $99\%$ accurate.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/conditional_bayes/conditional_bayes_base_rate.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Where This Goes Next}
+\begin{itemize}
+  \item \textbf{Module 0, Lecture 6 -- Bayesian inference:} let $A$ be an unknown quantity and $B$ the data we collected. Bayes' theorem then updates a prior over that quantity into a posterior, and MAP estimation simply picks the posterior's peak.
+  \pause
+  \item \textbf{Module 3, Lecture 6 -- Naive Bayes:} classify an email by comparing $P(\text{spam})\,P(\text{words} \mid \text{spam})$ against the same product for ``not spam''. ``Naive'' means it assumes the words are independent given the class -- the independence we checked from a table today.
+  \pause
+  \item \textbf{Module 1, Lecture 14 -- classification metrics:} the base-rate arithmetic on the previous slide is why accuracy alone is the wrong score for a rare event.
+  \pause
+  \item The prior/likelihood/posterior vocabulary then reappears in generative models, in regularization, and in alignment.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item $P(B \mid A) = P(A \cap B)/P(A)$: conditioning shrinks the sample space to $A$ and re-counts inside it.
+  \pause
+  \item Tree diagrams multiply along branches; contingency tables give joint, marginal, and conditional probabilities by changing the denominator.
+  \pause
+  \item Independence means the conditional equals the marginal -- and pooling groups with different rates can reverse a comparison completely (Simpson's paradox).
+  \pause
+  \item Law of total probability: average the group-by-group answers, weighted by group size.
+  \pause
+  \item Bayes' theorem reverses the conditioning. What a positive test means depends as much on the base rate as on the test itself.
+\end{itemize}
+\end{frame}

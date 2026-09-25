@@ -1,0 +1,182 @@
+\section{Lecture 4, Part 1: The Gaussian}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 4}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large The Gaussian}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item State the normal distribution's two parameters and use the $68$--$95$--$99.7$ rule without a table.
+  \pause
+  \item Convert any measurement to a \textbf{z-score} and use it to compare quantities measured on different scales.
+  \pause
+  \item Read a \textbf{mean vector} and \textbf{covariance matrix}, and say what the contour ellipses of a multivariate Gaussian show.
+\end{itemize}
+\end{frame}
+
+% ─── The normal distribution ────────────────────────────────────────────────
+\begin{frame}{Why Do We Need the Gaussian?}
+\begin{itemize}
+  \item \textbf{Why:} because it keeps turning up unbidden. Weigh croissants, measure heights, read a thermometer twice -- the same bell shape appears, whatever the underlying mechanism.
+  \pause
+  \item \textbf{The reason, in one line:} anything built by \emph{adding up} many small independent wobbles ends up Gaussian. A croissant's weight is dough portioning, plus flour moisture, plus oven position, plus rise time, plus a dozen others.
+  \pause
+  \item That is the Central Limit Theorem, and Lecture 5 proves it. For now take the consequence: sums and averages drift toward this one shape, so it is worth knowing in detail.
+  \pause
+  \item \textbf{Everyday consequence:} two numbers -- a centre and a spread -- are enough to answer almost any question about the whole batch.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Normal Distribution}
+\begin{rldefinition}
+A \textbf{normal} (or \textbf{Gaussian}) variable $X \sim \mathcal{N}(\mu, \sigma^2)$ has the symmetric bell-shaped density
+\[
+f(x) = \frac{1}{\sigma\sqrt{2\pi}}\,
+        \exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right).
+\]
+$\mu$ slides the curve sideways, $\sigma$ stretches it. \emph{The bakery's croissants:} $\mu = 60$\,g, $\sigma = 2$\,g.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The formula is never needed by hand -- it has no closed-form integral. What is needed is the consequence below.
+  \pause
+  \item \textbf{The $68$--$95$--$99.7$ rule:} about $68\%$ of the batch lies within $1\sigma$ of $\mu$, about $95\%$ within $2\sigma$, and about $99.7\%$ within $3\sigma$. Exactly: $68.27\%$, $95.45\%$, $99.73\%$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Croissant Weights and the $68$--$95$--$99.7$ Rule}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Target $60$\,g, $\sigma = 2$\,g. The rule reads straight off the axis: $68\%$ weigh between $58$ and $62$\,g, $95\%$ between $56$ and $64$\,g, $99.7\%$ between $54$ and $66$\,g.
+  \pause
+  \item \textbf{Why the bakery cares:} the label promises ``$55$\,g or more''. That is $2.5\sigma$ below target, so the shortfall rate is $0.62\%$ -- about $6$ croissants in every $1000$.
+  \pause
+  \item Tighten the process to $\sigma = 1.5$\,g and $55$\,g becomes $3.3\sigma$ away: about $4$ per $10{,}000$. \textbf{Spread, not the average, decides the failure rate} -- the same lesson as Lecture 1's bottling line, now with a formula behind it.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/continuous_gaussian/gaussian_empirical_rule.pdf}
+\end{columns}
+\end{frame}
+
+% ─── z-scores ───────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need z-scores?}
+\begin{rldefinition}
+The \textbf{z-score} of a measurement is how many standard deviations it sits from the mean, $z = (x - \mu)/\sigma$. It has no units, so grams and minutes become comparable. \emph{A $57$\,g croissant:} $z = (57-60)/2 = -1.5$, one and a half standard deviations light.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Worked example -- which bake went further wrong?} One morning a croissant came out at $57$\,g and a loaf at $480$\,g, where loaves are $\mathcal{N}(500, 15^2)$:
+  \[
+    z_{\text{croissant}} = \tfrac{-3}{2} = -1.50,
+    \qquad
+    z_{\text{loaf}} = \tfrac{-20}{15} = -1.33 .
+  \]
+  \pause
+  \item The loaf is $20$\,g light and the croissant only $3$\,g, yet the \emph{croissant} is the more unusual bake: $6.7\%$ of croissants come out that light against $9.1\%$ of loaves. Raw differences mislead; z-scores do not.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Standardizing Is Everywhere}
+\begin{itemize}
+  \item Subtracting $\mu$ and dividing by $\sigma$ turns any measurement into ``how many spreads from typical''. Doing that to every column of a table is called \textbf{standardizing}.
+  \pause
+  \item \textbf{Why an AI course teaches this:} k-NN measures distances, so a column in grams and a column in kilograms would count a thousand times differently -- standardize first and they do not (Module 1, Lecture 1). PCA has the same problem, for the same reason (Module 1, Lecture 2).
+  \pause
+  \item \textbf{And inside the network:} \textbf{batch normalization} takes the z-score of each activation using the mean and standard deviation of the current mini-batch. It is this slide's formula applied a few hundred times per forward pass (Module 2, Lecture 6).
+\end{itemize}
+\end{frame}
+
+% ─── Multivariate ───────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need More Than One Number at a Time?}
+\begin{itemize}
+  \item Real records come in bundles. For each trading day the shop notes the high temperature \emph{and} the iced coffees sold -- and those two are plainly not independent.
+  \pause
+  \item Describing them separately (``temperature averages $22^\circ$C, sales average $40$ cups'') throws away the very thing worth knowing: warm days sell more.
+  \pause
+  \item \textbf{What is missing is a number for moving together.} Variance measured how one quantity spreads; we now need how two co-spread. That number is the \textbf{covariance}, and with $k$ quantities it becomes a $k \times k$ matrix.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Multivariate Gaussian}
+\begin{rldefinition}
+A \textbf{multivariate Gaussian} replaces $\mu$ with a \textbf{mean vector} $\boldsymbol{\mu}$ -- one typical value per quantity -- and $\sigma^2$ with a \textbf{covariance matrix} $\Sigma$. $\Sigma_{ii}$ is the variance of quantity $i$; $\Sigma_{ij}$ is their covariance: positive when they rise together, negative when one rises as the other falls, zero when knowing one says nothing about the other.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{From $300$ trading days} (temperature in $^\circ$C, iced coffees sold):
+  \[
+    \boldsymbol{\mu} = \begin{pmatrix} 21.8 \\ 39.5 \end{pmatrix},
+    \qquad
+    \Sigma = \begin{pmatrix} 31.9 & 49.6 \\ 49.6 & 128.4 \end{pmatrix}.
+  \]
+  \pause
+  \item Read it: temperature varies with $\sqrt{31.9} = 5.7^\circ$C, sales with $\sqrt{128.4} = 11.3$ cups, and the off-diagonal $49.6$ is positive -- warm days sell more. Dividing out both spreads gives the correlation, $49.6/(5.7 \times 11.3) = 0.77$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Hot Days and Iced Coffee}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Each dot is one trading day; the ellipses are the $1\sigma$ and $2\sigma$ contours.
+  \pause
+  \item \textbf{The tilt is the covariance.} Zero covariance lines the ellipses up with the axes; positive covariance tips them upward, and stronger correlation makes them thinner.
+  \pause
+  \item \textbf{Why the ellipse is the useful object:} the starred day, $28^\circ$C and only $25$ cups, sits well outside it -- yet $28^\circ$C is just $1.1$ standard deviations warm and $25$ cups $1.3$ light. Only the \emph{pair} is strange, $3.5$ standard deviations out; checking each column alone would have missed it.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/continuous_gaussian/gaussian_bivariate.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why an AI Course Spends a Lecture on One Curve}
+\begin{itemize}
+  \item \textbf{The long axis of that ellipse is what PCA finds.} PCA diagonalizes the covariance matrix: its principal directions \emph{are} the ellipse's axes, and the variance along each is how far the ellipse stretches (Module 1, Lecture 2).
+  \pause
+  \item \textbf{Clustering.} A Gaussian Mixture Model describes data as several of these ellipses overlaid -- one per cluster, each with its own $\boldsymbol{\mu}$ and $\Sigma$ (Module 1, Lecture 9).
+  \pause
+  \item \textbf{Starting a network.} Weights are initialized by drawing from $\mathcal{N}(0, \sigma^2)$ with $\sigma$ set by the layer width, precisely so activations neither vanish nor explode (Module 2).
+  \pause
+  \item \textbf{Regularization is a Gaussian in disguise.} Assuming weights are drawn from $\mathcal{N}(0,\tau^2)$ and then taking the most probable weights yields exactly the L2 penalty -- ridge regression (Module 1, Lecture 12; derived in Lecture 6).
+  \pause
+  \item \textbf{Generative models.} A VAE's latent variable is a multivariate Gaussian, and a diffusion model's forward process is nothing but repeatedly adding $\mathcal{N}(0,\sigma^2)$ noise.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Where This Goes Next}
+\begin{itemize}
+  \item \textbf{Lecture 5 -- the CLT:} why averages of \emph{anything} become Gaussian, which is the promise this lecture kept borrowing.
+  \pause
+  \item \textbf{Lecture 6 -- Bayesian inference:} the Beta becomes the prior for a Bernoulli and the Gaussian its own conjugate prior, so the updates of this lecture get a general rule.
+  \pause
+  \item \textbf{Lecture 9 -- multivariate statistics:} the covariance matrix again, this time as the route into correlation and PCA.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item A continuous variable has $P(X = x) = 0$ for every $x$, so probability is carried by a \textbf{density}: $P(a<X<b)$ is the area under $f$, and the total area is $1$.
+  \pause
+  \item The \textbf{CDF} $F(x) = P(X \le x)$ turns every range question into $F(b) - F(a)$.
+  \pause
+  \item \textbf{Uniform} when no value in a range is special; \textbf{exponential} for the wait until the next event, memoryless and the partner of Lecture 3's Poisson; \textbf{Beta} for a belief about a single proportion, with $\alpha$ and $\beta$ counting successes and failures.
+  \pause
+  \item The \textbf{Gaussian} $\mathcal{N}(\mu,\sigma^2)$ follows the $68$--$95$--$99.7$ rule, and a \textbf{z-score} $(x-\mu)/\sigma$ makes different scales comparable.
+  \pause
+  \item In several dimensions, a \textbf{mean vector} and \textbf{covariance matrix} replace $\mu$ and $\sigma^2$; the off-diagonal entries tilt the contour ellipses, and those ellipses are what PCA, GMMs and outlier detection all act on.
+\end{itemize}
+\end{frame}

@@ -1,0 +1,212 @@
+\section{Lecture 10, Part 0: Model Evaluation}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 10}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Model Evaluation}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say what a training, validation and test set are each for, and why a test set is spent the moment you look at it.
+  \pause
+  \item Read the bias--variance tradeoff off a measured error curve, and explain why more capacity eventually hurts.
+  \pause
+  \item Put an honest interval around a reported metric using cross-validation and the bootstrap.
+\end{itemize}
+\end{frame}
+
+% ─── Train / validation / test ──────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Test Set At All?}
+\begin{itemize}
+  \item \textbf{Why:} we never care how well a rule describes the data we already have. We care how it does on a day we have not seen. Those two numbers can be wildly different.
+  \pause
+  \item \textbf{Everyday example:} a student works through ten past papers until they can reproduce every answer from memory. Their score on those ten papers is $100\%$. It says nothing about tomorrow's exam, because the exam is the only paper they have not memorised.
+  \pause
+  \item \textbf{Numerical example:} the coffee shop fits a curve through $20$ days of iced-coffee sales. A wiggly enough curve scores an error of $1.5$ cups on those $20$ days -- and $27.7$ cups on $40$ fresh days.
+  \pause
+  \item The error on data you fitted is not an estimate of anything. It is a measure of how hard you tried.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Training, Validation and Test}
+\begin{rldefinition}
+\textbf{Training set} -- the data the rule is fitted on. \emph{The past papers you practise with.}
+
+\smallskip
+\textbf{Validation set} -- held-out data used to \emph{choose} between candidate rules: how wiggly a curve, how deep a tree. \emph{The mock exam that tells you which revision method is working.}
+
+\smallskip
+\textbf{Test set} -- held out and untouched until the very end, used once to report how well the chosen rule does. \emph{The real exam.}
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The split matters because each set answers a different question. Choosing on the test set turns it into a validation set, and then nothing is left to report with.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Fitting Twenty Days of Sales}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item The shop records the day's high temperature and iced coffees sold, for $20$ days. Sales stay flat while it is cool, then climb.
+  \pause
+  \item \textbf{Degree $1$} -- a straight line. It cannot bend, so it misses the flat stretch and the top: error $2.84$ training, $3.33$ test.
+  \pause
+  \item \textbf{Degree $3$} -- follows the real shape: $2.03$ and $2.65$.
+  \pause
+  \item \textbf{Degree $9$} -- passes near every dot, even predicting \emph{negative} sales near $21^\circ$C to get there: $1.48$ training, $27.7$ test.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/evaluation/evaluation_polynomial_fits.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Bias-variance ──────────────────────────────────────────────────────────
+\begin{frame}{Why Does More Capacity Stop Helping?}
+\begin{itemize}
+  \item \textbf{Why:} a fit can be wrong for two opposite reasons, and fixing one makes the other worse.
+  \pause
+  \item \textbf{Too rigid} -- a straight line cannot bend to the truth, however much data it gets. It is wrong the same way every time: that is \textbf{bias}.
+  \pause
+  \item \textbf{Too flexible} -- a degree-$9$ curve chases the noise in whichever $20$ days it saw. Show it $20$ different days and it comes out a different shape: that is \textbf{variance}.
+  \pause
+  \item \textbf{And some error is nobody's fault:} two days at the same temperature still sell different amounts.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Bias--Variance Tradeoff}
+\begin{rldefinition}
+The error a rule makes on fresh data splits into three parts:
+\[
+\underbrace{\text{bias}^2}_{\text{too rigid to fit the truth}}
+\; + \;
+\underbrace{\text{variance}}_{\text{changes too much with the sample}}
+\; + \;
+\underbrace{\text{noise}}_{\text{irreducible}}
+\]
+\emph{Everyday:} the student who memorised ten papers has low bias and huge variance -- ask a question they did not memorise and the answer is anyone's guess. The student who answers ``it depends'' to everything has low variance and huge bias.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Adding capacity trades bias down and variance up. There is a point where the trade stops paying, and only held-out data can tell you where it is.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Where Does the Test Error Turn Around?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Same $20$ training days, every degree from $1$ to $10$, error measured on the $40$ test days.
+  \pause
+  \item \textbf{Training error only ever falls} -- $2.84$ down to $1.47$. It has to: more capacity can always fit the same points better.
+  \pause
+  \item \textbf{Test error falls, bottoms out at degree $3$ ($2.65$), then climbs} -- $4.8$ at degree $7$, then $22$, $28$, $34$. It wobbles on the way: $40$ test days is not many.
+  \pause
+  \item \textbf{Read it:} the gap between the curves \emph{is} the overfitting. Watching only the green line, degree $10$ looks like your best model ever.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/evaluation/evaluation_bias_variance.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Capacity Is Not Free}
+\begin{itemize}
+  \item \textbf{The promise, cashed:} every model you meet from here on has a capacity dial -- the depth of a decision tree, the number of neighbours in k-NN, the width of a network, the strength of a penalty term.
+  \pause
+  \item \textbf{Repeat this one:} \emph{training error always falls with capacity, so it can never tell you when to stop.} Only held-out data can.
+  \pause
+  \item \textbf{Module 1, Lecture 5} prunes decision trees for exactly this reason: an unpruned tree can put every training point in its own leaf, which is degree $10$ wearing a different hat.
+  \pause
+  \item \textbf{Module 1, Lecture 14} returns to this curve by name, and the whole of \textbf{regularization} (Module 1, Lecture 12) is machinery for holding variance down without giving up the flexibility.
+\end{itemize}
+\end{frame}
+
+% ─── Cross-validation ───────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Cross-Validation?}
+\begin{itemize}
+  \item \textbf{Why:} holding out a validation set costs you data twice -- the held-out days cannot be trained on, and the score from a handful of days is itself noisy.
+  \pause
+  \item \textbf{$k$-fold cross-validation:} split the training data into $k$ equal parts. Train on $k-1$ of them, score on the one left out, and repeat until every part has been the held-out one exactly once. Average the $k$ scores.
+  \pause
+  \item Every observation is used for training $k-1$ times and for scoring once. Nothing is wasted, and you get $k$ scores instead of one -- so you can see how much the answer wobbles.
+  \pause
+  \item \textbf{The cost is arithmetic:} you fit the model $k$ times instead of once. With $k = 5$ that is usually a bargain; on a model that takes a week to train, it is not.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Five Folds by Hand}
+\begin{itemize}
+  \item Take the shop's $20$ training days, shuffle them, and cut into $5$ folds of $4$ days. Fit the degree-$3$ curve five times, each time scoring on the fold left out:
+\end{itemize}
+\centering
+\small
+\begin{tabular}{l|ccccc}
+Fold held out & $1$ & $2$ & $3$ & $4$ & $5$ \\
+\hline
+Error (cups)  & $2.60$ & $1.57$ & $2.19$ & $2.58$ & $3.66$ \\
+\end{tabular}
+
+\vspace{0.4em}
+\raggedright
+\begin{itemize}
+  \item[] \pause
+  \item Mean $= 2.52$ cups, standard deviation $= 0.76$. \pause
+  \item \textbf{The spread is the point.} Had we held out only fold $2$ we would have reported $1.57$; had we held out only fold $5$, $3.66$. Either number alone would have been an accident of which days landed where.
+\end{itemize}
+\end{frame}
+
+% ─── Uncertainty on a metric ────────────────────────────────────────────────
+\begin{frame}{Why Do We Need an Interval on a Metric?}
+\begin{itemize}
+  \item \textbf{Why:} a test score is computed from a \emph{sample} of fresh data, so Lecture 5 applies: it is a random variable with a standard error.
+  \pause
+  \item \textbf{The problem:} $\sigma/\sqrt{n}$ applies to a mean. A median, an RMSE or an AUC is not a mean, and has no tidy formula.
+  \pause
+  \item \textbf{The bootstrap:} resample the test set \emph{with replacement} to the same size, recompute the metric, repeat thousands of times. The spread of those values estimates the spread of the metric.
+  \pause
+  \item It works because the test set is our best stand-in for the population -- drawing from it imitates drawing a fresh test set, the thing we cannot afford.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{How Precise Is That Error Number?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item The degree-$3$ curve scores $\mathrm{RMSE} = 2.65$ cups on the $40$ test days. Resample those $40$ days $10{,}000$ times.
+  \pause
+  \item Middle $95\%$ of the resampled scores: $[2.03,\; 3.24]$ -- an interval more than a cup wide.
+  \pause
+  \item \textbf{Read it:} ``the error is $2.65$'' is really ``the error is somewhere around $2$ to $3.2$, and $40$ days is not enough to say better''.
+  \pause
+  \item A rival model scoring $2.60$ has not beaten this one. Their intervals overlap almost entirely.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/evaluation/evaluation_bootstrap.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: $0.3\%$ Is Not a Difference}
+\begin{itemize}
+  \item \textbf{The promise, cashed:} leaderboards, papers and release notes all report a single accuracy. That number is an estimate, and it comes with a standard error whether or not anyone prints it.
+  \pause
+  \item \textbf{Numerical example:} a classifier at $90\%$ accuracy on a $1000$-example test set has $\mathrm{SE} = \sqrt{0.9 \times 0.1 / 1000} = 0.0095$, so a $95\%$ interval of roughly $\pm 1.9$ percentage points.
+  \pause
+  \item So $90.0\%$ against $90.3\%$ is not a result. The intervals sit almost exactly on top of each other, and rerunning with a different test split could easily swap the winner.
+  \pause
+  \item \textbf{Repeat this one:} \emph{halving the uncertainty on a metric needs four times the test data} -- the $\sqrt{n}$ of Lecture 5. At $10{,}000$ examples the interval is $\pm 0.6$ points, and only then is $0.3\%$ worth arguing about.
+\end{itemize}
+\end{frame}

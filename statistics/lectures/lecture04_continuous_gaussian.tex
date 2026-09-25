@@ -1,0 +1,188 @@
+\section{Lecture 4, Part 0: Continuous Random Variables}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 4}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Continuous Random Variables}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say why a continuous quantity needs a \textbf{density} rather than a probability for each value, and read probability as \emph{area}.
+  \pause
+  \item Use the CDF to answer ``at most'', ``at least'' and ``between'' questions.
+  \pause
+  \item Recognize the uniform, exponential and Beta distributions from the question being asked.
+\end{itemize}
+\end{frame}
+
+% ─── Why a density ──────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Density Instead of a Probability?}
+\begin{itemize}
+  \item \textbf{Why:} Lecture 3 listed the values a variable could take. Now take the \emph{gap} between two customers walking into the coffee shop. Between $2$ and $3$ minutes there are already infinitely many possible answers -- $2.5$, $2.51$, $2.500\overline{7}$ -- so they cannot be listed.
+  \pause
+  \item \textbf{The awkward consequence:} if infinitely many values each had a probability above zero, the total would exceed $1$. So for a continuous variable
+  \[
+    P(X = 2.5 \text{ exactly}) = 0 ,
+  \]
+  and that is not a trick -- no stopwatch ever reads exactly $2.5$.
+  \pause
+  \item \textbf{The fix:} stop asking for single values and ask for \emph{ranges}. $P(2 < X < 3)$ is a perfectly good number. The object that answers range questions is a \textbf{density}.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{From Bars to a Curve}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item $20{,}000$ observed gaps between customers, drawn as the histogram of Lecture 1 -- but with the vertical axis rescaled so that \emph{total area is $1$}.
+  \pause
+  \item Top: bins $2$ minutes wide, six bars. Bottom: bins $0.25$ minutes wide, forty-eight bars.
+  \pause
+  \item Keep shrinking the bins and the bar tops stop being bars. What they trace out is the blue curve -- the \textbf{density}.
+  \pause
+  \item \textbf{Nothing changed but the resolution.} A density is the shape a histogram settles into when the bins get arbitrarily narrow and the data arbitrarily plentiful.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/continuous_gaussian/continuous_histogram_to_density.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{The Probability Density Function}
+\begin{rldefinition}
+A \textbf{probability density function} $f(x)$ gives probability as \emph{area}: the chance of landing between $a$ and $b$ is the area under $f$ from $a$ to $b$.
+\[
+P(a < X < b) = \int_a^b f(x)\,\mathrm{d}x,
+\qquad f(x) \ge 0,
+\qquad \int_{-\infty}^{\infty} f(x)\,\mathrm{d}x = 1 .
+\]
+\emph{Reading the integral sign:} it is the $\sum$ of Lecture 3 with the bars made infinitely thin -- ``add up the area''.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{$f(x)$ is not a probability} and may exceed $1$: a delivery landing uniformly within a $30$-second window has density $1/0.5 = 2$ per minute. Think of $f(x)$ as concentration -- probability per minute -- the way speed is distance per hour.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: How Long Until the Next Customer?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Lecture 3 had $4$ arrivals per ten minutes. So the average gap is $2.5$ minutes, and the density of the gap is $f(x) = 0.4\,e^{-0.4x}$.
+  \pause
+  \item \textbf{Will the next customer arrive within $2$ minutes?} Shade the area from $0$ to $2$:
+  $P(X < 2) = 1 - e^{-0.8} = 0.55$.
+  \pause
+  \item The lower panel stacks that area up as you sweep left to right. At $x = 2$ its height is $0.55$ -- the same number, read off a curve instead of measured as an area.
+  \pause
+  \item \textbf{Why the barista cares:} a quiet stretch of $5$ minutes or more still happens $e^{-2} = 13.5\%$ of the time, so a lull is no sign the rush is over.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/continuous_gaussian/continuous_density_and_cdf.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{The CDF: Everything Up To Here}
+\begin{rldefinition}
+The \textbf{cumulative distribution function} $F(x) = P(X \le x)$ is the area under the density to the \emph{left} of $x$ -- the running total. It starts at $0$, ends at $1$, and never decreases. \emph{Gaps between customers:} $F(2) = 0.55$, so $55\%$ of gaps are under two minutes.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Every range question is two lookups and a subtraction:
+  \[
+    P(a < X < b) = F(b) - F(a) .
+  \]
+  \pause
+  \item \textbf{Worked example:} gaps between $2$ and $5$ minutes. $F(5) = 1 - e^{-2} = 0.865$ and $F(2) = 0.551$, so the answer is $0.865 - 0.551 = 0.314$ -- just under a third.
+  \pause
+  \item This is why tables and software report $F$, not $f$: $F$ is what actually answers questions.
+\end{itemize}
+\end{frame}
+
+% ─── Uniform and exponential ────────────────────────────────────────────────
+\begin{frame}{Uniform and Exponential: The Two Simplest Shapes}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Uniform}$(a,b)$ -- every value equally likely, density flat at $1/(b-a)$. \emph{A delivery promised ``within ten minutes''}: $f(x) = 0.1$, so it lands in the first three minutes with probability $3/10$.
+  \pause
+  \item \textbf{Exponential}$(\lambda)$ -- the wait until the next event when events arrive at rate $\lambda$: $f(x) = \lambda e^{-\lambda x}$, mean $1/\lambda$.
+  \pause
+  \item The shapes say opposite things: under the uniform no moment is special; under the exponential short waits are always commonest, however long you have already waited.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/continuous_gaussian/continuous_uniform_exponential.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why Does the Exponential Pair With the Poisson?}
+\begin{itemize}
+  \item They are two views of one process. \textbf{Poisson} counts how many customers arrive in ten minutes; \textbf{exponential} measures the gap between consecutive arrivals. Rate $\lambda = 4$ per ten minutes $\Rightarrow$ mean gap $2.5$ minutes.
+  \pause
+  \item \textbf{The memoryless property:} having already waited three minutes changes nothing.
+  \[
+    P(X > 5 \mid X > 3) = \frac{e^{-2}}{e^{-1.2}} = e^{-0.8} = 0.449 = P(X > 2) .
+  \]
+  \pause
+  \item \textbf{Everyday reading:} the shop does not ``owe'' you a customer. The queue has no memory of the quiet stretch -- which is exactly the independence assumption the Poisson made in Lecture 3.
+  \pause
+  \item \textbf{And a warning:} that is a strong claim about the world. Real arrivals cluster at lunchtime, and then neither model fits.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Every Random Number Starts Uniform}
+\begin{itemize}
+  \item A computer can only produce one kind of randomness: a uniform number between $0$ and $1$. Everything else is built from it by running a CDF \emph{backwards}.
+  \pause
+  \item \textbf{Worked example.} Draw $u \sim$ Uniform$(0,1)$ and solve $F(x) = u$. For the exponential, $1 - e^{-\lambda x} = u$ gives
+  \[
+    x = -\frac{\ln(1-u)}{\lambda} .
+  \]
+  With $u = 0.5$ and $\lambda = 0.4$: $x = 1.73$ minutes -- and indeed half of all gaps are shorter than that.
+  \pause
+  \item \textbf{Why an AI course teaches this:} this is how sampling actually happens. Dropout masks, shuffled mini-batches, data augmentation and the noise added at every step of a diffusion model all begin as uniform draws pushed through an inverse CDF.
+\end{itemize}
+\end{frame}
+
+% ─── Beta ───────────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Distribution Over One Probability?}
+\begin{itemize}
+  \item Lecture 3 ended with the same problem for \emph{many} categories: the Dirichlet, a distribution over the cup-size shares. The two-outcome case deserves its own name.
+  \pause
+  \item \textbf{The question:} what fraction $p$ of customers buy a pastry? Lecture 3 simply asserted $p = 0.3$. Where did that come from, and how sure are we?
+  \pause
+  \item \textbf{Numerical example:} $3$ of the first $10$ orders included a pastry. Read literally that is $p = 0.30$ -- but $0.20$ or $0.45$ would hardly be surprising on ten orders.
+  \pause
+  \item So $p$ itself is an unknown number between $0$ and $1$, and we need a density over exactly that range.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Beta: A Belief About a Single Rate}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item A \textbf{Beta}$(\alpha, \beta)$ is a density on $[0,1]$, so it can only describe a proportion; its mean is $\alpha/(\alpha+\beta)$.
+  \pause
+  \item Like the Dirichlet, $\alpha$ and $\beta$ \textbf{count successes and failures}. Top: $3$ of $10$, Beta$(4,8)$, mean $0.33 \pm 0.13$. Bottom: $30$ of $100$, Beta$(31,71)$, mean $0.30 \pm 0.05$. \textbf{Updating is counting:} one more pastry adds $1$ to $\alpha$.
+  \pause
+  \item \textbf{In AI:} this is how a click-rate or a model's accuracy is tracked as evidence arrives -- $12$ correct of $15$ is not the evidence $800$ of $1000$ is. Lecture 6 makes it the conjugate prior for a Bernoulli.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=0.96\linewidth]{figures/continuous_gaussian/continuous_beta.pdf}
+\end{columns}
+\end{frame}

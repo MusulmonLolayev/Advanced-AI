@@ -1,0 +1,115 @@
+\section{Lecture 1, Part 1: Probability}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 1}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Probability}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Define sample spaces and events, and apply the complement, addition, and multiplication rules of probability.
+  \pause
+  \item Distinguish mutual exclusivity from independence, and empirical from classical probability.
+\end{itemize}
+\end{frame}
+
+% ─── Probability foundations ────────────────────────────────────────────────
+\begin{frame}{Sample Space, Event \& Probability}
+\begin{rldefinition}
+\textbf{Sample space} $\Omega$ -- everything that could happen, written down before you look. Rolling a die: $\Omega = \{1,2,3,4,5,6\}$. Tossing a coin: $\Omega = \{\text{heads},\text{tails}\}$. Tomorrow: $\Omega = \{\text{rain},\text{no rain}\}$.
+
+\smallskip
+\textbf{Event} $A \subseteq \Omega$ -- a yes/no question about the outcome, written as the set of outcomes that answer ``yes''. ``The die shows an even number'' is $A = \{2,4,6\}$.
+
+\smallskip
+\textbf{Probability} $P$ -- one number $P(A) \in [0,1]$ per event: $0$ means impossible, $1$ means certain, and $P(\Omega) = 1$ because \emph{something} must happen. For a fair die, $P(A) = \tfrac{3}{6} = \tfrac12$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Why bother with sets?} Once the question is a set, ``or'' becomes $\cup$, ``and'' becomes $\cap$, ``not'' becomes the complement -- and the three rules on the next slide do the counting for us.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Three Probability Rules}
+\begin{itemize}
+  \item \textbf{Complement rule:} $P(A^c) = 1 - P(A)$ -- ``at least one'' is nearly always easier to get as $1 - P(\text{none})$.
+  \pause
+  \item \textbf{Addition rule:} $P(A \cup B) = P(A) + P(B) - P(A \cap B)$.
+  \pause
+  \item \textbf{Multiplication rule:} $P(A \cap B) = P(A)\,P(B \mid A)$, where $P(B \mid A)$ is the probability of $B$ \emph{given} that $A$ has happened -- Lecture 2 develops this.
+  \pause
+  \item \textbf{Example} -- one card drawn from 52: $P(\heartsuit) = \tfrac{13}{52}$, $P(\mathrm{K}) = \tfrac{4}{52}$, $P(\heartsuit \cap \mathrm{K}) = \tfrac{1}{52}$, so $P(\heartsuit \cup \mathrm{K}) = \tfrac{13 + 4 - 1}{52} = \tfrac{16}{52}$: subtracting the overlap avoids counting the king of hearts twice.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: The Birthday Problem}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Question:} in a room of $n$ people, $P(\text{2 share a birthday})=$?
+  \pause
+  \item \textbf{Why the complement rule:} counting shared-birthday cases directly is hard. Easier: $P(\text{all different})$, then subtract from 1:
+  $P(\text{share}) = 1 - \prod_{k=1}^{n-1}\frac{365-k}{365}$
+  \pause
+  \item \textbf{Result:} at $n=23$, $P(\text{share})=0.507$. Most guess $n\approx180$ is needed -- intuition about probability is often wrong.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/data_probability/data_probability_birthday_problem.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Mutual Exclusivity vs. Independence}
+\begin{itemize}
+  \item $A$ and $B$ are \textbf{mutually exclusive} if $A \cap B = \emptyset$, so $P(A \cap B) = 0$.
+  \pause
+  \item $A$ and $B$ are \textbf{independent} if $P(A \cap B) = P(A)\,P(B)$, equivalently $P(B \mid A) = P(B)$.
+  \pause
+  \item \textbf{Numerical example:} roll a die. $A=$``even''$=\{2,4,6\}$, $P(A)=\tfrac12$; $B=$``$>4$''$=\{5,6\}$, $P(B)=\tfrac13$. $A\cap B=\{6\}$: $P(A\cap B)=\tfrac16=P(A)P(B)$ -- independent, yet clearly \emph{not} mutually exclusive.
+  \pause
+  \item These are not the same concept: two mutually exclusive events with nonzero probability are always \emph{dependent}, since $P(A\cap B) = 0 \neq P(A)P(B)$.
+\end{itemize}
+\pause
+\begin{rlpitfall}
+Confusing ``mutually exclusive'' with ``independent'' is a common error. If two events can never happen together, learning that one happened tells you the other definitely did not --- that is strong dependence, not independence.
+\end{rlpitfall}
+\end{frame}
+
+\begin{frame}{Empirical vs. Classical Probability}
+\begin{itemize}
+  \item \textbf{Classical probability}: $P(A) = |A| / |\Omega|$ when all outcomes are equally likely (e.g. a fair die).
+  \pause
+  \item \textbf{Empirical probability}: $P(A) \approx \dfrac{\text{count of } A \text{ in observed data}}{\text{total observations}}$, estimated from a sample.
+  \pause
+  \item \textbf{Real event:} a weather forecast of ``70\% chance of rain'' is empirical -- it comes from historical frequency: of all past days with today's atmospheric conditions, rain occurred on about 70\% of them. There is no equally-likely sample space to count from classically.
+  \pause
+  \item Machine learning almost always relies on empirical probability: class frequencies in a training set, token frequencies in a corpus, click-through rates in logged data.
+\end{itemize}
+\pause
+\begin{rlquestion}
+If a spam classifier is trained on a dataset where 90\% of emails are spam, is the empirical $P(\text{spam})$ estimated from that dataset a good estimate of $P(\text{spam})$ for real-world email traffic?
+\end{rlquestion}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item Data type (categorical/numerical, discrete/continuous) determines which statistics and plots are valid.
+  \pause
+  \item Mean: one number for decisions and totals. Median: survives outliers/skew. Mode: only option for categorical data.
+  \pause
+  \item Variance/std/IQR answer a question the mean cannot: how reliable, risky, or spread out is the data? Same mean can hide very different behavior.
+  \pause
+  \item Anscombe's quartet: summary statistics are not a substitute for plotting the data.
+  \pause
+  \item Probability rules (complement, addition, multiplication) let us compute probabilities of complex events from simpler ones -- and empirical probability is how ML estimates them from data.
+\end{itemize}
+\end{frame}

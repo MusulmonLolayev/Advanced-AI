@@ -1,0 +1,226 @@
+\section{Lecture 8, Part 0: The Exponential Family}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 8}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large The Exponential Family}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Rewrite a Bernoulli and a Categorical by hand, and recognize the logit and the softmax as what falls out.
+  \pause
+  \item Read the three pieces $\eta$, $T(x)$ and $A(\eta)$ off a distribution you already know.
+  \pause
+  \item Use $A'(\eta) = E[T(X)]$ to turn maximum likelihood into ``match the averages''.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do So Many Distributions Look Alike?}
+\begin{itemize}
+  \item \textbf{Why:} the two derivations in Lecture 5 came out suspiciously similar. Bernoulli: $\hat{p} = k/n$. Gaussian: $\hat{\mu} = \bar{x}$. Both answers were \emph{the average of something} -- and fitting a Poisson would have given $\hat{\lambda} = \bar{k}$, the average once more.
+  \pause
+  \item Lecture 6 had the same experience from the other side: every conjugate update turned out to be \emph{add counts to the prior}.
+  \pause
+  \item And the softmax has now appeared twice -- once as a Categorical in Lecture 3, once inside cross-entropy in Lecture 5 -- without anyone saying where it comes from.
+  \pause
+  \item \textbf{Those are not three coincidences.} Bernoulli, Poisson, Gaussian, Categorical, Beta and Dirichlet are all one family wearing different clothes. This lecture undresses them.
+\end{itemize}
+\end{frame}
+
+% ─── Bernoulli rewrite: eta appears ─────────────────────────────────────────
+\begin{frame}{Worked Example: Rewriting the Bernoulli}
+\small
+Take the Bernoulli of Lecture 3, written for $x \in \{0,1\}$, and do nothing but algebra:
+\[
+p^{x}(1-p)^{1-x}
+\;=\; \exp\big( x\log p + (1-x)\log(1-p) \big)
+\;=\; \exp\Big( x\,\underbrace{\log\tfrac{p}{1-p}}_{\textstyle \eta} \;+\; \log(1-p) \Big).
+\]
+\pause
+\begin{itemize}
+  \item \textbf{Nothing was assumed.} We took a logarithm and collected the terms in $x$ -- and one particular combination of $p$ \emph{appeared} on its own: $\eta = \log\frac{p}{1-p}$.
+  \pause
+  \item That combination already has a name: the \textbf{logit}. It is the number a classifier's final layer produces, \emph{before} any sigmoid is applied.
+  \pause
+  \item \textbf{Coffee shop:} $p = 0.3$ gives $\eta = \log\frac{0.3}{0.7} = -0.85$. Negative because pastries are the minority outcome, and $\eta = 0$ would mean $p = 0.5$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{From Probability to Logit and Back}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Top:} $\eta = \log\frac{p}{1-p}$ stretches the interval $(0,1)$ out over the whole line. Certainty at either end runs off to $\pm\infty$.
+  \pause
+  \item \textbf{Bottom:} the inverse squashes it back, $p = \sigma(\eta) = \frac{1}{1+e^{-\eta}}$ -- the sigmoid.
+  \pause
+  \item \textbf{Why a network works in $\eta$:} a layer outputs any real number it likes. Probabilities would have to be kept inside $[0,1]$ by force; logits need no policing.
+  \pause
+  \item The orange dot is the same coffee shop on both panels: $p = 0.3 \leftrightarrow \eta = -0.85$.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=0.96\linewidth]{figures/expfamily/expfamily_logit_map.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Categorical rewrite: softmax appears ───────────────────────────────────
+\begin{frame}{Worked Example: Rewriting the Categorical}
+\small
+Write the cup size as a one-hot vector $x = (x_1, \dots, x_k)$ with exactly one entry equal to $1$:
+\[
+\prod_{c=1}^{k} p_c^{\,x_c}
+\;=\; \exp\Big( \sum_{c=1}^{k} x_c \log p_c \Big),
+\qquad \eta_c = \log p_c .
+\]
+\pause
+\begin{itemize}
+  \item Since $\sum_c e^{\eta_c} = \sum_c p_c = 1$, we may subtract $A(\eta) = \log\sum_c e^{\eta_c} = 0$ without changing anything -- and \emph{now} adding the same constant to every $\eta_c$ is harmless, because $A$ absorbs it.
+  \pause
+  \item So the $\eta_c$ are unnormalized \textbf{scores}, not log-probabilities. Inverting the map to recover the shares:
+  \[
+    p_c = \frac{e^{\eta_c}}{\sum_{j} e^{\eta_j}} .
+  \]
+  \pause
+  \item \textbf{That is the softmax} -- derived, not introduced. \emph{Coffee shop:} scores $(-1.61, -0.69, -1.20)$ return exactly $(0.2,\, 0.5,\, 0.3)$, and so do those three scores plus $2$.
+\end{itemize}
+\end{frame}
+
+% ─── The general form, now earned ───────────────────────────────────────────
+\begin{frame}{The Exponential Family}
+\begin{rldefinition}
+A distribution is in the \textbf{exponential family} if it can be written
+\[
+p(x \mid \eta) = h(x)\,\exp\big( \eta^{\top} T(x) - A(\eta) \big) .
+\]
+\textbf{$T(x)$ -- the sufficient statistic:} the only thing the data gets to say. \emph{Bernoulli:} $T(x)=x$.\\
+\textbf{$\eta$ -- the natural parameter:} the coordinate the family is straight in. \emph{Bernoulli:} the logit.\\
+\textbf{$A(\eta)$ -- the log-partition function:} whatever it takes to make the total $1$. \emph{Bernoulli:} $\log(1+e^{\eta})$.\\
+\textbf{$h(x)$ -- the base measure:} the leftover bookkeeping that never involves $\eta$. \emph{Bernoulli:} $1$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The shape is the whole content: $x$ and $\eta$ meet \emph{only} in the product $\eta^{\top}T(x)$. Everything that follows in this lecture is a consequence of that one restriction.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{One Form, Four Distributions}
+\footnotesize
+\centering
+\begin{tabular}{l|ccc}
+Distribution & $T(x)$ & $\eta$ & $A(\eta)$ \\
+\hline
+Bernoulli$(p)$ & $x$ & $\log\frac{p}{1-p}$ & $\log(1+e^{\eta})$ \\[2pt]
+Poisson$(\lambda)$ & $k$ & $\log \lambda$ & $e^{\eta}$ \\[2pt]
+Gaussian$(\mu,\sigma^2)$, $\sigma$ known & $x$ & $\mu/\sigma^{2}$ & $\sigma^{2}\eta^{2}/2$ \\[2pt]
+Categorical$(p_1,\dots,p_k)$ & one-hot $x$ & scores $\eta_c$ & $\log\sum_c e^{\eta_c}$ \\
+\end{tabular}
+
+\vspace{0.6em}
+\raggedright
+\begin{itemize}
+  \item \textbf{The Beta and the Dirichlet are in it too}, with the roles swapped: there the \emph{probability} is the data, and $T(p) = (\log p, \log(1-p))$ with $\eta = (\alpha-1, \beta-1)$.
+  \pause
+  \item \textbf{Not everything is.} A Student-$t$ or a mixture of two Gaussians cannot be squeezed into this form -- which is exactly why they are harder to fit.
+\end{itemize}
+\end{frame}
+
+% ─── A(eta) ─────────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need $A(\eta)$?}
+\begin{itemize}
+  \item \textbf{Why:} $h(x)e^{\eta^{\top}T(x)}$ is a perfectly good \emph{shape}, but its total is not $1$. $A(\eta)$ is the log of that total, subtracted off to fix it:
+  \[
+    A(\eta) = \log \sum_{x} h(x)\,e^{\eta^{\top}T(x)} .
+  \]
+  \pause
+  \item \textbf{Numerical example, Bernoulli:} the two unnormalized weights are $e^{0}=1$ and $e^{\eta}$, so $A(\eta)=\log(1+e^{\eta})$. At $\eta = -0.85$ that is $\log(1.429) = 0.357$, which is exactly $-\log(1-p) = -\log 0.7$.
+  \pause
+  \item \textbf{For the Categorical it is the log-sum-exp}, $\log\sum_c e^{\eta_c}$ -- the same expression every deep learning framework computes to normalize a softmax.
+  \pause
+  \item So $A$ looks like bookkeeping. The next slide shows it is nothing of the kind.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Slope of $A$ Is the Mean}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Differentiate $A$ once for the mean of $T$, twice for its variance:
+  \[
+    A'(\eta) = E_{\eta}[T], \qquad A''(\eta) = \mathrm{Var}_{\eta}(T).
+  \]
+  \pause
+  \item \textbf{Bernoulli:} $A' = \sigma(\eta) = 0.30 = p$ at $\eta = -0.85$, and $A'' = p(1-p) = 0.21$ -- Lecture 3's variance.
+  \pause
+  \item \textbf{Poisson:} $A = e^{\eta}$, so $A' = A'' = \lambda$. \emph{That} is why its mean equals its variance -- the exponential is its own derivative.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=0.96\linewidth]{figures/expfamily/expfamily_log_partition.pdf}
+\end{columns}
+\end{frame}
+
+% ─── AI payoff 1 ────────────────────────────────────────────────────────────
+\begin{frame}{Why This Matters: The Last Layer of a Classifier}
+\begin{itemize}
+  \item A classification network ends by producing $k$ raw numbers and pushing them through a softmax. Those raw numbers are called logits, and the name is not an analogy: \textbf{they are the natural parameters $\eta$ of a Categorical.}
+  \pause
+  \item \textbf{So the last layer of a classifier is an exponential-family parameterization}, and the sigmoid and the softmax are not design choices -- they are the inverse map back from $\eta$ to probabilities.
+  \pause
+  \item That also explains a practical detail: frameworks pair \texttt{logits} with the loss in one function rather than applying softmax first, because $\log\sum_c e^{\eta_c}$ is $A(\eta)$ and it is more stable computed once.
+  \pause
+  \item \textbf{Repeat this one:} \emph{a network predicts $\eta$; the link function converts it to a distribution.} That sentence is also the definition of a generalized linear model.
+\end{itemize}
+\end{frame}
+
+% ─── MLE as moment matching ─────────────────────────────────────────────────
+\begin{frame}{Worked Example: MLE Is Moment Matching}
+\small
+For $n$ independent draws the log-likelihood is a sum, and the exponential form collapses it:
+\[
+\ell(\eta) = \eta^{\top}\sum_{i=1}^{n} T(x_i) \;-\; n\,A(\eta) + \text{const},
+\qquad
+\frac{\partial \ell}{\partial \eta} = \sum_{i=1}^{n} T(x_i) \;-\; n\,A'(\eta).
+\]
+\pause
+\begin{itemize}
+  \item Set the derivative to zero and divide by $n$. Using $A'(\eta) = E_{\eta}[T]$:
+  \[
+    \boxed{\; E_{\hat{\eta}}[T(X)] \;=\; \frac{1}{n}\sum_{i=1}^{n} T(x_i) \;}
+  \]
+  \pause
+  \item \textbf{In words:} pick the parameter whose predicted average matches the observed one. That is the whole of maximum likelihood for this family.
+  \pause
+  \item \textbf{Both of Lecture 5's results, and the Poisson for free:} $\sigma(\hat{\eta}) = \bar{x}$ gives $\hat{p} = k/n$; $\sigma^{2}\hat{\eta} = \bar{x}$ gives $\hat{\mu} = \bar{x}$; $e^{\hat{\eta}} = \bar{k}$ gives $\hat{\lambda} = \bar{k}$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why This Matters: Fitting Means Matching Averages}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item The boxed equation, drawn twice: slide the red line -- the data's average -- and read off where it meets the model's mean curve.
+  \pause
+  \item \textbf{Bernoulli:} $66$ of $200$ orders, so the line sits at $0.33$ and $\hat{\eta} = -0.71$.
+  \pause
+  \item \textbf{Poisson:} $3.96$ arrivals per ten minutes, so $\hat{\eta} = \log 3.96 = 1.38$.
+  \pause
+  \item \textbf{In AI:} the gradient is \emph{observed} $T$ minus \emph{expected} $T$ -- the training signal for log-linear and energy-based models, and the reason they need some way to estimate $E_{\eta}[T]$.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=0.96\linewidth]{figures/expfamily/expfamily_moment_matching.pdf}
+\end{columns}
+\end{frame}

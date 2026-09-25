@@ -1,0 +1,79 @@
+\section{Module 7: Introduction}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\Large\bfseries Module 7}
+
+\vspace{0.6em}
+{\Large Introduction}
+\vfill
+\end{frame}
+
+\begin{frame}{Why Agents, and Why Last}
+\begin{itemize}
+  \item By Module 3 you can build and prompt a language model; by Module 6 you can serve one efficiently. Both assume \emph{you} decide what happens next.
+  \pause
+  \item An \textbf{agent} is what you get when the model decides instead: which tool to call, whether to call another, and when to stop.
+  \pause
+  \item That single change moves every hard problem. Correctness becomes a property of a whole \emph{trajectory}, not of one output. Cost is unbounded until the loop halts. A wrong step is not discarded -- it becomes the input to the next step.
+  \pause
+  \item Module 7 comes last because it composes the rest: retrieval from Module 3, serving and caching from Module 6, and the evaluation discipline from Module 0.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{What the Eight Lectures Cover}
+\begin{itemize}
+  \item \textbf{The loop and its interface} (L1--L2) -- what an agent loop is, and how a model emits a call that your code can actually execute.
+  \pause
+  \item \textbf{What it remembers, who it delegates to} (L3--L4) -- context limits and external memory; the orchestrator--subagent pattern.
+  \pause
+  \item \textbf{What it retrieves} (L5--L7) -- retrieval-augmented generation end to end, embedding models, and the index structures that make search fast.
+  \pause
+  \item \textbf{Whether any of it works} (L8) -- trajectory-level evaluation, prompt injection, sandboxing.
+\end{itemize}
+\pause
+\begin{rlintuition}
+The first seven lectures build a system. The eighth is the only one that tells you whether it works -- which is why the project is graded on it.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{The Capstone: A Grounded Legal Research Agent}
+\begin{itemize}
+  \item One team project replaces the lab sequence: a research agent over national legislation that must \textbf{ground every claim in a cited article}.
+  \pause
+  \item Deliberately \emph{not} ``an agent that answers legal questions''. ``Find and cite passages in this corpus'' can be scored against article IDs, and it stays clear of giving advice.
+  \pause
+  \item \textbf{Corpus:} article-structured Uzbek legislation from \texttt{lex.uz} -- the Constitution, 20 codes and 4 major laws, $7{,}368$ articles in all.
+  \pause
+  \item \textbf{Why this domain:} Magesh et al.\ (2024) measured $17$--$33\%$ hallucination in commercial legal research tools marketed as eliminating it. You are graded on the harness that finds \emph{your own} rate.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{How the Capstone Maps onto the Lectures}
+\begin{itemize}
+  \item \textbf{Sprint 1} (after L1--L2) -- the agent loop, tool schemas, structured cited output. A naive baseline plus a 20-query smoke evaluation.
+  \pause
+  \item \textbf{Sprint 2} (after L5--L7) -- the retrieval stack: chunking, embeddings, an approximate-nearest-neighbour index, hybrid and reranked retrieval. Scored as recall@$k$ against that baseline.
+  \pause
+  \item \textbf{Sprint 3} (after L3--L4) -- multi-turn memory, and a verifier subagent that checks each claim against the article it cites.
+  \pause
+  \item \textbf{Sprint 4} (after L8) -- the evaluation harness, abstention behaviour, and a red team.
+\end{itemize}
+\pause
+\begin{rlintuition}
+Everything runs against a cheap hosted API, not a model on your laptop: cents per evaluation run, a few tens of dollars per team for the term.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Reading Resources}
+\begin{itemize}
+  \item There is no textbook -- the field is younger than the publication cycle. Each lecture instead has three to five primary papers, listed on its closing slide.
+  \pause
+  \item \textbf{The spine:} ReAct (Yao et al., 2023) for the loop; RAG (Lewis et al., 2020) for retrieval; HNSW (Malkov \& Yashunin, 2018) for the index that makes it fast.
+  \pause
+  \item \textbf{Read before Lecture 8:} Magesh, Surani, Dahl, Suzgun, Manning \& Ho (2024), \textit{Hallucination-Free? Assessing the Reliability of Leading AI Legal Research Tools} -- the empirical result this module is built around.
+  \pause
+  \item \textbf{Benchmarks} you will meet: AgentBench, WebArena and SWE-bench for agents; LegalBench and LegalBench-RAG for the legal side.
+\end{itemize}
+\end{frame}

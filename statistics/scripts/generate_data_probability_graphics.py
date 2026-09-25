@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate lecture figures for statistics/lectures/lecture01_data_probability.tex
+"""Generate lecture figures for statistics/ Lecture 1 (lecture01_data_descriptive.tex)
 
 Numbers come from pandas/numpy; rendering is matplotlib, saved directly as
 vector PDF (and SVG) -- see the pandas-vector-graphics skill for when this
@@ -44,35 +44,53 @@ def save_fig(fig, name):
     print(f"✓ {name}.svg")
 
 
-# ─── Figure 1: API latency histogram — mean vs. median under skew ──────────
-print("Figure 1: latency histogram (mean vs median) …")
+# ─── Figure 1: salary histogram — mean vs. median under skew ──────────────
+print("Figure 1: salary histogram (mean vs median) …")
 rng = np.random.default_rng(42)
-n_req = 600
-body = rng.lognormal(mean=np.log(120), sigma=0.35, size=n_req - 20)
-tail = rng.uniform(500, 1100, size=20)  # occasional slow/retried requests
-latency = np.concatenate([body, tail])
-df_lat = pd.DataFrame({"latency_ms": latency})
+n_emp = 600
+# base pay floor plus a right-skewed component, so every salary clears $20k
+salary = 22_000 + rng.lognormal(mean=np.log(26_000), sigma=0.55, size=n_emp)
+df_pay = pd.DataFrame({"salary": salary})
 
-lat_mean = df_lat["latency_ms"].mean()
-lat_median = df_lat["latency_ms"].median()
-lat_p95 = df_lat["latency_ms"].quantile(0.95)
-lat_p99 = df_lat["latency_ms"].quantile(0.99)
-print(f"  mean={lat_mean:.1f}ms  median={lat_median:.1f}ms  "
-      f"p95={lat_p95:.1f}ms  p99={lat_p99:.1f}ms")
+pay_min = df_pay["salary"].min()
+pay_max = df_pay["salary"].max()
+pay_mean = df_pay["salary"].mean()
+pay_median = df_pay["salary"].median()
+print(f"  n={n_emp}  min=${pay_min:,.0f}  max=${pay_max:,.0f}")
+print(f"  mean=${pay_mean:,.0f}  median=${pay_median:,.0f}  "
+      f"range=${pay_max - pay_min:,.0f}")
+
+# Frequency table used in the "how to build a histogram" slide:
+# range/7 rounded up to a convenient width gives 7 classes of $20k.
+NUM_CLASSES = 7
+CLASS_WIDTH = 20_000
+edges = np.arange(20_000, 160_001, CLASS_WIDTH)
+counts, _ = np.histogram(df_pay["salary"], bins=edges)
+freq_table = pd.DataFrame({
+    "class": [f"{lo//1000}-{hi//1000}k" for lo, hi in zip(edges[:-1], edges[1:])],
+    "frequency": counts,
+})
+freq_table["relative %"] = (100 * freq_table["frequency"] / n_emp).round(1)
+assert counts.sum() == n_emp, "some salaries fall outside the class limits"
+print(f"  suggested width = range/{NUM_CLASSES} = "
+      f"${(pay_max - pay_min) / NUM_CLASSES:,.0f} -> rounded to ${CLASS_WIDTH:,}")
+print(freq_table.to_string(index=False))
 
 fig, ax = plt.subplots(figsize=(6.6, 4.0))
-ax.hist(df_lat["latency_ms"], bins=40, color=RLBLUE, alpha=0.75,
-        edgecolor="white", linewidth=0.4)
-ax.axvline(lat_mean, color=RLRED, linewidth=2.0, linestyle="-",
-           label=f"mean = {lat_mean:.0f} ms")
-ax.axvline(lat_median, color=RLGREEN, linewidth=2.0, linestyle="--",
-           label=f"median = {lat_median:.0f} ms")
-ax.set_xlabel("Request latency (ms)")
-ax.set_ylabel("Number of requests")
+ax.hist(df_pay["salary"], bins=edges, color=RLBLUE, alpha=0.75,
+        edgecolor="white", linewidth=0.8)
+ax.axvline(pay_mean, color=RLRED, linewidth=2.0, linestyle="-",
+           label=f"mean = \\${pay_mean/1000:.0f}k")
+ax.axvline(pay_median, color=RLGREEN, linewidth=2.0, linestyle="--",
+           label=f"median = \\${pay_median/1000:.0f}k")
+ax.set_xlabel("Annual salary ($1000s)")
+ax.set_ylabel("Number of employees")
+ax.set_xticks(edges)
+ax.set_xticklabels([f"{e//1000}" for e in edges])
 ax.legend(loc="upper right", frameon=False, fontsize=10)
 ax.grid(True, axis="y", linestyle=":", alpha=0.4)
 fig.tight_layout()
-save_fig(fig, "data_probability_latency_histogram")
+save_fig(fig, "data_probability_salary_histogram")
 
 
 # ─── Figure 2: "billionaire walks into a bar" — mean vs median ─────────────
@@ -86,81 +104,111 @@ after = pd.Series(np.concatenate([regulars, bezos]))
 print(f"  before: mean=${before.mean():,.0f}  median=${before.median():,.0f}")
 print(f"  after:  mean=${after.mean():,.0f}  median=${after.median():,.0f}")
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.4, 3.2),
-                                gridspec_kw={"width_ratios": [1, 1]})
+# stacked panels share one x-axis, so the shift of the mean line is read vertically
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(5.6, 3.9), sharex=True)
 for ax, data, title in ((ax1, before, "9 people in a bar"),
                          (ax2, after, "+ 1 billionaire walks in")):
     ax.set_xscale("log")
-    ax.scatter(data, np.zeros_like(data), s=70, c=RLBLUE, edgecolors="black",
+    ax.scatter(data, np.zeros_like(data), s=60, c=RLBLUE, edgecolors="black",
                linewidths=0.6, zorder=3, alpha=0.85)
     ax.axvline(data.mean(), color=RLRED, linewidth=2.0,
                label=f"mean = ${data.mean():,.0f}")
     ax.axvline(data.median(), color=RLGREEN, linewidth=2.0, linestyle="--",
                label=f"median = ${data.median():,.0f}")
     ax.set_yticks([])
-    ax.set_xlabel("Net worth ($, log scale)")
-    ax.set_title(title, fontsize=10.5, fontweight="bold")
-    ax.legend(loc="upper left", frameon=False, fontsize=8.5)
+    ax.set_title(title, fontsize=10, fontweight="bold")
+    ax.legend(loc="upper left", frameon=False, fontsize=8)
     ax.set_xlim(1e4, 3e11)
+ax2.set_xlabel("Net worth ($, log scale)")
 fig.tight_layout()
 save_fig(fig, "data_probability_billionaire_bar")
 
 
-# ─── Figure 3: manufacturing tolerances — why variance, not just mean ──────
-print("\nFigure 3: same mean, different variance (spec limits) …")
+# ─── Figure 3: bottle filling — why variance, not just the mean ───────────
+print("\nFigure 3: same mean, different variance (fill limits) …")
 rng3 = np.random.default_rng(11)
-spec_lo, spec_hi = 9.95, 10.05
-machine_a = rng3.normal(10.00, 0.010, size=400)
-machine_b = rng3.normal(10.00, 0.040, size=400)
-df_mfg = pd.DataFrame({"A": machine_a, "B": machine_b})
-pct_bad_a = ((df_mfg["A"] < spec_lo) | (df_mfg["A"] > spec_hi)).mean() * 100
-pct_bad_b = ((df_mfg["B"] < spec_lo) | (df_mfg["B"] > spec_hi)).mean() * 100
-print(f"  Machine A: mean={df_mfg['A'].mean():.4f}  std={df_mfg['A'].std():.4f}"
-      f"  out-of-spec={pct_bad_a:.1f}%")
-print(f"  Machine B: mean={df_mfg['B'].mean():.4f}  std={df_mfg['B'].std():.4f}"
-      f"  out-of-spec={pct_bad_b:.1f}%")
+spec_lo, spec_hi = 495.0, 505.0          # the label allows 500 ml +/- 5 ml
+n_bottles = 1000
+machines = {
+    "A": dict(sd=2.0, color=RLGREEN),
+    "B": dict(sd=4.0, color=RLORANGE),
+}
+# 1 ml bins whose edges land exactly on the limits, so no bar straddles them
+bins_fill = np.arange(486.0, 515.0, 1.0)
+assert spec_lo in bins_fill and spec_hi in bins_fill
 
-fig, ax = plt.subplots(figsize=(6.8, 4.0))
-bins = np.linspace(9.85, 10.15, 60)
-ax.hist(df_mfg["A"], bins=bins, color=RLGREEN, alpha=0.7,
-        label=f"Machine A: std={df_mfg['A'].std():.3f}mm, {pct_bad_a:.1f}% out-of-spec")
-ax.hist(df_mfg["B"], bins=bins, color=RLORANGE, alpha=0.7,
-        label=f"Machine B: std={df_mfg['B'].std():.3f}mm, {pct_bad_b:.1f}% out-of-spec")
-ax.axvline(spec_lo, color=RLRED, linewidth=1.6, linestyle="--")
-ax.axvline(spec_hi, color=RLRED, linewidth=1.6, linestyle="--",
-           label="spec limits (9.95-10.05mm)")
-ax.set_xlabel("Bolt diameter (mm)")
-ax.set_ylabel("Count")
-ax.legend(loc="upper left", frameon=True, facecolor="white", framealpha=0.95,
-          edgecolor="#cccccc", fontsize=8.2)
-ax.grid(True, axis="y", linestyle=":", alpha=0.4)
+fig, axes = plt.subplots(2, 1, figsize=(6.4, 4.4), sharex=True, sharey=True)
+for ax, (name, spec) in zip(axes, machines.items()):
+    fills = rng3.normal(500.0, spec["sd"], size=n_bottles)
+    rejected = int(((fills < spec_lo) | (fills > spec_hi)).sum())
+    spec["rejected"] = rejected
+    print(f"  Machine {name}: mean={fills.mean():.2f}ml  std={fills.std(ddof=1):.2f}ml"
+          f"  limits at {5.0 / spec['sd']:.2f} std  "
+          f"rejected={rejected} of {n_bottles}")
+
+    counts, edges = np.histogram(fills, bins=bins_fill)
+    # a bar is a reject if the whole bin lies outside the allowed range
+    inside = (edges[:-1] >= spec_lo) & (edges[1:] <= spec_hi)
+    ax.bar(edges[:-1][inside], counts[inside], width=1.0, align="edge",
+           color=spec["color"], edgecolor="white", linewidth=0.4)
+    ax.bar(edges[:-1][~inside], counts[~inside], width=1.0, align="edge",
+           color=RLRED, edgecolor="white", linewidth=0.4)
+    for limit in (spec_lo, spec_hi):
+        ax.axvline(limit, color=RLRED, linewidth=1.4, linestyle="--")
+    ax.set_title(f"Machine {name}:  std = {spec['sd']}ml   "
+                 f"$\\rightarrow$  {rejected} of {n_bottles} bottles rejected",
+                 loc="left", fontsize=10)
+    ax.grid(True, axis="y", linestyle=":", alpha=0.4)
+
+axes[1].annotate("red bars = outside\nthe allowed range",
+                 xy=(0.02, 0.92), xycoords="axes fraction", ha="left", va="top",
+                 fontsize=9, color=RLRED)
+axes[0].set_ylabel("Bottles")
+axes[1].set_ylabel("Bottles")
+axes[1].set_xlabel("Bottle contents (ml)")
+axes[1].set_xlim(486, 514)
+axes[1].set_xticks([490, 495, 500, 505, 510])
 fig.tight_layout()
-save_fig(fig, "data_probability_variance_manufacturing")
+save_fig(fig, "data_probability_variance_bottles")
 
 
-# ─── Figure 4: box plots — latency across three data centers ───────────────
-print("\nFigure 4: box plots across three data centers …")
-rng4 = np.random.default_rng(3)
-us_east = rng4.normal(42, 8, size=200)
-us_west = np.concatenate([rng4.normal(58, 12, size=190), rng4.uniform(150, 220, size=10)])
-eu = np.concatenate([rng4.normal(95, 18, size=190), rng4.uniform(250, 320, size=10)])
-box_data = [us_east, us_west, eu]
-labels_box = ["US-East", "US-West", "EU"]
-for name, d in zip(labels_box, box_data):
-    q1, med, q3 = np.percentile(d, [25, 50, 75])
-    print(f"  {name}: median={med:.1f}ms  Q1={q1:.1f}  Q3={q3:.1f}  IQR={q3 - q1:.1f}")
+# ─── Figure 4: box plots — waiting times at three service branches ────────
+print("\nFigure 4: box plots across three service branches …")
+rng4 = np.random.default_rng(5)
+# Waiting times are right-skewed by nature: most customers are served quickly,
+# a few wait much longer. A lognormal gives that shape, so the outliers the box
+# plot flags come from the tail of the same distribution -- not from a second,
+# artificially spliced-in cluster sitting in a gap above the whisker.
+branches = {
+    "Branch A": dict(median=12.0, sigma=0.16, color=RLBLUE),
+    "Branch B": dict(median=18.0, sigma=0.34, color=RLGREEN),
+    "Branch C": dict(median=28.0, sigma=0.50, color=RLORANGE),
+}
+box_data, labels_box, colors_box = [], [], []
+for name, spec in branches.items():
+    waits = rng4.lognormal(np.log(spec["median"]), spec["sigma"], size=200)
+    q1, med, q3 = np.percentile(waits, [25, 50, 75])
+    iqr = q3 - q1
+    fence = q3 + 1.5 * iqr
+    n_out = int((waits > fence).sum())
+    print(f"  {name}: median={med:.1f}min  Q1={q1:.1f}  Q3={q3:.1f}  IQR={iqr:.1f}"
+          f"  upper fence={fence:.1f}  flagged={n_out}/200")
+    box_data.append(waits)
+    labels_box.append(name)
+    colors_box.append(spec["color"])
 
 fig, ax = plt.subplots(figsize=(6.2, 4.0))
 bp = ax.boxplot(box_data, tick_labels=labels_box, patch_artist=True, widths=0.5,
                  flierprops=dict(marker="o", markerfacecolor=RLRED,
                                   markeredgecolor="black", markersize=5, alpha=0.7))
-for patch, color in zip(bp["boxes"], [RLBLUE, RLGREEN, RLORANGE]):
+for patch, color in zip(bp["boxes"], colors_box):
     patch.set_facecolor(color)
     patch.set_alpha(0.7)
-ax.set_ylabel("Request latency (ms)")
+ax.set_ylabel("Waiting time (minutes)")
+ax.set_ylim(bottom=0)
 ax.grid(True, axis="y", linestyle=":", alpha=0.4)
 fig.tight_layout()
-save_fig(fig, "data_probability_boxplot_datacenters")
+save_fig(fig, "data_probability_boxplot_branches")
 
 
 # ─── Figure 5: Anscombe's quartet — same summary stats, different shapes ──

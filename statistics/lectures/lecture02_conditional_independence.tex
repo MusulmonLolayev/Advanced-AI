@@ -1,0 +1,206 @@
+\section{Lecture 2, Part 0: Conditional Probability \& Independence}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 2}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Conditional Probability \& Independence}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Compute conditional probabilities $P(B \mid A)$ and read them as a restriction of the sample space.
+  \pause
+  \item Use tree diagrams and contingency tables to get joint, marginal, and conditional probabilities straight from counts.
+  \pause
+  \item Check independence from a table, and recognize when pooling groups reverses a comparison.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Conditional Probability?}
+\begin{itemize}
+  \item \textbf{Why:} a probability is a statement about what we know. When we learn something new the number has to change -- otherwise it was never describing our situation.
+  \pause
+  \item \textbf{Numerical example:} roll a fair die, $P(6) = \tfrac16$. A friend peeks and says ``it is even''. Only $\{2,4,6\}$ are still possible, so now $P(6) = \tfrac13$. The die never moved; our information did.
+  \pause
+  \item \textbf{Everyday:} ``30\% chance of rain'' becomes a much larger number the moment you look outside and the sky is already dark.
+  \pause
+  \item Almost every useful question has this shape: the chance a patient is ill \emph{given} the test was positive, the chance an email is spam \emph{given} it says ``free prize'', the chance a student takes the bus \emph{given} that they own a bike.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Conditional Probability}
+\begin{rldefinition}
+\textbf{Conditional probability} $P(B \mid A)$ -- the probability of $B$ once we already know that $A$ happened. Read the bar as ``given''.
+\[
+P(B \mid A) = \frac{P(A \cap B)}{P(A)}, \qquad P(A) > 0 .
+\]
+\smallskip
+\textbf{Where it comes from:} knowing $A$ rules out everything outside it, so $A$ becomes the new sample space -- count the part of $A$ that is also in $B$.\\
+\textbf{Die:} $A = \text{``even''} = \{2,4,6\}$, $B = \{6\}$: $\frac{1/6}{1/2} = \tfrac13$, i.e. $1$ of the $3$ even faces.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Multiply both sides by $P(A)$ to recover Lecture 1's multiplication rule: $P(A \cap B) = P(A)\,P(B \mid A)$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Conditioning Shrinks the Sample Space}
+\centering
+\includegraphics[width=0.68\textwidth]{figures/conditional_bayes/conditional_bayes_restrict_space.pdf}
+
+\vspace{0.25em}
+\footnotesize
+Nobody's journey changes -- only \emph{which} students we still count. The numerator falls from $45$ to $15$, the denominator from $100$ to $60$, and $0.45$ becomes $0.25$. That new denominator is what the bar in $P(B \mid A)$ tells you to use.
+\end{frame}
+
+% ─── Trees ──────────────────────────────────────────────────────────────────
+\begin{frame}{The Multiplication Rule \& Tree Diagrams}
+\small
+A tree splits an experiment into stages. Follow a path and \textbf{multiply along the branches}: $P(A \cap B) = P(A)\,P(B \mid A)$.
+\vspace{0.3em}
+
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  box/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+              minimum height=4.4mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  \node[box] (root) at (0,0) {100 students};
+  \node[box] (bk) at (3.0,1.25) {owns a bike};
+  \node[box] (nb) at (3.0,-1.25) {no bike};
+  \node[box] (b1) at (6.3,1.95) {takes the bus};
+  \node[box] (b2) at (6.3,0.65) {no bus};
+  \node[box] (b3) at (6.3,-0.65) {takes the bus};
+  \node[box] (b4) at (6.3,-1.95) {no bus};
+  \draw[->] (root) -- node[lbl,above,sloped] {$0.6$} (bk);
+  \draw[->] (root) -- node[lbl,below,sloped] {$0.4$} (nb);
+  \draw[->] (bk) -- node[lbl,above,sloped] {$0.25$} (b1);
+  \draw[->] (bk) -- node[lbl,below,sloped] {$0.75$} (b2);
+  \draw[->] (nb) -- node[lbl,above,sloped] {$0.75$} (b3);
+  \draw[->] (nb) -- node[lbl,below,sloped] {$0.25$} (b4);
+  \node[lbl,right] at (7.6,1.95) {$0.6 \times 0.25 = 0.15 \rightarrow 15$ students};
+  \node[lbl,right] at (7.6,0.65) {$0.6 \times 0.75 = 0.45 \rightarrow 45$ students};
+  \node[lbl,right] at (7.6,-0.65) {$0.4 \times 0.75 = 0.30 \rightarrow 30$ students};
+  \node[lbl,right] at (7.6,-1.95) {$0.4 \times 0.25 = 0.10 \rightarrow 10$ students};
+\end{tikzpicture}
+
+\vspace{0.2em}
+\footnotesize The four paths cover every student exactly once, so the products sum to $1$ -- and those four counts are exactly the four cells of the table on the next slide.
+\end{frame}
+
+\begin{frame}{Worked Example: Two Socks From the Drawer}
+\begin{itemize}
+  \item A drawer holds $10$ socks: $6$ black and $4$ white. You pull out two in the dark.
+  \pause
+  \item $P(\text{1st black}) = \tfrac{6}{10}$. That sock is now gone, so $5$ black remain among $9$: $P(\text{2nd black} \mid \text{1st black}) = \tfrac59$.
+  \pause
+  \item Multiply along the branch: $P(\text{both black}) = \tfrac{6}{10} \times \tfrac59 = \tfrac{30}{90} = \tfrac13$.
+  \pause
+  \item \textbf{Why the conditioning matters:} had you put the first sock back, the draws would be independent and the answer would be $\tfrac{6}{10} \times \tfrac{6}{10} = 0.36$. Drawing without replacement makes the second draw depend on the first.
+  \pause
+  \item Either colour counts as a pair, and white works the same way: $\tfrac{4}{10} \times \tfrac39 = \tfrac{12}{90}$. So $P(\text{pair}) = \tfrac{30}{90} + \tfrac{12}{90} \approx 0.47$ -- less than half the time.
+\end{itemize}
+\end{frame}
+
+% ─── Contingency tables ─────────────────────────────────────────────────────
+\begin{frame}{Contingency Tables}
+\small
+A \textbf{contingency table} counts how many members of a sample fall into each combination of two attributes, with the row and column totals written in the margins.
+\vspace{0.4em}
+
+\begin{columns}[T]
+\column{0.44\textwidth}
+\centering
+\small
+\begin{tabular}{l|rr|r}
+            & Bus & No bus & Total \\
+\hline
+Owns a bike & 15  & 45     & 60 \\
+No bike     & 30  & 10     & 40 \\
+\hline
+Total       & 45  & 55     & 100 \\
+\end{tabular}
+\column{0.54\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Joint} -- an inner cell over the grand total: $P(\text{bike} \cap \text{bus}) = \tfrac{15}{100} = 0.15$.
+  \pause
+  \item \textbf{Marginal} -- a margin total over the grand total: $P(\text{bus}) = \tfrac{45}{100} = 0.45$.
+  \pause
+  \item \textbf{Conditional} -- a cell over \emph{its own} row or column total: $P(\text{bus} \mid \text{bike}) = \tfrac{15}{60} = 0.25$.
+\end{itemize}
+\end{columns}
+\pause
+\begin{rlintuition}
+Conditioning is choosing a denominator: the whole table for a joint probability, one row or column for a conditional one.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Independence Checked From a Table}
+\begin{itemize}
+  \item Lecture 1 defined independence as $P(A \cap B) = P(A)P(B)$, equivalently $P(B \mid A) = P(B)$. A table turns that into a two-second check.
+  \pause
+  \item \textbf{Dependent:} $P(\text{bus}) = 0.45$, but $P(\text{bus} \mid \text{bike}) = 0.25$ and $P(\text{bus} \mid \text{no bike}) = 0.75$. Knowing about the bike moves the answer, so the two are \emph{not} independent.
+  \pause
+  \item \textbf{Independent:} in the same year group $40$ students wear glasses, and $18$ of them take the bus. $P(\text{bus} \mid \text{glasses}) = \tfrac{18}{40} = 0.45 = P(\text{bus})$ -- glasses tell you nothing about the bus.
+  \pause
+  \item \textbf{Shortcut for any cell:} under independence a cell should hold $\frac{\text{row total} \times \text{column total}}{n}$. That predicts $\frac{60 \times 45}{100} = 27$ bike-and-bus students, but the table says $15$; for glasses-and-bus it predicts $\frac{40 \times 45}{100} = 18$, exactly what we see.
+\end{itemize}
+\end{frame}
+
+% ─── Simpson's paradox ──────────────────────────────────────────────────────
+\begin{frame}{Real Event: Simpson's Paradox (Berkeley, 1973)}
+\begin{columns}[T]
+\column{0.42\textwidth}
+\centering
+\scriptsize
+\begin{tabular}{l|rr|rr}
+     & \multicolumn{2}{c|}{Men} & \multicolumn{2}{c}{Women} \\
+Dept & applied & adm. & applied & adm. \\
+\hline
+A & 825 & 62\% & 108 & 82\% \\
+B & 560 & 63\% &  25 & 68\% \\
+C & 325 & 37\% & 593 & 34\% \\
+D & 417 & 33\% & 375 & 35\% \\
+E & 191 & 28\% & 393 & 24\% \\
+F & 373 &  6\% & 341 &  7\% \\
+\hline
+\textbf{All six} & \textbf{2691} & \textbf{45\%} & \textbf{1835} & \textbf{30\%} \\
+\end{tabular}
+
+\vspace{0.4em}
+{\scriptsize The six largest departments, Berkeley graduate admissions, autumn 1973.}
+\column{0.56\textwidth}
+\small
+\begin{itemize}
+  \item Pooled over all six departments, $45\%$ of the men were admitted against $30\%$ of the women -- an apparently clear gap.
+  \pause
+  \item Taken one department at a time the gap mostly \emph{reverses}: women were admitted at the higher rate in A, B, D and F -- four of the six.
+  \pause
+  \item \textbf{Why:} over half the men applied to A and B, which accepted about $64\%$ and $63\%$ of everyone who applied. Nearly three quarters of the women applied to C, E and F, which accepted $35\%$, $25\%$ and $7\%$.
+  \pause
+  \item Nobody's admission rate was changed by the pooling. The applicants simply were not spread evenly across easy and hard departments.
+\end{itemize}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Simpson's Paradox: The Lesson}
+\begin{itemize}
+  \item $P(\text{admitted} \mid \text{woman}) < P(\text{admitted} \mid \text{man})$, and yet $P(\text{admitted} \mid \text{woman}, \text{dept})$ is the \emph{larger} of the two in most departments. Both statements are true of the same data.
+  \pause
+  \item Pooling groups can reverse a comparison whenever the groups differ in size \emph{and} in their underlying rates. The arithmetic is fine -- the two questions are simply not the same question.
+  \pause
+  \item \textbf{Everyday version:} a hospital with the worse overall survival rate can be the better hospital at every single operation, if it takes the hardest cases.
+  \pause
+  \item \textbf{Why this matters later:} a model fitted to pooled data can learn a relationship that holds in no subgroup at all. Always ask what the data was already conditioned on before it reached you.
+\end{itemize}
+\end{frame}

@@ -1,0 +1,327 @@
+\section{Lecture 1, Part 0: What is an Agent?}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 1}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large What is an Agent?}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Tell an agent from a pipeline by asking one question: who chooses the next step?
+  \pause
+  \item Trace a ReAct loop by hand, and say exactly what the scratchpad holds at each turn (Yao et al., 2023).
+  \pause
+  \item Design an action space, and predict the three ways an agent loop fails.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need an Agent Loop?}
+\begin{itemize}
+  \item \textbf{Why:} a pipeline fixes the order of steps when the program is written. That is fine whenever you already know the order -- and it breaks the moment the next step depends on what the last step returned.
+  \pause
+  \item \textbf{A question a pipeline handles:} ``what is the maximum normal working week?'' One search, one answer. Retrieve the article, generate a sentence, stop.
+  \pause
+  \item \textbf{A question it does not:} ``\dots and does that limit differ for employees under 18?'' The system must find the general rule, read it, notice that it says nothing about age, and search again. How many searches? Nobody knows before starting.
+  \pause
+  \item An \textbf{agent} is the program that lets the model decide there is a second search -- and a third, if the second came back empty.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Pipeline vs.\ Agent}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  box/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=3.5pt,
+              minimum height=5mm, minimum width=16mm, align=center},
+  tool/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=3.5pt,
+               minimum height=5mm, minimum width=16mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  \node[lbl, anchor=west] at (-0.3,2.6)
+    {\textbf{Pipeline} -- the order of steps is fixed when the program is written};
+  \node[box] (q1) at (0.8,1.8) {query};
+  \node[box] (r1) at (3.7,1.8) {retrieve};
+  \node[box] (g1) at (6.6,1.8) {generate};
+  \node[box] (a1) at (9.5,1.8) {answer};
+  \draw[->] (q1) -- (r1);
+  \draw[->] (r1) -- (g1);
+  \draw[->] (g1) -- (a1);
+
+  \node[lbl, anchor=west] at (-0.3,0.65)
+    {\textbf{Agent} -- the model chooses the next step, so the number of steps is not known in advance};
+  \node[box] (q2) at (0.8,-0.2) {query};
+  \node[box] (m)  at (4.6,-0.2) {model};
+  \node[box] (a2) at (9.5,-0.2) {answer};
+  \node[tool] (t) at (4.6,-2.0) {tool};
+  \draw[->] (q2) -- (m);
+  \draw[->] (m) -- node[lbl,above=1pt] {when the trace is enough} (a2);
+  \draw[->] (m) to[bend right=48] node[lbl,left] {action} (t);
+  \draw[->] (t) to[bend right=48] node[lbl,right] {observation} (m);
+\end{tikzpicture}
+
+\vspace{0.3em}
+\footnotesize Both rows use a model and a tool to answer a query. The new thing on the lower row is the arrow that goes \emph{back}: the model, not the programmer, decides how many times round the loop.
+\end{frame}
+
+\begin{frame}{Agent, Tool, Action Space, Trajectory}
+\begin{rldefinition}
+\textbf{Agent} -- a program in which the model, not the programmer, chooses the next step. \emph{Here:} the model decides whether one search was enough.
+
+\smallskip
+\textbf{Tool} -- a function the model may ask for by name, described to it only in text. \emph{Here:} \texttt{search(query)} over the legislation corpus.
+
+\smallskip
+\textbf{Action space} -- the set of calls available on a turn. \emph{Here:} \texttt{search}, \texttt{fetch\_article(id)}, \texttt{answer}.
+
+\smallskip
+\textbf{Trajectory} -- the whole sequence of thoughts, actions and observations for one task. Lecture 8 grades this, not just its last line.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The model never executes anything. It emits a \emph{request}; your code decides whether to honour it.
+\end{itemize}
+\end{frame}
+
+% ─── ReAct ──────────────────────────────────────────────────────────────────
+\begin{frame}{Why Does ReAct Interleave Reasoning and Action?}
+\begin{itemize}
+  \item \textbf{Why:} the two obvious designs each fail in a predictable way.
+  \pause
+  \item \textbf{Reason only} (chain of thought): the model plans beautifully but never checks anything against the world, so a wrong premise survives all the way to the answer.
+  \pause
+  \item \textbf{Act only:} the model issues calls with no stated plan, and when a result is surprising it has nowhere to write down that the plan should change.
+  \pause
+  \item \textbf{ReAct} (Yao et al., 2023) alternates a free-text \emph{thought}, an \emph{action}, and the \emph{observation} the tool returned -- each appended to the trace the model reads next turn. The thought is where ``that returned nothing useful, narrow the query'' can be recorded.
+  \pause
+  \item Yao et al.\ report the interleaved loop beating both baselines on question answering (HotpotQA, FEVER) and on interactive tasks (ALFWorld, WebShop).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The ReAct Loop}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  box/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+              minimum height=6mm, minimum width=20mm, align=center},
+  done/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=4pt,
+               minimum height=6mm, minimum width=20mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=2pt}
+]
+  \node[box]  (th) at (0,0)    {Thought};
+  \node[box]  (ac) at (5.2,0)  {Action};
+  \node[box]  (ob) at (10.4,0) {Observation};
+  \node[done] (an) at (0,1.9)  {Final answer};
+  \draw[->] (th) -- node[lbl,above] {emit a tool call} (ac);
+  \draw[->] (ac) -- node[lbl,above] {the tool runs} (ob);
+  \draw[->] (ob) to[bend left=18]
+      node[lbl,below] {appended to the scratchpad, then re-read} (th);
+  \draw[->] (th) -- node[lbl,right] {when no further tool is needed} (an);
+\end{tikzpicture}
+
+\vspace{0.4em}
+\footnotesize
+Every turn the model sees the \emph{entire} trace so far and produces the next thought. Nothing else is remembered.
+\end{frame}
+
+\begin{frame}{Worked Trace: One Task, Three Turns}
+\footnotesize
+\textbf{Task:} ``What is the maximum normal working week, and does it differ for employees under 18?''
+\smallskip
+
+\scriptsize
+\begin{tabular}{@{}p{1.5cm}p{0.78\textwidth}@{}}
+\textcolor{RLBlue}{\textbf{Thought 1}} & Two parts. Start with the general rule on working hours. \\[2pt]
+\textcolor{RLGreen}{\textbf{Action 1}}  & \texttt{search("normal working time hours per week")} \\[2pt]
+\textbf{Obs.\ 1}                        & Labor Code, Article 182 --- normal working time may not exceed 40 hours per week. \\
+\end{tabular}
+\pause
+
+\begin{tabular}{@{}p{1.5cm}p{0.78\textwidth}@{}}
+\textcolor{RLBlue}{\textbf{Thought 2}} & Part one is answered and cited. Part two asks about employees under 18, which Article 182 does not address. Search again. \\[2pt]
+\textcolor{RLGreen}{\textbf{Action 2}}  & \texttt{search("reduced working time employees under eighteen")} \\[2pt]
+\textbf{Obs.\ 2}                        & Three candidate articles returned; none of them states a limit for that category. \\
+\end{tabular}
+\pause
+
+\begin{tabular}{@{}p{1.5cm}p{0.78\textwidth}@{}}
+\textcolor{RLBlue}{\textbf{Thought 3}} & Part one is grounded; part two has no support in what I retrieved. Report both honestly. \\[2pt]
+\textcolor{RLGreen}{\textbf{Action 3}}  & \texttt{answer(...)} --- 40 hours per week [Art.~182]; \emph{no supporting article found} for employees under 18. \\
+\end{tabular}
+\pause
+
+\smallskip
+\footnotesize The number of searches was not fixed in advance. That is the whole difference from a pipeline.
+\end{frame}
+
+\begin{frame}{The Scratchpad Is Just the Context Window}
+\small
+\begin{itemize}
+  \item The trace is not stored anywhere special: every thought, action and observation is concatenated and re-sent as the next turn's prompt.
+  \pause
+  \item Write $S$ for the fixed prefix (system prompt plus tool schemas) and $a$ for the tokens one step adds. Turn $t$ sends $S + (t-1)a$ tokens, so a trajectory of $n$ steps is billed
+  \[
+    \underbrace{nS}_{\text{prefix, resent } n \text{ times}} \; + \; \underbrace{a\,\frac{n(n-1)}{2}}_{\text{every step re-read by every later step}}
+  \]
+  \pause
+  \item \textbf{The second term is quadratic in $n$} -- this is total input across the trajectory, not the size of any one prompt. With $S = 1200$ and $a = 500$:
+\end{itemize}
+\pause
+\centering
+\footnotesize
+\begin{tabular}{l|rrr}
+Steps $n$ & $3$ & $10$ & $20$ \\
+\hline
+Input tokens billed & $5{,}100$ & $34{,}500$ & $119{,}000$ \\
+If you paid only for new text & $2{,}700$ & $6{,}200$ & $11{,}200$ \\
+\end{tabular}
+
+\vspace{0.2em}
+\footnotesize Doubling the steps from $10$ to $20$ multiplies the bill by $3.4$, not by $2$.
+\end{frame}
+
+\begin{frame}{Why the KV Cache Makes This Affordable}
+\begin{itemize}
+  \item To generate a token the model needs the attention \emph{keys and values} of every token before it. Those depend only on the prefix, so a server that has already processed a prefix can keep them and skip recomputing.
+  \pause
+  \item An agent loop is the ideal case: turn $t$'s prompt \emph{begins with} turn $t-1$'s prompt, byte for byte. Only the newest $a$ tokens are unseen. Providers surface this as a discounted ``cached input'' rate -- for our baseline, \$0.003 against \$0.15 per million.
+  \pause
+  \item For the $n = 10$ trajectory above: $5{,}700$ tokens are new and $28{,}800$ are a cache hit, so the same run costs \textbf{\$0.00094 instead of \$0.00517} -- $5.5\times$ cheaper, and across a 500-query evaluation \textbf{\$0.47 instead of \$2.59}.
+  \pause
+  \item \textbf{Mechanism, not magic:} Module 6, Lecture 4 covers the KV cache and paged attention properly. Here we only need the rule it implies.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Controlling the Cost of a Trajectory}
+\small
+\begin{itemize}
+  \item \textbf{Keep the prefix byte-identical.} Put the system prompt and tool schemas first, append only, and never edit them mid-run. A timestamp, a reordered tool list or reformatted JSON near the front invalidates the cache \emph{from that byte onward} -- you then pay the full rate for the whole trajectory.
+  \pause
+  \item \textbf{Cap the observation, not just the answer.} Tool results are what makes $a$ large. Return the article number and the matching sentence, not the whole article. Halving $a$ halves the quadratic term.
+  \pause
+  \item \textbf{Cap the number of steps.} Give the loop a hard budget and \emph{abstain} when it is exhausted rather than continue. This is also the fix for the runaway loop we meet later in this lecture.
+  \pause
+  \item \textbf{Summarise only at a checkpoint.} Rewriting the history shortens the prompt but destroys the cached prefix, so the next turn pays full price for everything. Worth it only once the context window, not the bill, is the binding constraint -- Lecture 3 develops this.
+\end{itemize}
+\end{frame}
+
+% ─── Tools ──────────────────────────────────────────────────────────────────
+\begin{frame}{What Counts as a Tool?}
+\begin{rldefinition}
+A \textbf{tool} is a function the model may request by name and arguments, described to it only in prose. Three families cover nearly everything:
+
+\smallskip
+\textbf{Retrieval} -- \texttt{search(query)} returns passages. Read-only, cheap, and the bulk of this module.
+
+\smallskip
+\textbf{Code execution} -- \texttt{python(source)} returns whatever it printed. Unbounded power, so it needs a sandbox (Lecture 8).
+
+\smallskip
+\textbf{External API} -- \texttt{http\_get(url)} returns a response. Side effects live here, which is why reversibility becomes a design requirement.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The split between \emph{requesting} a call and \emph{executing} one is the entire security boundary. Everything in Lecture 8 is built on it.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Action Space Design Matters}
+\begin{itemize}
+  \item The action space is the only vocabulary the model has. Both directions of mis-sizing it hurt.
+  \pause
+  \item \textbf{Too large:} selection error grows with the number of near-duplicate tools. Given \texttt{search}, \texttt{lookup}, \texttt{find\_article} and \texttt{query\_corpus}, the model must guess which one you meant -- and any guess is defensible.
+  \pause
+  \item \textbf{Too coarse:} the agent cannot express the step it needs, so it substitutes a worse one. With only \texttt{search(query)} it cannot say ``search inside the Labor Code''; it will instead pad the query string and hope.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Designing the Action Space}
+\begin{itemize}
+  \item \textbf{Design rule:} every tool should be describable in one sentence, and no two tools should ever both be reasonable answers to the same need.
+  \pause
+  \item \textbf{Prefer arguments to tools.} One \texttt{search(query, code, chapter)} beats four near-identical search tools -- the model picks values, not names, and values are easier to constrain (Lecture 2).
+  \pause
+  \item \textbf{Every tool needs a failure reply.} ``No results'' and ``that article ID does not exist'' must be observations the agent can act on, not exceptions that end the run.
+  \pause
+  \item \textbf{A different route:} Toolformer (Schick et al., 2023) describes no tools in the prompt at all -- it fine-tunes on self-generated examples of calls that improved its own prediction, so the model learns \emph{when} to call.
+\end{itemize}
+\end{frame}
+
+% ─── Failure modes ──────────────────────────────────────────────────────────
+\begin{frame}{Three Ways the Loop Breaks}
+\begin{itemize}
+  \item \textbf{Infinite loops.} The model re-issues an action it has already tried, because the observation did not change anything it is reasoning about. \emph{Fix:} a hard step budget, and refuse duplicate actions by returning ``already tried'' as the observation.
+  \pause
+  \item \textbf{Hallucinated tool calls.} A call to a tool that does not exist, or arguments that do not typecheck. \emph{Fix:} constrain the decoding so only valid calls can be emitted (Lecture 2) -- and when one slips through, hand the validation error back as an observation instead of crashing.
+  \pause
+  \item \textbf{Compounding errors.} Every step is conditioned on every previous step, so one bad observation quietly poisons everything after it. This one has no fix, only arithmetic -- next slide.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Errors Compound}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Suppose each step succeeds independently with probability $p$. Then a $k$-step trajectory succeeds with
+  \vspace{-0.7em}
+  \[ P(\text{all correct}) = p^{k}, \]
+  \vspace{-1.4em}
+
+  the multiplication rule from Module 0, Lecture 2.
+  \pause
+  \item \textbf{Numerical:} $p = 0.95$ is excellent per step -- yet $0.95^{10} = 0.599$, correct barely six times in ten.
+  \pause
+  \item Independence is idealised -- one bad retrieval worsens the next thought, so real runs fall off \emph{faster} than $p^{k}$.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=0.95\linewidth]{figures/agent_loop/agent_loop_compounding.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Reliability Is Multiplicative}
+\begin{itemize}
+  \item Because $p^{k}$ falls off in $k$, \textbf{shortening the trajectory is often worth more than improving the model}. Cutting ten steps to five at $p=0.90$ takes you from $0.35$ to $0.59$ -- more than a better model buys.
+  \pause
+  \item Three levers, in the order they usually pay: \textbf{fewer steps}; \textbf{higher $p$ per step}; \textbf{recovery}, a step that can notice it failed and try again.
+  \pause
+  \item \textbf{Reflexion} (Shinn et al., 2023) is the third lever: after a failed attempt the model writes a short verbal critique of its own trajectory and keeps it for the next attempt -- turning a one-shot failure into a second try that knows something.
+  \pause
+  \item This is also why Lecture 8 scores whole trajectories rather than final answers. $p$ is a \emph{per-step} quantity, and you cannot estimate it from the last line alone.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item An \textbf{agent} is a program in which the model chooses the next step; a pipeline is one where you did. The only structural difference is the arrow that goes back.
+  \pause
+  \item \textbf{ReAct} interleaves thought, action and observation because reasoning alone never checks the world and acting alone cannot revise a plan.
+  \pause
+  \item The \textbf{scratchpad is the context window} -- which sets both the cost curve and the hard ceiling on trajectory length.
+  \pause
+  \item An \textbf{action space} should be small, unambiguous, and expressive enough that the agent never has to improvise around a missing tool.
+  \pause
+  \item Reliability is \textbf{multiplicative}: $p^{k}$. Fewer steps first, better steps second, recovery third.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading}
+\begin{itemize}
+  \item Yao, Zhao, Yu, Du, Shafran, Narasimhan \& Cao (2023). \textit{ReAct: Synergizing Reasoning and Acting in Language Models.} ICLR. --- the loop this lecture is built on.
+  \pause
+  \item Shinn, Cassano, Berman, Gopinath, Narasimhan \& Yao (2023). \textit{Reflexion: Language Agents with Verbal Reinforcement Learning.} NeurIPS. --- recovery as a design element.
+  \pause
+  \item Schick, Dwivedi-Yu, Dess\`i, Raileanu, Lomeli, Zettlemoyer, Cancedda \& Scialom (2023). \textit{Toolformer: Language Models Can Teach Themselves to Use Tools.} NeurIPS. --- learning \emph{when} to call rather than being told.
+  \pause
+  \item \textbf{Next lecture:} how a model emits a call your code can actually execute -- JSON Schema, constrained decoding, and why hallucinated tool calls stop being possible.
+\end{itemize}
+\end{frame}

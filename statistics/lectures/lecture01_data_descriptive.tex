@@ -1,0 +1,291 @@
+\section{Lecture 1, Part 0: Data \& Descriptive Statistics}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 1}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Data \& Descriptive Statistics}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Distinguish data types (categorical vs. numerical, discrete vs. continuous) and read frequency distributions, histograms, and box plots.
+  \pause
+  \item Compute and interpret measures of center (mean, median, mode) and spread (variance, standard deviation, IQR) -- and explain \emph{why} each one is needed, not just how to compute it.
+  \pause
+  \item Recognize when a single summary statistic hides the real structure of the data (Anscombe's quartet).
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Data Types}
+\begin{columns}[T]
+\column{0.48\textwidth}
+\textbf{Categorical (qualitative)}
+\begin{itemize}
+  \item nominal: no natural order (e.g. eye colour, city of birth)
+  \pause
+  \item ordinal: ordered, unequal spacing (e.g. rating: low/medium/high)
+\end{itemize}
+
+\pause
+\column{0.48\textwidth}
+\textbf{Numerical (quantitative)}
+\begin{itemize}
+  \item discrete: countable (e.g. number of children in a family)
+  \pause
+  \item continuous: measured on a scale (e.g. salary, height)
+\end{itemize}
+\end{columns}
+
+\pause
+\begin{rlintuition}
+The data type determines which summary statistics and plots are valid: means and standard deviations only make sense for numerical data; categorical data is summarized with counts and proportions.
+\end{rlintuition}
+\end{frame}
+
+\begin{frame}{Population, Sample, and Notation}
+\begin{rldefinition}
+A \textbf{population} is every unit we care about; a \textbf{sample} is the subset we actually measure. A sample of size $n$ is written
+\[
+x_1, x_2, \dots, x_n,
+\qquad
+x_i = \text{the } i\text{-th observation}.
+\]
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Our 600 salaries are a \textbf{sample}; the population is every employee in the industry -- too large to measure.
+  \pause
+  \item \textbf{Example:} five salaries (\$1000s) $\{31, 45, 47, 52, 88\}$ give $n = 5$, $x_1 = 31$, $x_3 = 47$, $x_5 = 88$.
+  \pause
+  \item \textbf{Summation:} $\sum_{i=1}^{n} x_i = x_1 + x_2 + \dots + x_n$ -- ``add up all $n$ observations''.
+  \pause
+  \item Latin letters ($\bar{x}$, $s$) are computed \emph{from the sample}; Greek letters ($\mu$, $\sigma$) describe the \emph{population} we cannot see.
+\end{itemize}
+\end{frame}
+
+% ─── Frequency distributions & histograms ───────────────────────────────────
+\begin{frame}{Frequency Distributions \& Histograms}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item A \textbf{frequency distribution} counts observations per value or class.
+  \pause
+  \item A \textbf{histogram} plots those counts as bars -- it shows the \emph{shape} of the data: symmetric, skewed, multi-modal.
+  \pause
+  \item \textbf{Real event:} 600 employee salaries are \emph{right-skewed} -- most sit between \$40k and \$60k, and a thin tail of high earners reaches \$151k.
+  \pause
+  \item \textbf{Why:} ``the average salary is \$52k'' hides that half the staff earn below \$48k. The shape shows it; the number alone does not.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/data_probability/data_probability_salary_histogram.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Building a Histogram for a Continuous Variable}
+\small
+A continuous variable almost never repeats a value, so counting each value separately is useless -- group the values into \textbf{classes} first.
+\begin{columns}[T]
+\column{0.54\textwidth}
+\begin{enumerate}
+  \item Range $=\max-\min=\$151\text{k}-\$27\text{k}=\$124\text{k}$.
+  \pause
+  \item Choose the number of classes $k$ (usually 5--10); here $k=7$.
+  \pause
+  \item Class width $=\text{range}/k=124/7\approx17.7$, rounded up to a convenient \$20k.
+  \pause
+  \item Count the observations falling in each class.
+  \pause
+  \item Draw one bar per class, \textbf{bars touching}: the scale is continuous, so gaps would suggest impossible salaries.
+\end{enumerate}
+\column{0.44\textwidth}
+\centering
+\scriptsize
+\begin{tabular}{lrr}
+\hline
+Salary class & Freq. & \% \\
+\hline
+\$20--40k   & 156 & 26.0 \\
+\$40--60k   & 311 & 51.8 \\
+\$60--80k   &  89 & 14.8 \\
+\$80--100k  &  32 &  5.3 \\
+\$100--120k &   7 &  1.2 \\
+\$120--140k &   3 &  0.5 \\
+\$140--160k &   2 &  0.3 \\
+\hline
+Total       & 600 &      \\
+\hline
+\end{tabular}
+\end{columns}
+\end{frame}
+
+% ─── Measures of center: the mean ───────────────────────────────────────────
+\begin{frame}{Why Do We Need the Mean?}
+\begin{rldefinition}
+For a sample $x_1, \dots, x_n$:
+\[
+\bar{x} = \frac{1}{n}\sum_{i=1}^{n} x_i
+\]
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Why:} decisions need one number, not a spreadsheet of 600 salaries. The mean compresses a whole dataset into one value that can be tracked over time or plugged into a formula (expected cost = mean cost $\times$ volume).
+  \pause
+  \item \textbf{Numerical example:} the five salaries (\$1000s) $\{31, 45, 47, 52, 88\}$ give $\bar{x} = \frac{31+45+47+52+88}{5} = \frac{263}{5} = 52.6$.
+  \pause
+  \item \textbf{Everyday means:} a student's grade average, the average monthly temperature in a weather report, a car's average fuel consumption, a player's average points per game -- all the same formula.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Do We Need the Median?}
+\begin{rldefinition}
+Sort the sample. The \textbf{median} is the middle value: the $\frac{n+1}{2}$-th observation when $n$ is odd, and the average of the two middle observations when $n$ is even.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Odd $n$:} $\{31, 45, 47, 52, 88\}$ is sorted and $n = 5$, so the median is the 3rd value, $47$.
+  \pause
+  \item \textbf{Even $n$:} drop the 88 to get $\{31, 45, 47, 52\}$ with $n = 4$; the median is $\frac{45 + 47}{2} = 46$.
+  \pause
+  \item For the first set $\bar{x} = 52.6$, which is larger than \emph{four of the five} salaries -- the single \$88k earner pulls it up, while the median stays on the middle person.
+  \pause
+  \item \textbf{Why:} the median describes a \emph{typical} member of the sample; the mean describes what each would get if the total were shared equally.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: When the Mean Misleads}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Nine people are in a bar, net worth \$20K--\$150K. Mean $\approx$ \$97K, median $\approx$ \$121K -- close together.
+  \pause
+  \item A billionaire walks in. The \textbf{mean} jumps to \$15{,}000{,}087{,}166 -- nobody in the room is close to that. The \textbf{median} barely moves, to \$122K.
+  \pause
+  \item \textbf{Why:} the median only cares about the middle-ranked value; the mean sums every value, so one huge outlier dominates the sum.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/data_probability/data_probability_billionaire_bar.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Mean vs. Median vs. Mode: Choosing a Center}
+\begin{itemize}
+  \item \textbf{Why this matters in practice:} national statistics agencies report \emph{median} household income, not mean -- a handful of billionaires would make ``mean income'' meaningless for a typical household. House prices are reported the same way: a few mansions would drag the mean far above what an ordinary buyer pays.
+  \pause
+  \item The \textbf{mode} is the most frequent value -- the only center defined for categorical data (the most common blood type, the shoe size a shop sells most).
+  \pause
+  \item \textbf{Rule of thumb:} mean for roughly symmetric data and for totals (a shop's daily takings); median for skewed data or extreme outliers (income, house prices, waiting times); mode for categorical data.
+\end{itemize}
+\end{frame}
+
+% ─── Measures of spread: variance & std ─────────────────────────────────────
+\begin{frame}{Why Do We Need Variance?}
+\begin{rldefinition}
+\[
+s^2 = \frac{1}{n-1}\sum_{i=1}^{n}(x_i - \bar{x})^2
+\qquad
+s = \sqrt{s^2}
+\]
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Why:} the mean alone cannot distinguish ``reliable'' from ``risky.'' Two datasets can share the exact same mean and still behave completely differently.
+  \pause
+  \item \textbf{Numerical example:} your commute takes $\{30, 29, 31, 30, 30\}$ minutes by bus and $\{18, 42, 25, 35, 30\}$ by car. Both average $30$ minutes, but $s^2_{\text{bus}} = \frac{2}{4} = 0.5$ and $s^2_{\text{car}} = \frac{338}{4} = 84.5$ -- by car you are sometimes 12 minutes late.
+  \pause
+  \item $s^2$ divides by $n-1$ (Bessel's correction) to give an unbiased estimate of the \emph{population} variance from a sample.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Same Mean, Different Variance}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Bottling line:} the label says $500$ml; the law allows $495$--$505$ml. Two machines both average exactly $500$ml.
+  \pause
+  \item \textbf{Machine A}, std $=2$ml: the limits sit $2.5$ standard deviations out, so \textbf{11 of 1000} bottles are rejected.
+  \pause
+  \item \textbf{Machine B}, std $=4$ml: the same limits are only $1.25$ standard deviations out -- \textbf{210 of 1000} rejected, one bottle in five.
+  \pause
+  \item Doubling the spread multiplied the waste by $19$; the mean never moved.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/data_probability/data_probability_variance_bottles.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Variance Determines Risk}
+\begin{itemize}
+  \item The bottler must control the \emph{spread}, not just the average, because the spread is what sets the share of mislabelled bottles. (This is the idea behind ``Six Sigma'' quality control.)
+  \pause
+  \item Same story elsewhere: a bus line with a reliable timetable, a clinic with predictable waiting times, an oven that holds its temperature -- the average alone never says how often things go wrong.
+  \pause
+  \item \textbf{Later in this course:} a model whose accuracy swings from run to run is riskier than a steady one with the same average -- the spread decides again.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Quartiles and the Five-Number Summary}
+\begin{rldefinition}
+Sort the data and split it at the median. $Q_1$ is the median of the lower half and $Q_3$ the median of the upper half, so a quarter of the data lies below $Q_1$ and a quarter above $Q_3$. The \textbf{five-number summary} is $\min$, $Q_1$, median, $Q_3$, $\max$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Worked example} -- nine salaries (\$1000s), sorted, median in bold:
+  \[
+    31,\; 38,\; 42,\; 45,\; \mathbf{47},\; 49,\; 52,\; 61,\; 88
+  \]
+  \pause
+  \item Lower half $\{31,38,42,45\}$ gives $Q_1 = \frac{38+42}{2} = 40$; upper half $\{49,52,61,88\}$ gives $Q_3 = \frac{52+61}{2} = 56.5$.
+  \pause
+  \item Five-number summary: $31,\; 40,\; 47,\; 56.5,\; 88$ -- the centre \emph{and} the spread, in five numbers.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{IQR \& Box Plots}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{IQR} $= Q_3 - Q_1$: spread of the middle 50\% -- like the median, robust to extreme outliers.
+  \pause
+  \item Outliers: beyond $Q_1 - 1.5\,\text{IQR}$ or $Q_3 + 1.5\,\text{IQR}$. For the nine salaries, $\text{IQR} = 16.5$ and the upper fence is $81.25$, so \$88k is flagged.
+  \pause
+  \item A \textbf{box plot} draws $Q_1$, median, $Q_3$, whiskers, outliers -- faster to compare groups than several histograms.
+  \pause
+  \item \textbf{Real event:} waiting times at three branches of a service centre. Branch C is both the slowest \emph{and} the most variable -- a single average would not show \emph{which} branch to fix.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/data_probability/data_probability_boxplot_branches.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why We Always Plot the Data: Anscombe's Quartet}
+\centering
+\includegraphics[width=0.96\textwidth]{figures/data_probability/data_probability_anscombe.pdf}
+
+\vspace{0.4em}
+\footnotesize All four datasets share mean $x=9.0$, mean $y\approx7.50$, variance $x=11.0$, correlation $\approx 0.816$, and the same regression line $y = 3.00 + 0.5x$.
+\end{frame}
+
+\begin{frame}{Anscombe's Quartet: The Lesson}
+\begin{itemize}
+  \item \textbf{Real event:} statistician Francis Anscombe published these four datasets in 1973 specifically to warn against trusting summary statistics without plotting the data.
+  \pause
+  \item Set I: a normal linear relationship with scatter. Set II: a perfect \emph{curve} -- a line is the wrong model entirely. Set III: a perfect line broken by one outlier that pulls the fitted slope off. Set IV: no relationship at all except one high-leverage point that fakes a strong correlation.
+  \pause
+  \item \textbf{Why this matters for ML:} reporting ``$R^2=0.67$, mean=9.0, std=3.3'' for a dataset tells you almost nothing about whether a linear model is appropriate, whether outliers are driving your fit, or whether the relationship is even real -- always visualize residuals and scatter plots, not just summary numbers, before trusting a model.
+\end{itemize}
+\end{frame}

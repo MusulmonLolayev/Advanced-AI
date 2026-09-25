@@ -1,0 +1,228 @@
+\section{Lecture 6, Part 1: MAP Estimation \& Conjugate Priors}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 6}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large MAP Estimation \& Conjugate Priors}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Compute a MAP estimate, and say how it differs from the MLE and from the posterior mean.
+  \pause
+  \item Update a Beta, a Dirichlet and a Gaussian prior by hand, by adding counts or precisions.
+  \pause
+  \item Derive $L_2$ regularisation from a Gaussian prior, and read the penalty strength $\lambda$ as a statement about belief.
+\end{itemize}
+\end{frame}
+
+% ─── MAP ────────────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Point Estimate Again?}
+\begin{itemize}
+  \item The whole posterior is the honest answer, but sometimes you must \emph{act}: the timetable app has room for one number, and the model needs one setting for each weight.
+  \pause
+  \item \textbf{Two ways to collapse a curve to a number:} take its peak, or take its balance point.
+\end{itemize}
+\pause
+\begin{rldefinition}
+\textbf{MAP estimate} (maximum a posteriori) -- the most probable $\theta$, the peak of the posterior: $\hat{\theta}_{\text{MAP}} = \arg\max_\theta p(\theta \mid D)$. \emph{Bus:} the single on-time rate you would bet on.\\
+\textbf{Posterior mean} -- the balance point, $E[\theta \mid D]$, the same average Lecture 3 defined. \emph{Bus:} the rate that makes your long-run predictions right.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item They coincide when the posterior is symmetric, and differ when it is skewed.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Three Answers From One Posterior}
+\begin{columns}[T]
+\column{0.47\textwidth}
+\small
+\begin{itemize}
+  \item After $10$ mornings: $6$ on time, $4$ late. Prior Beta$(8,2)$, so the posterior is Beta$(14,6)$.
+  \pause
+  \item \textbf{MLE} $= \tfrac{6}{10} = 0.600$ -- the data alone.
+  \pause
+  \item \textbf{Posterior mean} $= \tfrac{14}{20} = 0.700$; \textbf{MAP} $= \tfrac{14-1}{20-2} = 0.722$.
+  \pause
+  \item The two Bayesian answers sit higher because they also carry the $10$ prior mornings. MAP is above the mean because this posterior leans left.
+\end{itemize}
+\column{0.51\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/bayesian/bayesian_point_estimates.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Conjugacy ──────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Conjugate Priors?}
+\begin{itemize}
+  \item Multiplying a prior curve by a likelihood curve is easy. \emph{Rescaling} it so the area is $1$ needs an integral, and for most pairs that integral has no closed form.
+  \pause
+  \item \textbf{A conjugate prior} is one whose posterior lands back in the same family. Then you never touch the integral -- you just update the parameters.
+  \pause
+  \item \textbf{Everyday:} instead of redrawing a curve every morning, you add $1$ to a counter.
+  \pause
+  \item Three pairs cover most of this course: Beta with Bernoulli, Dirichlet with Categorical, Gaussian with Gaussian.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Beta--Bernoulli: Updating Is Counting}
+\begin{itemize}
+  \item \textbf{Rule:} \; $\text{Beta}(\alpha, \beta) \;+\; s \text{ successes},\; f \text{ failures} \;\longrightarrow\; \text{Beta}(\alpha + s,\; \beta + f)$.
+  \pause
+  \item \textbf{Bus, worked through:} start at Beta$(8,2)$. After $30$ mornings with $22$ on time and $8$ late,
+  \[
+    \text{Beta}(8 + 22,\; 2 + 8) = \text{Beta}(30, 10), \qquad \text{mean } \tfrac{30}{40} = 0.750 .
+  \]
+  \pause
+  \item So $\alpha$ and $\beta$ are just \emph{counts of on-time and late mornings} -- the ones you were given at the start plus the ones you saw.
+  \pause
+  \item That is why the prior was described as ``worth $10$ mornings'': the number is literally sitting in the parameters.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Dirichlet--Categorical: The Promise From Lecture 3}
+\begin{itemize}
+  \item Lecture 3 claimed the Dirichlet's $\alpha$ \emph{counts orders already seen}, and that updating is counting. Here is why that was true.
+  \pause
+  \item \textbf{Rule:} \; $\text{Dir}(\alpha_1, \dots, \alpha_k) \;+\; \text{counts } n_1, \dots, n_k \;\longrightarrow\; \text{Dir}(\alpha_1 + n_1, \dots, \alpha_k + n_k)$.
+  \pause
+  \item \textbf{Coffee shop, worked through:} the prior was $\text{Dir}(0.8, 2, 1.2)$ -- about four orders. The next $40$ orders are $7$ small, $21$ medium, $12$ large:
+  \[
+    \text{Dir}(7.8,\; 23,\; 13.2), \qquad \text{mean shares } \tfrac{7.8}{44},\, \tfrac{23}{44},\, \tfrac{13.2}{44} = 0.177,\, 0.523,\, 0.300 .
+  \]
+  \pause
+  \item The Beta is simply this rule with $k = 2$. One family, two names.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Timing the Walk to the Station}
+\begin{columns}[T]
+\column{0.52\textwidth}
+\small
+\begin{itemize}
+  \item You think the walk takes about $12$ minutes, give or take $3$. That is a prior $\mathcal{N}(12, 3^2)$.
+  \pause
+  \item You time it four times: $13, 14, 16, 17$, so $\bar{x} = 15$. A single walk varies by about $\sigma = 3$ minutes.
+  \pause
+  \item \textbf{Precisions add.} Writing precision as $1/\text{variance}$, the prior brings $\tfrac{1}{9}$ and the four timings bring $\tfrac{4}{9}$:
+  \[
+    \hat{\mu} = \frac{\tfrac{1}{9} \cdot 12 + \tfrac{4}{9} \cdot 15}{\tfrac{1}{9} + \tfrac{4}{9}} = \mathbf{14.4}
+  \]
+  with posterior sd $\sqrt{9/5} = 1.34$ minutes.
+\end{itemize}
+\column{0.46\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/bayesian/bayesian_gaussian_update.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Every Prior Is Worth $n$ Observations}
+\begin{itemize}
+  \item In that example the prior's spread ($3$ minutes) happened to equal a single timing's spread ($3$ minutes). So the hunch counted as \textbf{exactly one extra timing}:
+  \[
+    \hat{\mu} = \frac{1 \times 12 \;+\; 4 \times 15}{1 + 4} = \frac{72}{5} = 14.4 .
+  \]
+  \pause
+  \item Same story as Beta$(8,2)$ being worth $10$ mornings, and $\text{Dir}(0.8,2,1.2)$ being worth about four orders.
+  \pause
+  \item \textbf{So the one question to ask of any prior is: how many observations is it worth?} A vague prior is worth few and gets overruled quickly; a confident one is worth many and does not.
+  \pause
+  \item A tighter prior also means a tighter posterior -- and, as the next slide shows, a heavier penalty.
+\end{itemize}
+\end{frame}
+
+% ─── The AI payoff ──────────────────────────────────────────────────────────
+\begin{frame}{MAP With a Gaussian Prior \emph{Is} $L_2$ Regularisation}
+\small
+Maximising the posterior is minimising minus its logarithm, and the logarithm splits the product into a sum:
+\[
+  \hat{w} = \arg\max_w \; p(D \mid w)\,p(w)
+          = \arg\min_w \; \big[ -\log p(D \mid w) \;-\; \log p(w) \big].
+\]
+\pause
+\begin{itemize}
+  \item \textbf{Gaussian noise on the targets} gives the first term (Lecture 5): $-\log p(D \mid w) = \tfrac{1}{2\sigma^2}\sum_i (y_i - \hat{y}_i)^2 + \text{const}$.
+  \pause
+  \item \textbf{A Gaussian prior on the weights}, $w \sim \mathcal{N}(0, \tau^2 I)$, gives the second: $-\log p(w) = \tfrac{1}{2\tau^2}\lVert w \rVert^2 + \text{const}$.
+  \pause
+  \item Add them, drop the constants and multiply through by $2\sigma^2$:
+\end{itemize}
+\pause
+\[
+  \boxed{\;\hat{w} = \arg\min_w \; \sum_i (y_i - \hat{y}_i)^2 \;+\; \lambda \lVert w \rVert^2, \qquad \lambda = \frac{\sigma^2}{\tau^2}\;}
+\]
+\pause
+\centering
+\footnotesize That is ridge regression, weight decay, ``$L_2$''. Nobody invented the penalty -- it fell out of a prior.
+\end{frame}
+
+\begin{frame}{Why This Matters: Weight Decay Is a Prior}
+\begin{columns}[T]
+\column{0.49\textwidth}
+\small
+\begin{itemize}
+  \item $\lambda = \sigma^2/\tau^2$ reads straight off: a \textbf{tighter prior} (small $\tau$) means a \textbf{bigger penalty}; \textbf{noisier data} (big $\sigma$) also means a bigger penalty.
+  \pause
+  \item The figure is that sentence: narrow the prior and the penalty parabola steepens. At $\tau = 2$ the coefficient is $0.125$; at $\tau = 0.5$ it is $2.0$, sixteen times heavier.
+  \pause
+  \item \textbf{Swap the prior, swap the penalty.} A Laplace prior $p(w) \propto e^{-\lvert w \rvert / b}$ gives $\lVert w \rVert_1 / b$ -- that is Lasso, or $L_1$. Its penalty has a kink at zero, which is exactly why $L_1$ drives weights to \emph{exactly} zero and $L_2$ does not.
+\end{itemize}
+\column{0.49\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/bayesian/bayesian_prior_to_penalty.pdf}
+
+\vspace{0.4em}
+\footnotesize Module 1 introduces Ridge and Lasso as two useful tricks. They are two priors.
+\end{columns}
+\end{frame}
+
+\begin{frame}{Predictive Distributions: Answering Without Picking a $\theta$}
+\begin{itemize}
+  \item The real question is rarely ``what is $\theta$?'' but ``will the bus be on time \emph{tomorrow}?'' -- and for that you need not choose a single $\theta$ at all.
+  \pause
+  \item \textbf{Average the prediction over every $\theta$, weighted by how much you believe it:}
+  \[
+    p(\text{new} \mid D) = \int p(\text{new} \mid \theta)\; p(\theta \mid D)\; d\theta .
+  \]
+  \pause
+  \item \textbf{Bus:} after $100$ mornings this comes out as the posterior mean, $P(\text{on time tomorrow}) = 0.691$.
+  \pause
+  \item \textbf{Walk:} the posterior variance was $1.8$, and tomorrow's walk carries its own $\sigma^2 = 9$. The predictive spread is $\sqrt{1.8 + 9} = 3.29$ minutes -- wider than the posterior, because you are uncertain about the average \emph{and} about tomorrow.
+  \pause
+  \item That split -- uncertainty about the parameter versus noise in the world -- is how a model says ``I do not know''.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Where This Goes Next}
+\begin{itemize}
+  \item \textbf{Lecture 7 -- information theory:} KL divergence measures how far the posterior moved from the prior, which is how much the data actually told you.
+  \pause
+  \item \textbf{Module 1 -- Ridge and Lasso:} now recognisable as a Gaussian and a Laplace prior on the weights.
+  \pause
+  \item \textbf{Module 3 -- topic models:} LDA puts a Dirichlet prior over a document's topic mixture, updated by word counts exactly as above.
+  \pause
+  \item \textbf{Module 5 -- exploration:} Thompson sampling draws one $\theta$ from the posterior and acts on it, so conjugacy is what makes it cheap enough to run every step.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item Bayes' rule as an update: $p(\theta \mid D) \propto p(D \mid \theta)\,p(\theta)$ -- prior times likelihood, rescaled.
+  \pause
+  \item A prior is stored evidence. Ask how many observations it is worth: Beta$(8,2)$ is worth $10$ mornings, and a prior whose spread matches one measurement's is worth exactly one measurement.
+  \pause
+  \item The posterior is the answer; MAP (its peak) and the posterior mean (its balance point) are summaries, and a credible interval says how sure you are.
+  \pause
+  \item Conjugate pairs turn updating into arithmetic: Beta--Bernoulli and Dirichlet--Categorical add counts, Gaussian--Gaussian adds precisions.
+  \pause
+  \item MAP with a Gaussian prior is exactly $L_2$ regularisation with $\lambda = \sigma^2/\tau^2$; with a Laplace prior it is $L_1$. Regularisation is not a trick -- it is a prior.
+\end{itemize}
+\end{frame}

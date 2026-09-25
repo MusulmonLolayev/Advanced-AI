@@ -1,0 +1,180 @@
+\section{Lecture 6, Part 0: Bayesian Inference}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 6}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Bayesian Inference}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Turn a prior and a likelihood into a posterior, and read the posterior as a whole answer rather than a single number.
+  \pause
+  \item Say what a prior actually stores, and when it stops mattering.
+  \pause
+  \item State what is treated as random by a frequentist and by a Bayesian, and why the two give different-sounding intervals.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Prior?}
+\begin{itemize}
+  \item \textbf{Why:} Lecture 5's maximum likelihood picks whichever $\theta$ explains the data best -- and uses nothing else. With very little data that is a disaster.
+  \pause
+  \item \textbf{Numerical example:} you move to a new street. On Monday the 7:40 bus is late. Maximum likelihood answers $\hat{\theta} = \tfrac{0}{1} = 0$: \emph{this bus is never on time}. Nobody believes that.
+  \pause
+  \item You do not believe it because you already knew something about buses before Monday. Maximum likelihood has nowhere to write that down.
+  \pause
+  \item \textbf{Everyday:} a restaurant with one one-star review is not a one-star restaurant, and a player who misses their first penalty is not a $0\%$ penalty taker.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Prior, Likelihood, Posterior -- Now as Curves}
+\begin{rldefinition}
+Lecture 2 gave these as three numbers. Each is now a curve over \emph{every} value $\theta$ could take.
+
+\smallskip
+\textbf{Prior} $p(\theta)$ -- what you believed before today's data. \emph{Bus:} ``on time about $80\%$ of mornings, but I am not certain'' is a Beta$(8,2)$ curve -- as if you had already watched $8$ on-time and $2$ late arrivals.\\
+\textbf{Likelihood} $p(\text{data} \mid \theta)$ -- how well each $\theta$ explains what you saw. \emph{Monday was late:} $p(\text{late} \mid \theta) = 1 - \theta$, largest at $\theta = 0$.\\
+\textbf{Posterior} $p(\theta \mid \text{data})$ -- what you believe now: the two multiplied together and rescaled.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The Beta curve is Lecture 4's; here we only need that it lives on $[0,1]$ and that $\alpha, \beta$ read as counts.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Bayes' Rule as an Update Rule}
+\begin{itemize}
+  \item Lecture 2's formula, with $\theta$ now ranging over a continuum:
+  \[
+    \underbrace{p(\theta \mid D)}_{\text{posterior}}
+      = \frac{\overbrace{p(D \mid \theta)}^{\text{likelihood}}\;\overbrace{p(\theta)}^{\text{prior}}}{p(D)}
+    \qquad\Longrightarrow\qquad
+    p(\theta \mid D) \;\propto\; p(D \mid \theta)\,p(\theta)
+  \]
+  \pause
+  \item The denominator $p(D)$ does not contain $\theta$. It is only the number that makes the curve enclose area $1$, so we may drop it and rescale at the end.
+  \pause
+  \item \textbf{In words:} start from what you believed, multiply by how well each $\theta$ explains the evidence, rescale. Values that explain the data badly get pushed down.
+  \pause
+  \item \textbf{This is learning.} Nothing else in the course updates a belief with evidence more directly than this one line.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: One Late Bus}
+\begin{itemize}
+  \item \textbf{Prior:} Beta$(8,2)$ -- worth $8$ on-time and $2$ late arrivals, so a prior mean of $\tfrac{8}{10} = 0.80$.
+  \pause
+  \item \textbf{Evidence:} Monday, the bus is late. The likelihood is $1 - \theta$.
+  \pause
+  \item \textbf{Multiply:} a Beta times this likelihood is a Beta again, with the late count raised by one:
+  \[
+    \text{Beta}(8,2) \;\times\; (1-\theta) \;\;\longrightarrow\;\; \text{Beta}(8,3).
+  \]
+  \pause
+  \item \textbf{Read it off:} the new mean is $\tfrac{8}{11} = 0.727$. One late bus moved the belief from $0.80$ to $0.727$ -- while maximum likelihood jumped all the way to $0$.
+  \pause
+  \item Part 1 explains why the Beta came back out as a Beta, and why that makes updating pure arithmetic.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Watching the 7:40 Bus for a Month}
+\begin{columns}[T]
+\column{0.47\textwidth}
+\small
+\begin{itemize}
+  \item $100$ mornings, on a route that really is on time $70\%$ of the time.
+  \pause
+  \item Maximum likelihood swings about early on; the posterior mean never leaves the sensible range.
+\end{itemize}
+\vspace{0.3em}
+\centering
+\footnotesize
+\begin{tabular}{r|rrr}
+Mornings & On time & MLE & Post.\ mean \\
+\hline
+$1$   & $0$  & $0.000$ & $0.727$ \\
+$10$  & $6$  & $0.600$ & $0.700$ \\
+$30$  & $22$ & $0.733$ & $0.750$ \\
+$100$ & $68$ & $0.680$ & $0.691$ \\
+\end{tabular}
+\column{0.51\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/bayesian/bayesian_posterior_updates.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: A Prior Is Stored Evidence}
+\begin{itemize}
+  \item Beta$(8,2)$ is not a mood. It is worth exactly $10$ mornings of watching -- you can count it.
+  \pause
+  \item So the honest question is never ``is my prior subjective?'' but \textbf{``how many observations is my prior worth?''} Here, $\alpha + \beta = 10$.
+  \pause
+  \item Maximum likelihood is not free of priors either -- it behaves like a flat Beta$(1,1)$, the belief that every on-time rate from $0$ to $1$ is equally plausible. That is also a choice, just an unstated one.
+  \pause
+  \item \textbf{Consequence:} a prior worth $10$ observations is swept aside by $100$; a prior worth $100$ is not.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Do We Need the Whole Posterior?}
+\begin{itemize}
+  \item A single number cannot say how sure you are. ``The bus is on time $70\%$ of the time'' sounds the same after $10$ mornings and after $10{,}000$.
+  \pause
+  \item \textbf{Credible interval:} the stretch of $\theta$ holding a stated share of the posterior's area. The central $95\%$ is the usual choice.
+  \pause
+  \item \textbf{After $10$ mornings:} posterior mean $0.700$, central $95\%$ from $\mathbf{0.488}$ to $\mathbf{0.874}$. You genuinely do not yet know whether this bus is unreliable or excellent.
+  \pause
+  \item \textbf{After $100$ mornings:} posterior mean $0.691$, central $95\%$ from $\mathbf{0.602}$ to $\mathbf{0.773}$. The interval has narrowed from $0.39$ wide to $0.17$ -- that shrinking \emph{is} the learning.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{When Does the Prior Stop Mattering?}
+\begin{columns}[T]
+\column{0.47\textwidth}
+\small
+\begin{itemize}
+  \item Three neighbours watch the \emph{same} $100$ mornings, from different starting beliefs.
+  \pause
+  \item \textbf{Flat} ends at $0.676$, \textbf{ours} (worth $10$ mornings) at $0.691$ -- the curves nearly coincide. The data has taken over.
+  \pause
+  \item \textbf{Stubborn}, worth $100$ mornings, still ends at $0.740$: never overruled, only half-answered.
+  \pause
+  \item \textbf{Rule of thumb:} a prior worth $k$ observations needs a few times $k$ to be overruled.
+\end{itemize}
+\column{0.51\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/bayesian/bayesian_three_priors.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Bayesian vs.\ Frequentist: What Is Random?}
+\begin{itemize}
+  \item \textbf{Frequentist:} $\theta$ is a fixed unknown number; the \emph{data} is random. A $95\%$ confidence interval is a statement about the procedure -- repeat the month many times and $95\%$ of the intervals you build would contain the true $\theta$.
+  \pause
+  \item \textbf{Bayesian:} the data is what you actually saw, so it is fixed; \emph{$\theta$} is what you are uncertain about. A $95\%$ credible interval says: given this prior and this data, there is a $95\%$ probability $\theta$ lies inside.
+  \pause
+  \item The Bayesian sentence is the one people \emph{think} they are saying when they quote a confidence interval.
+  \pause
+  \item Neither framing is wrong. They answer different questions, and with plenty of data they usually agree anyway -- as the flat prior above showed.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why an AI Course Teaches This}
+\begin{itemize}
+  \item \textbf{Every fine-tuned model is an update.} Pretraining leaves a belief about what text looks like; fine-tuning multiplies it by the likelihood of your data. Starting from pretrained weights rather than random ones \emph{is} starting from a prior (Modules 3 and 6).
+  \pause
+  \item \textbf{Uncertainty decides what to do next.} A model that reports a wide posterior can ask a human, or ask for that example to be labelled, instead of guessing confidently.
+  \pause
+  \item \textbf{Exploration needs posteriors.} Thompson sampling picks an action by drawing one $\theta$ from the posterior -- the standard cheap answer to explore-versus-exploit (Module 5).
+  \pause
+  \item And Part 1 has the biggest payoff of all: the regularisation term in almost every loss function you will write is a prior in disguise.
+\end{itemize}
+\end{frame}

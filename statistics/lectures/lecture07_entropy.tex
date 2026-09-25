@@ -1,0 +1,199 @@
+\section{Lecture 7, Part 0: Entropy \& Cross-Entropy}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 7}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large Entropy \& Cross-Entropy}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Say what entropy measures, in bits, and compute it for a distribution you can write down.
+  \pause
+  \item Read cross-entropy as the cost of using the wrong distribution, and identify the part of it nobody can avoid.
+  \pause
+  \item Explain why the loss you already use in Lecture 5 is this quantity under a different name.
+\end{itemize}
+\end{frame}
+
+% ─── Motivation ─────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Entropy?}
+\begin{itemize}
+  \item \textbf{Why:} Lecture 1 measured spread with the variance -- but variance needs numbers to average. Ask ``how uncertain is tomorrow's weather?'' and there is nothing to average: \emph{sunny} minus \emph{rain} is not a quantity.
+  \pause
+  \item \textbf{Everyday version:} a friend has picked tomorrow's weather and you must guess it with yes/no questions. If the town is sunny almost every day you will usually need one question. If all four outcomes are equally likely you will always need two.
+  \pause
+  \item That difference -- \emph{how many questions the guessing costs on average} -- is a measure of uncertainty that works for categories, and it is the one we want.
+  \pause
+  \item \textbf{Entropy is exactly that number}, and the unit is the yes/no question: the \textbf{bit}.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Twenty Questions About Tomorrow}
+\small
+One town's weather over $360$ logged days: \textbf{sunny} $180$, \textbf{cloudy} $90$, \textbf{rain} $45$, \textbf{storm} $45$ -- so $p = (\tfrac12, \tfrac14, \tfrac18, \tfrac18)$. Ask about the likeliest outcome first:
+
+\vspace{0.2em}
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  q/.style={draw=RLBlue, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+            minimum height=4.2mm, align=center},
+  leaf/.style={draw=RLGreen, fill=RLGray, rounded corners=2pt, inner sep=3pt,
+               minimum height=4.2mm, align=center},
+  lbl/.style={font=\scriptsize, inner sep=1.5pt}
+]
+  \node[q]    (q1) at (0,0)      {sunny?};
+  \node[leaf] (l1) at (2.5,0.95) {\textbf{sunny} -- 1 question};
+  \node[q]    (q2) at (2.5,-0.8) {cloudy?};
+  \node[leaf] (l2) at (5.2,0.15) {\textbf{cloudy} -- 2 questions};
+  \node[q]    (q3) at (5.2,-1.6) {rain?};
+  \node[leaf] (l3) at (7.9,-0.8) {\textbf{rain} -- 3 questions};
+  \node[leaf] (l4) at (7.9,-2.4) {\textbf{storm} -- 3 questions};
+  \draw[->] (q1) -- node[lbl,above,sloped] {yes} (l1);
+  \draw[->] (q1) -- node[lbl,below,sloped] {no}  (q2);
+  \draw[->] (q2) -- node[lbl,above,sloped] {yes} (l2);
+  \draw[->] (q2) -- node[lbl,below,sloped] {no}  (q3);
+  \draw[->] (q3) -- node[lbl,above,sloped] {yes} (l3);
+  \draw[->] (q3) -- node[lbl,below,sloped] {no}  (l4);
+\end{tikzpicture}
+
+\vspace{0.2em}
+\raggedright
+Average questions $= \tfrac12(1) + \tfrac14(2) + \tfrac18(3) + \tfrac18(3) = \mathbf{1.75}$. A rare outcome is expensive but seldom asked about; a common one is cheap and asked about often.
+\end{frame}
+
+\begin{frame}{Entropy}
+\begin{rldefinition}
+The \textbf{surprise} of an outcome is $\log_2 \tfrac{1}{p}$ -- how many yes/no questions it takes to pin down something of probability $p$. \emph{Weather:} sunny has $p = \tfrac12$, so $1$ bit; storm has $p = \tfrac18$, so $3$ bits.
+
+\smallskip
+The \textbf{entropy} $H(p)$ is the average surprise -- the average number of questions:
+\[
+H(p) \;=\; \sum_i p_i \log_2 \frac{1}{p_i} \;=\; -\sum_i p_i \log_2 p_i .
+\]
+\emph{Weather:} $H(p) = 1.75$ bits, exactly the tree's average.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Certainty is free.} If one outcome has $p = 1$ the entropy is $0$: no questions needed.
+  \item \textbf{Uniform is worst.} Four equally likely outcomes give $H = 2$ bits -- the most any four-outcome distribution can cost.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: 360 Days of Weather in Bits}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Each bar is one outcome's probability; the label above it is that outcome's surprise, $\log_2 \tfrac1p$.
+  \pause
+  \item \textbf{Entropy is the average of those labels}, weighted by the bars: $1.75$ bits.
+  \pause
+  \item Had the four outcomes been equally likely, every label would read $2$ bits and the average would be $2$. \textbf{Knowing the climate is worth $0.25$ bits a day} -- $90$ bits over those $360$ days.
+  \pause
+  \item \textbf{Read it:} entropy is low when probability is concentrated and high when it is spread out. It is the categorical answer to the question variance answers for numbers.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/information_theory/info_entropy_weather.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{When Is a Forecast Most Uncertain?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Take the simplest case -- rain or no rain -- and plot $H$ against the forecast probability.
+  \pause
+  \item \textbf{The peak is at $p = 0.5$}, where $H = 1$ bit: a fair coin is the most uncertain binary thing there is, and one question is always needed.
+  \pause
+  \item \textbf{Confidence is cheap either way.} A forecast of $0.11$ costs $0.50$ bits, and so does a forecast of $0.89$. Being sure it \emph{will} rain is as informative as being sure it will not.
+  \pause
+  \item \textbf{The curve is steep at the ends.} Moving a forecast from $0.5$ to $0.4$ buys almost nothing; moving it from $0.1$ to $0.01$ buys a lot.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/information_theory/info_binary_entropy.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Cross-entropy ──────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need Cross-Entropy?}
+\begin{itemize}
+  \item \textbf{The catch:} that question tree was built from the \emph{true} climate. Nobody hands you the true climate -- a forecaster has a belief $q$ and reality follows $p$.
+  \pause
+  \item \textbf{Everyday version:} a forecaster who thinks all four outcomes are equally likely will ask questions as if each cost $2$ bits. Reality still delivers sunny half the time, so he pays $2$ bits on a day that only needed $1$.
+  \pause
+  \item \textbf{The bill is a mixture:} how often each outcome \emph{actually} happens is set by $p$; how many questions each one \emph{costs him} is set by $q$.
+  \pause
+  \item \textbf{Cross-entropy} is that bill -- and it is the quantity you already minimise when you train a classifier.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Cross-Entropy}
+\begin{rldefinition}
+The \textbf{cross-entropy} $H(p, q)$ is what you pay describing outcomes drawn from $p$ with a scheme built for $q$ -- \emph{real} frequencies, \emph{wrong} question tree:
+\[
+H(p, q) \;=\; -\sum_i p_i \log_2 q_i .
+\]
+\emph{Weather:} a forecaster who believes all four outcomes equally likely pays $2.00$ bits a day where the truth costs $1.75$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Never a bargain:} $H(p,q) \ge H(p)$, with equality only when $q = p$ -- the truth is its own cheapest scheme.
+  \pause
+  \item \textbf{And you have met it already,} under another name.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Same Formula, Different Story}
+\begin{itemize}
+  \item Lecture 5 derived categorical cross-entropy as a negative log-likelihood: $-\sum_c y_c \log p_c$, with $y$ the one-hot label and $p$ the model's softmax.
+  \pause
+  \item \textbf{That is $H(y, p)$.} The one-hot label is a distribution putting all its mass on the true class, and the softmax is the belief being scored against it. Identical formula, no rearranging.
+  \pause
+  \item \textbf{Two readings of one number.} Lecture 5: \emph{how improbable was the data under my model?} Lecture 7: \emph{how many extra bits did my belief cost me?} Minimising either minimises the other.
+  \pause
+  \item \textbf{Bits or nats?} Frameworks use $\log_e$, so the unit is the \emph{nat} rather than the bit. It is a fixed factor of $\log 2 \approx 0.693$ and changes no decision -- our weather's $1.75$ bits is $1.21$ nats.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Three Forecasters, One Town}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Three forecasters, the same town, the same $360$ days. The blue base is $H(p) = 1.75$; the coloured cap is what each one wastes.
+  \pause
+  \item \textbf{Knows the climate:} $1.75$ bits. Nothing wasted -- and still not zero.
+  \pause
+  \item \textbf{Assumes all four equal:} $2.00$ bits, wasting $0.25$ a day.
+  \pause
+  \item \textbf{Always says sunny} ($q = 0.90$ for sun): $2.57$ bits, wasting $0.82$. Confidence that is wrong is punished hardest -- $\log_2 \tfrac{1}{0.01}$ is $6.6$ bits on the day the storm arrives.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/information_theory/info_cross_entropy_forecasters.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: The Loss You Cannot Get Below}
+\begin{itemize}
+  \item Every bar in that figure sat on the same blue base. \textbf{$H(p)$ is a floor} -- the part of the bill that comes from the world being uncertain, not from your model being wrong.
+  \pause
+  \item \textbf{So a cross-entropy loss of zero is not the target.} If two images with identical pixels genuinely carry different labels $70$/$30$ of the time, the best possible model still pays $H(0.7) = 0.88$ bits of loss on them. A model reporting near-zero training loss on noisy labels has memorised, not learned.
+  \pause
+  \item \textbf{Repeat this one:} \emph{cross-entropy splits into what the world does not know} ($H(p)$, unavoidable) \emph{plus what your model gets wrong} (the coloured cap). Only the second part is yours to reduce.
+  \pause
+  \item That second part has a name and a formula of its own -- the KL divergence, which opens Part 1.
+\end{itemize}
+\end{frame}

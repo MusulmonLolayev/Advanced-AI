@@ -1,0 +1,213 @@
+\section{Lecture 3, Part 1: Key Distributions}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 3}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 1}
+
+\vspace{0.6em}
+{\Large Key Distributions}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Recognize the Bernoulli, Binomial, Categorical, and Multinomial distributions from the question being asked.
+  \pause
+  \item Use the Poisson distribution for counts of events in a fixed window, and say when it replaces the Binomial.
+  \pause
+  \item Explain what a Dirichlet distribution is a distribution \emph{over}, and why that is useful.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Why Do We Need Named Distributions?}
+\begin{itemize}
+  \item \textbf{Why:} the same handful of shapes keep reappearing. Once a situation is recognized as one of them, the whole PMF, its expectation, and its variance come for free -- no counting required.
+  \pause
+  \item Four everyday questions, four different shapes:
+  \begin{itemize}
+    \item Did \emph{this one} customer buy a pastry? -- \textbf{Bernoulli}
+    \item How many of the next \emph{ten} did? -- \textbf{Binomial}
+    \item Which \emph{size} of cup did this customer pick? -- \textbf{Categorical}
+    \item How many customers walk in during the next \emph{ten minutes}? -- \textbf{Poisson}
+  \end{itemize}
+  \pause
+  \item A named distribution is also a claim about the world, and it can be wrong -- which is why the last one gets checked against real counts.
+\end{itemize}
+\end{frame}
+
+% ─── Bernoulli & Binomial ───────────────────────────────────────────────────
+\begin{frame}{Bernoulli: One Yes-or-No Trial}
+\begin{rldefinition}
+A \textbf{Bernoulli} variable takes the value $1$ with probability $p$ and $0$ otherwise -- a single yes/no question. \emph{A coin:} $p = 0.5$. \emph{A newborn being a girl:} $p \approx 0.49$.
+\[
+E[Y] = p, \qquad \mathrm{Var}(Y) = p(1-p).
+\]
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{From Part 0:} let $Y = 1$ if the order contains \emph{any} pastry. Then $p = p(1) + p(2) = 0.2 + 0.1 = 0.3$, so $E[Y] = 0.3$ and $\mathrm{Var}(Y) = 0.3 \times 0.7 = 0.21$.
+  \pause
+  \item The spread is largest at $p = 0.5$ and vanishes at $p = 0$ or $1$: a question whose answer is already known carries no uncertainty.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Binomial: Counting Successes in $n$ Trials}
+\begin{rldefinition}
+Repeat the same Bernoulli trial $n$ times, independently, and count the successes. That count is \textbf{Binomial}$(n, p)$:
+\[
+P(X = k) = \binom{n}{k} p^k (1-p)^{n-k},
+\qquad E[X] = np, \qquad \mathrm{Var}(X) = np(1-p).
+\]
+The $\binom{n}{k}$ counts the orders in which those $k$ successes could arrive; $p^k(1-p)^{n-k}$ is the probability of any one such order.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Both conditions matter:} the same $p$ every time, and no trial affecting another. Drawing socks without replacement in Lecture 2 broke the second, which is why that answer was not binomial.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: How Many of the Next Ten Buy a Pastry?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Ten customers, each buying a pastry with probability $p = 0.3$: $X \sim$ Binomial$(10, 0.3)$.
+  \pause
+  \item $P(X = 3) = \binom{10}{3}(0.3)^3(0.7)^7 = 120 \times 0.027 \times 0.0824 \approx 0.267$ -- the single most likely count, and it happens only about once in four batches.
+  \pause
+  \item $E[X] = 10 \times 0.3 = 3$, $\sigma = \sqrt{2.1} \approx 1.45$.
+  \pause
+  \item \textbf{Why the baker cares:} baking exactly three is wrong most of the time. $P(X \ge 6) \approx 0.047$ -- roughly one batch in twenty sells out at six or more.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/discrete_rv/discrete_rv_binomial.pdf}
+\end{columns}
+\end{frame}
+
+% ─── Categorical & Multinomial ──────────────────────────────────────────────
+\begin{frame}{Categorical and Multinomial: More Than Two Options}
+\begin{rldefinition}
+A \textbf{Categorical} variable picks one of $k$ options, with probabilities $p_1, \dots, p_k$ that add to $1$ -- a Bernoulli with more than two answers. \emph{Cup size:} small $0.2$, medium $0.5$, large $0.3$.
+
+\smallskip
+A \textbf{Multinomial} counts how many of $n$ independent picks landed in each option -- a Binomial with more than two answers. Expected counts are $n p_i$.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Ten customers:} expect $2$ small, $5$ medium, $3$ large -- but any single morning will differ, exactly as the Binomial bars showed.
+  \pause
+  \item \textbf{Later in this course:} a classifier's output layer produces $p_1, \dots, p_k$ that add to $1$ -- that is the softmax, and it is a Categorical distribution over the classes.
+\end{itemize}
+\end{frame}
+
+% ─── Poisson ────────────────────────────────────────────────────────────────
+\begin{frame}{Poisson: Counting Events in a Window}
+\begin{rldefinition}
+The \textbf{Poisson} distribution counts how many events land in a fixed window of time or space, when they arrive independently at an average rate $\lambda$ per window:
+\[
+P(X = k) = \frac{e^{-\lambda}\lambda^{k}}{k!},
+\qquad E[X] = \lambda, \qquad \mathrm{Var}(X) = \lambda .
+\]
+\emph{Everyday:} calls to a help desk per hour, buses arriving per ten minutes, typos per page.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item There is no ``$n$'' here: we never count the customers who \emph{did not} walk in. That is the practical difference from the Binomial.
+  \pause
+  \item \textbf{The mean equals the variance} -- a strong, checkable claim, and the first thing to test on real counts.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Arrivals at the Coffee Shop}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Customers arrive independently at $\lambda = 4$ per ten minutes. Bars are $3000$ observed windows; dots are the Poisson formula.
+  \pause
+  \item Observed mean $3.96$, variance $3.84$ -- close to each other and to $\lambda$, as Poisson requires.
+  \pause
+  \item $P(X = 0) = e^{-4} \approx 0.018$: one window in $55$ is empty. $P(X \ge 8) \approx 0.051$: one in twenty is a rush.
+  \pause
+  \item \textbf{Why staffing needs this:} a ten-hour day holds $60$ windows, so four on average still brings about three rushes.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/discrete_rv/discrete_rv_poisson.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Binomial or Poisson?}
+\begin{itemize}
+  \item \textbf{Binomial} when there is a fixed number of trials and both outcomes are visible: $10$ customers, each buys or does not.
+  \pause
+  \item \textbf{Poisson} when only the events are visible and the window is what is fixed: customers arriving, with no count of the people who stayed home.
+  \pause
+  \item \textbf{They meet:} split the ten minutes into $600$ seconds, each with a tiny $p = \tfrac{1}{150}$ chance of an arrival. Then $np = 4$, and Binomial$(600, \tfrac{1}{150})$ agrees with Poisson$(4)$ to within $0.001$ at every count.
+  \pause
+  \item \textbf{So:} the Poisson is what the Binomial becomes when $n$ is huge, $p$ is tiny, and only the product $np = \lambda$ matters.
+\end{itemize}
+\end{frame}
+
+% ─── Dirichlet ──────────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Distribution Over the Shares?}
+\begin{itemize}
+  \item Every distribution so far assumed we \emph{know} $p_1, \dots, p_k$. We never do. The cup-size shares $0.2, 0.5, 0.3$ came from counting a few mornings' orders.
+  \pause
+  \item \textbf{Numerical example:} the first four orders were $1$ small, $2$ medium, $1$ large. Read literally that says the shares are $0.25, 0.50, 0.25$ -- but with only four orders nobody would be surprised if the truth were $0.10, 0.60, 0.30$, or $0.40, 0.40, 0.20$.
+  \pause
+  \item So the shares themselves are uncertain, and we need a way to say \emph{which sets of shares are plausible} -- not one answer, but a spread of answers.
+  \pause
+  \item That is awkward, because the answer is three numbers at once and they must always add to $1$. A distribution over a single number will not do it.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Dirichlet: A Distribution Over the Bar Heights}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item A \textbf{Dirichlet} draws a whole set of shares at once, always adding to $1$. Each thin line is one draw.
+  \pause
+  \item Its parameter $\alpha$ counts \textbf{orders already seen}. Top: $(0.8, 2, 1.2)$, about four -- wide scatter. Bottom: $(8, 20, 12)$, about forty -- tight.
+  \pause
+  \item \textbf{Updating is counting:} three more mediums, add $3$ to the middle entry.
+  \pause
+  \item \textbf{In AI:} a softmax gives shares with no sense of how sure it is; predict $\alpha$ instead and the network can say ``I have barely seen this'' -- the idea behind LDA (Module 3) and AlphaZero's move priors (Module 5).
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=0.96\linewidth]{figures/discrete_rv/discrete_rv_dirichlet.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Where This Goes Next}
+\begin{itemize}
+  \item \textbf{Lecture 4 -- continuous random variables:} the same ideas when the values cannot be listed. The bars become a curve and the sum becomes an integral.
+  \pause
+  \item \textbf{Lecture 5 -- CLT and maximum likelihood:} the Binomial and Bernoulli are the first distributions we will fit to data, and Bernoulli likelihood is exactly the cross-entropy loss.
+  \pause
+  \item \textbf{Lecture 6 -- Bayesian inference:} the Dirichlet becomes the prior over a Categorical, updated by counts into a posterior.
+  \pause
+  \item \textbf{Lecture 7 -- information theory:} entropy measures how uncertain one of these distributions is, in bits.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+\begin{itemize}
+  \item A random variable turns an outcome into a number; its PMF lists the values and their probabilities, and they sum to $1$.
+  \pause
+  \item $E[X] = \sum_x x\,p(x)$ is the population version of Lecture 1's $\bar{x}$; $\mathrm{Var}(X) = E[X^2] - \mu^2$ is the population version of $s^2$. Shifting leaves the variance alone; scaling by $a$ multiplies it by $a^2$.
+  \pause
+  \item Bernoulli for one yes/no trial, Binomial for successes in $n$ of them; Categorical and Multinomial are the same pair with more than two options.
+  \pause
+  \item Poisson counts events in a window at rate $\lambda$, with mean and variance both equal to $\lambda$ -- and it is the Binomial's limit when $n$ is large and $p$ small.
+  \pause
+  \item A Dirichlet is a distribution over a Categorical's probabilities -- uncertainty about the shape itself.
+\end{itemize}
+\end{frame}

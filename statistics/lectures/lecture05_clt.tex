@@ -1,0 +1,179 @@
+\section{Lecture 5, Part 0: The Central Limit Theorem}
+
+\begin{frame}
+\vfill
+\centering
+{\color{RLBlue}\large Lecture 5}
+
+\vspace{0.3em}
+{\color{RLBlue}\Large\bfseries Part 0}
+
+\vspace{0.6em}
+{\Large The Central Limit Theorem}
+\vfill
+\end{frame}
+
+\begin{frame}{Learning Goals}
+\begin{itemize}
+  \item Treat the sample mean $\bar{x}$ as a random variable, and describe its sampling distribution.
+  \pause
+  \item Use the standard error $\sigma/\sqrt{n}$, and explain why four times the data buys only half the error.
+  \pause
+  \item State the central limit theorem with its conditions, and say what goes wrong when they fail.
+\end{itemize}
+\end{frame}
+
+% ─── The sampling distribution ──────────────────────────────────────────────
+\begin{frame}{Why Do We Need a Sampling Distribution?}
+\begin{itemize}
+  \item \textbf{Why:} every average we have ever computed came from \emph{one} sample. Collect a different sample and the average changes. So $\bar{x}$ is not a fixed number -- it is a random variable with a distribution of its own.
+  \pause
+  \item \textbf{Numerical example:} the coffee shop sells $0$, $1$ or $2$ pastries per order with probabilities $0.7, 0.2, 0.1$ (Lecture 3), so $\mu = 0.4$ and $\sigma^2 = 0.44$.
+  \pause
+  \item Serve two customers. You might see $0$ and $0$ (average $0$), or $1$ and $2$ (average $1.5$). Same shop, same day, different answer.
+  \pause
+  \item Until we know how much $\bar{x}$ moves around, a single measured average tells us nothing about how much to trust it.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{The Sampling Distribution of the Mean}
+\begin{rldefinition}
+The \textbf{sampling distribution} of $\bar{x}$ is the distribution of the averages you would get by repeating the whole sampling exercise again and again. \emph{Everyday:} ask $30$ customers their order size, write down the average, send $30$ fresh customers, repeat -- the histogram of those averages is the sampling distribution.
+\[
+E[\bar{x}] = \mu, \qquad \mathrm{Var}(\bar{x}) = \frac{\sigma^2}{n} .
+\]
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item The first says $\bar{x}$ is centred on the truth -- it is \textbf{unbiased}. The second says its spread shrinks as the sample grows.
+  \pause
+  \item Neither requires the original distribution to have any particular shape. Both are exact for every $n$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Two Orders, Five Possible Averages}
+\begin{itemize}
+  \item Serve $n = 2$ customers. Every pair of orders and its average:
+\end{itemize}
+\centering
+\small
+\begin{tabular}{l|ccccc}
+Average $\bar{x}$    & $0$    & $0.5$  & $1$    & $1.5$  & $2$    \\
+\hline
+Probability          & $0.49$ & $0.28$ & $0.18$ & $0.04$ & $0.01$ \\
+\end{tabular}
+
+\vspace{0.4em}
+\raggedright
+\begin{itemize}
+  \item[] \pause
+  \item $E[\bar{x}] = 0(0.49) + 0.5(0.28) + 1(0.18) + 1.5(0.04) + 2(0.01) = 0.40 = \mu$. \pause
+  \item $E[\bar{x}^2] = 0.25(0.28) + 1(0.18) + 2.25(0.04) + 4(0.01) = 0.38$, so $\mathrm{Var}(\bar{x}) = 0.38 - 0.4^2 = 0.22$. \pause
+  \item And $\sigma^2/n = 0.44/2 = 0.22$ -- the formula checked by hand, with no appeal to large samples.
+\end{itemize}
+\end{frame}
+
+% ─── Standard error ─────────────────────────────────────────────────────────
+\begin{frame}{Why Do We Need the Standard Error?}
+\begin{rldefinition}
+The \textbf{standard error} is the standard deviation of $\bar{x}$ -- how far a computed average typically sits from the truth:
+\[
+\mathrm{SE} = \frac{\sigma}{\sqrt{n}} .
+\]
+\emph{Not the same as $\sigma$.} $\sigma$ says how much one \emph{customer} varies; SE says how much an \emph{average of $n$ customers} varies.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item \textbf{Coffee shop:} $\sigma = \sqrt{0.44} = 0.663$. One order is wildly unpredictable, but the average of $30$ has $\mathrm{SE} = 0.663/\sqrt{30} = 0.121$ -- five times steadier.
+  \pause
+  \item The $\sqrt{n}$ is the whole story: it is what makes measuring more worthwhile, and what makes it expensive.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{How Fast Does the Average Settle?}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Standard error against sample size, for the coffee shop's $\sigma = 0.663$.
+  \pause
+  \item $n = 10 \Rightarrow 0.210$; \; $n = 40 \Rightarrow 0.105$; \; $n = 160 \Rightarrow 0.052$.
+  \pause
+  \item \textbf{Read it:} each step \emph{quadruples} the data and \emph{halves} the error. There is no sample size at which the curve becomes steep again.
+  \pause
+  \item \textbf{Why this matters:} accuracy is bought at quadratic cost. Going from $1\%$ error to $0.1\%$ needs $100$ times the data -- the reason careful measurement is expensive everywhere, from opinion polls to model evaluation.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/clt_mle/clt_mle_standard_error.pdf}
+\end{columns}
+\end{frame}
+
+% ─── The CLT itself ─────────────────────────────────────────────────────────
+\begin{frame}{The Central Limit Theorem}
+\begin{rldefinition}
+Take independent draws $X_1, \dots, X_n$ from \emph{any} distribution with mean $\mu$ and finite variance $\sigma^2$. As $n$ grows, the sampling distribution of $\bar{x}$ approaches a normal:
+\[
+\bar{x} \;\approx\; \mathcal{N}\!\left(\mu, \; \frac{\sigma^2}{n}\right)
+\qquad\text{equivalently}\qquad
+\frac{\bar{x} - \mu}{\sigma/\sqrt{n}} \;\approx\; \mathcal{N}(0, 1).
+\]
+\emph{The striking part:} the original shape does not matter -- coin flips, dice, waiting times and pastries per order all have bell-shaped averages.
+\end{rldefinition}
+\pause
+\begin{itemize}
+  \item Lecture 3's law of large numbers said \emph{where} $\bar{x}$ lands; the CLT says what its \emph{whole distribution} looks like on the way.
+  \pause
+  \item \textbf{Three conditions:} independent draws, from the same distribution, with finite variance.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Real Event: Three Spikes Become a Bell}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Bars are the \emph{exact} distribution of $\bar{x}$, computed by combining every possible set of orders. The curve is $\mathcal{N}(0.4, 0.44/n)$.
+  \pause
+  \item $n = 1$ is three bars and nothing like a bell. $n = 2$ is lopsided. By $n = 5$ the shape is recognisable, and $n = 30$ tracks the curve closely.
+  \pause
+  \item Check it numerically: $P(\bar{x} \text{ within } 1\,\mathrm{SE})$ runs $0.90 \to 0.77 \to 0.67 \to 0.66$, closing on the $0.68$ the Gaussian predicts (Lecture 4).
+  \pause
+  \item \textbf{Nothing was simulated.} The bell is arithmetic, not a curve drawn over a claim.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/clt_mle/clt_mle_sampling_distribution.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Real Event: When the CLT Is Slow}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item Same $n = 30$, two populations. Below, one order in twenty is an office run of $40$ coffees.
+  \pause
+  \item The office-run averages come in \emph{clumps} -- one per number of big orders that happened to land in the sample. The normal curve is hopeless.
+  \pause
+  \item Skewness measures lopsidedness -- $0$ for a symmetric shape. The skewness of $\bar{x}$ is $\mathrm{skew}(X)/\sqrt{n}$: $0.26$ above, $0.75$ below.
+  \pause
+  \item \textbf{So ``$n \ge 30$'' is a rule of thumb, not a theorem.} A rare huge value is exactly what breaks it.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/clt_mle/clt_mle_heavy_tail.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: Mini-Batch Gradients}
+\begin{itemize}
+  \item \textbf{The promise, cashed:} training a network computes a gradient. The honest one averages over all $N$ training examples; that is far too slow, so a \textbf{mini-batch} of $B$ examples is averaged instead.
+  \pause
+  \item A mini-batch gradient is a sample mean. So it is \emph{unbiased} -- centred on the full-data gradient -- and its noise has standard error $\sigma_g/\sqrt{B}$. Training works at all because of this slide.
+  \pause
+  \item \textbf{Repeat this one:} \emph{quadrupling the batch size halves the gradient noise.} That is why batch $2048$ is not $32$ times better than batch $64$ -- it is only $\sqrt{32} \approx 5.7$ times less noisy.
+  \pause
+  \item \textbf{Batch normalization} rests on it too: it normalises by a mean and variance estimated from $B$ examples. At $B = 2$ or $4$ those estimates are themselves noisy -- one reason layer and group normalization exist (Module 2).
+\end{itemize}
+\end{frame}

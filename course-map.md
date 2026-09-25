@@ -21,8 +21,12 @@ The course is organized into eight modules (0–7). Lecture numbering restarts a
 ### Module 0: Statistics for Advanced AI (Lectures 1-10)
 
 Authored under `statistics/` (own `main.tex`, `lectures/`, `theme/`, `scripts/` — mirrors `ml/`'s
-layout but is an independent deck, not shared with it). Lecture 1 is drafted
-(`statistics/lectures/lecture01_data_probability.tex`); Lectures 2-10 below are outline only so far.
+layout but is an independent deck, not shared with it). The deck opens with a module
+intro (`lecture00_module_intro.tex`), which sits outside the part numbering and is labelled
+"Module 0 - Introduction". Within each lecture, part numbering restarts at 0, and each part
+divider names its lecture. All ten lectures are drafted, each split
+into two part files (e.g. Lecture 1 is Part 0 `lecture01_data_descriptive.tex` and Part 1
+`lecture01_probability_basics.tex`); the full deck is 255 frames.
 
 Primary references:
 - Illowsky & Dean, *Introductory Statistics 2e* (OpenStax) — Lectures 1–5 core probability and distributions
@@ -324,6 +328,133 @@ here, not scattered across Modules 1–3. Forward-referenced in Module 1 L14 (Ga
    - safety: prompt injection attacks, tool misuse, sandboxing code execution
    - alignment in agentic systems: minimal footprint, reversibility, human oversight
 
+#### Module 7 capstone project: a grounded legal research agent
+
+Module 7 is assessed by one team project rather than a lab sequence. It is scoped as a
+**legal research agent that must ground every claim in a retrieved article, plus a harness that
+measures when it fails** — deliberately *not* "an agent that answers legal questions". The
+reframing matters for three reasons: retrieval can be scored against article IDs instead of
+judged by eye; the failure mode is the lecture material rather than an accident; and confining
+the agent to "find and cite passages in this corpus" keeps it clear of unauthorized-practice
+questions that advice-giving would raise.
+
+**Corpus.** Uzbek national legislation, article-structured, from lex.uz:
+
+- `javohirmat/uzbek-legal-corpus` (GitHub) — Constitution + 20 codes + 4 laws, 7,368 articles,
+  ~971k words, article-level JSONL (`code`, `article_id`, `section`, `chapter`, `text`,
+  `lex_uz_doc`, `snapshot_date`). Data CC0, code MIT. Good default: small, audited, stable.
+- `sukhrobnurali/uzbek-legal-corpus` (Hugging Face) — 24,267 acts / 54,173 article rows,
+  1991-2026, adding `amendment_note`, `version_date`, `cross_references`, `okoz_codes`,
+  `quality_flag`. Use when a team needs temporal or multi-hop ground truth.
+
+Legislative text is not copyrightable under Art. 8 of the Law on Copyright and Related Rights.
+
+**Lectures stay jurisdiction-neutral.** The slides teach algorithms and papers; Uzbek law appears
+only as the running worked example (one Labor Code article carried through all eight lectures —
+chunked in L5, embedded in L6, indexed in L7, attacked in L8) and as the project corpus. Same
+device as the bike/bus year group in Module 0 Lecture 2.
+
+**Ground truth without annotators.** The corpus metadata supplies most of the labels:
+
+1. *Query-from-article inversion* — pick an article, write a question it answers; that article ID
+   is the gold span. This is how LegalBench-RAG was built (generative queries traced back to
+   corpus locations), so the method is citable rather than improvised.
+2. *`cross_references`* — article A cites article B, giving free two-hop retrieval items with a
+   known answer set. Benchmarks the multi-hop material in L5.
+3. *`amendment_note` + `version_date`* — "what did Article X say before date D" tests corpus
+   versioning, a failure mode real legal tools have.
+4. *Deleted-span holdout* — remove the supporting article for a subset of queries; a correct agent
+   must abstain. Needs no labels, and measures groundedness directly.
+5. *Student annotation with inter-annotator agreement* — where teams do label, require Cohen's
+   kappa, which cashes out Module 0's statistics.
+
+**Sprints** (following the Stanford CS224G cadence — four two-week sprints, checkpoint-weighted):
+
+1. After L1-L2 — ReAct loop, tool schemas, structured cited output. Naive chunking baseline plus a
+   20-query smoke eval.
+2. After L5-L7 — the retrieval stack: chunking strategy, embeddings, ANN index, hybrid BM25+dense,
+   reranking. Scored as recall@k against the sprint-1 baseline.
+3. After L3-L4 — multi-turn memory, and a verifier subagent that checks each claim against its
+   cited article. Orchestrator/subagent pattern.
+4. After L8 — evaluation harness, abstention behaviour, red team (a planted article containing
+   "ignore previous instructions").
+
+**Deliverables:** repo; 2-minute demo video; 4-page technical report whose centrepiece is the
+eval table, not the demo; red-team appendix. Grade the harness as heavily as the agent — every
+team's demo looks convincing, which is exactly what Magesh et al. (2024) demonstrated empirically.
+
+**Two traps that are lessons, not accidents.** The corpus uses U+02BB and U+02BC for the okina in
+*oʻ/gʻ* and the tutuq belgisi, never ASCII apostrophes — naive normalization silently destroys a
+lexical index, which is the concrete answer to "why did retrieval fail" in L6. And only about half
+of lex.uz acts have a Latin-script version, the rest being Russian or Cyrillic, which forces the
+cross-lingual retrieval discussion honestly. No Uzbek-specific retrieval evaluation exists in the
+literature, so a team that produces one has done something new; it also justifies treating BM25 as
+a strong baseline, since legal Uzbek is formulaic.
+
+#### Module 7 model and cost baseline
+
+The project runs against a **cheap hosted API**, not a locally served model — a 7B-class model at
+usable speed needs a GPU most students do not have, and that is a hard blocker rather than a
+teaching opportunity. Pin one model in the handout so eval numbers are comparable across teams.
+
+**Baseline: DeepSeek V4.1-Flash** (prices per 1M tokens, snapshot 2026-09-24 — DeepSeek adjusts
+these frequently, so re-check before each cohort):
+
+| | input | cached input | output |
+|---|---|---|---|
+| off-peak | $0.15 | $0.003 | $0.60 |
+| peak | $0.30 | $0.006 | $1.20 |
+
+**Schedule labs after 15:00 Tashkent time.** Peak is 01:00-04:00 and 06:00-10:00 UTC on weekdays,
+which is 06:00-09:00 and 11:00-15:00 local (UTC+5). An early-afternoon lab pays double for exactly
+the same work.
+
+**Budget.** A 500-query eval run driving ~3 tool calls per query (~6k input, ~600 output tokens
+per query) costs about $0.63 off-peak, or **~$0.25 with prefix caching** — the system prompt and
+few-shot block repeat on every query and DeepSeek caches prefixes automatically. Forty full eval
+runs plus development traffic comes to roughly **$25-50 per team**, so **$250-500 for a class of
+ten teams**. A departmental line item, not a barrier.
+
+**Free tiers do not work here.** Provider free quotas run to a few hundred to a thousand requests
+per day; one 500-query eval run at 3 tool calls is 1,500 requests. Relying on a free tier just
+teaches students to shrink their eval set, which defeats the design.
+
+**Embeddings are a separate decision from generation.** BGE-M3 over the 7,368-article corpus is a
+one-time CPU encode of ~1.4M tokens — about an hour on a laptop, no GPU, free afterwards and
+offline. A hosted embedding API costs cents for the same corpus. Decide deliberately rather than
+by default.
+
+**Before the syllabus commits:** verify multi-step tool-calling and strict-JSON-schema behaviour
+on the pinned model against the actual corpus (Lectures 1-2 depend on it), and confirm that a
+workable payment method is available locally.
+
+#### Module 7 reading list (per lecture)
+
+1. **Agents & action loops** — ReAct (Yao et al., 2023); Reflexion (Shinn et al., 2023);
+   Toolformer (Schick et al., 2023).
+2. **Function calling & structured outputs** — Gorilla (Patil et al., 2023); grammar-constrained
+   decoding (Willard & Louf, 2023); JSON Schema / OpenAPI tool specs.
+3. **Memory** — MemGPT (Packer et al., 2023); Lost in the Middle (Liu et al., 2023).
+4. **Multi-agent orchestration** — AutoGen (Wu et al., 2023); Generative Agents (Park et al.,
+   2023); LangGraph documentation on orchestrator-subagent graphs.
+5. **RAG end-to-end** — RAG (Lewis et al., 2020); Fusion-in-Decoder (Izacard & Grave, 2021);
+   HyDE (Gao et al., 2022); Self-RAG (Asai et al., 2023).
+6. **Dense retrieval & embeddings** — DPR (Karpukhin et al., 2020); ColBERT (Khattab & Zaharia,
+   2020); BGE-M3 (Chen et al., 2024); MTEB (Muennighoff et al., 2022); BM25 (Robertson &
+   Zaragoza, 2009) as the baseline that must be beaten.
+7. **Vector databases & ANN search** — HNSW (Malkov & Yashunin, 2018); product quantization
+   (Jegou, Douze & Schmid, 2011); ScaNN (Guo et al., 2020); FAISS (Johnson et al., 2019).
+8. **Evaluation, safety & failure modes** — LegalBench (Guha et al., 2023); LegalBench-RAG
+   (ZeroEntropy, 2024); *Hallucination-Free? Assessing the Reliability of Leading AI Legal
+   Research Tools* (Magesh, Surani, Dahl, Suzgun, Manning & Ho, 2024 — 17-33% hallucination in
+   tools marketed as eliminating it, and the best single teaching artifact in the module);
+   indirect prompt injection (Greshake et al., 2023); AgentBench (Liu et al., 2023);
+   WebArena (Zhou et al., 2023); SWE-bench (Jimenez et al., 2023); RAGAS (Es et al., 2023).
+
+Open decisions: whether teams may substitute an English contract corpus (CUAD / ContractNLI via
+LegalBench-RAG) to get annotated spans at the cost of local relevance; and team size, currently
+assumed 2-4 following CS224G's 2-5.
+
 ## Topics intentionally excluded
 
 - **Hierarchical clustering** -- lower priority than GMM; k-means + DBSCAN + GMM already
@@ -332,7 +463,7 @@ here, not scattered across Modules 1–3. Forward-referenced in Module 1 L14 (Ga
   sampling, Probabilistic PCA, Relevance Vector Machines, Bayesian model averaging) --
   theoretical/Bayesian territory largely superseded in modern practice. Exceptions retained:
   variational inference (Module 2, Lecture 13), Gaussian Processes as a surrogate model
-  (Module 1, Lecture 14), Bayesian inference foundations (Module 0, Lecture 9).
+  (Module 1, Lecture 14), Bayesian inference foundations (Module 0, Lecture 6).
 
 ## Assignment sequence
 
@@ -345,7 +476,8 @@ here, not scattered across Modules 1–3. Forward-referenced in Module 1 L14 (Ga
 7. **Lab 7 - Forest Variants (Isolation Forest)**
 
 Assignments currently only cover Module 1; later modules may get their own lab sequence as
-they are authored.
+they are authored. Module 7 is the exception by design: it is assessed by a single team capstone
+(see the Module 7 section above) rather than a lab sequence.
 
 ## Notes
 
