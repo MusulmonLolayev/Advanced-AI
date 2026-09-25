@@ -141,6 +141,35 @@ The second form is the one to compute with: square the values, average them, sub
 \end{itemize}
 \end{frame}
 
+\begin{frame}{Real Event: Why a Gambler Cannot End in Profit}
+\begin{columns}[T]
+\column{0.50\textwidth}
+\small
+\begin{itemize}
+  \item \textbf{Every bet has the same negative expectation.} Roulette pays even money on red, but only $18$ of $37$ pockets are red: $E[X] = -\tfrac{1}{37} \approx -2.7$ cents per \$1. The wheel has no memory, so that number never improves.
+  \pause
+  \item \textbf{Expectations add.} After $n$ bets the expected balance is $n \cdot E[X]$. Playing longer is not a chance to recover -- it \emph{is} the mechanism of the loss.
+  \pause
+  \item \textbf{So the chance of being ahead drains away:} $36\%$ after $100$ bets, $19\%$ after $1{,}000$, $0.3\%$ after $10{,}000$.
+\end{itemize}
+\column{0.48\textwidth}
+\centering
+\includegraphics[width=\linewidth]{figures/discrete_rv/discrete_rv_gambler.pdf}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Why This Matters: There Is a Last Time You Are Ahead}
+\begin{itemize}
+  \item A winning night is not evidence against any of this. $P(\text{ahead})$ is $36\%$ after a hundred bets -- being up is \emph{ordinary}, and it is exactly what brings people back.
+  \pause
+  \item \textbf{But it does not last.} Because the running total drifts down at a fixed rate, it eventually passes below zero and never returns. The moments when you are in profit form a \emph{finite} set: there is a last one, and after it you are behind forever.
+  \pause
+  \item \textbf{``I will win it back'' does not work either.} Doubling after each loss turns many small wins into one catastrophic loss. With a \$1000 bankroll you can cover nine straight losses ($1+2+\cdots+256 = \$511$); the tenth you cannot. That happens once every $400$ sessions, and the expectation stays at $-27$ cents per session.
+  \pause
+  \item \textbf{No stopping rule escapes it.} Whatever system decides when you walk away, the expected outcome is (number of bets) $\times$ $E[X]$ -- and $E[X]$ is negative. The only winning move is not to place the first bet.
+\end{itemize}
+\end{frame}
+
 \begin{frame}{Worked Example: Two Raffles, Same Expectation}
 \begin{itemize}
   \item \textbf{Raffle A} (from the previous slide): one \$400 prize among $500$ tickets, $E[X] = -\$1.20$.

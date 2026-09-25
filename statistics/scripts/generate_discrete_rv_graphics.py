@@ -215,3 +215,42 @@ fig.tight_layout()
 save_fig(fig, "discrete_rv_dirichlet")
 
 print("\nAll Lecture 3 figures written to", OUT_DIR)
+
+
+# ─── Figure 6: why a gambler cannot end in profit ─────────────────────────
+print("\nFigure 6: roulette — expected balance and P(ahead) …")
+from scipy.stats import binom
+
+P_RED = 18 / 37                  # European wheel: 18 red pockets out of 37
+EDGE = -1 / 37                   # expected net per $1 staked
+# even n only: with odd n a tie is impossible, which makes P(ahead) alternate
+n_bets = np.unique((np.round(np.logspace(1, 5, 60)) // 2 * 2).astype(int))
+exp_balance = n_bets * EDGE
+# "ahead" = strictly more wins than losses; exact binomial, not simulated
+p_ahead = np.array([binom.sf(n // 2, n, P_RED) for n in n_bets])
+
+for n in (10, 100, 1000, 10_000, 100_000):
+    pa = binom.sf(n // 2, n, P_RED)
+    print(f"  n={n:6d}  E[balance]=${n * EDGE:9.2f}  P(ahead)={pa:.5f}")
+
+fig, (axE, axP) = plt.subplots(2, 1, figsize=(4.2, 3.6), sharex=True)
+
+axE.semilogx(n_bets, exp_balance, color=RLRED, linewidth=2.0)
+axE.axhline(0, color="#888888", linewidth=0.8)
+axE.set_ylabel("Expected\nbalance ($)", fontsize=10)
+axE.tick_params(labelsize=9.5)
+axE.grid(True, linestyle=":", alpha=0.4)
+
+axP.semilogx(n_bets, 100 * p_ahead, color=RLBLUE, linewidth=2.0)
+axP.set_ylabel("Chance of being\nahead (%)", fontsize=10)
+axP.set_xlabel("Number of $1 bets", fontsize=10)
+axP.set_ylim(0, 55)
+axP.tick_params(labelsize=9.5)
+axP.grid(True, linestyle=":", alpha=0.4)
+for n, txt in ((100, "36%"), (1000, "19%"), (10_000, "0.3%")):
+    axP.annotate(txt, xy=(n, 100 * binom.sf(n // 2, n, P_RED)),
+                 xytext=(9, 9), textcoords="offset points",
+                 ha="left", fontsize=9.5, color=RLBLUE)
+
+fig.tight_layout()
+save_fig(fig, "discrete_rv_gambler")
