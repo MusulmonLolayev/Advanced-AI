@@ -149,9 +149,11 @@ Take independent draws $X_1, \dots, X_n$ from \emph{any} distribution with mean 
 
 \begin{frame}{Worked Example: One Huge Order Changes Everything}
 \begin{itemize}
-  \item At the same coffee shop, an ordinary order is about $1.4$ coffees -- but \textbf{one order in twenty is an office run of $40$}, bought for a whole office at once.
+  \item At the same coffee shop, out of every $20$ orders: $12$ are one coffee, $6$ are two, $1$ is three -- and \textbf{$1$ is an office run of $40$}, bought for a whole office at once.
   \pause
-  \item Take $30$ orders and simply count how many office runs happen to be among them:
+  \item So an ordinary order -- any order that is \emph{not} a run -- averages $\frac{12(1) + 6(2) + 1(3)}{19} = \frac{27}{19} \approx 1.4$ coffees.
+  \pause
+  \item Now take $30$ orders and count how many office runs are among them:
 \end{itemize}
 \pause
 \centering
@@ -161,16 +163,15 @@ office runs among your $30$ & total coffees & average \\
 $0$ & $43$ & $1.4$ \\
 $1$ & $81$ & $2.7$ \\
 $2$ & $120$ & $4.0$ \\
-$3$ & $158$ & $5.3$ \\
 \end{tabular}
 \raggedright
 
 \vspace{0.4em}
 \pause
 \begin{itemize}
-  \item Each extra run adds $40$ coffees to the total, so it adds $40/30 \approx 1.3$ to the average. There is no way to get half a run, so \textbf{no average between $1.4$ and $2.7$ is possible}.
+  \item Each extra run adds $40$ coffees, so it adds $40/30 \approx 1.3$ to the average -- and there is no half a run, so \textbf{no average between $1.4$ and $2.7$ exists}.
   \pause
-  \item The average of $30$ orders is therefore not spread smoothly at all -- it can only sit at $1.4$, $2.7$, $4.0$, $5.3$, \dots
+  \item The average of $30$ orders is not spread smoothly -- it can only sit at $1.4$, $2.7$, $4.0$, $5.3$, \dots
 \end{itemize}
 \end{frame}
 
