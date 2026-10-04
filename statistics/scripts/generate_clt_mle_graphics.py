@@ -155,6 +155,22 @@ for ax, (pmf, mu_p, sd_p, name) in zip(
            alpha=0.9, edgecolor="none")
     grid = np.linspace(mu_p - 4 * se, mu_p + 4 * se, 500)
     ax.plot(grid, normal_pdf(grid, mu_p, se), color=RLBLUE, linewidth=1.6)
+    if "office" in name:
+        # Each office run in the sample replaces an ordinary order, lifting the
+        # mean by (40 - mean of an ordinary order)/n. Label the islands so the
+        # reader does not have to infer what they are.
+        ord_mean = float((ov[1:4] * office[1:4]).sum() / office[1:4].sum())
+        for k in range(5):
+            centre = ((N_CMP - k) * ord_mean + 40 * k) / N_CMP
+            win = np.abs(means - centre) < 0.4
+            if not win.any():
+                continue
+            peak = (pmf_n * N_CMP)[win].max()
+            ax.annotate(f"{k}" + (" runs" if k == 0 else ""),
+                        xy=(centre, peak), xytext=(0, 4),
+                        textcoords="offset points", ha="center",
+                        fontsize=8.5, color="#444444")
+        print(f"  clump spacing = {(40 - ord_mean) / N_CMP:.3f}")
     ax.set_xlim(mu_p - 4 * se, mu_p + 4 * se)
     ax.set_title(f"{name}\nn = {N_CMP}, SE = {se:.3f}", fontsize=8.5,
                  loc="left", pad=3)
