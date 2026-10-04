@@ -147,6 +147,33 @@ Take independent draws $X_1, \dots, X_n$ from \emph{any} distribution with mean 
 \end{columns}
 \end{frame}
 
+\begin{frame}{Worked Example: One Huge Order Changes Everything}
+\begin{itemize}
+  \item At the same coffee shop, an ordinary order is about $1.4$ coffees -- but \textbf{one order in twenty is an office run of $40$}, bought for a whole office at once.
+  \pause
+  \item Take $30$ orders and simply count how many office runs happen to be among them:
+\end{itemize}
+\pause
+\centering
+\begin{tabular}{c|c|c}
+office runs among your $30$ & total coffees & average \\
+\hline
+$0$ & $43$ & $1.4$ \\
+$1$ & $81$ & $2.7$ \\
+$2$ & $120$ & $4.0$ \\
+$3$ & $158$ & $5.3$ \\
+\end{tabular}
+\raggedright
+
+\vspace{0.4em}
+\pause
+\begin{itemize}
+  \item Each extra run adds $40$ coffees to the total, so it adds $40/30 \approx 1.3$ to the average. There is no way to get half a run, so \textbf{no average between $1.4$ and $2.7$ is possible}.
+  \pause
+  \item The average of $30$ orders is therefore not spread smoothly at all -- it can only sit at $1.4$, $2.7$, $4.0$, $5.3$, \dots
+\end{itemize}
+\end{frame}
+
 \begin{frame}{Real Event: When the CLT Is Slow}
 \begin{columns}[T]
 \column{0.50\textwidth}
@@ -156,9 +183,9 @@ Take independent draws $X_1, \dots, X_n$ from \emph{any} distribution with mean 
   \pause
   \item \textbf{Above -- pastries.} Nothing unusual ever happens, and the average is already a bell.
   \pause
-  \item \textbf{Below -- coffees.} One order in twenty is an office run of $40$. Swapping an ordinary order (about $1.4$) for one of $40$ lifts the average by $(40-1.4)/30 \approx 1.3$, so it lands on an \textbf{island labelled by how many runs you got} -- nothing in between.
+  \item \textbf{Below -- coffees.} There they are: the islands we just counted, each labelled by how many office runs landed in the sample.
   \pause
-  \item \textbf{``$n \ge 30$'' is a rule of thumb, not a theorem} -- a rare huge value is what breaks it.
+  \item \textbf{So ``$n \ge 30$'' is a rule of thumb, not a theorem} -- a rare huge value is what breaks it.
 \end{itemize}
 \column{0.48\textwidth}
 \centering
