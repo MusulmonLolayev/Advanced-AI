@@ -42,13 +42,47 @@ The \textbf{likelihood} $L(\theta)$ is the probability of the data you actually 
 \[
 L(\theta) = \prod_{i=1}^{n} p(x_i \mid \theta)
 \]
-\emph{Coffee shop:} with $66$ pastry orders out of $200$, $L(p) = p^{66}(1-p)^{134}$ -- one factor of $p$ per order that had a pastry, one factor of $1-p$ per order that did not.
+\emph{Coffee shop:} with $66$ pastry orders out of $200$, $L(p) = p^{66}(1-p)^{134}$ -- derived on the next slide.
 \end{rldefinition}
 \pause
 \begin{itemize}
   \item \textbf{The direction is the point.} With $\theta$ fixed, $p(x \mid \theta)$ is a distribution over data; with the \emph{data} fixed it is a curve over $\theta$ -- and that curve is not a probability distribution.
   \pause
   \item The \textbf{maximum likelihood estimate} $\hat{\theta}$ is the value at which that curve peaks.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Where $p^{66}(1-p)^{134}$ Comes From}
+\small
+\setlength{\abovedisplayskip}{5pt}\setlength{\belowdisplayskip}{5pt}
+\begin{itemize}
+  \item Each of the $200$ orders either had a pastry or not. Write $y_i = 1$ if order $i$ had one, $y_i = 0$ if not. Then $P(y_i = 1) = p$ and $P(y_i = 0) = 1-p$.
+  \pause
+  \item \textbf{One formula covers both cases:} $\;p(y_i \mid p) = p^{\,y_i}(1-p)^{\,1-y_i}$. Check it -- $y_i = 1$ gives $p^1(1-p)^0 = p$, and $y_i = 0$ gives $p^0(1-p)^1 = 1-p$.
+  \pause
+  \item Orders are independent, so the $200$ probabilities \emph{multiply} -- and powers of the same base \emph{add their exponents}:
+  \[
+    L(p) = \prod_{i=1}^{200} p^{\,y_i}(1-p)^{\,1-y_i}
+         = p^{\sum_i y_i}\,(1-p)^{\,200 - \sum_i y_i}.
+  \]
+  \pause
+  \item $66$ orders had a pastry, so $\sum_i y_i = 66$ and $200 - 66 = 134$:
+  \[
+    \boxed{\;L(p) = p^{66}(1-p)^{134}\;}
+  \]
+\vspace{-0.6em}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Reading $L(p) = p^{66}(1-p)^{134}$}
+\begin{itemize}
+  \item \textbf{Only the counts survived.} Which orders had pastries, and in what order they arrived, vanished -- $L$ depends on the data through $66$ and $134$ alone. Those two numbers are all the evidence there is about $p$.
+  \pause
+  \item \textbf{This is the probability of that exact sequence.} If you only knew ``$66$ out of $200$'' without knowing which, you would multiply by $\binom{200}{66}$ -- the number of ways it could have happened.
+  \pause
+  \item That factor does not contain $p$, so it shifts the whole curve up or down without moving its peak. \textbf{The estimate is unchanged}, which is why it is normally dropped.
+  \pause
+  \item \textbf{Sanity check:} $L$ is tiny -- about $8 \times 10^{-56}$ at its peak, the chance of one exact $200$-order sequence. Multiplying by $\binom{200}{66}$ turns it into $0.06$, the chance of \emph{some} $66$. We never care about the value, only \emph{where} it is largest.
 \end{itemize}
 \end{frame}
 
