@@ -40,3 +40,9 @@ venv/
 env/
 Screenshot*.png
 *.synctex(busy)
+
+# Video build artifacts
+video/out/
+video/media/
+video/.venv/
+video/__pycache__/
