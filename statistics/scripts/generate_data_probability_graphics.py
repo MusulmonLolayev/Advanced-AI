@@ -94,23 +94,29 @@ save_fig(fig, "data_probability_salary_histogram")
 
 
 # ─── Figure 2: "billionaire walks into a bar" — mean vs median ─────────────
+# The drinkers are 50 of the same 600 employees from Figure 1, so the video and
+# the slides can say "fifty of these people go for a drink" and mean the same
+# people. A larger group also puts the mean and the median close together
+# before the outlier arrives, which is the whole point of the comparison.
 print("\nFigure 2: mean vs median with one extreme outlier …")
-rng2 = np.random.default_rng(7)
-regulars = rng2.uniform(20_000, 150_000, size=9)
+N_DRINKERS = 50
+step = n_emp // N_DRINKERS                      # evenly spread across the whole payroll
+regulars = np.sort(df_pay["salary"].to_numpy())[::step][:N_DRINKERS]
 bezos = np.array([150_000_000_000.0])
 
 before = pd.Series(regulars)
 after = pd.Series(np.concatenate([regulars, bezos]))
+print(f"  drinkers = {N_DRINKERS} of the {n_emp} employees")
 print(f"  before: mean=${before.mean():,.0f}  median=${before.median():,.0f}")
 print(f"  after:  mean=${after.mean():,.0f}  median=${after.median():,.0f}")
 
 # stacked panels share one x-axis, so the shift of the mean line is read vertically
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(5.6, 3.9), sharex=True)
-for ax, data, title in ((ax1, before, "9 people in a bar"),
+for ax, data, title in ((ax1, before, f"{N_DRINKERS} colleagues go for a drink"),
                          (ax2, after, "+ 1 billionaire walks in")):
     ax.set_xscale("log")
-    ax.scatter(data, np.zeros_like(data), s=60, c=RLBLUE, edgecolors="black",
-               linewidths=0.6, zorder=3, alpha=0.85)
+    ax.scatter(data, np.zeros_like(data), s=42, c=RLBLUE, edgecolors="black",
+               linewidths=0.5, zorder=3, alpha=0.75)
     ax.axvline(data.mean(), color=RLRED, linewidth=2.0,
                label=f"mean = ${data.mean():,.0f}")
     ax.axvline(data.median(), color=RLGREEN, linewidth=2.0, linestyle="--",
@@ -119,7 +125,7 @@ for ax, data, title in ((ax1, before, "9 people in a bar"),
     ax.set_title(title, fontsize=10, fontweight="bold")
     ax.legend(loc="upper left", frameon=False, fontsize=8)
     ax.set_xlim(1e4, 3e11)
-ax2.set_xlabel("Net worth ($, log scale)")
+ax2.set_xlabel("Salary ($, log scale)")
 fig.tight_layout()
 save_fig(fig, "data_probability_billionaire_bar")
 
