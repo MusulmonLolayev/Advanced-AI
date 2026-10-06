@@ -1,0 +1,12 @@
+employees                 600
+payroll mean              $51,613
+payroll median            $47,697
+payroll total  mean*n     $30,968,030
+drinkers                  50 (every 12th of the sorted payroll)
+drinkers mean             $50,627
+drinkers median           $47,323
+after mean                $2,941,226,105
+after median              $47,761
+hands-on nine (k$)        [31, 38, 42, 45, 47, 49, 52, 61, 88]
+hands-on sum / mean       453 / 50.333
+hands-on below the mean   6 of 9

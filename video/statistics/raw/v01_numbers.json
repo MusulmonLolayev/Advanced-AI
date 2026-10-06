@@ -1,0 +1,26 @@
+{
+  "n_emp": 600,
+  "payroll_mean": 51613.383827508784,
+  "payroll_median": 47696.81467112218,
+  "payroll_total": 30968030.29650527,
+  "n_drinkers": 50,
+  "drink_mean": 50626.91698679976,
+  "drink_median": 47322.75470881106,
+  "after_mean": 2941226104.820575,
+  "after_median": 47760.85009809591,
+  "billionaire": 150000000000.0,
+  "nine": [
+    31,
+    38,
+    42,
+    45,
+    47,
+    49,
+    52,
+    61,
+    88
+  ],
+  "nine_sum": 453,
+  "nine_mean": 50.333333333333336,
+  "nine_below": 6
+}
