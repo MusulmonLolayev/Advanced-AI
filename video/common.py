@@ -4,6 +4,7 @@ Colours and the contact strip mirror statistics/theme/rl-theme.tex so the
 videos and the slide decks look like one course.
 """
 import asyncio
+import os
 import subprocess
 from pathlib import Path
 
@@ -15,7 +16,18 @@ from manim_voiceover.helper import remove_bookmarks
 from manim_voiceover.services.base import SpeechService, initialize_speech_service
 
 # ─── identity ─────────────────────────────────────────────────────────────
-VOICE = "en-US-AndrewNeural"
+# One voice per language. LANG picks it; render with LANG=uz ./render.sh ...
+VOICES = {
+    "en": "en-US-AndrewNeural",
+    "uz": "uz-UZ-SardorNeural",     # male; uz-UZ-MadinaNeural is the female option
+}
+LANG = os.environ.get("LANG_CODE", "en")
+VOICE = VOICES[LANG]
+# VOICE_ENGINE=navoiy narrates in the instructor's own fine-tuned voice (Uzbek only),
+# served by ~/navoiy-stack/work/tts_server.py. Default stays edge-tts.
+ENGINE = os.environ.get("VOICE_ENGINE", "edge")
+NAVOIY_URL = os.environ.get("NAVOIY_URL", "http://127.0.0.1:8765/tts")
+NAVOIY_VOICE_ID = "musulmon-ft-llm1-flow12-phone"
 PAUSE_AFTER_VOICEOVER = 0.3
 
 REPO = Path(__file__).resolve().parents[1]
@@ -62,10 +74,37 @@ class EdgeTTSService(SpeechService):
         return {"input_text": text, "input_data": input_data, "original_audio": audio_path}
 
 
+class NavoiyService(SpeechService):
+    """The instructor's cloned voice, via the local Navoiy server. Same cache and
+    truncation guard as EdgeTTSService, so a failed clip fails the render."""
+    def __init__(self, **kwargs):
+        initialize_speech_service(self, kwargs)
+
+    def generate_from_text(self, text, cache_dir=None, path=None, **kwargs):
+        import json, urllib.request
+        cache_dir = cache_dir or self.cache_dir
+        input_text = remove_bookmarks(text)
+        input_data = {"input_text": input_text, "service": "navoiy", "voice": NAVOIY_VOICE_ID}
+        cached = self.get_cached_result(input_data, cache_dir)
+        if cached is not None:
+            return cached
+        audio_path = str(path) if path else self.get_audio_basename(input_data) + ".mp3"
+        target = str(Path(cache_dir) / audio_path)
+        min_seconds = len(input_text.split()) / 4.5
+        req = urllib.request.Request(NAVOIY_URL, data=json.dumps({"text": input_text, "out": str(Path(target).resolve())}).encode(),
+                                     headers={"Content-Type": "application/json"})
+        resp = json.loads(urllib.request.urlopen(req, timeout=300).read())
+        if not resp.get("ok"):
+            raise RuntimeError(f"navoiy server failed: {resp.get('error')}")
+        if MP3(target).info.length < min_seconds:
+            raise RuntimeError(f"navoiy returned truncated audio for: {input_text[:60]!r}")
+        return {"input_text": text, "input_data": input_data, "original_audio": audio_path}
+
+
 class CourseScene(VoiceoverScene):
     def setup(self):
         super().setup()
-        self.set_speech_service(EdgeTTSService())
+        self.set_speech_service(NavoiyService() if ENGINE == "navoiy" else EdgeTTSService())
 
     def wait_for_voiceover(self):
         had = getattr(self, "current_tracker", None) is not None
