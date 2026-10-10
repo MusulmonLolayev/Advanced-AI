@@ -35,6 +35,7 @@ UI = {
     "pause": {"en": "⏸  Pause the video", "uz": "⏸  Videoni toʻxtating"},
     "next": {"en": "Next", "uz": "Keyingi"},
     "video": {"en": "Video {n} — {t}", "uz": "{n}-video — {t}"},
+    "lecture": {"en": "Lecture {n}", "uz": "{n}-maʼruza"},
 }
 
 
@@ -113,19 +114,35 @@ class NavoiyService(SpeechService):
 
 
 def at(tracker, text, k):
-    """Seconds into a clip where sentence k (0-based) starts, by character share.
-    Neither voice reports word timings, so this keeps visuals on the sentence they
-    illustrate in every language."""
+    """Seconds into a clip where cue k starts, by character share.
+    Neither voice reports word timings, so this keeps visuals on the words they
+    illustrate in every language. k is a sentence index (0-based), a phrase that
+    occurs in the text, or a {lang: index-or-phrase} dict when the two languages
+    split their sentences differently."""
     import re
-    parts = [x for x in re.split(r"(?<=[.?!:])\s+", text.strip()) if x]
-    before = sum(len(x) + 1 for x in parts[:k])
+    if isinstance(k, dict):
+        k = k[LANG]
+    if isinstance(k, str):
+        i = text.find(k)
+        if i < 0:
+            raise ValueError(f"cue {k!r} not in narration: {text[:60]!r}")
+        before = i
+    else:
+        parts = [x for x in re.split(r"(?<=[.?!:])\s+", text.strip()) if x]
+        if k > len(parts) - 1:
+            raise ValueError(f"cue {k} past the last sentence ({len(parts)}) of {text[:60]!r}")
+        before = sum(len(x) + 1 for x in parts[:k])
     return tracker.duration * before / max(len(text), 1)
 
 
 class CourseScene(VoiceoverScene):
     def setup(self):
         super().setup()
-        self.set_speech_service(NavoiyService() if ENGINE == "navoiy" else EdgeTTSService())
+        # One voice cache per scene: scenes render in parallel, and the cache index is
+        # appended to without a lock.
+        cache = Path(config.media_dir) / "voiceovers" / type(self).__name__
+        self.set_speech_service(NavoiyService(cache_dir=cache) if ENGINE == "navoiy"
+                                else EdgeTTSService(cache_dir=cache))
 
     def wait_for_voiceover(self):
         had = getattr(self, "current_tracker", None) is not None

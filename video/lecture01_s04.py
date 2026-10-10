@@ -1,18 +1,14 @@
-"""Video 1 — Why Do We Need the Mean?
+"""Lecture 1, section 4 — the mean (was video 1, v01_mean.py, folded into the lecture).
 
 Every number shown here comes from statistics/raw/, which statistics/capture_v01.py
 produces (and asserts against the slide figures). Every picture is drawn from the
 same files: the 600 dots are the 600 real salaries, the bars are the same people.
-
-Narration and on-screen words live in one table, T, keyed by language. English is the
-approved script; Uzbek is its translation, read by the instructor's cloned voice:
-    ./render.sh v01_mean h                               # English, edge-tts
-    LANG_CODE=uz VOICE_ENGINE=navoiy ./render.sh v01_mean h
+The narration is the approved section 4 of narration/lecture01.md.
 """
 import json
 
 import numpy as np
-from common import *
+from lecture01_kit import *
 
 RAW = Path(__file__).parent / "statistics" / "raw"
 D = json.loads((RAW / "v01_numbers.json").read_text())
@@ -43,75 +39,6 @@ assert round(NINE_MEAN, 3) == 50.333
 
 # ─── words ────────────────────────────────────────────────────────────────
 T = {
-    # narration
-    "s1a": {"en": "Six hundred people work at this company. Here is what every one of them earns. "
-                  "Your manager asks a simple question: what do people earn here?",
-            "uz": "Bu kompaniyada olti yuz kishi ishlaydi. Mana, ularning har biri qancha maosh oladi. "
-                  "Rahbaringiz oddiy savol beradi: bu yerda odamlar qancha maosh oladi?"},
-    "s1b": {"en": "You cannot read out six hundred numbers. You need one number that stands for "
-                  "all of them. But which one?",
-            "uz": "Olti yuzta sonni birma-bir oʻqib chiqa olmaysiz. Sizga ularning hammasini "
-                  "ifodalaydigan bitta son kerak. Lekin qaysi biri?"},
-    "s2a": {"en": "The oldest answer is also the simplest. Add everything up, and share it out equally.",
-            "uz": "Eng qadimiy javob eng soddasi hamdir. Hammasini qoʻshib chiqing va teng boʻlib bering."},
-    "s2b": {"en": "Here that comes to fifty-one thousand, six hundred and thirteen dollars. "
-                  "We call it the mean.",
-            "uz": "Bu yerda u ellik bir ming olti yuz oʻn uch dollarga teng. "
-                  "Biz uni oʻrtacha qiymat deymiz."},
-    "s2c": {"en": "Notice what it is really doing. It is the amount each person would get if all the "
-                  "money in the company were collected, and split evenly.",
-            "uz": "Aslida u nima qilayotganiga diqqat qiling. Bu kompaniyadagi barcha pul yigʻilib, "
-                  "teng taqsimlansa, har bir kishiga tegadigan miqdor."},
-    "s3a": {"en": "That is why the mean is what you want whenever totals matter.",
-            "uz": "Shuning uchun umumiy yigʻindi muhim boʻlganda aynan oʻrtacha qiymat kerak boʻladi."},
-    "s3b": {"en": "Multiply it back by six hundred, and you recover the entire payroll: "
-                  "just under thirty-one million dollars.",
-            "uz": "Uni olti yuzga koʻpaytiring va butun ish haqi fondini qaytarib olasiz: "
-                  "oʻttiz bir million dollarga yaqin."},
-    "s3c": {"en": "No other summary does that. The mean is the one that remembers the total.",
-            "uz": "Buni boshqa hech bir koʻrsatkich qila olmaydi. "
-                  "Oʻrtacha qiymat yigʻindini eslab qoladi."},
-    "s4a": {"en": "Now watch it fail. Fifty of those six hundred employees go out for a drink.",
-            "uz": "Endi uning qanday pand berishini koʻring. Oʻsha olti yuz xodimdan ellik nafari kafega boradi."},
-    "s4b": {"en": "Their average salary is fifty thousand, six hundred and twenty-seven dollars, and "
-                  "the middle person earns forty-seven thousand, three hundred and twenty-three. "
-                  "Close together, as you would expect.",
-            "uz": "Ularning oʻrtacha maoshi ellik ming olti yuz yigirma yetti dollar, oʻrtadagi odam esa "
-                  "qirq yetti ming uch yuz yigirma uch dollar oladi. "
-                  "Kutilganidek, ikkalasi bir-biriga yaqin."},
-    "s4c": {"en": "Then one more person walks in: a billionaire. Nobody already in that room gained "
-                  "a single cent.",
-            "uz": "Keyin yana bir kishi kirib keladi: milliarder. "
-                  "Xonadagilarning hech biri bir tiyin ham boyimadi."},
-    "s4d": {"en": "But the average salary in that room is now two point nine billion dollars.",
-            "uz": "Lekin endi xonadagi oʻrtacha maosh ikki butun oʻndan toʻqqiz milliard dollar."},
-    "s4e": {"en": "Look at where that red line lands. In empty space, between the crowd and the "
-                  "billionaire. It describes nobody present.",
-            "uz": "Qizil chiziq qayerga tushganiga qarang. Boʻm-boʻsh joyga, olomon bilan milliarder "
-                  "oʻrtasiga. U xonadagi hech kimni tasvirlamaydi."},
-    "s5a": {"en": "Now the dashed line. Before: forty-seven thousand, three hundred and twenty-three.",
-            "uz": "Endi uzuq chiziqqa qarang. Avval: qirq yetti ming uch yuz yigirma uch dollar."},
-    "s5b": {"en": "After: forty-seven thousand, seven hundred and sixty-one. It moved by four hundred "
-                  "dollars.",
-            "uz": "Keyin: qirq yetti ming yetti yuz oltmish bir dollar. "
-                  "U atigi toʻrt yuz dollarga siljidi."},
-    "s5c": {"en": "That line is the median, and it is the subject of the next video.",
-            "uz": "Bu chiziq — mediana, va u keyingi videoning mavzusi."},
-    "s6a": {"en": "Your turn. Pause the video. Here are nine salaries, in thousands of dollars. "
-                  "Work out the mean. Then count how many of the nine people earn less than it.",
-            "uz": "Endi navbat sizda. Videoni toʻxtating. Mana toʻqqizta maosh, ming dollarda. "
-                  "Ularning oʻrtacha qiymatini hisoblang. "
-                  "Keyin toʻqqiz kishidan nechtasi undan kam maosh olishini sanang."},
-    "s6b": {"en": "The total is four hundred and fifty-three, so the mean is fifty thousand, three "
-                  "hundred and thirty-three dollars.",
-            "uz": "Yigʻindi toʻrt yuz ellik uch, demak oʻrtacha qiymat "
-                  "ellik ming uch yuz oʻttiz uch dollar."},
-    "s6c": {"en": "And six of the nine earn less than that. Even with no billionaire anywhere, the "
-                  "mean already sits above most of the people in it.",
-            "uz": "Toʻqqiz kishidan oltitasi esa undan kam oladi. Hech qanday milliarder boʻlmasa ham, "
-                  "oʻrtacha qiymat allaqachon koʻpchilikdan yuqorida turibdi."},
-    "s7": {"en": "Which is exactly the problem the median solves.",
-           "uz": "Aynan shu muammoni mediana hal qiladi."},
     # on screen
     "employees": {"en": "{n} employees", "uz": "{n} xodim"},
     "question": {"en": "What do people earn here?", "uz": "Bu yerda odamlar qancha maosh oladi?"},
@@ -122,12 +49,12 @@ T = {
     "median": {"en": "median", "uz": "mediana"},
     "fills": {"en": "{v} above the line  =  {v} missing below it",
               "uz": "chiziq ustidagi {v}  =  ostida yetishmagan {v}"},
-    "remembers": {"en": "The mean remembers the total", "uz": "Oʻrtacha qiymat yigʻindini eslab qoladi"},
+    "remembers": {"en": "The mean remembers the total", "uz": "Oʻrtacha qiymat umumiy summani eslab qoladi"},
     "people": {"en": "{n} people", "uz": "{n} kishi"},
     "each": {"en": "{v} each", "uz": "har biriga {v}"},
     "missing": {"en": "{v} missing", "uz": "{v} yetishmaydi"},
     "no_other": {"en": "No other summary does that.",
-                 "uz": "Buni boshqa hech bir koʻrsatkich qila olmaydi."},
+                 "uz": "Boshqa hech bir koʻrsatkich buni qilolmaydi."},
     "billionaire": {"en": "a billionaire", "uz": "milliarder"},
     "nobody": {"en": "describes nobody here", "uz": "hech kimni tasvirlamaydi"},
     "log": {"en": "each tick is ten times the one before", "uz": "har bir belgi oldingisidan 10 marta katta"},
@@ -135,23 +62,22 @@ T = {
     "before": {"en": "before", "uz": "avval"},
     "after": {"en": "after", "uz": "keyin"},
     "is_median": {"en": "That line is the median.", "uz": "Bu chiziq — mediana."},
-    "task1": {"en": "Work out the mean of these nine.",
-              "uz": "Shu toʻqqiztasining oʻrtacha qiymatini toping."},
-    "task2": {"en": "Count how many of the nine earn less than it.",
-              "uz": "Toʻqqiz kishidan nechtasi undan kam olishini sanang."},
+    "task1": {"en": "We work out the mean of these nine.",
+              "uz": "Oʻrtacha qiymatini hisoblaymiz."},
+    "task2": {"en": "We count how many of the nine earn less than it.",
+              "uz": "Nechtasi undan kam olishini sanaymiz."},
     "unit": {"en": "salaries, in thousands of dollars", "uz": "maoshlar, ming dollarda"},
     "total": {"en": "total", "uz": "yigʻindi"},
     "below": {"en": "{k} of the {n} earn less than that", "uz": "{n} kishidan {k} nafari undan kam oladi"},
-    "next_title": {"en": "Why Do We Need the Median?", "uz": "Mediana nima uchun kerak?"},
+    "loss_cap": {"en": "training = making this number smaller", "uz": "oʻqitish = shu sonni kichraytirish"},
 }
 
 
 def say(key, **kw):
+    """Narration from the approved draft (section 4), or a screen label from T."""
+    if f"4.{key}" in NARRATION:
+        return line(f"4.{key}")
     return T[key][LANG].format(**kw)
-
-
-def money(v, cents=False):
-    return f"${v:,.2f}" if cents else f"${v:,.0f}"
 
 
 # ─── the 600 salaries as a dot histogram (one dot per person) ─────────────
@@ -211,9 +137,9 @@ def mean_line(y):
     return Line([BX0 - 0.2, y, 0], [BX1 + 0.2, y, 0], color=RLRED, stroke_width=4)
 
 
-class S1Problem(CourseScene):
+class S04Problem(LectureScene):
     def construct(self):
-        self.add(brand_mark())
+        self.section_card(4)
         head = txt(say("employees", n=N_EMP), size=34, color=GREY_B).to_edge(UP, buff=SAFE + 0.3)
         rng = np.random.default_rng(7)
         order = rng.permutation(N_EMP)
@@ -263,9 +189,8 @@ class S1Problem(CourseScene):
         self.clear_all()
 
 
-class S2Mean(CourseScene):
+class S04Mean(LectureScene):
     def construct(self):
-        self.add(brand_mark())
         dots, axis = hist_dots(), hist_axis()
         self.add(dots, axis)
         bars, level = salary_bars(), level_bars()
@@ -312,9 +237,8 @@ class S2Mean(CourseScene):
         self.clear_all()
 
 
-class S3Totals(CourseScene):
+class S04Totals(LectureScene):
     def construct(self):
-        self.add(brand_mark())
         bars, line = level_bars(), mean_line(BBASE + HM)
         self.add(bars, line)
         k = 2.2   # zoom: same rectangle, taller, so the strips below are visible
@@ -368,6 +292,26 @@ class S3Totals(CourseScene):
             self.play(Indicate(eq[4], color=HILITE, scale_factor=1.12), run_time=1.2)
         self.clear_all()
 
+        # the same average, used by every model we train later in the course
+        mean_f = MathTex(r"\bar{x}", "=", r"\frac{1}{n}\sum_{i=1}^{n}", "x_i", font_size=64)
+        loss_f = MathTex("L", "=", r"\frac{1}{n}\sum_{i=1}^{n}", r"\text{" + w("error", "xato") + r"}_i",
+                         font_size=64)
+        mean_f.move_to(UP * 0.9)
+        loss_f.move_to(UP * 0.9)
+        loss_f[0].set_color(RLRED)
+        loss_f[3].set_color(RLRED)
+        cap = txt(say("loss_cap"), size=30, color=GREY_B).next_to(loss_f, DOWN, buff=0.7)
+        arrow = Arrow(UP * 0.5, DOWN * 0.5, color=RLRED, stroke_width=6).next_to(cap, DOWN, buff=0.3)
+        t = say("s3d")
+        with self.voiceover(t) as tr:
+            self.play(FadeIn(mean_f), run_time=0.8)
+            self.cue(tr, t, 1)
+            self.play(TransformMatchingTex(mean_f, loss_f), run_time=1.2)
+            self.cue(tr, t, {"en": "training", "uz": "oʻqitish"})
+            self.play(FadeIn(cap), GrowArrow(arrow), run_time=0.9)
+            self.play(loss_f[0].animate.scale(0.7), run_time=0.8)
+        self.clear_all()
+
 
 # ─── log axis shared by scene 4 ───────────────────────────────────────────
 LO, HI, LEFT_X, RIGHT_X = np.log10(2e4), np.log10(3e11), -5.6, 5.6
@@ -377,9 +321,8 @@ def xpos(s):
     return LEFT_X + (RIGHT_X - LEFT_X) * (np.log10(s) - LO) / (HI - LO)
 
 
-class S4Failure(CourseScene):
+class S04Failure(LectureScene):
     def construct(self):
-        self.add(brand_mark())
         dots, haxis = hist_dots(), hist_axis()
         self.add(dots, haxis)
         picked = [dots[i] for i in range(0, N_EMP, N_EMP // N_DRINKERS)][:N_DRINKERS]
@@ -455,9 +398,8 @@ class S4Failure(CourseScene):
         self.clear_all()
 
 
-class S5Median(CourseScene):
+class S04Median(LectureScene):
     def construct(self):
-        self.add(brand_mark())
         head = txt(say("not_moved"), size=36, weight=BOLD, color=RLGREEN).to_edge(UP, buff=SAFE + 0.35)
         n1 = N_DRINKERS + 1
         x0, x1, base = -5.5, 5.5, -2.5
@@ -521,9 +463,8 @@ class S5Median(CourseScene):
         self.clear_all()
 
 
-class S6HandsOn(CourseScene):
+class S04HandsOn(LectureScene):
     def construct(self):
-        self.add(brand_mark())
         base, k, step = -2.4, 2.7 / max(NINE), 1.05
         xs = [(i - (len(NINE) - 1) / 2) * step for i in range(len(NINE))]
         bars = VGroup(*[Rectangle(width=0.72, height=v * k, stroke_width=0, fill_color=RLBLUE, fill_opacity=1)
@@ -537,7 +478,7 @@ class S6HandsOn(CourseScene):
             self.play(FadeIn(card), Create(floor), run_time=0.8)
             self.play(LaggedStart(*[GrowFromEdge(b, DOWN) for b in bars], lag_ratio=0.12), run_time=1.4)
             self.play(LaggedStart(*[FadeIn(n) for n in nums], lag_ratio=0.1), FadeIn(unit), run_time=1.0)
-        self.wait(3)
+        self.hands_on()
 
         ym = base + NINE_MEAN * k
         line = Line([xs[0] - 0.6, ym, 0], [xs[-1] + 0.6, ym, 0], color=RLRED, stroke_width=4)
@@ -570,15 +511,14 @@ class S6HandsOn(CourseScene):
         self.clear_all()
 
 
-class S7Next(CourseScene):
+class S04ToMedian(LectureScene):
     def construct(self):
-        card = next_card(2, say("next_title"))
+        ln = DashedLine(LEFT * 3, RIGHT * 3, color=RLGREEN, stroke_width=6)
+        name = txt(say("median"), size=56, weight=BOLD, color=RLGREEN).next_to(ln, UP, buff=0.4)
         with self.voiceover(say("s7")):
-            self.play(FadeIn(card, shift=UP * 0.3), run_time=1.0)
-            self.wait(1.4)
-        self.play(FadeOut(card), run_time=0.6)
-        self.play(FadeIn(brand_outro()), run_time=1.0)
-        self.wait(2.0)
+            self.play(Create(ln), FadeIn(name, shift=UP * 0.3), run_time=1.0)
+            self.wait(0.6)
+        self.clear_all()
 
 
-SCENES = ["S1Problem", "S2Mean", "S3Totals", "S4Failure", "S5Median", "S6HandsOn", "S7Next"]
+SCENES = ["S04Problem", "S04Mean", "S04Totals", "S04Failure", "S04Median", "S04HandsOn", "S04ToMedian"]

@@ -141,6 +141,74 @@ V["bday_first_over_half"] = next(n for n in range(1, 366)
 assert V["bday_first_over_half"] == 23
 V["bday_pairs_23"] = 23 * 22 // 2
 
+# ─── arrays the pictures are drawn from (regenerated with the figure script's seeds) ──
+# Same generators, same order of draws as generate_data_probability_graphics.py, then
+# checked against the stdout it printed, so the video draws the slides' own data.
+A = {}
+rng3 = np.random.default_rng(11)
+for name, sd in (("A", 2.0), ("B", 4.0)):
+    f = rng3.normal(500.0, sd, size=1000)
+    A[f"fills_{name}"] = f.tolist()
+    bad = (f < 495) | (f > 505)
+    assert int(bad.sum()) == V[f"bottle_{name}_rejected"]
+    V[f"bottle_{name}_mean"] = float(f.mean())
+    V[f"bottle_{name}_std"] = float(f.std(ddof=1))
+    V[f"bottle_{name}_limits_sd"] = 5.0 / sd
+assert f"mean={V['bottle_B_mean']:.2f}ml  std={V['bottle_B_std']:.2f}ml" in fig
+# machine B with its mean moved off-centre: every shift rejects more bottles
+fB = np.array(A["fills_B"])
+V["bottle_B_shift"] = {str(d): int(((fB + d < 495) | (fB + d > 505)).sum()) for d in range(-3, 4)}
+assert min(V["bottle_B_shift"].values()) == V["bottle_B_shift"]["0"] == 210
+
+rng4 = np.random.default_rng(5)
+for b, (med, sig) in zip(V["branches"], ((12.0, 0.16), (18.0, 0.34), (28.0, 0.50))):
+    w = rng4.lognormal(np.log(med), sig, size=200)
+    q1, q2, q3 = np.percentile(w, [25, 50, 75])
+    iqr = q3 - q1
+    assert (round(q1, 1), round(q2, 1), round(q3, 1)) == (b["q1"], b["median"], b["q3"]), b
+    lo_f, hi_f = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+    b.update(q1x=q1, medx=q2, q3x=q3, iqrx=iqr,
+             wlo=float(w[w >= lo_f].min()), whi=float(w[w <= hi_f].max()),
+             fliers=sorted(float(v) for v in w[(w < lo_f) | (w > hi_f)]))
+    A[f"waits_{b['name']}"] = w.tolist()
+assert [len(b["fliers"]) for b in V["branches"]] == [2, 3, 3]
+
+# Anscombe's quartet: the published data, as in the figure script
+x123 = [10, 8, 13, 9, 11, 14, 6, 4, 12, 7, 5]
+quartet = {
+    "I": (x123, [8.04, 6.95, 7.58, 8.81, 8.33, 9.96, 7.24, 4.26, 10.84, 4.82, 5.68]),
+    "II": (x123, [9.14, 8.14, 8.74, 8.77, 9.26, 8.10, 6.13, 3.10, 9.13, 7.26, 4.74]),
+    "III": (x123, [7.46, 6.77, 12.74, 7.11, 7.81, 8.84, 6.08, 5.39, 8.15, 6.42, 5.73]),
+    "IV": ([8, 8, 8, 8, 8, 8, 8, 19, 8, 8, 8], [6.58, 5.76, 7.71, 8.84, 8.47, 7.04, 5.25, 12.50, 5.56, 7.91, 6.89]),
+}
+V["anscombe"] = {}
+for name, (x, y) in quartet.items():
+    x, y = np.array(x, float), np.array(y)
+    slope, icept = np.polyfit(x, y, 1)
+    st = dict(x=x.tolist(), y=y.tolist(), mean_x=x.mean(), mean_y=y.mean(), var_x=x.var(ddof=1),
+              corr=float(np.corrcoef(x, y)[0, 1]), slope=float(slope), intercept=float(icept))
+    row = re.search(rf"^{name}\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+[\d.]+\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)$", fig, re.M)
+    assert row and tuple(map(float, row.groups())) == tuple(round(st[k], 3) for k in
+            ("mean_x", "mean_y", "var_x", "corr", "slope", "intercept")), name
+    V["anscombe"][name] = st
+
+# birthday curve, one point per group size
+V["bday_curve"] = [1 - prod((365 - k) / 365 for k in range(n)) for n in range(1, 71)]
+assert abs(V["bday_curve"][22] - V["bday"]["23"]) < 1e-12
+
+# section 3: a continuous variable never repeats; section 5: one typo (52 -> 520)
+assert len(np.unique(sal)) == len(sal)
+V["five_typo"] = [31, 45, 47, 520, 88]
+V["five_typo_mean"] = sum(V["five_typo"]) / 5
+V["five_typo_median"] = sorted(V["five_typo"])[2]
+assert (V["five_typo_mean"], V["five_typo_median"]) == (146.2, 47)
+V["sal_median"] = float(np.median(sal))
+V["sal_mean"] = float(sal.mean())
+# section 7's closing question: how much one extreme value moves the variance
+V["nine_var"] = float(np.var(nine, ddof=1))
+V["eight_var"] = float(np.var(nine[:-1], ddof=1))
+(OUT / "l01_arrays.json").write_text(json.dumps(A) + "\n")
+
 (OUT / "l01_numbers.json").write_text(json.dumps(V, indent=2) + "\n")
 for k, v in V.items():
     print(f"{k:22s} {v}")
