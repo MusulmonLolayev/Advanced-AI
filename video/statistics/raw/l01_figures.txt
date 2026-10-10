@@ -1,0 +1,52 @@
+Figure 1: salary histogram (mean vs median) …
+  n=600  min=$27,092  max=$151,117
+  mean=$51,613  median=$47,697  range=$124,026
+  suggested width = range/7 = $17,718 -> rounded to $20,000
+   class  frequency  relative %
+  20-40k        156        26.0
+  40-60k        311        51.8
+  60-80k         89        14.8
+ 80-100k         32         5.3
+100-120k          7         1.2
+120-140k          3         0.5
+140-160k          2         0.3
+✓ data_probability_salary_histogram.pdf
+✓ data_probability_salary_histogram.svg
+
+Figure 2: mean vs median with one extreme outlier …
+  drinkers = 50 of the 600 employees
+  before: mean=$50,627  median=$47,323
+  after:  mean=$2,941,226,105  median=$47,761
+✓ data_probability_billionaire_bar.pdf
+✓ data_probability_billionaire_bar.svg
+
+Figure 3: same mean, different variance (fill limits) …
+  Machine A: mean=500.03ml  std=2.00ml  limits at 2.50 std  rejected=11 of 1000
+  Machine B: mean=499.99ml  std=4.01ml  limits at 1.25 std  rejected=210 of 1000
+✓ data_probability_variance_bottles.pdf
+✓ data_probability_variance_bottles.svg
+
+Figure 4: box plots across three service branches …
+  Branch A: median=11.8min  Q1=10.5  Q3=13.2  IQR=2.6  upper fence=17.1  flagged=2/200
+  Branch B: median=17.7min  Q1=14.3  Q3=22.7  IQR=8.3  upper fence=35.2  flagged=3/200
+  Branch C: median=29.5min  Q1=20.4  Q3=40.2  IQR=19.9  upper fence=70.0  flagged=3/200
+✓ data_probability_boxplot_branches.pdf
+✓ data_probability_boxplot_branches.svg
+
+Figure 5: Anscombe's quartet …
+     mean_x  mean_y  var_x  var_y   corr  slope  intercept
+set                                                       
+I       9.0   7.501   11.0  4.127  0.816    0.5      3.000
+II      9.0   7.501   11.0  4.128  0.816    0.5      3.001
+III     9.0   7.500   11.0  4.123  0.816    0.5      3.002
+IV      9.0   7.501   11.0  4.123  0.817    0.5      3.002
+✓ data_probability_anscombe.pdf
+✓ data_probability_anscombe.svg
+
+Figure 6: birthday problem curve …
+  first group size with P(shared birthday) > 0.5: n=23
+  P(shared)|n=23 = 0.5073
+✓ data_probability_birthday_problem.pdf
+✓ data_probability_birthday_problem.svg
+
+All done.
