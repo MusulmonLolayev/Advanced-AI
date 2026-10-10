@@ -4,7 +4,11 @@ Narrated Manim videos built from the same material as the slide decks.
 
 ## Layout
 - `common.py` — speech service, `CourseScene`, style helpers, brand marks.
-- `vNN_topic.py` — one file per video, one `Scene` class per section, `SCENES = [...]` giving order.
+- **One video per lecture**, built like the slides: a lecture opening (one greeting), then Part 0, Part 1 … each with a
+  part card, and inside each part one section per concept with a short section card. Sections say "keyingi/avvalgi
+  boʻlim", never "video"; only the lecture's end points to the next lecture. Narration drafts live in
+  `narration/lectureNN.md` and must be approved before building.
+- Scenes: one `Scene` class per beat, `SCENES = [...]` giving order; `render.sh` concatenates them into the one lecture video.
 - `statistics/raw/` — real stdout captured from the figure scripts. Every number on screen must trace to a file here.
 - `statistics/screens/figures/` — figures rasterised from the committed PDFs, cached so a video re-renders later.
 - `render.sh <module> [l|m|h|k]`, `check_edges.py <mp4>`.
@@ -33,7 +37,7 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 
 ## Rules carried over from the decks
 Uzbek narration follows **Uzbek translation rules** in the repo-root `CLAUDE.md` (berilganlar, tavsiflovchi, native "we" phrasing, approval before voicing).
-Numbers on screen come from a saved raw output, never retyped. Narration spells numbers for the ear while the screen shows digits. One concept per video; problem first, concept as the answer; each video ends with the problem the next one solves.
+Numbers on screen come from a saved raw output, never retyped. Narration spells numbers for the ear while the screen shows digits. One concept per section; problem first, concept as the answer; each section ends with the question the next one answers.
 
 ## Instructor voice (Navoiy, fine-tuned)
 `VOICE_ENGINE=navoiy LANG_CODE=uz ./render.sh <video> h` narrates in the instructor's own voice.

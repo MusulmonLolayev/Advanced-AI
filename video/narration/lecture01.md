@@ -1,10 +1,12 @@
-# Lecture 1 — video narration (draft 2, for approval)
+# Lecture 1 — video narration (draft 3, for approval)
 
-Lecture 1 split into **14 short videos**: Part 0 (Berilganlar va tavsiflovchi statistika) = videos 1–9,
-Part 1 (Ehtimollik) = videos 10–14. Each video: problem first → concept as the answer → one AI use → a hands-on
-pause → the problem the next video solves.
+**One video for the whole lecture**, in two parts like the slides: Part 0 (Berilganlar va tavsiflovchi statistika) =
+sections 1–9, Part 1 (Ehtimollik) = sections 10–14. A part card opens each part and a short section card
+("3-boʻlim · Gistogramma") opens each section. Each section: problem first → concept as the answer → one AI use →
+a hands-on pause → the question the next section answers.
 
-**Draft 2 changes:** data = **berilganlar** (maʼlumot only where *information* is meant, e.g. "ob-havo maʼlumoti");
+**Draft 3:** one video per lecture — a single greeting and lecture intro, "keyingi/avvalgi boʻlim" instead of
+"keyingi/oʻtgan video", part transitions inside the video. **Draft 2:** data = **berilganlar** (maʼlumot only where *information* is meant, e.g. "ob-havo maʼlumoti");
 descriptive = **tavsiflovchi**; every Uzbek line rewritten as spoken Uzbek in your phrasing instead of a translation
 of the English ("Toshkent qoʻshuv Samarqand, va boʻlamiz ikkiga"). Spread = *tarqoqlik*.
 
@@ -16,11 +18,17 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 
 ---
 
-## Part 0 — Berilganlar va tavsiflovchi statistika
+## Lecture opening
+▸ title card "1-maʼruza" → learning goals
+0. **Assalomu alaykum, aziz doʻstlar. Birinchi maʼruzamizga xush kelibsiz. Bu maʼruza ikki qismdan iborat. Nolinchi qismda berilganlar va tavsiflovchi statistikani oʻrganamiz, birinchi qismda esa ehtimollikni.**
+   *Hello, dear friends, and welcome to our first lecture. It has two parts. In part zero we study data and descriptive statistics, and in part one, probability.*
 
-### Video 1 — Berilganlar turlari · Data types
-1. **Assalomu alaykum, aziz doʻstlar. Statistikada birinchi savol hisob-kitob emas. Avval qoʻlimizdagi berilganlar qanday turda ekanini bilib olishimiz kerak.**
-   *Hello, dear friends. In statistics, the first question is not a calculation. The first question is: what kind of data do we have?*
+## Part 0 — Berilganlar va tavsiflovchi statistika
+▸ part card "0-qism · Berilganlar va tavsiflovchi statistika"
+
+### 1-boʻlim · Section 1 — Berilganlar turlari · Data types
+1. **Keling, boshladik. Statistikada birinchi savol hisob-kitob emas. Avval qoʻlimizdagi berilganlar qanday turda ekanini bilib olishimiz kerak.**
+   *Let's begin. In statistics, the first question is not a calculation. The first question is: what kind of data do we have?*
    ▸ six cards drop in: koʻz rangi · tugʻilgan shahar · baho · farzandlar soni · maosh · boʻy
 2. **Tasavvur qilamiz, ikki kishining tugʻilgan shahrini olib, oʻrtachasini hisoblamoqchimiz. Toshkent qoʻshuv Samarqand, va boʻlamiz ikkiga. Bunday hisobning hech qanday maʼnosi yoʻq.**
    *Let's imagine we add up two people's cities of birth and divide by two. Tashkent plus Samarkand, divided by two. That means nothing.*
@@ -50,12 +58,12 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     *Let's try it ourselves. Pause the video. Blood type, finishing place in an exam, and room temperature: which type is each?*
 11. **Qon guruhi — nominal. Imtihondagi oʻrin — ordinal, chunki birinchi oʻrin ikkinchidan oldin turadi, lekin ular orasidagi farq teng emas. Harorat esa uzluksiz.**
     *Blood type is nominal. Exam place is ordinal: first comes before second, but the gaps are not equal. Temperature is continuous.*
-12. **Endi bizda olti yuzta maosh bor, yaʼni sonli, uzluksiz berilganlar. Lekin bu olti yuz kishi kimlar? Bu butun soha emas, uning bir qismi xolos. Keyingi videoda shu haqida gaplashamiz.**
-    *Now we have six hundred salaries: numerical, continuous data. But who are these six hundred people? Not the whole industry, only part of it. That is the next video.*
+12. **Endi bizda olti yuzta maosh bor, yaʼni sonli, uzluksiz berilganlar. Lekin bu olti yuz kishi kimlar? Bu butun soha emas, uning bir qismi xolos. Keyingi boʻlimda shu haqida gaplashamiz.**
+    *Now we have six hundred salaries: numerical, continuous data. But who are these six hundred people? Not the whole industry, only part of it. That is the next section.*
 
-### Video 2 — Bosh toʻplam va tanlanma · Population and sample
-1. **Assalomu alaykum, aziz doʻstlar. Bizda olti yuzta xodimning maoshi bor. Lekin odatda bizni kattaroq savol qiziqtiradi: butun sohada odamlar qancha maosh oladi?**
-   *Hello, dear friends. We have the salaries of six hundred employees. But the question we usually care about is bigger: what do people earn across the whole industry?*
+### 2-boʻlim · Section 2 — Bosh toʻplam va tanlanma · Population and sample
+1. **Bizda olti yuzta xodimning maoshi bor. Lekin odatda bizni kattaroq savol qiziqtiradi: butun sohada odamlar qancha maosh oladi?**
+   *We have the salaries of six hundred employees. But the question we usually care about is bigger: what do people earn across the whole industry?*
    ▸ the 600 dots, then the camera pulls back: they sit inside a huge faint cloud
 2. **Sohadagi hamma xodimni oʻlchab chiqolmaymiz, chunki ular juda koʻp. Biz oʻrganmoqchi boʻlgan hamma birliklar bosh toʻplam deb ataladi.**
    *We cannot measure every employee in the industry; there are far too many. Every unit we care about is called the population.*
@@ -84,12 +92,12 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     *Let's try it ourselves. Pause the video. In our five salaries, what is x two, and what is x one plus x five?*
 12. **x ikki — qirq besh. x bir qoʻshuv x besh — oʻttiz bir qoʻshuv sakson sakkiz, yaʼni bir yuz oʻn toʻqqiz.**
     *x two is forty-five. x one plus x five is thirty-one plus eighty-eight: one hundred and nineteen.*
-13. **Xoʻp, olti yuzta maoshimiz bor. Lekin olti yuzta sonni bir qarashda qanday koʻramiz? Bu keyingi videoda.**
-    *So we have six hundred salaries. But how do we see the shape of six hundred numbers at a glance? That is the next video.*
+13. **Xoʻp, olti yuzta maoshimiz bor. Lekin olti yuzta sonni bir qarashda qanday koʻramiz? Buni keyingi boʻlimda koʻramiz.**
+    *So we have six hundred salaries. But how do we see the shape of six hundred numbers at a glance? That is the next section.*
 
-### Video 3 — Gistogramma · The histogram
-1. **Assalomu alaykum, aziz doʻstlar. Olti yuzta maoshni roʻyxat qilib yozsak, hech narsani koʻrolmaymiz. Keling, ularni rasm qilib chizaylik.**
-   *Hello, dear friends. Written as a list, six hundred salaries show us nothing. Let's draw their shape instead.*
+### 3-boʻlim · Section 3 — Gistogramma · The histogram
+1. **Olti yuzta maoshni roʻyxat qilib yozsak, hech narsani koʻrolmaymiz. Keling, ularni rasm qilib chizaylik.**
+   *Written as a list, six hundred salaries show us nothing. Let's draw their shape instead.*
    ▸ the salary list scrolls, then collapses into dots on an axis
 2. **Maosh uzluksiz kattalik, shuning uchun bir xil qiymat deyarli takrorlanmaydi. Har bir qiymatni alohida sanasak, hammasi bir martadan chiqadi.**
    *Salary is continuous, so almost no value repeats. If we count each value separately, every one of them appears exactly once.*
@@ -118,11 +126,11 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     *Let's try it ourselves. Pause the video. Using the table, we find how many employees earn more than eighty thousand.*
 12. **Oxirgi toʻrtta sinfni qoʻshamiz: oʻttiz ikki, yetti, uch va ikki. Jami qirq toʻrt kishi.**
     *We add the last four classes: thirty-two, seven, three and two. Forty-four people in all.*
-13. **Lekin rahbarimiz baribir bitta son soʻraydi. Qaysi son? Bu keyingi videoda.**
-    *But our manager still asks for one number. Which one? That is the next video.*
+13. **Lekin rahbarimiz baribir bitta son soʻraydi. Qaysi son? Buni keyingi boʻlimda koʻramiz.**
+    *But our manager still asks for one number. Which one? That is the next section.*
 
-### Video 4 — Oʻrtacha qiymat · The mean  *(already built; Uzbek rewritten, English "you" → "we", one new AI line)*
-- s1a **Assalomu alaykum, aziz doʻstlar. Bu kompaniyada olti yuz kishi ishlaydi. Mana, har biri qancha maosh oladi. Rahbarimiz oddiy savol beradi: bu yerda odamlar qancha maosh oladi?** · *Hello, dear friends. Six hundred people work at this company. Here is what every one of them earns. Our manager asks a simple question: what do people earn here?*
+### 4-boʻlim · Section 4 — Oʻrtacha qiymat · The mean  *(already built as its own video; folded into the lecture: greeting removed, Uzbek rewritten, "you" → "we", one new AI line; its Next card becomes the section 5 card)*
+- s1a **Bu kompaniyada olti yuz kishi ishlaydi. Mana, har biri qancha maosh oladi. Rahbarimiz oddiy savol beradi: bu yerda odamlar qancha maosh oladi?** · *Six hundred people work at this company. Here is what every one of them earns. Our manager asks a simple question: what do people earn here?*
 - s1b **Olti yuzta sonni bittalab oʻqib chiqolmaymiz. Hammasining oʻrnini bosadigan bitta son kerak. Lekin qaysi son?** · *We cannot read out six hundred numbers. We need one number that stands for all of them. But which one?*
 - s2a **Eng qadimiy javob eng oddiysi ham. Hammasini qoʻshamiz va teng qilib boʻlib chiqamiz.** · *The oldest answer is also the simplest. We add everything up, and share it out equally.*
 - s2b **Mana bu yerda ellik bir ming olti yuz oʻn uch dollar chiqdi. Buni oʻrtacha qiymat deymiz.** · *Here that comes to fifty-one thousand, six hundred and thirteen dollars. We call it the mean.*
@@ -138,15 +146,15 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 - s4e **Keling, qizil chiziq qayerga tushganiga qaraylik. Boʻsh joyga, odamlar bilan milliarderning oʻrtasiga. Xonadagi hech kim bunday maosh olmaydi.** · *Let's look at where that red line lands. In empty space, between the crowd and the billionaire. It describes nobody present.*
 - s5a **Endi uzuq chiziqqa qaraylik. Avval: qirq yetti ming uch yuz yigirma uch dollar.** · *Now let's look at the dashed line. Before: forty-seven thousand, three hundred and twenty-three.*
 - s5b **Keyin: qirq yetti ming yetti yuz oltmish bir dollar. Bor-yoʻgʻi toʻrt yuz dollarga siljidi.** · *After: forty-seven thousand, seven hundred and sixty-one. It moved by four hundred dollars.*
-- s5c **Mana shu chiziq mediana deb ataladi. U keyingi videomizning mavzusi.** · *That line is the median, and it is the subject of the next video.*
+- s5c **Mana shu chiziq mediana deb ataladi. U keyingi boʻlimimizning mavzusi.** · *That line is the median, and it is the subject of the next section.*
 - s6a **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Mana toʻqqizta maosh, ming dollarda. Oʻrtacha qiymatini hisoblaymiz. Keyin toʻqqiz kishidan nechtasi undan kam olishini sanaymiz.** · *Let's try it ourselves. Pause the video. Here are nine salaries, in thousands of dollars. We work out the mean. Then we count how many of the nine earn less than it.*
 - s6b **Yigʻindi toʻrt yuz ellik uch, demak oʻrtacha qiymat ellik ming uch yuz oʻttiz uch dollar.** · *The total is four hundred and fifty-three, so the mean is fifty thousand, three hundred and thirty-three dollars.*
 - s6c **Toʻqqiz kishidan oltitasi undan kam oladi. Hech qanday milliarder yoʻq boʻlsa ham, oʻrtacha qiymat koʻpchilikdan yuqorida turibdi.** · *And six of the nine earn less than that. Even with no billionaire anywhere, the mean already sits above most of the people in it.*
 - s7 **Mana shu muammoni mediana hal qiladi.** · *Which is exactly the problem the median solves.*
 
-### Video 5 — Mediana va moda · The median and the mode
-1. **Assalomu alaykum, aziz doʻstlar. Oʻtgan videoda bitta milliarder oʻrtacha qiymatni boʻsh joyga olib ketdi. Keling, bunday paytda ham joyidan qimirlamaydigan son topaylik.**
-   *Hello, dear friends. In the last video, one billionaire dragged the mean into empty space. Let's find a number that holds its ground.*
+### 5-boʻlim · Section 5 — Mediana va moda · The median and the mode
+1. **Avvalgi boʻlimda bitta milliarder oʻrtacha qiymatni boʻsh joyga olib ketdi. Keling, bunday paytda ham joyidan qimirlamaydigan son topaylik.**
+   *In the last section, one billionaire dragged the mean into empty space. Let's find a number that holds its ground.*
 2. **Gʻoya oddiy. Maoshlarni kichigidan kattasigacha tartib bilan teramiz va oʻrtada turgan odamni olamiz. Bu mediana deb ataladi.**
    *The idea is simple: we line the salaries up from smallest to largest, and take the person standing in the middle. That is the median.*
 3. **Beshta maosh: oʻttiz bir, qirq besh, qirq yetti, ellik ikki, sakson sakkiz. Ular tartiblangan, n beshga teng. Demak, oʻrtadagisi uchinchisi, yaʼni qirq yetti.**
@@ -170,16 +178,16 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     ▸ three cards, each with its data type icon
 11. **Sunʼiy intellektda ham shunday. Berilganlardagi bitta xato, masalan bitta ortiqcha nol bilan yozilgan maosh, oʻrtachani buzib yuboradi, medianani esa deyarli qimirlatmaydi. Shuning uchun berilganlarni tozalashda koʻpincha medianaga tayanamiz.**
     *The same in AI: one error in the data, say a salary typed with an extra zero, wrecks the mean and barely moves the median. That is why data cleaning often leans on the median.*
-12. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Oʻtgan videodagi toʻqqizta maoshning medianasini topamiz.**
-    *Let's try it ourselves. Pause the video. We find the median of the nine salaries from the last video.*
+12. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Avvalgi boʻlimdagi toʻqqizta maoshning medianasini topamiz.**
+    *Let's try it ourselves. Pause the video. We find the median of the nine salaries from the last section.*
 13. **Toʻqqizta qiymat bor, demak oʻrtadagisi beshinchisi — qirq yetti ming dollar. Oʻrtacha qiymat esa ellik ming uch yuz oʻttiz uch dollar edi.**
     *Nine values, so the middle one is the fifth: forty-seven thousand dollars. The mean was fifty thousand, three hundred and thirty-three.*
-14. **Lekin markaz hamma narsani aytib bermaydi. Ikki xil berilganlarning oʻrtachasi bir xil boʻlib, oʻzi butunlay boshqacha boʻlishi mumkin. Bu keyingi videoda.**
-    *But a center does not tell the whole story. Two datasets can share the same mean and behave completely differently. That is the next video.*
+14. **Lekin markaz hamma narsani aytib bermaydi. Ikki xil berilganlarning oʻrtachasi bir xil boʻlib, oʻzi butunlay boshqacha boʻlishi mumkin. Buni keyingi boʻlimda koʻramiz.**
+    *But a center does not tell the whole story. Two datasets can share the same mean and behave completely differently. That is the next section.*
 
-### Video 6 — Dispersiya · Variance
-1. **Assalomu alaykum, aziz doʻstlar. Tasavvur qilamiz, ishga ikki xil yoʻl bilan borishimiz mumkin: avtobusda yoki mashinada. Besh kun avtobusda, besh kun mashinada yuramiz va vaqtini yozib boramiz.**
-   *Hello, dear friends. Let's imagine we can get to work two ways: by bus or by car. We time five days by bus and five days by car.*
+### 6-boʻlim · Section 6 — Dispersiya · Variance
+1. **Tasavvur qilamiz, ishga ikki xil yoʻl bilan borishimiz mumkin: avtobusda yoki mashinada. Besh kun avtobusda, besh kun mashinada yuramiz va vaqtini yozib boramiz.**
+   *Let's imagine we can get to work two ways: by bus or by car. We time five days by bus and five days by car.*
 2. **Avtobusda: oʻttiz, yigirma toʻqqiz, oʻttiz bir, oʻttiz, oʻttiz daqiqa. Mashinada: oʻn sakkiz, qirq ikki, yigirma besh, oʻttiz besh, oʻttiz daqiqa.**
    *Bus: thirty, twenty-nine, thirty-one, thirty, thirty minutes. Car: eighteen, forty-two, twenty-five, thirty-five, thirty minutes.*
    ▸ two rows of dots on a minutes axis
@@ -205,12 +213,12 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     *Why n minus one, not n? We computed the mean from the sample itself, so it always sits a little closer to the sample than the true mean does. Dividing by n minus one corrects for that.*
 12. **Sunʼiy intellektda ikki modelning oʻrtacha aniqligi bir xil boʻlsa, natijasi har safar sakrab turadiganini emas, barqarorini tanlaymiz. Bu farqni aynan dispersiya koʻrsatadi.**
     *In AI, between two models with the same average accuracy, we choose the steady one over the one that jumps around from run to run. Variance is what shows the difference.*
-13. **Keyingi videoda dispersiya qanday qilib haqiqiy pulga va chiqindiga aylanishini koʻramiz.**
-    *In the next video, we see how variance turns into real money and real waste.*
+13. **Keyingi boʻlimda dispersiya qanday qilib haqiqiy pulga va chiqindiga aylanishini koʻramiz.**
+    *In the next section, we see how variance turns into real money and real waste.*
 
-### Video 7 — Tarqoqlik — bu xavf · Variance is risk
-1. **Assalomu alaykum, aziz doʻstlar. Keling, ichimlik zavodiga boraylik. Shishaga besh yuz millilitr deb yozilgan. Qonun boʻyicha toʻrt yuz toʻqson beshdan besh yuz beshgacha boʻlishi mumkin.**
-   *Hello, dear friends. Let's visit a bottling plant. The label says five hundred millilitres, and the law allows four hundred and ninety-five to five hundred and five.*
+### 7-boʻlim · Section 7 — Tarqoqlik — bu xavf · Variance is risk
+1. **Keling, ichimlik zavodiga boraylik. Shishaga besh yuz millilitr deb yozilgan. Qonun boʻyicha toʻrt yuz toʻqson beshdan besh yuz beshgacha boʻlishi mumkin.**
+   *Let's visit a bottling plant. The label says five hundred millilitres, and the law allows four hundred and ninety-five to five hundred and five.*
    ▸ a fill axis with the 495–505 band shaded
 2. **Zavodda ikkita mashina bor. Ikkalasi ham oʻrtacha roppa-rosa besh yuz millilitr quyadi.**
    *There are two machines, and both fill exactly five hundred millilitres on average.*
@@ -232,12 +240,12 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Let's think it through. Pause the video. If we cannot reduce machine B's spread, where should we set its average?*
 10. **Aynan chegaralarning oʻrtasiga. Oʻrtachani qaysi tomonga sursak ham, bitta chegara yaqinlashadi va yaroqsiz shishalar koʻpayadi.**
     *Right in the middle of the limits. Whichever way we move the average, one limit gets closer, and more bottles are rejected.*
-11. **Lekin dispersiya bitta juda katta qiymatga ham sezgir. Shunday qiymatlardan buzilmaydigan tarqoqlik oʻlchovi bormi? Bu keyingi videoda.**
-    *But variance is very sensitive to a single extreme value. Is there a measure of spread that survives outliers? That is the next video.*
+11. **Lekin dispersiya bitta juda katta qiymatga ham sezgir. Shunday qiymatlardan buzilmaydigan tarqoqlik oʻlchovi bormi? Buni keyingi boʻlimda koʻramiz.**
+    *But variance is very sensitive to a single extreme value. Is there a measure of spread that survives outliers? That is the next section.*
 
-### Video 8 — Kvartillar va quti diagrammasi · Quartiles and box plots
-1. **Assalomu alaykum, aziz doʻstlar. Mediana markazni juda katta qiymatlardan himoya qildi. Keling, tarqoqlik uchun ham xuddi shunday himoya quraylik.**
-   *Hello, dear friends. The median protected the center from outliers. Let's build the same protection for spread.*
+### 8-boʻlim · Section 8 — Kvartillar va quti diagrammasi · Quartiles and box plots
+1. **Mediana markazni juda katta qiymatlardan himoya qildi. Keling, tarqoqlik uchun ham xuddi shunday himoya quraylik.**
+   *The median protected the center from outliers. Let's build the same protection for spread.*
 2. **Toʻqqizta maoshimizni tartib bilan teramiz. Mediana beshinchisi, yaʼni qirq yetti. U berilganlarni ikki yarmiga ajratadi.**
    *We take our nine salaries, sorted. The median is the fifth, forty-seven. It splits the data into two halves.*
    ▸ nine bars; the fifth glows and a divider drops
@@ -267,12 +275,12 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     *Let's try it ourselves. Pause the video. We work out the lower fence, Q one minus one and a half IQRs. Is any value below it?*
 14. **Pastki chegara oʻn besh butun yuzdan yigirma besh. Eng kichik maosh oʻttiz bir. Demak, pastda chetga chiqqan qiymat yoʻq.**
     *The lower fence is fifteen point two five. The smallest salary is thirty-one, so there is no outlier at the bottom.*
-15. **Lekin beshta son ham bizni aldashi mumkin. Keyingi videoda statistikasi bir xil, lekin rasmi butunlay boshqacha boʻlgan toʻrtta berilganlar toʻplamini koʻramiz.**
-    *But even five numbers can fool us. In the next video, four datasets with the same statistics and completely different pictures.*
+15. **Lekin beshta son ham bizni aldashi mumkin. Keyingi boʻlimda statistikasi bir xil, lekin rasmi butunlay boshqacha boʻlgan toʻrtta berilganlar toʻplamini koʻramiz.**
+    *But even five numbers can fool us. In the next section, four datasets with the same statistics and completely different pictures.*
 
-### Video 9 — Berilganlarni doim chizamiz · Always plot the data (Anscombe)
-1. **Assalomu alaykum, aziz doʻstlar. Keling, toʻrtta berilganlar toʻplamini olaylik. Har birida oʻn bittadan nuqta bor.**
-   *Hello, dear friends. Let's take four datasets. Each has eleven points.*
+### 9-boʻlim · Section 9 — Berilganlarni doim chizamiz · Always plot the data (Anscombe)
+1. **Keling, toʻrtta berilganlar toʻplamini olaylik. Har birida oʻn bittadan nuqta bor.**
+   *Let's take four datasets. Each has eleven points.*
    ▸ four tables of numbers, no plots yet
 2. **Ularning statistikasini hisoblaymiz. x ning oʻrtachasi toʻrttasida ham toʻqqiz. y ning oʻrtachasi ham toʻrttasida yetti yarim.**
    *Let's compute their statistics. The mean of x is nine in all four. The mean of y is seven and a half in all four.*
@@ -296,16 +304,17 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     *Let's think it through. Pause the video. In which of the four is a straight-line model actually right?*
 12. **Faqat birinchisida. Qolgan uchtasida oʻsha chiziq bizni aldaydi.**
     *Only the first. In the other three, the same line misleads us.*
-13. **Mana shu bilan maʼruzamizning birinchi qismini tugatamiz. Keyingi qismda noaniqlikni oʻlchashni oʻrganamiz, yaʼni ehtimollikni.**
-    *That brings us to the end of the first part of this lecture. In the next part we learn to measure uncertainty: probability.*
+13. **Mana shu bilan nolinchi qismni tugatamiz. Keyingi qismda noaniqlikni oʻlchashni oʻrganamiz, yaʼni ehtimollikni.**
+    *That brings part zero to an end. In the next part we learn to measure uncertainty: probability.*
 
 ---
 
 ## Part 1 — Ehtimollik
+▸ part card "1-qism · Ehtimollik"
 
-### Video 10 — Namunalar fazosi, hodisa, ehtimollik · Sample space, event, probability
-1. **Assalomu alaykum, aziz doʻstlar. Maʼruzamizning ikkinchi qismiga xush kelibsiz. Ertaga yomgʻir yogʻadimi? Kubik olti koʻrsatadimi? Keling, bunday savollarni songa aylantirishni oʻrganaylik.**
-   *Hello, dear friends, and welcome to the second part of our lecture. Will it rain tomorrow? Will the die show a six? Let's learn to turn questions like these into numbers.*
+### 10-boʻlim · Section 10 — Namunalar fazosi, hodisa, ehtimollik · Sample space, event, probability
+1. **Xoʻp, endi maʼruzamizning birinchi qismiga oʻtamiz. Ertaga yomgʻir yogʻadimi? Kubik olti koʻrsatadimi? Keling, bunday savollarni songa aylantirishni oʻrganaylik.**
+   *Now we move on to part one of our lecture. Will it rain tomorrow? Will the die show a six? Let's learn to turn questions like these into numbers.*
 2. **Birinchi qadam — natijaga qarashdan oldin, nima boʻlishi mumkin boʻlsa, hammasini yozib chiqamiz. Kubikda bu bir, ikki, uch, toʻrt, besh, olti. Buni namunalar fazosi deymiz va omega bilan belgilaymiz.**
    *Step one: before we look, we write down everything that could happen. For a die, that is one, two, three, four, five, six. We call this the sample space, and write it as omega.*
    ▸ six die faces drop into a set Ω
@@ -326,12 +335,12 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Let's try it ourselves. Pause the video. We write down the event "the die shows more than four", and find its probability.*
 10. **Besh va olti. Oltitadan ikkitasi, yaʼni uchdan bir.**
     *Five and six. Two out of six: one third.*
-11. **Keyingi videoda bu ehtimollarni birlashtiradigan uchta qoidani koʻramiz.**
-    *In the next video, the three rules that combine these probabilities.*
+11. **Keyingi boʻlimda bu ehtimollarni birlashtiradigan uchta qoidani koʻramiz.**
+    *In the next section, the three rules that combine these probabilities.*
 
-### Video 11 — Uchta qoida · The three rules
-1. **Assalomu alaykum, aziz doʻstlar. Oddiy hodisalarning ehtimolini topishni bilamiz. Murakkab hodisalarnikini qanday topamiz? Buning uchun uchta qoida yetarli.**
-   *Hello, dear friends. We have the probabilities of simple events. How do we get them for complicated ones? Three rules are enough.*
+### 11-boʻlim · Section 11 — Uchta qoida · The three rules
+1. **Oddiy hodisalarning ehtimolini topishni bilamiz. Murakkab hodisalarnikini qanday topamiz? Buning uchun uchta qoida yetarli.**
+   *We have the probabilities of simple events. How do we get them for complicated ones? Three rules are enough.*
 2. **Birinchisi — toʻldiruvchi qoidasi. A sodir boʻlmasligining ehtimolini topish uchun birdan A ning ehtimolini ayiramiz. Juft son chiqmasligi: birdan ikkidan birni ayiramiz, yaʼni ikkidan bir.**
    *The first is the complement rule. The probability that A does not happen is one minus the probability of A. Not even: one minus a half, which is a half.*
 3. **Bu qoida «hech boʻlmaganda bittasi» degan savollarda juda qulay: hech biri boʻlmasligini hisoblab, birdan ayiramiz.**
@@ -356,12 +365,12 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     *Let's try it ourselves. Pause the video. What is the probability that the card is neither a heart nor a king?*
 12. **Toʻldiruvchi qoidasi bilan: birdan ellik ikkidan oʻn oltini ayiramiz, yaʼni ellik ikkidan oʻttiz olti.**
     *The complement rule: one minus sixteen out of fifty-two, which is thirty-six out of fifty-two.*
-13. **Keyingi videoda toʻldiruvchi qoidasi deyarli hammani aldaydigan savolga javob beradi.**
-    *In the next video, the complement rule answers a question that fools almost everyone.*
+13. **Keyingi boʻlimda toʻldiruvchi qoidasi deyarli hammani aldaydigan savolga javob beradi.**
+    *In the next section, the complement rule answers a question that fools almost everyone.*
 
-### Video 12 — Tugʻilgan kun masalasi · The birthday problem
-1. **Assalomu alaykum, aziz doʻstlar. Xonada nechta odam boʻlsa, ikkitasining tugʻilgan kuni bir xil boʻlish ehtimoli yarimdan oshadi? Koʻpchilik yuz saksonta atrofida deb oʻylaydi.**
-   *Hello, dear friends. How many people must be in a room before the chance that two share a birthday passes one half? Most people guess around one hundred and eighty.*
+### 12-boʻlim · Section 12 — Tugʻilgan kun masalasi · The birthday problem
+1. **Xonada nechta odam boʻlsa, ikkitasining tugʻilgan kuni bir xil boʻlish ehtimoli yarimdan oshadi? Koʻpchilik yuz saksonta atrofida deb oʻylaydi.**
+   *How many people must be in a room before the chance that two share a birthday passes one half? Most people guess around one hundred and eighty.*
 2. **Keling, toʻgʻridan-toʻgʻri sanab koʻraylik: kimdir kim bilandir bir kunda tugʻilgan hamma holatlarni. Juftlar, uchliklar, bir nechta juftlar — sanash tezda chalkashib ketadi.**
    *Let's try to count it directly: every case where someone shares a birthday with someone. Pairs, triples, several pairs at once; the counting gets messy fast.*
 3. **Shuning uchun teskarisini hisoblaymiz: hammaning tugʻilgan kuni har xil boʻlsin. Keyin buni birdan ayiramiz.**
@@ -385,12 +394,12 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     *Let's try it ourselves. Pause the video. In a class of thirty, what is the chance? Let's read it off the curve.*
 11. **Taxminan yetmish bir foiz. Demak, oʻttiz kishilik guruhlarning koʻpchiligida tugʻilgan kuni bir xil boʻlgan juftlik bor.**
     *About seventy-one percent. Most classes of thirty have a shared birthday.*
-12. **Bu hisobda biz odamlarning tugʻilgan kunlari bir-biriga bogʻliq emas deb oldik. «Bogʻliq emas» degani aslida nima? Bu keyingi videoda.**
-    *In that calculation we assumed people's birthdays have nothing to do with each other. What does that really mean? That is the next video.*
+12. **Bu hisobda biz odamlarning tugʻilgan kunlari bir-biriga bogʻliq emas deb oldik. «Bogʻliq emas» degani aslida nima? Buni keyingi boʻlimda koʻramiz.**
+    *In that calculation we assumed people's birthdays have nothing to do with each other. What does that really mean? That is the next section.*
 
-### Video 13 — Istisno qiluvchi va erkli hodisalar · Mutually exclusive vs. independent
-1. **Assalomu alaykum, aziz doʻstlar. Ikkita tushuncha koʻpincha adashtiriladi: bir-birini istisno qiluvchi hodisalar va erkli hodisalar. Keling, farqini kubik misolida koʻraylik.**
-   *Hello, dear friends. Two ideas get mixed up all the time: mutually exclusive and independent. Let's see the difference on a die.*
+### 13-boʻlim · Section 13 — Istisno qiluvchi va erkli hodisalar · Mutually exclusive vs. independent
+1. **Ikkita tushuncha koʻpincha adashtiriladi: bir-birini istisno qiluvchi hodisalar va erkli hodisalar. Keling, farqini kubik misolida koʻraylik.**
+   *Two ideas get mixed up all the time: mutually exclusive and independent. Let's see the difference on a die.*
 2. **Ikki hodisa hech qachon birga sodir boʻlmasa, ular bir-birini istisno qiladi. Kesishmasi boʻsh, birga sodir boʻlish ehtimoli nol.**
    *Two events are mutually exclusive if they can never happen together: their overlap is empty, and the probability of both is zero.*
 3. **Ikki hodisaning birga sodir boʻlish ehtimoli ularning ehtimollari koʻpaytmasiga teng boʻlsa, ular erkli deyiladi. Yaʼni birini bilish ikkinchisi haqida hech narsa aytmaydi.**
@@ -414,12 +423,12 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     *Let's try it ourselves. Pause the video. Are the events "even" and "less than three" independent?*
 12. **Kesishmasi faqat ikki, ehtimoli oltidan bir. Ikkidan birni uchdan birga koʻpaytirsak ham oltidan bir. Demak, erkli.**
     *Their overlap is only two: one sixth. One half times one third is also one sixth. So they are independent.*
-13. **Hozirgacha biz toʻgʻri kubikda sanadik. Lekin hayotda hamma natijalar teng ehtimolli boʻlishi kamdan-kam uchraydi. Bu keyingi videoda.**
-    *So far we have counted on a fair die. But in the real world, equally likely outcomes are rare. That is the next video.*
+13. **Hozirgacha biz toʻgʻri kubikda sanadik. Lekin hayotda hamma natijalar teng ehtimolli boʻlishi kamdan-kam uchraydi. Buni keyingi boʻlimda koʻramiz.**
+    *So far we have counted on a fair die. But in the real world, equally likely outcomes are rare. That is the next section.*
 
-### Video 14 — Klassik va empirik ehtimollik · Classical vs. empirical probability
-1. **Assalomu alaykum, aziz doʻstlar. Ob-havo maʼlumotida eshitamiz: ertaga yomgʻir yogʻish ehtimoli yetmish foiz. Bu son qayerdan olinadi?**
-   *Hello, dear friends. The weather forecast says: seventy percent chance of rain tomorrow. Where does that number come from?*
+### 14-boʻlim · Section 14 — Klassik va empirik ehtimollik · Classical vs. empirical probability
+1. **Ob-havo maʼlumotida eshitamiz: ertaga yomgʻir yogʻish ehtimoli yetmish foiz. Bu son qayerdan olinadi?**
+   *The weather forecast says: seventy percent chance of rain tomorrow. Where does that number come from?*
 2. **Kubikda biz klassik ehtimollikdan foydalandik. Hamma natijalar teng ehtimolli boʻlsa, hodisadagi natijalar sonini jami natijalar soniga boʻlamiz.**
    *On the die, we used classical probability: when all outcomes are equally likely, we divide the outcomes in the event by the total number of outcomes.*
 3. **Ob-havoda esa teng ehtimolli natijalar yoʻq, sanaydigan fazomiz ham yoʻq.**
@@ -431,7 +440,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *The formula is simple: the number of times the event was observed, divided by the total number of observations.*
 6. **Masalan, olti yuzta xodimimizdan uch yuz oʻn bittasi qirq mingdan oltmish minggacha oladi. Demak, tasodifiy tanlangan xodimning shu oraliqda boʻlish ehtimoli taxminan ellik ikki foiz.**
    *For example, of our six hundred employees, three hundred and eleven earn between forty and sixty thousand. The empirical probability that a random employee lands there is about fifty-two percent.*
-   ▸ the histogram from video 3; the 40–60k bar lifts out: 311 / 600
+   ▸ the histogram from section 3; the 40–60k bar lifts out: 311 / 600
 7. **Sunʼiy intellekt deyarli doim empirik ehtimollikka tayanadi: oʻqitish toʻplamidagi sinflar ulushi, matnlardagi soʻzlar chastotasi, reklamani bosishlar ulushi va hokazo.**
    *AI almost always relies on empirical probability: class shares in a training set, word frequencies in a corpus, click-through rates in logs.*
 8. ⏸ **Keling, oʻylab koʻraylik. Videoni toʻxtating. Spam filtrni toʻqson foizi spam boʻlgan berilganlarda oʻqitdik. Shu berilganlardan olingan spam ehtimoli haqiqiy pochtaga toʻgʻri keladimi?**
