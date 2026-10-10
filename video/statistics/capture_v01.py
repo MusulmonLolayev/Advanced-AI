@@ -33,6 +33,17 @@ assert round(np.median(drinkers)) == 47323, f"drinkers median drifted: {np.media
 assert round(after.mean()) == 2_941_226_105, f"after mean drifted: {after.mean()}"
 assert round(np.median(after)) == 47761, f"after median drifted: {np.median(after)}"
 
+# What the bar animations show: excess above the mean exactly fills the shortfall
+# below it, and the median (unlike the mean) does not give back the payroll.
+excess = float(np.clip(salary - mean, 0, None).sum())
+shortfall = float(np.clip(mean - salary, 0, None).sum())
+assert abs(excess - shortfall) < 1e-3, (excess, shortfall)
+median_total = median * n_emp
+s_drink = np.sort(drinkers)
+mid_before = (float(s_drink[N_DRINKERS // 2 - 1]), float(s_drink[N_DRINKERS // 2]))
+assert np.isclose(np.mean(mid_before), np.median(drinkers))
+assert np.isclose(np.sort(after)[N_DRINKERS // 2], np.median(after))
+
 nine = [31, 38, 42, 45, 47, 49, 52, 61, 88]
 below = sum(1 for x in nine if x < sum(nine) / len(nine))
 
@@ -46,6 +57,9 @@ lines = [
     f"drinkers median           ${np.median(drinkers):,.0f}",
     f"after mean                ${after.mean():,.0f}",
     f"after median              ${np.median(after):,.0f}",
+    f"excess above mean         ${excess:,.0f}  (= shortfall below ${shortfall:,.0f})",
+    f"median * n                ${median_total:,.0f}  (short by ${mean * n_emp - median_total:,.0f})",
+    f"drinkers middle two       ${mid_before[0]:,.2f}, ${mid_before[1]:,.2f}  (25th, 26th of 50)",
     f"hands-on nine (k$)        {nine}",
     f"hands-on sum / mean       {sum(nine)} / {sum(nine)/len(nine):.3f}",
     f"hands-on below the mean   {below} of {len(nine)}",
@@ -64,6 +78,10 @@ values = {
     "after_mean": float(after.mean()),
     "after_median": float(np.median(after)),
     "billionaire": float(BILLIONAIRE),
+    "excess": excess,
+    "median_total": float(median_total),
+    "median_short": float(mean * n_emp - median_total),
+    "mid_before": list(mid_before),
     "nine": [int(x) for x in nine],
     "nine_sum": int(sum(nine)),
     "nine_mean": float(sum(nine) / len(nine)),

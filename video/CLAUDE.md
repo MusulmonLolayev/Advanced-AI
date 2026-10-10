@@ -20,6 +20,15 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 - **SoX is missing and that is fine** — `manim-voiceover` only needs it to time-stretch audio, which we never do. The warning is noise.
 - **`render.sh` must filter stderr when reading `SCENES`**, or the SoX warning lands in the scene list.
 - **The ffmpeg concat list needs absolute paths**, since ffmpeg resolves entries relative to the list file.
+- **`render.sh` must take each scene from the folder of the quality it just rendered** (`480p15/`, `1080p60/`...).
+  A bare `find -name S.mp4` picked a three-day-old 1080p scene over the fresh 480p one, and the concat silently
+  shipped the old video. It also checks the file is newer than the render's start.
+- **Text-only scenes are not a video.** Every scene draws the real data: the 600 salaries as a dot histogram, then as
+  sorted bars that level to the mean; the mean as a rectangle whose area is the payroll; the 50 drinkers as a sorted
+  row whose middle shifts by half a person. Words on screen are labels, not the content.
+- **One video, every language.** Narration and screen words live in the video's `T` table keyed by `LANG_CODE`;
+  `common.at()` / `CourseScene.until()` time visuals to sentence starts by character share, since neither voice
+  reports word timings.
 - **Nothing persistent may touch the frame edge.** `check_edges.py` flags bright pixels within 4 px of any border, so the brand mark is inset by `common.SAFE`. A full-width footer strip would flag every frame — branding lives in the opening bumper, the closing card, and that one inset mark.
 
 ## Rules carried over from the decks

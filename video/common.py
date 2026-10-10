@@ -30,6 +30,17 @@ NAVOIY_URL = os.environ.get("NAVOIY_URL", "http://127.0.0.1:8765/tts")
 NAVOIY_VOICE_ID = "musulmon-ft-llm1-flow12-phone"
 PAUSE_AFTER_VOICEOVER = 0.3
 
+# Fixed card wording, per language. Video text lives in each video's own table.
+UI = {
+    "pause": {"en": "⏸  Pause the video", "uz": "⏸  Videoni toʻxtating"},
+    "next": {"en": "Next", "uz": "Keyingi"},
+    "video": {"en": "Video {n} — {t}", "uz": "{n}-video — {t}"},
+}
+
+
+def ui(key, **kw):
+    return UI[key][LANG].format(**kw)
+
 REPO = Path(__file__).resolve().parents[1]
 FIGURES = REPO / "statistics" / "figures"
 
@@ -101,6 +112,16 @@ class NavoiyService(SpeechService):
         return {"input_text": text, "input_data": input_data, "original_audio": audio_path}
 
 
+def at(tracker, text, k):
+    """Seconds into a clip where sentence k (0-based) starts, by character share.
+    Neither voice reports word timings, so this keeps visuals on the sentence they
+    illustrate in every language."""
+    import re
+    parts = [x for x in re.split(r"(?<=[.?!:])\s+", text.strip()) if x]
+    before = sum(len(x) + 1 for x in parts[:k])
+    return tracker.duration * before / max(len(text), 1)
+
+
 class CourseScene(VoiceoverScene):
     def setup(self):
         super().setup()
@@ -111,6 +132,15 @@ class CourseScene(VoiceoverScene):
         super().wait_for_voiceover()
         if had:
             self.wait(PAUSE_AFTER_VOICEOVER)
+
+    def until(self, tracker, text, k):
+        """Wait until sentence k of the current clip has started."""
+        target = at(tracker, text, k) - self.voice_t(tracker)
+        if target > 0.05:
+            self.wait(target)
+
+    def voice_t(self, tracker):
+        return self.renderer.time - tracker.start_t
 
     def clear_all(self, run_time=0.8):
         if self.mobjects:
@@ -169,7 +199,7 @@ def title_card(line1, line2=None, color=RLBLUE):
 
 
 def pause_card(steps, note=None):
-    head = txt("⏸  Pause the video", size=40, weight=BOLD, color=HILITE)
+    head = txt(ui("pause"), size=40, weight=BOLD, color=HILITE)
     items = VGroup(*[txt(f"{i}. {s}", size=28) for i, s in enumerate(steps, 1)])
     items.arrange(DOWN, aligned_edge=LEFT, buff=0.3)
     g = VGroup(head, items).arrange(DOWN, buff=0.55)
@@ -177,8 +207,8 @@ def pause_card(steps, note=None):
 
 
 def next_card(number, title):
-    head = txt("Next", size=30, color=GREY_B)
-    body = txt(f"Video {number} — {title}", size=40, weight=BOLD, color=RLBLUE)
+    head = txt(ui("next"), size=30, color=GREY_B)
+    body = txt(ui("video", n=number, t=title), size=40, weight=BOLD, color=RLBLUE)
     return VGroup(head, body).arrange(DOWN, buff=0.35)
 
 

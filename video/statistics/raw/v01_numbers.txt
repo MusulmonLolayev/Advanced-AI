@@ -7,6 +7,9 @@ drinkers mean             $50,627
 drinkers median           $47,323
 after mean                $2,941,226,105
 after median              $47,761
+excess above mean         $3,729,139  (= shortfall below $3,729,139)
+median * n                $28,618,089  (short by $2,349,941)
+drinkers middle two       $46,884.66, $47,760.85  (25th, 26th of 50)
 hands-on nine (k$)        [31, 38, 42, 45, 47, 49, 52, 61, 88]
 hands-on sum / mean       453 / 50.333
 hands-on below the mean   6 of 9
