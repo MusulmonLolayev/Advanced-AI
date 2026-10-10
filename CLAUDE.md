@@ -66,3 +66,28 @@ When adding a new assignment, follow the newest existing one (`assignment7_fores
 - Keep math notation consistent between a lecture and its corresponding assignment package (variable names in `advanced_ai/*.py` should match the symbols used in the matching `lecture0N_*.tex`).
 - Lecture pacing pattern: short derivation → numerical example → graphic.
 - `course-map.md` calls out cross-module forward/back references explicitly (e.g. Module 1 L14 forward-references Module 5's RLHF math) — check it when a lecture assumes prerequisite material from another module, since modules are authored out of strict numeric order.
+
+## Uzbek translation rules
+
+Uzbek text in this repo (video narration, on-screen labels, any Uzbek slide text) is spoken or read in the instructor's
+own voice, so it must sound like them, not like a translation. Apply these whenever translating or writing Uzbek:
+
+- **Terminology (instructor's choice, not negotiable):**
+  - data → **berilganlar** (from Latin *datum*, "given"); dataset → **berilganlar toʻplami**. Never "maʼlumot(lar)" for
+    data — **maʼlumot means *information*** and is used only in that sense (e.g. "ob-havo maʼlumoti").
+  - descriptive → **tavsiflovchi** (e.g. "tavsiflovchi statistika"), not "tavsifiy".
+  - population / sample → **bosh toʻplam / tanlanma**; spread → **tarqoqlik**; mean → **oʻrtacha qiymat**.
+  Add new term decisions here as the instructor makes them.
+- **Never translate word-for-word from English.** Write the sentence the way it would be said aloud in Uzbek: short
+  active clauses, first-person-plural verbs, verb last. Example: "Toshkent qoʻshuv Samarqand, boʻlinsin ikki" (calque)
+  → "Toshkent qoʻshuv Samarqand, va boʻlamiz ikkiga". Prefer "maʼnosi yoʻq" over "maʼnoga ega emas".
+- **"We", not "you".** *Keling, …-aylik*, *tasavvur qilamiz*, *hisoblaymiz*, *misolimizda*. Videos open with
+  "Assalomu alaykum, aziz doʻstlar"; transitions use "Xoʻp, endi", "Mana bu yerda", "Demak", "yaʼni"; a part ends with
+  "Mana shu bilan … tugatamiz". Only the pause card ("Videoni toʻxtating") addresses the viewer directly. These come
+  from the instructor's transcribed lectures.
+- **Orthography:** oʻ/gʻ use U+02BB (ʻ), the tutuq belgisi uses U+02BC (ʼ). No Cyrillic or Turkish letters
+  (scan: `grep -nP '[\x{0400}-\x{04FF}\x{0131}]'`).
+- **Numbers are spelled out for the ear** ("ellik bir ming olti yuz oʻn uch dollar", "nol butun oʻndan besh") and
+  must come from a captured script output, never retyped.
+- **The instructor approves every Uzbek line before it is voiced or built.** Show the draft (Uzbek with the English
+  alongside), apply their corrections, and record any new term or phrasing rule in this section.

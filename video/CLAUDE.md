@@ -32,6 +32,7 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 - **Nothing persistent may touch the frame edge.** `check_edges.py` flags bright pixels within 4 px of any border, so the brand mark is inset by `common.SAFE`. A full-width footer strip would flag every frame — branding lives in the opening bumper, the closing card, and that one inset mark.
 
 ## Rules carried over from the decks
+Uzbek narration follows **Uzbek translation rules** in the repo-root `CLAUDE.md` (berilganlar, tavsiflovchi, native "we" phrasing, approval before voicing).
 Numbers on screen come from a saved raw output, never retyped. Narration spells numbers for the ear while the screen shows digits. One concept per video; problem first, concept as the answer; each video ends with the problem the next one solves.
 
 ## Instructor voice (Navoiy, fine-tuned)
