@@ -70,12 +70,13 @@ class S10Curve(LectureScene):
 
         # three base rates, read off the curve
         marks = VGroup()
-        offs = {"0.001": RIGHT * 2.4 + UP * 0.45, "0.01": RIGHT * 1.5 + UP * 0.9, "0.1": RIGHT * 1.0 + DOWN * 0.9}
+        offs = {"0.001": RIGHT * 2.4 + UP * 0.45, "0.01": RIGHT * 2.2 + UP * 0.75, "0.1": RIGHT * 1.0 + DOWN * 0.9}
         for k, v in MARKS.items():
             p = ax.c2p(100 * float(k), 100 * v)
             d = Dot(p, radius=0.09, color=HILITE)
             lab = VGroup(txt(w(f"1 in {round(1 / float(k))}", f"{round(1 / float(k))} kishidan 1"), size=22, color=GREY_B),
                          txt(pct(v), size=30, weight=BOLD, color=HILITE)).arrange(DOWN, buff=0.08).move_to(p + offs[k])
+            lab.add_background_rectangle(color=BLACK, opacity=0.9, buff=0.06)   # the curve must not cross the text
             marks.add(VGroup(d, lab, Line(d.get_center(), lab.get_center(), color=GREY_D, stroke_width=1.5)
                              .scale(0.55)))
         with self.say("10.3") as (tr, t):

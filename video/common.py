@@ -102,15 +102,38 @@ class NavoiyService(SpeechService):
             return cached
         audio_path = str(path) if path else self.get_audio_basename(input_data) + ".mp3"
         target = str(Path(cache_dir) / audio_path)
-        min_seconds = len(input_text.split()) / 4.5
-        req = urllib.request.Request(NAVOIY_URL, data=json.dumps({"text": input_text, "out": str(Path(target).resolve())}).encode(),
-                                     headers={"Content-Type": "application/json"})
-        resp = json.loads(urllib.request.urlopen(req, timeout=300).read())
-        if not resp.get("ok"):
-            raise RuntimeError(f"navoiy server failed: {resp.get('error')}")
-        trim_silence(target)
-        if MP3(target).info.length < min_seconds:
-            raise RuntimeError(f"navoiy returned truncated audio for: {input_text[:60]!r}")
+
+        def synth(t, out):
+            req = urllib.request.Request(NAVOIY_URL, data=json.dumps({"text": t, "out": str(Path(out).resolve())}).encode(),
+                                         headers={"Content-Type": "application/json"})
+            resp = json.loads(urllib.request.urlopen(req, timeout=300).read())
+            if not resp.get("ok"):
+                raise RuntimeError(f"navoiy server failed: {resp.get('error')}")
+            trim_silence(out)
+            return MP3(out).info.length >= len(t.split()) / 4.5
+
+        if not synth(input_text, target):
+            # The model sometimes stops early on a long run of repeated words (a line of spelled
+            # decimals), and its fixed seed repeats the same cut on every retry. Voice the line one
+            # sentence at a time instead, and join the pieces with a short breath.
+            import re
+            parts = [p for p in re.split(r"(?<=[.?!:])\s+", input_text.strip()) if p]
+            pieces = []
+            for k, p in enumerate(parts):
+                out = str(Path(target).with_suffix(f".part{k}.mp3"))
+                if not synth(p, out):
+                    raise RuntimeError(f"navoiy returned truncated audio for: {p[:60]!r}")
+                pieces.append(out)
+            listing = Path(target).with_suffix(".parts.txt")
+            gap = Path(target).with_suffix(".gap.mp3")
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
+                            "-t", "0.2", "-b:a", "128k", str(gap)], check=True)
+            listing.write_text("".join(f"file '{Path(x).resolve()}'\nfile '{gap.resolve()}'\n" for x in pieces[:-1])
+                               + f"file '{Path(pieces[-1]).resolve()}'\n")
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(listing),
+                            "-ar", "24000", "-ac", "1", "-b:a", "128k", str(target)], check=True)
+            for x in (*pieces, listing, gap):
+                Path(x).unlink()
         return {"input_text": text, "input_data": input_data, "original_audio": audio_path}
 
 

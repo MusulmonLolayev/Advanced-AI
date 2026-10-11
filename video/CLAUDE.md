@@ -57,6 +57,10 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 - **The cloned voice pads its clips** with up to ~1.2 s of quiet at each end (edge-tts barely does). `NavoiyService`
   trims both ends to 0.12 s (`common.trim_silence`); without it every section boundary in the Uzbek lecture was a
   2.4-3.4 s gap.
+- **The cloned voice can stop early on a long run of repeated words** (Lecture 2's line of spelled decimals), and
+  its fixed seed repeats the same cut on every retry. `NavoiyService` then voices that line sentence by sentence and
+  joins the pieces with a 0.2 s breath; lines that voice whole are untouched.
+- **Labels next to a curve get a black backing** (`add_background_rectangle`), or the curve runs through the text.
 - **`Indicate` grows a mobject by 20 %**, which pushed a full-width bell curve onto the frame edge; use
   `scale_factor=1.04` on anything near full width.
 - **Nothing persistent may touch the frame edge.** `check_edges.py` flags bright pixels within 4 px of any border, so the brand mark is inset by `common.SAFE`. A full-width footer strip would flag every frame — branding lives in the opening bumper, the closing card, and that one inset mark.
