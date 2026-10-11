@@ -175,8 +175,8 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 4. **Bu qanday boʻlishi mumkin? Erkaklarning yarmidan koʻpi ey va bi fakultetlariga hujjat topshirgan. Bu fakultetlar topshirganlarning taxminan oltmish toʻrt va oltmish uch foizini qabul qilgan.**
    *How can that be? Over half the men applied to A and B, which admitted about sixty-four and sixty-three percent of everyone who applied.*
    ▸ bar widths become the number of applicants
-5. **Ayollarning esa deyarli toʻrtdan uch qismi eng qiyin uchta fakultetga topshirgan. Ular oʻttiz besh, yigirma besh va olti foizni qabul qilgan.**
-   *Nearly three quarters of the women applied to the three hardest departments, which admitted thirty-five, twenty-five and six percent.*
+5. **Ayollarning esa deyarli toʻrtdan uch qismi qabul ancha qiyin boʻlgan uchta fakultetga topshirgan. Ular oʻttiz besh, yigirma besh va olti foizni qabul qilgan.**
+   *Nearly three quarters of the women applied to three much harder departments, which admitted thirty-five, twenty-five and six percent.*
 6. **Hech kimning qabul ehtimoli oʻzgarmadi. Faqat erkaklar va ayollar oson va qiyin fakultetlarga teng taqsimlanmagan edi. Bu Simpson paradoksi deb ataladi.**
    *Nobody's chance of admission changed. Men and women simply were not spread evenly across easy and hard departments. This is called Simpson's paradox.*
 7. **Ikkala gap ham bir xil berilganlar haqida toʻgʻri. Ular shunchaki ikki xil savolga javob beradi: umuman qabul ehtimoli va bitta fakultet ichidagi qabul ehtimoli.**

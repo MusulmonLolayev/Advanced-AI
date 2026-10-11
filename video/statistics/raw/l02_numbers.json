@@ -3,6 +3,10 @@
   1,
   6
  ],
+ "die_p_even": [
+  1,
+  2
+ ],
  "die_p6_given_even": [
   1,
   3
@@ -28,28 +32,47 @@
   "nobike_bus": 0.3,
   "nobike_nobus": 0.1
  },
+ "tree_counts": {
+  "bike_bus": 15,
+  "bike_nobus": 45,
+  "nobike_bus": 30,
+  "nobike_nobus": 10
+ },
+ "tree_sum": 1.0,
+ "tree_reversed": {
+  "bus": 0.45,
+  "nobus": 0.55
+ },
  "socks": {
   "black": 6,
   "white": 4,
   "total": 10,
+  "p_first_black": [
+   3,
+   5
+  ],
+  "p_second_black_given": [
+   5,
+   9
+  ],
+  "both_black_unreduced": [
+   30,
+   90
+  ],
   "both_black": [
    1,
    3
   ],
-  "both_black_90": [
-   30,
-   90
-  ],
-  "both_white_90": [
+  "with_replacement": 0.36,
+  "both_white_unreduced": [
    12,
    90
   ],
-  "with_replacement": 0.36,
-  "pair_90": [
+  "pair_unreduced": [
    42,
    90
   ],
-  "pair": 0.4667
+  "pair": 0.4666666666666667
  },
  "joint_bike_bus": 0.15,
  "p_bike_given_bus": [
@@ -119,6 +142,32 @@
   ],
   "men_share_AB": 0.5146785581568191,
   "women_share_CEF": 0.7231607629427793,
+  "pct": {
+   "A": [
+    62,
+    82
+   ],
+   "B": [
+    63,
+    68
+   ],
+   "C": [
+    37,
+    34
+   ],
+   "D": [
+    33,
+    35
+   ],
+   "E": [
+    28,
+    24
+   ],
+   "F": [
+    6,
+    7
+   ]
+  },
   "all_pct": {
    "A": 64,
    "B": 63,
@@ -128,7 +177,16 @@
    "F": 6
   }
  },
+ "plain_average": 0.5,
+ "total_terms": [
+  0.15,
+  0.30000000000000004
+ ],
  "total_bus": 0.45000000000000007,
+ "total_nobus_terms": [
+  0.44999999999999996,
+  0.1
+ ],
  "total_nobus": 0.5499999999999999,
  "bayes_bike_given_bus": [
   1,
@@ -146,6 +204,8 @@
   "positives": 595,
   "ppv": 0.16806722689075632
  },
+ "false_per_real": 4.95,
+ "healthy_per_ill": 99.0,
  "screen_1in10": {
   "tested": 10000,
   "ill": 1000,
@@ -154,7 +214,6 @@
   "positives": 1450,
   "ppv": 0.6896551724137931
  },
- "false_per_real": 4.95,
  "screen_1in1000": {
   "tested": 100000,
   "ill": 100,
@@ -163,8 +222,15 @@
   "positives": 5095,
   "ppv": 0.019627085377821395
  },
- "acc_always_healthy_1in100": 0.99,
- "acc_always_healthy_1in1000": 0.999,
+ "base_marks": {
+  "0.001": 0.019627085377821395,
+  "0.01": 0.1680672268907563,
+  "0.1": 0.689655172413793
+ },
+ "acc_always_healthy": {
+  "0.01": 0.99,
+  "0.001": 0.999
+ },
  "base_curve": [
   [
    0.001,

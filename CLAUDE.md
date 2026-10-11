@@ -61,6 +61,13 @@ Setup uses conda: `environment-data.yml` (per assignment) defines env `ai_course
 
 When adding a new assignment, follow the newest existing one (`assignment7_forest_variants`) as the template rather than an older one — the self-check and data-prep conventions have evolved (e.g. assignment5 has no `scripts/` data-prep tooling or `forest/`-style subpackages; assignment7 does).
 
+## Every calculation has a unit test
+
+Any number that reaches a slide, a figure or a video is computed by a script **and** asserted by a unit test
+(instructor's rule): a `test_*` function that recomputes it from the raw inputs and checks the value the material
+shows. A hand-typed number with no test behind it is a defect, even if it happens to be right — the Berkeley slide
+said 7 % where the counts give 6 %.
+
 ## Notation and pacing conventions
 
 - Keep math notation consistent between a lecture and its corresponding assignment package (variable names in `advanced_ai/*.py` should match the symbols used in the matching `lecture0N_*.tex`).
@@ -81,6 +88,13 @@ own voice, so it must sound like them, not like a translation. Apply these whene
   - population / sample → **bosh toʻplam / tanlanma**; spread → **tarqoqlik**; mean → **oʻrtacha qiymat**.
   - mode → **mod** (kept as the international term, not "moda").
   - label (a training example's target, as in labelled data) → **belgilanganlar**; data stays **berilganlar**.
+  - Lecture 2 terms (approved): conditional probability → **shartli ehtimollik**; tree diagram → **daraxt
+    diagrammasi**; without replacement → **qaytarmasdan**; contingency table → **kontingentlik jadvali**; joint /
+    marginal → **birgalikdagi / marginal ehtimollik**; numerator / denominator → **surat / maxraj**; law of total
+    probability → **toʻla ehtimollik formulasi**; prior / likelihood / posterior → **aprior ehtimollik /
+    haqiqatga oʻxshashlik / aposterior ehtimollik**; evidence → **dalil**; prosecutor's fallacy → **prokuror
+    xatosi**; false alarm → **yolgʻon signal**; base rate → **asosiy ulush**; accuracy → **aniqlik**; a university
+    department → **fakultet** ("boʻlim" is taken by video sections); Bayesian inference → **Bayes xulosasi**.
 - **Latin letters are spoken by their English names**, written in Uzbek spelling in the narration so the voice reads
   them right: x → eks, f → ef, n → en, s → es, i → ay, y → uay, A → ey, B → bi, C → si, Q → kyu, IQR → ay kyu ar
   (capitalized at a sentence start: "Eks ikki — …"). Greek letters keep their names (sigma, mu, omega). The screen

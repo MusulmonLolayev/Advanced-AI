@@ -10,6 +10,11 @@ Narrated Manim videos built from the same material as the slide decks.
   `narration/lectureNN.md` and must be approved before building.
 - Scenes: one `Scene` class per beat, `SCENES = [...]` giving order; `render.sh` concatenates them into the one lecture video.
 - `statistics/raw/` — real stdout captured from the figure scripts. Every number on screen must trace to a file here.
+- `statistics/capture_lNN.py` computes a lecture's numbers (`compute()` is pure) and writes `raw/lNN_numbers.json`;
+  `statistics/test_lNN.py` unit-tests every one of them against the slides and the narration (`unittest`, no
+  pytest): `uv run python -m unittest discover -s statistics -p 'test_l02.py'`. Run by discovery, not by dotted
+  path — the folder name `statistics` shadows the standard library module. The test caught a narration claim the
+  numbers did not support ("the three hardest departments"), so run it after every narration edit.
 - `statistics/screens/figures/` — figures rasterised from the committed PDFs, cached so a video re-renders later.
 - `render.sh <module> [l|m|h|k]`, `check_edges.py <mp4>`. `JOBS=N` renders scenes in parallel (keep N <= 4 with
   the Navoiy voice, whose server answers one request at a time); `ONLY="S03Histogram ..."` renders just those scenes.
@@ -53,6 +58,8 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 ## Rules carried over from the decks
 Uzbek narration follows **Uzbek translation rules** in the repo-root `CLAUDE.md` (berilganlar, tavsiflovchi, native "we" phrasing, approval before voicing).
 Numbers on screen come from a saved raw output, never retyped. Narration spells numbers for the ear while the screen shows digits. One concept per section; problem first, concept as the answer; each section ends with the question the next one answers.
+A pause task may reuse a number the section already showed, the way a teacher repeats a point in class; it does not
+have to be new.
 
 ## Instructor voice (Navoiy, fine-tuned)
 `VOICE_ENGINE=navoiy LANG_CODE=uz JOBS=4 ./render.sh lecture01 h` narrates in the instructor's own voice.
