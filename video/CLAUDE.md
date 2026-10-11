@@ -18,9 +18,15 @@ Narrated Manim videos built from the same material as the slide decks.
 - `statistics/screens/figures/` — figures rasterised from the committed PDFs, cached so a video re-renders later.
 - `render.sh <module> [l|m|h|k]`, `check_edges.py <mp4>`. `JOBS=N` renders scenes in parallel (keep N <= 4 with
   the Navoiy voice, whose server answers one request at a time); `ONLY="S03Histogram ..."` renders just those scenes.
-- Lecture 1: `lecture01.py` collects the scenes of `lecture01_s00.py` ... `lecture01_s14.py` (one file per section;
-  `lecture01.py` re-tags their `__module__`, since manim only renders classes whose module name starts with the absolute-path name it gives the file it was handed). `lecture01_kit.py` parses the approved
-  `narration/lecture01.md`, so the voice reads the approved words verbatim: never copy narration into Python.
+- Lecture N: `lectureNN.py` collects the scenes of `lectureNN_s00.py` … (one file per section; it re-tags their
+  `__module__`, since manim only renders classes whose module name starts with the absolute-path name it gives the
+  file it was handed). `lecture_kit.py` holds what every lecture shares — the narration parser, `LectureScene`
+  (say/cue/section_card/hands_on/clear_all), card/frac/die_face/bars_row — and `lectureNN_kit.py` binds it to that
+  lecture's approved `narration/lectureNN.md`, numbers and part layout with `bind()`, so the voice reads the approved
+  words verbatim: never copy narration into Python. `lecture02_kit.py` adds the 100-student grid, the tree and the
+  contingency table used across Lecture 2's sections.
+- A section file renders on its own while it is being written:
+  `LANG_CODE=uz uv run --frozen manim -ql --media_dir out/l02dev_uz/media lecture02_s04.py S04Table`.
 
 ## Environment
 `uv` project (Python 3.12). System deps: `ffmpeg`, `libcairo2-dev`, `libpango1.0-dev`, `pkg-config`.
