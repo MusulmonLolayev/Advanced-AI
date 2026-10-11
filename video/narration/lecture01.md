@@ -73,24 +73,24 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 4. **Keling, kichikroq misol olaylik. Beshta maosh, ming dollarda: oʻttiz bir, qirq besh, qirq yetti, ellik ikki va sakson sakkiz.**
    *Let's take a smaller example: five salaries, in thousands of dollars. Thirty-one, forty-five, forty-seven, fifty-two, and eighty-eight.*
    ▸ five cards
-5. **Har birini nomlab olish uchun raqam beramiz: x bir, x ikki, va shunday qilib x beshgacha. Nechta kuzatuv borligini n bilan belgilaymiz. Mana bu yerda n beshga teng.**
+5. **Har birini nomlab olish uchun raqam beramiz: eks bir, eks ikki, va shunday qilib eks beshgacha. Nechta kuzatuv borligini en bilan belgilaymiz. Mana bu yerda en beshga teng.**
    *To name them, we number each one: x one, x two, and so on up to x five. We write the sample size as n; here n is five.*
    ▸ x₁ … x₅ appear under the cards, then "n = 5"
-6. **Demak, x uch — bu uchinchi kuzatuv, yaʼni qirq yetti. x besh esa sakson sakkiz.**
+6. **Demak, eks uch — bu uchinchi kuzatuv, yaʼni qirq yetti. Eks besh esa sakson sakkiz.**
    *So x three is the third observation, forty-seven. And x five is eighty-eight.*
-7. **Hammasini qoʻshish kerak boʻlsa, uzun qilib yozib oʻtirmaymiz. Sigma belgisi bilan yozamiz: i birdan n gacha, x i larni qoʻshamiz.**
+7. **Hammasini qoʻshish kerak boʻlsa, uzun qilib yozib oʻtirmaymiz. Sigma belgisi bilan yozamiz: ay birdan en gacha, eks ay larni qoʻshamiz.**
    *When we need to add them all up, we do not write it out longhand. We use the sigma sign: the sum of x i, for i from one to n.*
    ▸ x₁ + x₂ + x₃ + x₄ + x₅ folds into Σ xᵢ
 8. **Mana bu yerda yigʻindi ikki yuz oltmish uchga teng.**
    *Here that comes to two hundred and sixty-three.*
-9. **Yana bitta kelishuv bor. Tanlanmadan hisoblagan sonlarimizni lotin harflari bilan yozamiz: x chiziqcha va s. Koʻrolmaydigan bosh toʻplamni esa grek harflari bilan yozamiz: myu va sigma.**
+9. **Yana bitta kelishuv bor. Tanlanmadan hisoblagan sonlarimizni lotin harflari bilan yozamiz: eks chiziqcha va es. Koʻrolmaydigan bosh toʻplamni esa grek harflari bilan yozamiz: myu va sigma.**
    *One more convention. Numbers computed from the sample get Latin letters: x bar and s. The population we cannot see gets Greek letters: mu and sigma.*
    ▸ two columns under the cloud and the sample: x̄, s │ μ, σ
 10. **Sunʼiy intellektda oʻqitish toʻplami — bu tanlanma. Model esa butun dunyoda, yaʼni bosh toʻplamda ishlashi kerak. Kursimiz davomida bu farqni koʻp marta uchratamiz.**
     *In AI, the training set is a sample. The model has to work on the whole world: the population. That gap comes back again and again in this course.*
-11. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Beshta maoshimizda x ikki nechaga teng? x bir qoʻshuv x besh-chi?**
+11. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Beshta maoshimizda eks ikki nechaga teng? Eks bir qoʻshuv eks besh-chi?**
     *Let's try it ourselves. Pause the video. In our five salaries, what is x two, and what is x one plus x five?*
-12. **x ikki — qirq besh. x bir qoʻshuv x besh — oʻttiz bir qoʻshuv sakson sakkiz, yaʼni bir yuz oʻn toʻqqiz.**
+12. **Eks ikki — qirq besh. Eks bir qoʻshuv eks besh — oʻttiz bir qoʻshuv sakson sakkiz, yaʼni bir yuz oʻn toʻqqiz.**
     *x two is forty-five. x one plus x five is thirty-one plus eighty-eight: one hundred and nineteen.*
 13. **Xoʻp, olti yuzta maoshimiz bor. Lekin olti yuzta sonni bir qarashda qanday koʻramiz? Buni keyingi boʻlimda koʻramiz.**
     *So we have six hundred salaries. But how do we see the shape of six hundred numbers at a glance? That is the next section.*
@@ -132,7 +132,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 ### 4-boʻlim · Section 4 — Oʻrtacha qiymat · The mean  *(already built as its own video; folded into the lecture: greeting removed, Uzbek rewritten, "you" → "we", one new AI line; its Next card becomes the section 5 card)*
 - s1a **Bu kompaniyada olti yuz kishi ishlaydi. Mana, har biri qancha maosh oladi. Rahbarimiz oddiy savol beradi: bu yerda odamlar qancha maosh oladi?** · *Six hundred people work at this company. Here is what every one of them earns. Our manager asks a simple question: what do people earn here?*
 - s1b **Olti yuzta sonni bittalab oʻqib chiqolmaymiz. Hammasining oʻrnini bosadigan bitta son kerak. Lekin qaysi son?** · *We cannot read out six hundred numbers. We need one number that stands for all of them. But which one?*
-- s2a **Eng qadimiy javob eng oddiysi ham. Hammasini qoʻshamiz va teng qilib boʻlib chiqamiz.** · *The oldest answer is also the simplest. We add everything up, and share it out equally.*
+- s2a **Eng oddiy javob — hammasini qoʻshamiz va teng qilib boʻlib chiqamiz.** · *The simplest answer: we add everything up and share it out equally.*
 - s2b **Mana bu yerda ellik bir ming olti yuz oʻn uch dollar chiqdi. Buni oʻrtacha qiymat deymiz.** · *Here that comes to fifty-one thousand, six hundred and thirteen dollars. We call it the mean.*
 - s2c **Keling, u aslida nima qilayotganini koʻraylik. Kompaniyadagi hamma pulni yigʻib, teng boʻlib chiqsak, har bir kishiga mana shuncha tegadi.** · *Let's look at what it is really doing. It is the amount each person would get if all the money in the company were collected, and split evenly.*
 - s3a **Shuning uchun umumiy summa muhim boʻlganda bizga aynan oʻrtacha qiymat kerak.** · *That is why the mean is what we want whenever totals matter.*
@@ -152,15 +152,15 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 - s6c **Toʻqqiz kishidan oltitasi undan kam oladi. Hech qanday milliarder yoʻq boʻlsa ham, oʻrtacha qiymat koʻpchilikdan yuqorida turibdi.** · *And six of the nine earn less than that. Even with no billionaire anywhere, the mean already sits above most of the people in it.*
 - s7 **Mana shu muammoni mediana hal qiladi.** · *Which is exactly the problem the median solves.*
 
-### 5-boʻlim · Section 5 — Mediana va moda · The median and the mode
+### 5-boʻlim · Section 5 — Mediana va mod · The median and the mode
 1. **Avvalgi boʻlimda bitta milliarder oʻrtacha qiymatni boʻsh joyga olib ketdi. Keling, bunday paytda ham joyidan qimirlamaydigan son topaylik.**
    *In the last section, one billionaire dragged the mean into empty space. Let's find a number that holds its ground.*
 2. **Gʻoya oddiy. Maoshlarni kichigidan kattasigacha tartib bilan teramiz va oʻrtada turgan odamni olamiz. Bu mediana deb ataladi.**
    *The idea is simple: we line the salaries up from smallest to largest, and take the person standing in the middle. That is the median.*
-3. **Beshta maosh: oʻttiz bir, qirq besh, qirq yetti, ellik ikki, sakson sakkiz. Ular tartiblangan, n beshga teng. Demak, oʻrtadagisi uchinchisi, yaʼni qirq yetti.**
+3. **Beshta maosh: oʻttiz bir, qirq besh, qirq yetti, ellik ikki, sakson sakkiz. Ular tartiblangan, en beshga teng. Demak, oʻrtadagisi uchinchisi, yaʼni qirq yetti.**
    *Five salaries: thirty-one, forty-five, forty-seven, fifty-two, eighty-eight. They are sorted, n is five, so the middle one is the third: forty-seven.*
    ▸ five bars in a row; two from each end fade, the third glows
-4. **Agar n juft boʻlsa-chi? Sakson sakkizni olib tashlaymiz. Toʻrtta qoldi, endi oʻrtada bitta emas, ikkita odam turibdi.**
+4. **Agar en juft boʻlsa-chi? Sakson sakkizni olib tashlaymiz. Toʻrtta qoldi, endi oʻrtada bitta emas, ikkita odam turibdi.**
    *What if n is even? Let's drop the eighty-eight. Now four are left, and there is not one middle person but two.*
 5. **Bunday holatda ikkalasining oʻrtachasini olamiz. Qirq besh bilan qirq yetti — mediana qirq olti boʻladi.**
    *Then we take the average of those two: forty-five and forty-seven, so the median is forty-six.*
@@ -171,9 +171,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *So the median describes a typical member of the sample. The mean describes each person's share if the total were split equally.*
 8. **Shuning uchun statistika idoralari oilalar daromadini mediana bilan eʼlon qiladi. Uy narxlari ham xuddi shunday. Bir nechta milliarder yoki hashamatli uy oʻrtachani buzib yuboradi.**
    *That is why national statistics offices report median household income, and house prices the same way. A handful of billionaires or mansions would make the mean meaningless.*
-9. **Yana bitta markaz bor — moda. Bu eng koʻp uchraydigan qiymat. Kategorial berilganlar uchun faqat moda ishlaydi: masalan, eng koʻp uchraydigan qon guruhi yoki doʻkonda eng koʻp sotiladigan oyoq kiyim oʻlchami.**
+9. **Yana bitta markaz bor — mod. Bu eng koʻp uchraydigan qiymat. Kategorial berilganlar uchun faqat mod ishlaydi: masalan, eng koʻp uchraydigan qon guruhi yoki doʻkonda eng koʻp sotiladigan oyoq kiyim oʻlchami.**
    *There is one more center: the mode, the value that appears most often. It is the only one that works for categorical data: the most common blood type, or the shoe size a shop sells most.*
-10. **Demak, qoidamiz shunday. Simmetrik berilganlar va umumiy summa uchun — oʻrtacha qiymat. Qiyshiq berilganlar va juda katta qiymatlar boʻlsa — mediana. Kategorial berilganlar uchun — moda.**
+10. **Demak, qoidamiz shunday. Simmetrik berilganlar va umumiy summa uchun — oʻrtacha qiymat. Qiyshiq berilganlar va juda katta qiymatlar boʻlsa — mediana. Kategorial berilganlar uchun — mod.**
     *Our rule of thumb: for symmetric data and for totals, the mean. For skewed data and extreme values, the median. For categorical data, the mode.*
     ▸ three cards, each with its data type icon
 11. **Sunʼiy intellektda ham shunday. Berilganlardagi bitta xato, masalan bitta ortiqcha nol bilan yozilgan maosh, oʻrtachani buzib yuboradi, medianani esa deyarli qimirlatmaydi. Shuning uchun berilganlarni tozalashda koʻpincha medianaga tayanamiz.**
@@ -201,7 +201,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 6. **Shunchaki qoʻshsak, nol chiqadi, chunki musbatlar bilan manfiylar bir-birini yeb qoʻyadi. Shuning uchun har birini kvadratga oshiramiz.**
    *If we simply add them, we get zero: the pluses and minuses cancel. So we square each one first.*
    ▸ each arrow grows into a square: 144, 144, 25, 25, 0
-7. **Kvadratlarni qoʻshsak, uch yuz oʻttiz sakkiz chiqadi. Uni n minus birga, yaʼni toʻrtga boʻlamiz: sakson toʻrt butun oʻndan besh. Mana shu dispersiya deb ataladi.**
+7. **Kvadratlarni qoʻshsak, uch yuz oʻttiz sakkiz chiqadi. Uni en minus birga, yaʼni toʻrtga boʻlamiz: sakson toʻrt butun oʻndan besh. Mana shu dispersiya deb ataladi.**
    *The squares add up to three hundred and thirty-eight. We divide by n minus one, that is four: eighty-four point five. This is the variance.*
 8. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Avtobusning dispersiyasini ham xuddi shunday hisoblaymiz.**
    *Let's try it ourselves. Pause the video. We work out the bus's variance the same way.*
@@ -209,7 +209,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *By bus the distances are only minus one and plus one. The squares add up to two, so the variance is zero point five.*
 10. **Dispersiyaning birligi daqiqaning kvadrati, bu biroz gʻalati. Shuning uchun ildizdan chiqaramiz va standart chetlanishni olamiz: mashinada taxminan toʻqqiz daqiqa, avtobusda bir daqiqaga ham yetmaydi.**
     *Variance is measured in squared minutes, which is an odd unit. Taking the square root gives the standard deviation: about nine minutes by car, less than one minute by bus.*
-11. **Nima uchun n ga emas, n minus birga boʻlamiz? Chunki oʻrtachani shu tanlanmaning oʻzidan hisobladik. Shuning uchun u tanlanmaga haqiqiy oʻrtachadan doim biroz yaqinroq boʻladi. n minus birga boʻlib, shu kamchilikni tuzatamiz.**
+11. **Nima uchun en ga emas, en minus birga boʻlamiz? Chunki oʻrtachani shu tanlanmaning oʻzidan hisobladik. Shuning uchun u tanlanmaga haqiqiy oʻrtachadan doim biroz yaqinroq boʻladi. En minus birga boʻlib, shu kamchilikni tuzatamiz.**
     *Why n minus one, not n? We computed the mean from the sample itself, so it always sits a little closer to the sample than the true mean does. Dividing by n minus one corrects for that.*
 12. **Sunʼiy intellektda ikki modelning oʻrtacha aniqligi bir xil boʻlsa, natijasi har safar sakrab turadiganini emas, barqarorini tanlaymiz. Bu farqni aynan dispersiya koʻrsatadi.**
     *In AI, between two models with the same average accuracy, we choose the steady one over the one that jumps around from run to run. Variance is what shows the difference.*
@@ -249,29 +249,29 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 2. **Toʻqqizta maoshimizni tartib bilan teramiz. Mediana beshinchisi, yaʼni qirq yetti. U berilganlarni ikki yarmiga ajratadi.**
    *We take our nine salaries, sorted. The median is the fifth, forty-seven. It splits the data into two halves.*
    ▸ nine bars; the fifth glows and a divider drops
-3. **Pastki yarmi: oʻttiz bir, oʻttiz sakkiz, qirq ikki, qirq besh. Uning medianasi oʻttiz sakkiz bilan qirq ikkining oʻrtachasi, yaʼni qirq. Bu birinchi kvartil deb ataladi, Q bir.**
+3. **Pastki yarmi: oʻttiz bir, oʻttiz sakkiz, qirq ikki, qirq besh. Uning medianasi oʻttiz sakkiz bilan qirq ikkining oʻrtachasi, yaʼni qirq. Bu birinchi kvartil deb ataladi, kyu bir.**
    *The lower half: thirty-one, thirty-eight, forty-two, forty-five. Its median is the average of thirty-eight and forty-two: forty. That is the first quartile, Q one.*
-4. **Yuqori yarmi: qirq toʻqqiz, ellik ikki, oltmish bir, sakson sakkiz. Uning medianasi ellik olti yarim. Bu uchinchi kvartil, Q uch.**
+4. **Yuqori yarmi: qirq toʻqqiz, ellik ikki, oltmish bir, sakson sakkiz. Uning medianasi ellik olti yarim. Bu uchinchi kvartil, kyu uch.**
    *The upper half: forty-nine, fifty-two, sixty-one, eighty-eight. Its median is fifty-six and a half. That is the third quartile, Q three.*
-5. **Endi beshta son bilan berilganlarni tasvirlaymiz: eng kichigi, Q bir, mediana, Q uch va eng kattasi. Oʻttiz bir, qirq, qirq yetti, ellik olti yarim va sakson sakkiz.**
+5. **Endi beshta son bilan berilganlarni tasvirlaymiz: eng kichigi, kyu bir, mediana, kyu uch va eng kattasi. Oʻttiz bir, qirq, qirq yetti, ellik olti yarim va sakson sakkiz.**
    *Now five numbers describe the data: the minimum, Q one, the median, Q three and the maximum. Thirty-one, forty, forty-seven, fifty-six and a half, eighty-eight.*
-6. **Q uchdan Q birni ayirsak, kvartillararo oraliq chiqadi, qisqacha IQR. Bu oʻrtadagi yarim berilganlarning kengligi. Mana bu yerda oʻn olti yarim. U ham medianaga oʻxshab, juda katta qiymatlardan buzilmaydi.**
+6. **Kyu uchdan kyu birni ayirsak, kvartillararo oraliq chiqadi, qisqacha ay kyu ar. Bu oʻrtadagi yarim berilganlarning kengligi. Mana bu yerda oʻn olti yarim. U ham medianaga oʻxshab, juda katta qiymatlardan buzilmaydi.**
    *Q three minus Q one is the interquartile range, the IQR: the width of the middle half of the data. Here, sixteen and a half. Like the median, it survives extreme values.*
-7. **Endi chetga chiqqan qiymatlarni topamiz. Q uchga bir yarim IQR qoʻshamiz: sakson bir butun yuzdan yigirma besh chiqadi. Bundan yuqoridagi har qanday qiymat chetga chiqqan hisoblanadi.**
+7. **Endi chetga chiqqan qiymatlarni topamiz. Kyu uchga bir yarim ay kyu ar qoʻshamiz: sakson bir butun yuzdan yigirma besh chiqadi. Bundan yuqoridagi har qanday qiymat chetga chiqqan hisoblanadi.**
    *Now we can flag outliers. Add one and a half IQRs to Q three: eighty-one point two five. Anything above that counts as an outlier.*
 8. **Sakson sakkiz bu chegaradan oshib ketdi. Demak, sakson sakkiz ming dollarlik maosh — chetga chiqqan qiymat.**
    *Eighty-eight is past that fence. So the eighty-eight thousand dollar salary is flagged as an outlier.*
-9. **Endi hammasini bitta rasmga chizamiz: Q birdan Q uchgacha quti, ichida mediana chizigʻi, ikki tomonda moʻylovlar va alohida nuqta — chetga chiqqan qiymat. Bu quti diagrammasi deb ataladi.**
+9. **Endi hammasini bitta rasmga chizamiz: kyu birdan kyu uchgacha quti, ichida mediana chizigʻi, ikki tomonda moʻylovlar va alohida nuqta — chetga chiqqan qiymat. Bu quti diagrammasi deb ataladi.**
    *We draw all of this as one picture: a box from Q one to Q three, a median line inside, whiskers, and a separate dot for the outlier. This is a box plot.*
    ▸ the nine bars turn sideways and collapse into the box plot
-10. **Uning kuchi guruhlarni solishtirganda koʻrinadi. Xizmat koʻrsatish markazining uchta filialida kutish vaqtini olaylik. A filialida mediana oʻn bir butun oʻndan sakkiz daqiqa, B filialida oʻn yetti butun oʻndan yetti, C filialida esa yigirma toʻqqiz yarim.**
+10. **Uning kuchi guruhlarni solishtirganda koʻrinadi. Xizmat koʻrsatish markazining uchta filialida kutish vaqtini olaylik. Ey filialida mediana oʻn bir butun oʻndan sakkiz daqiqa, bi filialida oʻn yetti butun oʻndan yetti, si filialida esa yigirma toʻqqiz yarim.**
     *Its strength is comparing groups. Waiting times at three branches of a service centre: branch A has a median of eleven point eight minutes, branch B seventeen point seven, branch C twenty-nine point five.*
     ▸ three box plots side by side
-11. **C filiali ham eng sekin, ham eng beqaror: uning qutisi deyarli yigirma daqiqa keng. Bitta oʻrtacha son qaysi filialni tuzatish kerakligini koʻrsatib berolmas edi.**
+11. **Si filiali ham eng sekin, ham eng beqaror: uning qutisi deyarli yigirma daqiqa keng. Bitta oʻrtacha son qaysi filialni tuzatish kerakligini koʻrsatib berolmas edi.**
     *Branch C is both the slowest and the most variable: its box is almost twenty minutes wide. A single average would not tell us which branch to fix.*
 12. **Sunʼiy intellektda modelni oʻqitishdan oldin aynan shu qoida bilan gʻalati qiymatlarni topamiz: xato yozilgan yozuvlar, sensor xatolari va hokazo.**
     *In AI, before training a model we use exactly this rule to catch strange values: mistyped records, sensor glitches.*
-13. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Pastki chegarani hisoblaymiz, yaʼni Q birdan bir yarim IQR ni ayiramiz. Undan pastda qiymat bormi?**
+13. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Pastki chegarani hisoblaymiz, yaʼni kyu birdan bir yarim ay kyu ar ni ayiramiz. Undan pastda qiymat bormi?**
     *Let's try it ourselves. Pause the video. We work out the lower fence, Q one minus one and a half IQRs. Is any value below it?*
 14. **Pastki chegara oʻn besh butun yuzdan yigirma besh. Eng kichik maosh oʻttiz bir. Demak, pastda chetga chiqqan qiymat yoʻq.**
     *The lower fence is fifteen point two five. The smallest salary is thirty-one, so there is no outlier at the bottom.*
@@ -282,9 +282,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 1. **Keling, toʻrtta berilganlar toʻplamini olaylik. Har birida oʻn bittadan nuqta bor.**
    *Let's take four datasets. Each has eleven points.*
    ▸ four tables of numbers, no plots yet
-2. **Ularning statistikasini hisoblaymiz. x ning oʻrtachasi toʻrttasida ham toʻqqiz. y ning oʻrtachasi ham toʻrttasida yetti yarim.**
+2. **Ularning statistikasini hisoblaymiz. Eks ning oʻrtachasi toʻrttasida ham toʻqqiz. Uay ning oʻrtachasi ham toʻrttasida yetti yarim.**
    *Let's compute their statistics. The mean of x is nine in all four. The mean of y is seven and a half in all four.*
-3. **x ning dispersiyasi hammasida oʻn bir. Korrelyatsiya hammasida taxminan nol butun mingdan sakkiz yuz oʻn olti. Hatto eng yaxshi toʻgʻri chiziq ham bir xil: y teng uch qoʻshuv x ning yarmi.**
+3. **Eks ning dispersiyasi hammasida oʻn bir. Korrelyatsiya hammasida taxminan nol butun mingdan sakkiz yuz oʻn olti. Hatto eng yaxshi toʻgʻri chiziq ham bir xil: uay teng uch qoʻshuv eks ning yarmi.**
    *The variance of x is eleven in all of them. The correlation is about zero point eight one six in all of them. Even the best-fitting line is the same: y equals three plus half of x.*
 4. **Raqamlarga qarasak, toʻrttasi ham bir xil. Xoʻp, endi ularni chizib koʻraylik.**
    *By the numbers, these are the same dataset four times. Now let's draw them.*
@@ -341,7 +341,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 ### 11-boʻlim · Section 11 — Uchta qoida · The three rules
 1. **Oddiy hodisalarning ehtimolini topishni bilamiz. Murakkab hodisalarnikini qanday topamiz? Buning uchun uchta qoida yetarli.**
    *We have the probabilities of simple events. How do we get them for complicated ones? Three rules are enough.*
-2. **Birinchisi — toʻldiruvchi qoidasi. A sodir boʻlmasligining ehtimolini topish uchun birdan A ning ehtimolini ayiramiz. Juft son chiqmasligi: birdan ikkidan birni ayiramiz, yaʼni ikkidan bir.**
+2. **Birinchisi — toʻldiruvchi qoidasi. Ey sodir boʻlmasligining ehtimolini topish uchun birdan ey ning ehtimolini ayiramiz. Juft son chiqmasligi: birdan ikkidan birni ayiramiz, yaʼni ikkidan bir.**
    *The first is the complement rule. The probability that A does not happen is one minus the probability of A. Not even: one minus a half, which is a half.*
 3. **Bu qoida «hech boʻlmaganda bittasi» degan savollarda juda qulay: hech biri boʻlmasligini hisoblab, birdan ayiramiz.**
    *It is the easy way into "at least one" questions: we work out "none", and subtract it from one.*
@@ -353,7 +353,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    ▸ the crossing card flashes
 6. **Shuning uchun kesishmani bir marta ayiramiz: oʻn uch qoʻshuv toʻrt minus bir, yaʼni ellik ikkidan oʻn olti.**
    *So we subtract the overlap once: thirteen plus four minus one, sixteen out of fifty-two.*
-7. **Uchinchisi — koʻpaytirish qoidasi. A va B ning birga sodir boʻlish ehtimolini topish uchun A ning ehtimolini A sodir boʻlgandagi B ning ehtimoliga koʻpaytiramiz.**
+7. **Uchinchisi — koʻpaytirish qoidasi. Ey va bi ning birga sodir boʻlish ehtimolini topish uchun ey ning ehtimolini ey sodir boʻlgandagi bi ning ehtimoliga koʻpaytiramiz.**
    *The third is the multiplication rule. The probability of A and B together is the probability of A, times the probability of B given that A has happened.*
 8. **Masalan, yurak qiroli. Avval yurak chiqishi — ellik ikkidan oʻn uch. Yurak chiqqanini bilsak, uning qirol boʻlishi — oʻn uchdan bir. Koʻpaytirsak, ellik ikkidan bir chiqadi.**
    *The king of hearts: first a heart, thirteen out of fifty-two. Given it is a heart, the chance it is a king is one in thirteen. Multiply them: one out of fifty-two.*
@@ -404,10 +404,10 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Two events are mutually exclusive if they can never happen together: their overlap is empty, and the probability of both is zero.*
 3. **Ikki hodisaning birga sodir boʻlish ehtimoli ularning ehtimollari koʻpaytmasiga teng boʻlsa, ular erkli deyiladi. Yaʼni birini bilish ikkinchisi haqida hech narsa aytmaydi.**
    *Two events are independent if the probability of both equals the product of their probabilities. In other words, knowing one tells us nothing about the other.*
-4. **Kubik tashlaymiz. A — juft son: ikki, toʻrt, olti, ehtimoli ikkidan bir. B — toʻrtdan katta son: besh, olti, ehtimoli uchdan bir.**
+4. **Kubik tashlaymiz. Ey — juft son: ikki, toʻrt, olti, ehtimoli ikkidan bir. Bi — toʻrtdan katta son: besh, olti, ehtimoli uchdan bir.**
    *We roll a die. A is "even": two, four, six, with probability one half. B is "more than four": five, six, with probability one third.*
    ▸ Venn diagram over the six faces
-5. **Ikkalasi birga faqat oltida boʻladi, ehtimoli oltidan bir. Ikkidan birni uchdan birga koʻpaytirsak ham oltidan bir chiqadi. Demak, A va B erkli.**
+5. **Ikkalasi birga faqat oltida boʻladi, ehtimoli oltidan bir. Ikkidan birni uchdan birga koʻpaytirsak ham oltidan bir chiqadi. Demak, ey va bi erkli.**
    *Both together: only six, with probability one sixth. And one half times one third is also one sixth. So A and B are independent.*
 6. **Lekin ular bir-birini istisno qilmaydi, chunki olti ikkalasida ham bor.**
    *But they are not mutually exclusive: six belongs to both.*
@@ -447,7 +447,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Let's think it through. Pause the video. We trained a spam filter on data where ninety percent of emails are spam. Is the spam probability from that data right for real email?*
 9. **Yoʻq. Empirik ehtimollik faqat berilganlar olingan joy uchun toʻgʻri. Tanlanma bosh toʻplamga oʻxshamasa, ehtimol ham notoʻgʻri chiqadi.**
    *No. An empirical probability is only right for the place the data came from. If the sample does not look like the population, the probability is wrong too.*
-10. **Keling, maʼruzani yakunlaylik. Berilganlar turi qaysi hisob toʻgʻri ekanini belgilaydi. Oʻrtacha qiymat umumiy summani eslab qoladi, mediana esa juda katta qiymatlardan buzilmaydi. Dispersiya va IQR xavfni oʻlchaydi. Berilganlarni doim chizib koʻramiz. Ehtimollik qoidalari esa murakkab hodisalarni oddiylari orqali hisoblaydi.**
+10. **Keling, maʼruzani yakunlaylik. Berilganlar turi qaysi hisob toʻgʻri ekanini belgilaydi. Oʻrtacha qiymat umumiy summani eslab qoladi, mediana esa juda katta qiymatlardan buzilmaydi. Dispersiya va ay kyu ar xavfni oʻlchaydi. Berilganlarni doim chizib koʻramiz. Ehtimollik qoidalari esa murakkab hodisalarni oddiylari orqali hisoblaydi.**
     *Let's wrap up the lecture. The type of data decides which calculations are valid. The mean remembers the total; the median survives outliers. Variance and the IQR measure risk. We always plot the data. And the probability rules build complex events from simple ones.*
 11. **Mana shu bilan birinchi maʼruzamizni tugatamiz. Keyingi maʼruzada «… sodir boʻlgandagi» degan soʻzning kuchini koʻramiz: shartli ehtimollik va Bayes teoremasi.**
     *That brings our first lecture to an end. In the next lecture, we see the power of the word "given": conditional probability and Bayes' theorem.*

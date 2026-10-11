@@ -77,6 +77,14 @@ own voice, so it must sound like them, not like a translation. Apply these whene
     data — **maʼlumot means *information*** and is used only in that sense (e.g. "ob-havo maʼlumoti").
   - descriptive → **tavsiflovchi** (e.g. "tavsiflovchi statistika"), not "tavsifiy".
   - population / sample → **bosh toʻplam / tanlanma**; spread → **tarqoqlik**; mean → **oʻrtacha qiymat**.
+  - mode → **mod** (kept as the international term, not "moda").
+  - label (a training example's target, as in labelled data) → **belgilanganlar**; data stays **berilganlar**.
+- **Latin letters are spoken by their English names**, written in Uzbek spelling in the narration so the voice reads
+  them right: x → eks, f → ef, n → en, s → es, i → ay, y → uay, A → ey, B → bi, C → si, Q → kyu, IQR → ay kyu ar
+  (capitalized at a sentence start: "Eks ikki — …"). Greek letters keep their names (sigma, mu, omega). The screen
+  shows the symbol itself.
+- **English counterparts name the quantity, not the thing**: "farzandlar soni" → "number of children", never
+  "children".
   Add new term decisions here as the instructor makes them.
 - **Never translate word-for-word from English.** Write the sentence the way it would be said aloud in Uzbek: short
   active clauses, first-person-plural verbs, verb last. Example: "Toshkent qoʻshuv Samarqand, boʻlinsin ikki" (calque)

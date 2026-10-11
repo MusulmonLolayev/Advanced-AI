@@ -127,7 +127,8 @@ def card(label, value=None, color=RLBLUE, width=2.9, height=1.5, size=26):
     """A data card: the variable's name, and one example value under it."""
     rect = RoundedRectangle(corner_radius=0.14, width=width, height=height, stroke_color=color,
                             stroke_width=3, fill_color=BLACK, fill_opacity=0.6)
-    head = txt(label, size=size, color=WHITE)
+    # a long label breaks at "\n" into centred lines, at the same font size as the other cards
+    head = VGroup(*[txt(t, size=size, color=WHITE) for t in label.split("\n")]).arrange(DOWN, buff=0.08)
     if head.width > width - 0.3:
         head.scale_to_fit_width(width - 0.3)
     g = VGroup(rect, head)

@@ -223,11 +223,11 @@ class S05Mode(LectureScene):
             k = seen.get(v, 0)
             seen[v] = k + 1
             dots.add(Dot([mx(v), y + 0.35 + 0.55 * k, 0], radius=0.2, color=RLBLUE))
-        head = self.heading(w("Mode", "Moda"), color=HILITE)
-        mode_t = txt(f"{w('mode', 'moda')} = 30  (×3)", size=34, weight=BOLD, color=HILITE)
+        head = self.heading(w("Mode", "Mod"), color=HILITE)
+        mode_t = txt(f"{w('mode', 'mod')} = 30  (×3)", size=34, weight=BOLD, color=HILITE)
         mode_t.next_to(dots, UP, buff=0.35)
         cat = VGroup(txt(w("categorical data:", "kategorial berilganlar:"), size=26, color=GREY_B),
-                     txt(w("blood type, shoe size → mode", "qon guruhi, oyoq kiyim oʻlchami → moda"), size=26))
+                     txt(w("blood type, shoe size → mode", "qon guruhi, oyoq kiyim oʻlchami → mod"), size=26))
         cat.arrange(DOWN, aligned_edge=LEFT, buff=0.15).to_edge(UP, buff=SAFE + 1.3)
         t = line("5.9")
         with self.voiceover(t) as tr:
@@ -245,7 +245,7 @@ class S05Mode(LectureScene):
                  width=4.0, height=2.3, size=30),
             card(w("median", "mediana"), w("skewed, extremes", "qiyshiq, chetdagi qiymatlar"), color=RLGREEN,
                  width=4.0, height=2.3, size=30),
-            card(w("mode", "moda"), w("categorical", "kategorial"), color=HILITE, width=4.0, height=2.3, size=30),
+            card(w("mode", "mod"), w("categorical", "kategorial"), color=HILITE, width=4.0, height=2.3, size=30),
         ).arrange(RIGHT, buff=0.35).move_to(DOWN * 0.2)
         for c in cards:                    # long Uzbek values must stay inside their card
             if c[2].width > c[0].width - 0.3:

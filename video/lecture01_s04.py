@@ -199,7 +199,7 @@ class S04Mean(LectureScene):
 
         t = say("s2a")
         with self.voiceover(t) as tr:
-            self.until(tr, t, 1)
+            self.until(tr, t, {"en": "we add", "uz": "hammasini"})
             self.play(FadeOut(axis), *[ReplacementTransform(d, b) for d, b in zip(dots, bars)], run_time=1.6)
             self.play(Transform(bars, level), run_time=1.8)
 

@@ -10,7 +10,7 @@ VARS = [  # (label, example value, categorical?)
     (w("eye colour", "koʻz rangi"), w("brown", "jigarrang"), True),
     (w("city of birth", "tugʻilgan shahar"), w("Samarkand", "Samarqand"), True),
     (w("rating", "baho"), w("medium", "oʻrta"), True),
-    (w("children", "farzandlar soni"), "2", False),
+    (w("number of\nchildren", "farzandlar soni"), "2", False),
     (w("salary", "maosh"), money(EXAMPLE_SALARY), False),
     (w("height", "boʻy"), w("172.4 cm", "172.4 sm"), False),
 ]

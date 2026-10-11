@@ -23,7 +23,7 @@ separately in `lecture01.md`; these labels are not yet. Send corrections as sect
 | Samarqand | Samarkand |
 | baho | rating |
 | oʻrta | medium |
-| farzandlar soni | children |
+| farzandlar soni | number of children |
 | maosh | salary |
 | boʻy | height |
 | 172.4 sm | 172.4 cm |
@@ -112,12 +112,12 @@ separately in `lecture01.md`; these labels are not yet. Send corrections as sect
 | Mediana | Median |
 | mediana → odatiy odam | median → a typical member |
 | oʻrtacha → teng ulush | mean → each person's equal share |
-| Moda | Mode |
+| Mod | Mode |
 | Qoidamiz | Rule of thumb |
 | Bitta xato: 52 → 520 | One typo: 52 → 520 |
 | maoshlar, ming dollarda | salaries, in thousands of dollars |
 | kategorial berilganlar: | categorical data: |
-| qon guruhi, oyoq kiyim oʻlchami → moda | blood type, shoe size → mode |
+| qon guruhi, oyoq kiyim oʻlchami → mod | blood type, shoe size → mode |
 | Shu toʻqqiztasining medianasini topamiz. | We find the median of these nine. |
 | avtobus | bus |
 | mashina | car |
@@ -126,7 +126,7 @@ separately in `lecture01.md`; these labels are not yet. Send corrections as sect
 | mediana | median |
 | oʻrtacha | mean |
 | avtobus, daqiqa | bus, minutes |
-| moda | mode |
+| mod | mode |
 | oilalar daromadi → mediana | household income → median |
 | uy narxlari → mediana | house prices → median |
 | oʻrtacha qiymat | mean |
