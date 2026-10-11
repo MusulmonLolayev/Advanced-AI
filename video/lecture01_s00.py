@@ -22,7 +22,7 @@ class S00Opening(LectureScene):
             self.play(GrowFromEdge(marks[0], LEFT), FadeIn(rows[0], shift=RIGHT * 0.3), run_time=0.7)
             self.cue(tr, t, {"en": "and in part one", "uz": "birinchi qismda"})
             self.play(GrowFromEdge(marks[1], LEFT), FadeIn(rows[1], shift=RIGHT * 0.3), run_time=0.7)
-        self.clear_all()
+        self.clear_all(run_time=0.3)   # the next scene opens on a silent card
 
 
 SCENES = ["S00Opening"]

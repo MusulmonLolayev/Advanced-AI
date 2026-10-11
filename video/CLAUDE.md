@@ -41,8 +41,13 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
   lock, so parallel scenes sharing one cache would corrupt it.
 - **Cues may differ by language.** `self.cue(tr, t, k)` takes a sentence index, a phrase, or `{"en": .., "uz": ..}`;
   sentences split on `. ? ! :`, and the Uzbek and English lines often split differently.
-- **Silent cards and transitions stay short** (section card 1.2 s, `clear_all` 0.5 s, 0.15 s after each line): voice clips carry their own
+- **Silent cards and transitions stay short** (section card 1.0 s, `clear_all` 0.5 s, 0.15 s after each line): voice clips carry their own
   lead-in and tail, and anything over 2 s of silence that is not a hands-on pause is a defect.
+- **The cloned voice pads its clips** with up to ~1.2 s of quiet at each end (edge-tts barely does). `NavoiyService`
+  trims both ends to 0.12 s (`common.trim_silence`); without it every section boundary in the Uzbek lecture was a
+  2.4-3.4 s gap.
+- **`Indicate` grows a mobject by 20 %**, which pushed a full-width bell curve onto the frame edge; use
+  `scale_factor=1.04` on anything near full width.
 - **Nothing persistent may touch the frame edge.** `check_edges.py` flags bright pixels within 4 px of any border, so the brand mark is inset by `common.SAFE`. A full-width footer strip would flag every frame — branding lives in the opening bumper, the closing card, and that one inset mark.
 
 ## Rules carried over from the decks

@@ -114,9 +114,9 @@ class LectureScene(CourseScene):
             g = VGroup(ph, bar, g).arrange(DOWN, buff=0.45)
         if g.width > 12:
             g.scale_to_fit_width(12)
-        self.play(FadeIn(g, shift=UP * 0.3), run_time=0.5)
-        self.wait(0.4 if part is None else 0.6)
-        self.play(FadeOut(g), run_time=0.3)
+        self.play(FadeIn(g, shift=UP * 0.3), run_time=0.4)
+        self.wait(0.35 if part is None else 0.5)
+        self.play(FadeOut(g), run_time=0.25)
 
     def heading(self, text, color=WHITE, size=34):
         return txt(text, size=size, weight=BOLD, color=color).to_edge(UP, buff=SAFE + 0.3)

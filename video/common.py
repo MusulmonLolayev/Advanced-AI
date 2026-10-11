@@ -108,9 +108,21 @@ class NavoiyService(SpeechService):
         resp = json.loads(urllib.request.urlopen(req, timeout=300).read())
         if not resp.get("ok"):
             raise RuntimeError(f"navoiy server failed: {resp.get('error')}")
+        trim_silence(target)
         if MP3(target).info.length < min_seconds:
             raise RuntimeError(f"navoiy returned truncated audio for: {input_text[:60]!r}")
         return {"input_text": text, "input_data": input_data, "original_audio": audio_path}
+
+
+def trim_silence(path, keep=0.12, threshold="-40dB"):
+    """Cut a clip's leading and trailing silence down to `keep` seconds, in place.
+    The cloned voice pads clips with up to ~1.2 s of quiet at each end, which turned
+    scene boundaries into 3 s gaps."""
+    f = (f"silenceremove=start_periods=1:start_threshold={threshold}:start_silence={keep}")
+    tmp = Path(path).with_suffix(".trim.mp3")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(path), "-af", f"{f},areverse,{f},areverse",
+                    "-ar", "24000", "-ac", "1", "-b:a", "128k", str(tmp)], check=True)
+    tmp.replace(path)
 
 
 def at(tracker, text, k):

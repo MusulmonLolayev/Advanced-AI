@@ -208,8 +208,8 @@ class S07Risk(LectureScene):
         with self.say("7.8") as (tr, t):
             self.play(FadeOut(items), FadeOut(often), FadeOut(head), FadeIn(head2), FadeOut(ax[0]), FadeOut(ax[1]),
                       run_time=0.9)
-            self.play(FadeIn(trust), GrowArrow(a_trust), Indicate(ba, color=RLGREEN), run_time=1.0)
-            self.play(FadeIn(careful), GrowArrow(a_care), Indicate(bb, color=RLORANGE), run_time=1.0)
+            self.play(FadeIn(trust), GrowArrow(a_trust), Indicate(ba, color=RLGREEN, scale_factor=1.04), run_time=1.0)
+            self.play(FadeIn(careful), GrowArrow(a_care), Indicate(bb, color=RLORANGE, scale_factor=1.04), run_time=1.0)
         self.clear_all()
 
 
