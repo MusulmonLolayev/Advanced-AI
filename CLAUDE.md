@@ -65,6 +65,8 @@ When adding a new assignment, follow the newest existing one (`assignment7_fores
 
 - Keep math notation consistent between a lecture and its corresponding assignment package (variable names in `advanced_ai/*.py` should match the symbols used in the matching `lecture0N_*.tex`).
 - Lecture pacing pattern: short derivation → numerical example → graphic.
+- Index observations as plain subscripts, x_1, x_2, …, x_n, also after sorting — never the order-statistic
+  brackets x_{(1)}, x_{(2)} (instructor's rule; one notation for indices across slides and videos).
 - `course-map.md` calls out cross-module forward/back references explicitly (e.g. Module 1 L14 forward-references Module 5's RLHF math) — check it when a lecture assumes prerequisite material from another module, since modules are authored out of strict numeric order.
 
 ## Uzbek translation rules

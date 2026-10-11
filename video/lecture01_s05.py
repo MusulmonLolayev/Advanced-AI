@@ -100,7 +100,7 @@ class S05Middle(LectureScene):
 
         bars = VGroup(*[by_value[v] for v in FIVE])
         nums = VGroup(*[txt(str(v), size=30, weight=BOLD).next_to(b, UP, buff=0.12) for v, b in zip(FIVE, bars)])
-        subs = VGroup(*[MathTex(f"x_{{({i})}}", font_size=40, color=GREY_B).next_to(b, DOWN, buff=0.15)
+        subs = VGroup(*[MathTex(f"x_{i}", font_size=40, color=GREY_B).next_to(b, DOWN, buff=0.15)
                         for i, b in enumerate(bars, 1)])
         n_lab = MathTex("n = 5", font_size=40).to_corner(UR, buff=SAFE + 0.4)
         t = line("5.3")
