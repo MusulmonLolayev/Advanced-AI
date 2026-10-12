@@ -138,6 +138,52 @@ class S10Event(LectureScene):
         self.clear_all()
 
 
+ROLLS = L["roll_strip"]                                  # an illustration from a fixed seed (capture_l01.py)
+assert L["roll_strip_evens"] == len(ROLLS) // 2 and L["p_three_evens"] == "1/8"
+
+
+def longest_even_run(rolls):
+    best, run, end = 0, 0, 0
+    for i, r in enumerate(rolls):
+        run = run + 1 if r % 2 == 0 else 0
+        if run > best:
+            best, end = run, i
+    return end - best + 1, best
+
+
+class S10LongRun(LectureScene):
+    def construct(self):
+        a, b = L["p_even"].split("/")
+        head = VGroup(txt(f"P({label('even')})", size=40, color=HILITE), MathTex(rf"= \tfrac{{{a}}}{{{b}}}",
+                      font_size=52)).arrange(RIGHT, buff=0.2).to_edge(UP, buff=SAFE + 0.3)
+        faces = VGroup(*[die_face(r, size=0.72) for r in ROLLS]).arrange_in_grid(rows=3, buff=(0.2, 0.3))
+        faces.move_to([-2.4, -0.3, 0])
+        for f, r in zip(faces, ROLLS):
+            if r % 2:
+                f.set_opacity(0.35)
+        ill = txt(label("illustration"), size=20, color=GREY_B).next_to(faces, DOWN, buff=0.2).align_to(faces, RIGHT)
+        start, n = longest_even_run(ROLLS)
+        assert n == 3 and start // 8 == (start + n - 1) // 8          # the run sits inside one row of eight
+        run = SurroundingRectangle(VGroup(*faces[start:start + n]), buff=0.1, color=RLRED, corner_radius=0.1,
+                                   stroke_width=5)
+        count = tagged(f"{L['roll_strip_evens']} / {len(ROLLS)}", f"{label('even')}:", after=False, size=32,
+                       color=HILITE)
+        run_lab = txt(label("three_evens_in_a_row"), size=26, color=RLRED)
+        p, q = L["p_three_evens"].split("/")
+        prob = MathTex(rf"\left(\tfrac{{{a}}}{{{b}}}\right)^{{3}} = \tfrac{{{p}}}{{{q}}}", font_size=52, color=RLRED)
+        col = VGroup(count, run_lab, prob).arrange(DOWN, buff=0.55).move_to([4.0, -0.3, 0])
+        with self.say("10.6a") as (tr, t):
+            self.play(FadeIn(head), run_time=0.6)
+            self.cue(tr, t, 1)
+            self.play(LaggedStart(*[FadeIn(f, shift=DOWN * 0.3) for f in faces], lag_ratio=0.06), FadeIn(ill),
+                      run_time=1.8)
+            self.play(FadeIn(count), run_time=0.6)
+            self.cue(tr, t, 3)
+            self.play(Create(run), FadeIn(run_lab), run_time=0.8)
+            self.play(Write(prob), run_time=0.9)
+        self.clear_all()
+
+
 class S10Sets(LectureScene):
     def construct(self):
         rows = VGroup()
@@ -219,4 +265,4 @@ class S10HandsOn(LectureScene):
         self.clear_all()
 
 
-SCENES = ["S10Omega", "S10Event", "S10Sets", "S10HandsOn"]
+SCENES = ["S10Omega", "S10Event", "S10LongRun", "S10Sets", "S10HandsOn"]

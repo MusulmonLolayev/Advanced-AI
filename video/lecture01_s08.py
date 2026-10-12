@@ -104,6 +104,35 @@ class S08Quartiles(LectureScene):
             self.play(bars[6].animate.set_fill(HILITE), bars[7].animate.set_fill(HILITE), FadeIn(q3_sum), run_time=0.8)
             self.play(Create(q3_ln), FadeIn(q3_lab), run_time=0.8)
 
+        # quartiles as quarters: cut the sorted row at Q1, the median and Q3
+        xq1, xq3 = (xs[1] + xs[2]) / 2, (xs[6] + xs[7]) / 2
+        assert NINE[1] < Q1 < NINE[2] and NINE[6] < Q3 < NINE[7] and NINE[4] == Q2
+        cuts = VGroup(*[DashedLine([x, -2.5, 0], [x, 1.25, 0], color=HILITE, stroke_width=3) for x in (xq1, xq3)])
+        mid = DashedLine([xs[4], -2.5, 0], [xs[4], 1.25, 0], color=RLGREEN, stroke_width=3)
+        left = xs[0] - 0.55
+        spans = VGroup()
+        for x_end, frac, yy, col in ((xq1, "1/4", -2.78, HILITE), (xs[4], "1/2", -3.07, RLGREEN), (xq3, "3/4", -3.36, HILITE)):
+            ar = Arrow([left, yy, 0], [x_end, yy, 0], buff=0, stroke_width=3, color=col, tip_length=0.16,
+                       max_tip_length_to_length_ratio=0.2)
+            spans.add(VGroup(ar, MathTex(frac, font_size=30, color=col).next_to(ar, RIGHT, buff=0.12)))
+        quart = txt(label("quartile_means_quarter"), size=30, weight=BOLD, color=HILITE).move_to([0, 2.65, 0])
+        shades = [RLBLUE, interpolate_color(ManimColor(RLBLUE), WHITE, 0.4)]
+        group_of = [0, 0, 1, 1, None, 0, 0, 1, 1]           # the four quarters, the median bar on its own
+        under = VGroup(b_lo, b_hi, l_lo, l_hi)
+        with self.say("8.4a") as (tr, t):
+            self.play(*[b.animate.set_fill(RLGREEN if g is None else shades[g], opacity=1)
+                        for b, g in zip(bars, group_of)], under.animate.set_opacity(0), run_time=0.8)
+            self.play(Create(cuts), Create(mid), run_time=0.8)
+            self.cue(tr, t, 1)
+            self.play(GrowArrow(spans[0][0]), FadeIn(spans[0][1]), run_time=0.7)
+            self.cue(tr, t, {"uz": "yarmi", "en": "half below"})
+            self.play(GrowArrow(spans[1][0]), FadeIn(spans[1][1]), run_time=0.7)
+            self.cue(tr, t, {"uz": "toʻrtdan uch", "en": "three quarters"})
+            self.play(GrowArrow(spans[2][0]), FadeIn(spans[2][1]), run_time=0.7)
+            self.cue(tr, t, 2)
+            self.play(FadeIn(quart, shift=DOWN * 0.15), run_time=0.8)
+        self.play(FadeOut(VGroup(cuts, mid, spans, quart)), under.animate.set_opacity(1), run_time=0.6)
+
         names = [label("minimum"), "Q1", label("median", 1), "Q3", label("max")]
         vals = [min(NINE), Q1, Q2, Q3, max(NINE)]
         row = VGroup(*[VGroup(txt(n, size=22, color=GREY_B), txt(num(v), size=34, weight=BOLD))
@@ -125,6 +154,32 @@ class S08Quartiles(LectureScene):
             self.play(FadeIn(iqr_t), run_time=0.8)
             self.cue(tr, t, 3)
             self.play(Indicate(band, color=HILITE, scale_factor=1.03), run_time=1.0)
+
+        # why the IQR survives: turn 88 into 88 million; the max changes, Q3 does not move
+        huge = NINE[-1] * 10 ** 6
+        assert float(np.median(sorted(NINE[:-1] + [huge])[5:])) == L["q3_huge"] == Q3
+        bar_h, top = bars[8].height, 1.5                  # the tall bar stops under the five-number row
+        orig_num, orig_max = nums[8].copy(), row[4][1].copy()
+        big_txt = f"{huge:,}".replace(",", " ")
+        big = txt(big_txt, size=26, weight=BOLD, color=RLRED).move_to([xs[8], top + 0.28, 0])
+        big_max = txt(big_txt, size=34, weight=BOLD, color=RLRED).move_to(row[4][1], aligned_edge=LEFT)
+        cut = VGroup(*[Line([xs[8] - 0.5, y0 - 0.07, 0], [xs[8] + 0.5, y0 + 0.07, 0], color=BLACK, stroke_width=7)
+                       for y0 in (0.55, 0.72)])              # a break: the bar is far taller than drawn
+        same = txt(label("unchanged"), size=24, color=HILITE).next_to(q3_lab, DOWN, buff=0.15)
+        with self.say("8.6a") as (tr, t):
+            self.cue(tr, t, 1)
+            self.play(bars[8].animate.stretch_to_fit_height(top - (-2.5), about_edge=DOWN).set_fill(RLRED),
+                      Transform(nums[8], big), Transform(row[4][1], big_max), run_time=1.2)
+            self.add(cut)
+            self.play(Indicate(q3_ln, color=HILITE, scale_factor=1.03), Indicate(q3_lab, color=HILITE),
+                      Indicate(row[3][1], color=HILITE), FadeIn(same), run_time=1.0)
+            self.cue(tr, t, 2)
+            self.play(bars[6].animate.set_fill(HILITE), bars[7].animate.set_fill(HILITE), run_time=0.7)
+            self.play(Indicate(band, color=HILITE, scale_factor=1.03), run_time=0.9)
+        self.remove(cut)
+        self.play(bars[8].animate.stretch_to_fit_height(bar_h, about_edge=DOWN).set_fill(RLBLUE),
+                  Transform(nums[8], orig_num), Transform(row[4][1], orig_max), bars[6].animate.set_fill(RLBLUE),
+                  bars[7].animate.set_fill(RLBLUE), FadeOut(same), run_time=0.7)
 
         fence = DashedLine([xs[0] - 0.55, y(F_HI), 0], [xs[8] + 0.55, y(F_HI), 0], color=RLRED, stroke_width=4)
         fence_lab = txt(num(F_HI), size=28, weight=BOLD, color=RLRED).next_to(fence, RIGHT, buff=0.15)

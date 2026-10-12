@@ -142,6 +142,22 @@ class S06Commute(LectureScene):
             self.cue(tr, t, {"en": "So we square", "uz": "Shuning uchun"})
             self.play(*[ReplacementTransform(a.copy(), s) for a, s in zip(arrows, sq)], run_time=1.6)
 
+        # 6.6a: absolute value would also drop the sign; the square weighs big distances more
+        d12, d5 = abs(L["car_dev"][1]), abs(L["car_dev"][3])
+        s12, s5 = L["car_sq"][1], L["car_sq"][3]
+        absx = MathTex(rf"|{{-}}{d12:g}| = {d12:g}", font_size=46, color=HILITE).to_edge(UP, buff=SAFE + 0.15)
+        ratios = MathTex(rf"\frac{{{d12:g}}}{{{d5:g}}} = {L['sq_ratio']['dist']:g}", r"\qquad\qquad",
+                         rf"\frac{{{s12:g}}}{{{s5:g}}} = {L['sq_ratio']['square']:g}", font_size=46, color=HILITE)
+        ratios.to_edge(UP, buff=SAFE + 0.05)
+        t = line("6.6a")
+        with self.voiceover(t) as tr:
+            self.play(FadeOut(zero), FadeOut(zero_x), FadeIn(absx), Indicate(labs[0], color=HILITE), run_time=1.0)
+            self.cue(tr, t, {"en": "But squaring", "uz": "Lekin kvadrat"})
+            self.play(FadeOut(absx), FadeIn(ratios[0]), Indicate(arrows[1], color=WHITE),
+                      Indicate(arrows[3], color=WHITE), run_time=1.1)
+            self.play(FadeIn(ratios[2]), Indicate(sq[1], color=WHITE, scale_factor=1.08),
+                      Indicate(sq[3], color=WHITE, scale_factor=1.15), run_time=1.2)
+
         add = MathTex(" + ".join(f"{v:g}" for v in L["car_sq"]) + f" = {L['car_ss']:g}", font_size=40)
         div = MathTex(rf"s^2 = \frac{{{L['car_ss']:g}}}{{n-1}} = \frac{{{L['car_ss']:g}}}{{4}} = {L['car_var']:g}",
                       font_size=44, color=HILITE)
@@ -149,7 +165,7 @@ class S06Commute(LectureScene):
         top = VGroup(add, div).arrange(DOWN, buff=0.25).to_edge(UP, buff=SAFE + 0.1)
         t = line("6.7")
         with self.voiceover(t) as tr:
-            self.play(FadeOut(zero), FadeOut(zero_x), FadeOut(arrows), FadeOut(labs),
+            self.play(FadeOut(ratios), FadeOut(arrows), FadeOut(labs),
                       FadeIn(add), run_time=0.9)
             self.cue(tr, t, 1)
             self.play(FadeIn(div), run_time=0.9)
@@ -217,6 +233,23 @@ class S06Std(LectureScene):
             self.play(FadeIn(bands[1]), FadeIn(stds[1]), run_time=0.8)
             self.play(FadeIn(bands[0]), FadeIn(stds[0]), run_time=0.8)
 
+        # 6.10a: s as the typical distance of one day's trip from the mean
+        cap = VGroup(MathTex("s", font_size=52, color=HILITE),
+                     txt(label("typical_distance_from_mean"), size=32)).arrange(RIGHT, buff=0.35)
+        cap.to_edge(UP, buff=SAFE + 0.3)
+        reach = DoubleArrow([car["mx"](MEAN - L["car_std"]), car["y"] + 0.55, 0],
+                            [car["mx"](MEAN + L["car_std"]), car["y"] + 0.55, 0], buff=0, color=HILITE,
+                            stroke_width=5, tip_length=0.2)
+        t = line("6.10a")
+        with self.voiceover(t) as tr:
+            self.play(FadeOut(root), FadeOut(roots), FadeIn(cap, shift=DOWN * 0.2), run_time=0.9)
+            self.cue(tr, t, 2)
+            self.play(GrowFromCenter(reach), Indicate(stds[1], color=HILITE), run_time=1.0)
+            self.play(Indicate(bands[0], color=RLGREEN, scale_factor=1.3), Indicate(stds[0], color=RLGREEN),
+                      run_time=1.0)
+            self.cue(tr, t, 3)
+            self.play(Indicate(bands[1], color=HILITE, scale_factor=1.04), run_time=0.9)
+
         formula = MathTex(r"s^2 = \frac{\sum_{i=1}^{n} (x_i - ", r"\bar{x}", r")^2}{", r"n - 1", "}", font_size=48)
         formula.to_edge(UP, buff=SAFE + 0.2).set_x(-1.5)
         formula[3].set_color(HILITE)
@@ -224,7 +257,7 @@ class S06Std(LectureScene):
         note.next_to(formula, RIGHT, buff=0.5).shift(UP * 0.25)
         t = line("6.11")
         with self.voiceover(t) as tr:
-            self.play(FadeOut(root), FadeOut(roots), FadeIn(formula), run_time=0.9)
+            self.play(FadeOut(cap), FadeOut(reach), FadeIn(formula), run_time=0.9)
             self.play(Indicate(formula[3], color=HILITE, scale_factor=1.3), run_time=0.9)
             self.cue(tr, t, 1)
             self.play(formula[1].animate.set_color(RLGREEN), FadeIn(note, shift=LEFT * 0.2), run_time=0.9)

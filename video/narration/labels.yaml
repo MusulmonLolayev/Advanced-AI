@@ -107,6 +107,11 @@ height:
   uz: "boʻy"
 
 # L1 §1
+does_adding_mean_anything_q:
+  en: "Does adding them mean anything?"
+  uz: "Ularni qoʻshishning maʼnosi bormi?"
+
+# L1 §1
 blood_type_q:
   en: "Blood type?"
   uz: "Qon guruhi?"
@@ -135,6 +140,16 @@ mean_std_deviation:
 count_proportion:
   en: "count, proportion"
   uz: "sanash, ulush"
+
+# L1 §1
+postcode:
+  en: "postcode"
+  uz: "pochta indeksi"
+
+# L1 §1
+phone_number:
+  en: "phone number"
+  uz: "telefon raqami"
 
 # L1 §1
 tashkent:
@@ -185,6 +200,31 @@ salaries_thousand:
 salaries:
   en: "salaries"
   uz: "maosh"
+
+# L1 §2
+only_big_companies:
+  en: "only big companies in the capital"
+  uz: "faqat poytaxtdagi katta kompaniyalar"
+
+# L1 §2
+too_high:
+  en: "too high"
+  uz: "juda yuqori"
+
+# L1 §2
+at_random:
+  en: "at random"
+  uz: "tasodifiy"
+
+# L1 §2
+we_compute:
+  en: "we compute"
+  uz: "hisoblaymiz"
+
+# L1 §2
+we_want_to_know:
+  en: "we want to know"
+  uz: "bilmoqchimiz"
 
 # L1 §2, §14
 training_set:
@@ -262,6 +302,26 @@ draw_touching_bars:
   uz: "tegib turgan ustunlar"
 
 # L1 §3
+symmetric:
+  en: "symmetric"
+  uz: "simmetrik"
+
+# L1 §3, §5
+skewed_right:
+  en: "skewed right"
+  uz: "oʻngga qiyshaygan"
+
+# L1 §3
+two_peaks:
+  en: "two peaks"
+  uz: "ikki choʻqqi"
+
+# L1 §3
+histogram:
+  en: "Histogram"
+  uz: "Gistogramma"
+
+# L1 §3
 every_feature_one_histogram:
   en: "every feature, one histogram"
   uz: "har bir belgi — bitta gistogramma"
@@ -270,6 +330,21 @@ every_feature_one_histogram:
 strange_values:
   en: "strange values"
   uz: "gʻalati qiymatlar"
+
+# L1 §3
+too_few:
+  en: "too few"
+  uz: "juda kam"
+
+# L1 §3
+too_many:
+  en: "too many"
+  uz: "juda koʻp"
+
+# L1 §3
+good:
+  en: "good"
+  uz: "yaxshi"
 
 # L1 §3
 bottle_fill_ml:
@@ -296,16 +371,6 @@ each_value_once:
   en: "each value: once"
   uz: "har bir qiymat: 1 marta"
 
-# L1 §3
-histogram:
-  en: "Histogram"
-  uz: "Gistogramma"
-
-# L1 §3
-skewed_right:
-  en: "skewed right"
-  uz: "oʻngga qiyshaygan"
-
 # L1 §3, §4
 one_number_q:
   en: "one number?"
@@ -320,6 +385,21 @@ how_many_q:
 thin_tail:
   en: "thin tail"
   uz: "ingichka dum"
+
+# L1 §3, §10, §14; L2 §6, §7, §9; L3 §1, §3, §4, §5, §9, §10; L4 §1, §2, §3, §4, §6, §7, §8, §10; L5 §1, §2, §3, §4, §5, §6, §8, §10
+illustration:
+  en: "illustration"
+  uz: ["tasvir uchun", "misol", "illustratsiya"]
+
+# L1 §3
+classes_count:
+  en: "classes"
+  uz: "ta sinf"
+
+# L1 §4
+balance_point:
+  en: "balance point"
+  uz: "muvozanat nuqtasi"
 
 # L1 §4
 missing:
@@ -571,6 +651,11 @@ minutes:
   en: ["min", "minutes"]
   uz: "daqiqa"
 
+# L1 §6
+typical_distance_from_mean:
+  en: "typical distance from the mean"
+  uz: "oʻrtachadan odatiy uzoqlik"
+
 # L1 §7
 rejected:
   en: "rejected:"
@@ -676,7 +761,7 @@ machine_b:
   en: "Machine B"
   uz: "B mashina"
 
-# L1 §7
+# L1 §7, §8
 unchanged:
   en: "unchanged"
   uz: "oʻzgarmadi"
@@ -742,6 +827,11 @@ upper_half:
   uz: "yuqori yarmi"
 
 # L1 §8
+quartile_means_quarter:
+  en: "quartile — quarter"
+  uz: "kvartil — chorak"
+
+# L1 §8
 box_plot:
   en: "box plot"
   uz: "quti diagrammasi"
@@ -801,6 +891,16 @@ in_which_panel_is_a_straight_q:
   en: "In which panel is a straight line right?"
   uz: "Qaysi birida toʻgʻri chiziq toʻgʻri keladi?"
 
+# L1 §9; L4 §9
+correlation:
+  en: "correlation"
+  uz: "korrelyatsiya"
+
+# L1 §9
+strong_relationship:
+  en: "strong relationship"
+  uz: "kuchli bogʻlanish"
+
 # L1 §10
 rain_tomorrow_q:
   en: "Rain tomorrow?"
@@ -810,6 +910,11 @@ rain_tomorrow_q:
 tomorrow:
   en: "tomorrow"
   uz: "ertangi kun"
+
+# L1 §10
+three_evens_in_a_row:
+  en: "three evens in a row"
+  uz: "ketma-ket uch marta juft"
 
 # L1 §10
 cat:
@@ -887,6 +992,11 @@ event:
   uz: "hodisa"
 
 # L1 §10
+even:
+  en: "even"
+  uz: "juft"
+
+# L1 §10
 why_sets_q:
   en: "Why sets?"
   uz: "Nima uchun toʻplamlar?"
@@ -896,17 +1006,12 @@ classifier_output:
   en: "classifier output"
   uz: "klassifikator natijasi"
 
-# L1 §10, §14; L2 §6, §7, §9; L3 §1, §3, §4, §5, §9, §10; L4 §1, §2, §3, §4, §6, §7, §8, §10; L5 §1, §2, §3, §4, §5, §6, §8, §10
-illustration:
-  en: "illustration"
-  uz: ["tasvir uchun", "misol", "illustratsiya"]
-
 # L1 §10
 "3_rules":
   en: "3 rules"
   uz: "3 ta qoida"
 
-# L1 §10
+# L1 §10, §13
 heads:
   en: "heads"
   uz: "gerb"
@@ -916,7 +1021,7 @@ tails:
   en: "tails"
   uz: "raqam"
 
-# L1 §11
+# L1 §11, §12
 complement:
   en: "complement"
   uz: "toʻldiruvchi"
@@ -972,6 +1077,16 @@ p_neither_a_heart_nor_a_q:
   uz: "2. qoʻshish"
 
 # L1 §11
+not_a_six:
+  en: "not a six"
+  uz: "olti emas"
+
+# L1 §11
+times_rolled:
+  en: "rolls"
+  uz: "marta tashlash"
+
+# L1 §11
 sentence:
   en: "sentence"
   uz: "gap"
@@ -986,15 +1101,15 @@ birthdays:
   en: "birthdays"
   uz: "tugʻilgan kun"
 
-# L1 §11
-at_least_one:
-  en: "at least one"
-  uz: "hech boʻlmaganda bitta"
-
-# L1 §11
+# L1 §11, §12
 none:
   en: "none"
   uz: "hech biri"
+
+# L1 §11, §12
+at_least_one:
+  en: "at least one"
+  uz: "hech boʻlmaganda bitta"
 
 # L1 §12
 people_in_the_room_n:
@@ -1207,6 +1322,21 @@ c_less_than_3:
   uz: "C: 3 dan kichik"
 
 # L1 §13
+no_effect:
+  en: "no effect"
+  uz: "taʼsiri yoʻq"
+
+# L1 §13
+picture:
+  en: "picture"
+  uz: "rasm"
+
+# L1 §13; L3 §1
+numbers:
+  en: "numbers"
+  uz: "sonlar"
+
+# L1 §13
 spam_q:
   en: "spam?"
   uz: "spammi?"
@@ -1321,6 +1451,11 @@ classical:
   en: "classical"
   uz: "klassik"
 
+# L1 §14
+number_of_days:
+  en: "number of days"
+  uz: "kunlar soni"
+
 # L1 §14; L3 §7
 spam:
   en: "spam"
@@ -1340,6 +1475,11 @@ next:
 lecture_2_conditional_probability_and_bayes:
   en: "Lecture 2 · Conditional probability and Bayes' theorem"
   uz: "2-maʼruza · Shartli ehtimollik va Bayes teoremasi"
+
+# L1 §14
+share_of_rainy_days:
+  en: "share of rainy days"
+  uz: "yomgʻirli kunlar ulushi"
 
 # L1 §14
 tomorrow_rain:
@@ -2314,11 +2454,6 @@ the_student_takes_the_bus:
 events:
   en: "events"
   uz: "hodisalar"
-
-# L3 §1
-numbers:
-  en: "numbers"
-  uz: "sonlar"
 
 # L3 §1
 random_variable:
@@ -3571,11 +3706,6 @@ temperature:
 sales:
   en: "sales"
   uz: "savdo"
-
-# L4 §9
-correlation:
-  en: "correlation"
-  uz: "korrelyatsiya"
 
 # L4 §9
 as_a_pair:

@@ -98,6 +98,19 @@ class S12Problem(LectureScene):
             self.play(LaggedStart(*[Create(l) for l in tangle], lag_ratio=0.05), FadeTransform(q, mess),
                       run_time=1.6)
 
+        # 12.2a: a reminder of section 11's complement rule
+        recall = VGroup(txt(label("complement"), size=24, weight=BOLD, color=GREY_B),
+                        txt(f"P({label('at_least_one')})", size=26, color=HILITE),
+                        txt(f"= 1 − P({label('none')})", size=26, color=RLGREEN)).arrange(DOWN, buff=0.18)
+        recall_box = SurroundingRectangle(recall, buff=0.22, color=GREY_B, corner_radius=0.15)
+        recall_g = VGroup(recall_box, recall).move_to([3.8, -0.6, 0])
+        t = line("12.2a")
+        with self.voiceover(t) as tr:
+            self.play(VGroup(tangle, pair, triple, two_pairs).animate.set_opacity(0.25), FadeOut(tags), FadeOut(mess),
+                      FadeIn(recall_g, shift=UP * 0.2), run_time=0.8)
+            self.cue(tr, t, 1)
+            self.play(Indicate(recall[2], color=RLGREEN), run_time=0.9)
+
         # the complement: everyone different
         lhs = txt(label("p_a_shared_pair"), size=34, color=HILITE)
         eq = txt("=", size=34)
@@ -106,7 +119,7 @@ class S12Problem(LectureScene):
         formula = VGroup(lhs, eq, one, rhs).arrange(RIGHT, buff=0.3).move_to(UP * 1.2)
         t = line("12.3")
         with self.voiceover(t) as tr:
-            self.play(FadeOut(VGroup(pair, triple, two_pairs, tangle, tags, mess, head)), run_time=0.6)
+            self.play(FadeOut(VGroup(pair, triple, two_pairs, tangle, head, recall_g)), run_time=0.6)
             self.play(VGroup(room, people).animate.scale(0.55).move_to([0, -1.9, 0]), run_time=0.8)
             self.cue(tr, t, 1)
             self.play(FadeIn(rhs), people.animate.set_color(RLGREEN), run_time=0.7)
@@ -152,6 +165,19 @@ class S12Problem(LectureScene):
             self.play(FadeOut(VGroup(cells, cal_lab, who_lab, *who)), ReplacementTransform(VGroup(*fr), prod_[0][3:]),
                       run_time=1.2)
             self.play(FadeIn(prod_[0][:3]), GrowFromCenter(brace), FadeIn(blab), run_time=0.9)
+
+        # 12.5a: the same product written out for 23 people
+        n23, last = L["bday_first_over_half"], L["bday_last_factor_23"]
+        assert last == 365 - n23 + 1
+        p23 = MathTex(rf"n = {n23}:\quad", r"\frac{365}{365}\cdot\frac{364}{365}\cdots", rf"\frac{{{last}}}{{365}}",
+                      font_size=50).next_to(blab, DOWN, buff=0.55)
+        p23[2].set_color(HILITE)
+        t = line("12.5a")
+        with self.voiceover(t) as tr:
+            self.play(Write(p23[:2]), run_time=1.4)
+            self.cue(tr, t, {"en": "and so on", "uz": "va shunday"})
+            self.play(Write(p23[2]), run_time=0.8)
+            self.play(Indicate(p23[2], color=HILITE), run_time=0.8)
         self.clear_all()
 
 

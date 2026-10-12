@@ -21,6 +21,7 @@ MODELS = ("Kotib/uzbek_stt_v1", "islomov/rubaistt_v2_medium")
 MAX_MISSING_RUN = 3      # this many approved words in a row, heard by neither recogniser
 MAX_CER = 0.15
 MAX_TAIL_DB = -35        # a clip still this loud in its last 50 ms was cut off mid-word
+MAX_NOISE_S = 1.0        # this long loud with no clean voiced frame is hiss, not speech
 
 
 def words(t):
@@ -43,6 +44,25 @@ def tail_db(path):
                          capture_output=True, check=True).stdout
     x = np.frombuffer(raw, np.int16).astype(float)[-800:] / 32768
     return float(20 * np.log10(np.sqrt((x ** 2).mean()) + 1e-9))
+
+
+def noise_run(path, win=0.1, flat_min=0.12, loud=-32):
+    """Longest stretch (seconds) that is loud but never has a clean voiced 0.1 s frame (spectral flatness stays
+    >= 0.12). Speech keeps dipping below that; hiss does not. Lecture 4's 6:17 line opened with 2.3 s of it while
+    the recognisers still half-heard the words under it. Across Lectures 3-4 normal clips peak at 0.9 s."""
+    import subprocess
+    import numpy as np
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1", "-ar", "24000", "-f", "s16le", "-"],
+                         capture_output=True, check=True).stdout
+    x = np.frombuffer(raw, np.int16).astype(float) / 32768
+    hop, run, best = int(win * 24000), 0, 0
+    for i in range(0, len(x) - hop, hop):
+        seg = x[i:i + hop]
+        rms = 20 * np.log10(np.sqrt((seg ** 2).mean()) + 1e-9)
+        sp = np.abs(np.fft.rfft(seg * np.hanning(hop))) + 1e-9
+        run = run + 1 if rms > loud and np.exp(np.log(sp).mean()) / sp.mean() >= flat_min else 0
+        best = max(best, run)
+    return round(best * win, 1)
 
 
 def missing_tail(ref, hyp):
@@ -97,14 +117,14 @@ def main(builds):
             heard = [a(f)["text"] for a in asrs]
             scores = [(missing_run(ref, words(h)), cer(ref, words(h)), missing_tail(ref, words(h))) for h in heard]
             run, c, tail = (min(s[i] for s in scores) for i in range(3))
-            end = tail_db(f)
-            ok = run < MAX_MISSING_RUN and c <= MAX_CER and tail == 0 and end <= MAX_TAIL_DB
+            end, noise = tail_db(f), noise_run(f)
+            ok = run < MAX_MISSING_RUN and c <= MAX_CER and tail == 0 and end <= MAX_TAIL_DB and noise < MAX_NOISE_S
             report.append({"file": f, "text": text, "heard": heard, "missing_run": run, "cer": round(c, 3),
-                           "missing_tail": tail, "tail_db": round(end, 1), "ok": ok})
+                           "missing_tail": tail, "tail_db": round(end, 1), "noise_s": noise, "ok": ok})
             if not ok:
                 bad += 1
                 print(f"FAIL {Path(f).parent.name}/{Path(f).name}  missing {run} words, CER {c:.2f}, "
-                      f"last {tail} words lost, ends at {end:.0f} dB\n"
+                      f"last {tail} words lost, ends at {end:.0f} dB, noise {noise} s\n"
                       f"     text:  {text}\n     heard: {heard[0]}\n            {heard[1]}", flush=True)
         Path(build, "voice_check.json").write_text(json.dumps(report, ensure_ascii=False, indent=1))
         print(f"{build}: {sum(r['ok'] for r in report)}/{len(report)} clips say their text", flush=True)

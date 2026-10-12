@@ -109,6 +109,30 @@ class S09Tables(LectureScene):
             self.cue(tr, t, 2)
             self.play(LaggedStart(*[FadeIn(b) for b in blocks["fit"]], lag_ratio=0.2), run_time=1.0)
 
+        # what correlation is: a number from -1 to 1; ours sits near the strong end
+        r_val = ANS["I"]["corr"]
+        assert round(r_val, 1) == 0.8
+        rows_all = VGroup(*[VGroup(n, h, rows) for n, h, rows in tabs])
+        scale = NumberLine(x_range=[-1, 1, 0.5], length=9, color=GREY_B, include_tip=False).move_to([0, 0.75, 0])
+        ends = VGroup(*[MathTex(f"{v:g}", font_size=34, color=GREY_B).next_to(scale.n2p(v), DOWN, buff=0.2)
+                        for v in (-1, 0, 1)])
+        title = txt(label("correlation"), size=32, weight=BOLD, color=HILITE).move_to([0, 2.0, 0])
+        none = txt(label("no_relationship"), size=22, color=GREY_B).next_to(ends[1], DOWN, buff=0.12)
+        strong = txt(label("strong_relationship"), size=22, color=RLRED).next_to(ends[2], DOWN, buff=0.12)
+        back = Rectangle(width=13.6, height=4.1, stroke_width=0, fill_color=BLACK, fill_opacity=0.9).move_to([0, 1.3, 0])
+        mark = Dot(scale.n2p(r_val), radius=0.13, color=RLRED)
+        r_lab = MathTex(rf"r = {r_val:.3f}", font_size=34, color=RLRED).next_to(mark, UP, buff=0.18)
+        with self.say("9.3a") as (tr, t):
+            self.play(rows_all.animate.set_opacity(0.15), Indicate(blocks["r"], color=HILITE, scale_factor=1.05),
+                      run_time=0.9)
+            self.play(FadeIn(back), FadeIn(title), Create(scale), FadeIn(ends), run_time=1.0)
+            self.cue(tr, t, 1)
+            self.play(FadeIn(none), run_time=0.6)
+            self.cue(tr, t, {"uz": 3, "en": "zero point eight"})
+            self.play(FadeIn(mark, scale=0.5), FadeIn(r_lab), FadeIn(strong), run_time=0.9)
+        self.play(FadeOut(VGroup(back, scale, ends, title, none, strong, mark, r_lab)), rows_all.animate.set_opacity(1),
+                  run_time=0.6)
+
         eqs = VGroup(*[MathTex("=", font_size=44, color=HILITE).move_to([(COLS[i] + COLS[i + 1]) / 2, -2.05, 0])
                        for i in range(3)])
         frames = VGroup(*[panel_frame(i) for i in range(4)])

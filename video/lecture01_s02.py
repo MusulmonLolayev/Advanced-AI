@@ -66,6 +66,36 @@ class S02Population(LectureScene):
             self.play(Create(ring), FadeIn(smp, shift=LEFT * 0.2), run_time=1.0)
             self.cue(tr, t, 1)
             self.play(FadeIn(n_lab), Indicate(dots, color=HILITE, scale_factor=1.15), run_time=1.2)
+
+        # a sample must look like the population: one corner of the cloud is a biased sample
+        rng = np.random.default_rng(11)
+        n = len(dots)
+
+        def spread(center, w, h):
+            r, th = np.sqrt(rng.uniform(0, 1, n)), rng.uniform(0, 2 * np.pi, n)
+            return np.c_[r * np.cos(th) * w / 2, r * np.sin(th) * h / 2, np.zeros(n)] + np.array(center)
+
+        corner = spread([4.0, 1.1, 0], 2.2, 1.3)
+        even = spread([0, -0.1, 0], 11.6, 6.0)
+        biased = dots.copy().set_color(RLRED)
+        for d, q in zip(biased, corner):
+            d.scale(3.4).set_fill(opacity=1).move_to(q)
+        fair = dots.copy().set_color(GOOD)
+        for d, q in zip(fair, even):
+            d.scale(3.4).set_fill(opacity=1).move_to(q)
+        bad_ring = Ellipse(width=2.6, height=1.7, color=RLRED, stroke_width=4).move_to([4.0, 1.1, 0])
+        bad_lab = txt(label("only_big_companies"), size=26, color=RLRED).next_to(bad_ring, DOWN, buff=0.2)
+        bad_lab.set_x(min(bad_lab.get_x(), config.frame_width / 2 - SAFE - 0.1 - bad_lab.width / 2))
+        high = txt(label("too_high"), size=26, weight=BOLD, color=RLRED).next_to(bad_lab, DOWN, buff=0.12)
+        good_lab = txt(label("at_random"), size=32, weight=BOLD, color=GOOD).move_to([3.4, -2.75, 0])
+        with self.say("2.3a") as (tr, t):
+            self.play(FadeOut(ring), FadeOut(smp), FadeOut(n_lab), fog.animate.set_opacity(0.12), run_time=0.5)
+            self.cue(tr, t, 1)
+            self.play(Transform(dots, biased), run_time=1.4)
+            self.play(Create(bad_ring), FadeIn(bad_lab), FadeIn(high), run_time=0.8)
+            self.cue(tr, t, 2)
+            self.play(FadeOut(bad_ring), FadeOut(bad_lab), FadeOut(high), Transform(dots, fair), run_time=1.6)
+            self.play(FadeIn(good_lab, shift=UP * 0.2), run_time=0.6)
         self.clear_all()
 
 
@@ -149,6 +179,23 @@ class S02Symbols(LectureScene):
             self.play(FadeIn(latin, shift=UP * 0.2), Indicate(ring, color=RLBLUE), run_time=1.0)
             self.cue(tr, t, 4)
             self.play(FadeIn(greek, shift=UP * 0.2), Indicate(rim, color=HILITE, scale_factor=1.0), run_time=1.0)
+
+        # x-bar is what we can compute, mu what we want to know: statistics reasons from one to the other
+        bridge = CurvedArrow(latin[0].get_right() + RIGHT * 0.1, greek[0].get_left() + LEFT * 0.1, angle=-PI / 3,
+                             color=HILITE, stroke_width=5, tip_length=0.25)
+        ask = txt("?", size=48, weight=BOLD, color=HILITE).next_to(bridge, UP, buff=0.05)
+        cap_s = txt(label("we_compute"), size=22, color=RLBLUE).next_to(latin, DOWN, buff=0.35)
+        cap_p = txt(label("we_want_to_know"), size=22, color=HILITE).next_to(greek, DOWN, buff=0.35)
+        for c, x in ((cap_s, h_s.get_x()), (cap_p, h_p.get_x())):
+            c.set_x(x)
+        cap_p.set_x(min(cap_p.get_x(), config.frame_width / 2 - SAFE - 0.1 - cap_p.width / 2))
+        with self.say("2.9a") as (tr, t):
+            self.cue(tr, t, 1)
+            self.play(Indicate(latin[0], color=RLBLUE), FadeIn(cap_s), run_time=0.9)
+            self.play(Indicate(greek[0], color=HILITE), FadeIn(cap_p), run_time=0.9)
+            self.cue(tr, t, 2)
+            self.play(Create(bridge), FadeIn(ask, scale=0.6), run_time=1.0)
+        self.play(FadeOut(bridge), FadeOut(ask), FadeOut(cap_s), FadeOut(cap_p), run_time=0.4)
 
         smp2 = txt(label("training_set"), size=28, weight=BOLD, color=RLBLUE).move_to(smp)
         pop2 = txt(label("the_whole_world"), size=30, weight=BOLD, color=GREY_A).move_to(pop)

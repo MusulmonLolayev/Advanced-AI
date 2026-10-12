@@ -86,6 +86,36 @@ def bell(mean, sd, color, height):
     return VMobject(stroke_color=color, stroke_width=5).set_points_smoothly(pts)
 
 
+# ─── the way from the mean to the upper limit, marked off in standard deviations ───
+RULER_Y = BASE - 0.68
+
+
+def sd_ruler(sd, color):
+    """A white line from 500 ml to the upper limit, and on it one segment per standard deviation
+    (the last one cut short where the limit falls), each full segment marked s."""
+    base_ = VGroup(Line([mx(TARGET), RULER_Y, 0], [mx(HI_ML), RULER_Y, 0], color=WHITE, stroke_width=2),
+                   *[Line([mx(v), RULER_Y - 0.12, 0], [mx(v), RULER_Y + 0.12, 0], color=WHITE, stroke_width=3)
+                     for v in (TARGET, HI_ML)])
+    dist = txt(f"{TOL:g} ml", size=22).next_to(base_[1], LEFT, buff=0.2)
+    segs = VGroup()
+    a, j = TARGET, 0
+    while a < HI_ML - 1e-9:
+        b = min(a + sd, HI_ML)
+        shade = color if j % 2 == 0 else interpolate_color(ManimColor(color), BLACK, 0.45)
+        seg = Line([mx(a), RULER_Y, 0], [mx(b), RULER_Y, 0], color=shade, stroke_width=10)
+        mark = VGroup(seg)
+        if b - a >= sd - 1e-9:
+            mark.add(MathTex("s", font_size=30, color=color).next_to(seg, DOWN, buff=0.1))
+        segs.add(mark)
+        a, j = b, j + 1
+    return VGroup(VGroup(base_, dist), segs)
+
+
+def limits_sum(sd, k, color):
+    assert TOL / sd == k
+    return MathTex(rf"{TOL:g} \div {sd:g} = {k:g}", font_size=34, color=color).move_to([mx(HI_ML) + 1.45, RULER_Y, 0])
+
+
 class S07Bottles(LectureScene):
     def construct(self):
         self.section_card(7)
@@ -122,6 +152,17 @@ class S07Bottles(LectureScene):
             self.cue(tr, t, {"en": "eleven", "uz": "Shuning uchun"})
             self.play(*[c.animate.set_fill(RLRED) for c in bad_cells(grid, FA)], FadeIn(ctr_a), run_time=0.9)
 
+        ruler_a, sum_a = sd_ruler(SD["A"], RLGREEN), limits_sum(SD["A"], L["bottle_A_limits_sd"], RLGREEN)
+        with self.say("7.3a") as (tr, t):
+            self.play(Indicate(sd_a, color=RLGREEN, scale_factor=1.06), run_time=0.8)
+            self.cue(tr, t, 1)
+            self.play(Create(ruler_a[0][0]), FadeIn(ruler_a[0][1]), run_time=0.8)
+            self.play(LaggedStart(*[FadeIn(m) for m in ruler_a[1]], lag_ratio=0.35), run_time=1.0)
+            self.cue(tr, t, 2)
+            self.play(FadeIn(sum_a, shift=UP * 0.1), run_time=0.7)
+            self.cue(tr, t, 3)
+            self.play(Indicate(ctr_a, color=RLRED), run_time=0.9)
+
         hb = hist(FB, RLORANGE)
         name_b = tagged(f"s = {SD['B']:g} ml", f"{label('machine_b')}: ", after=False, size=26,
                         color=RLORANGE).move_to(name_a)
@@ -130,12 +171,21 @@ class S07Bottles(LectureScene):
         ctr_b = tagged(f"{REJ_B} / {N_BOTTLES}", label("rejected"), after=False, size=24, color=RLRED).move_to(ctr_a)
         with self.say("7.4") as (tr, t):
             self.play(ha.animate.set_opacity(0.18), FadeOut(name_a), FadeIn(name_b), *[c.animate.set_fill(GREY_D) for c
-                      in bad_cells(grid, FA)], FadeOut(ctr_a), run_time=0.8)
+                      in bad_cells(grid, FA)], FadeOut(ctr_a), FadeOut(ruler_a), FadeOut(sum_a), run_time=0.8)
             self.play(LaggedStart(*[GrowFromEdge(r, DOWN) for r in hb], lag_ratio=0.04), run_time=1.6)
             self.cue(tr, t, 1)
             self.play(FadeOut(sd_a), FadeIn(sd_b), run_time=0.6)
             self.cue(tr, t, 2)
             self.play(*[c.animate.set_fill(RLRED) for c in bad_cells(grid, FB)], FadeIn(ctr_b), run_time=1.2)
+
+        ruler_b, sum_b = sd_ruler(SD["B"], RLORANGE), limits_sum(SD["B"], L["bottle_B_limits_sd"], RLORANGE)
+        with self.say("7.4a") as (tr, t):
+            self.play(Create(ruler_b[0][0]), FadeIn(ruler_b[0][1]), run_time=0.7)
+            self.play(LaggedStart(*[FadeIn(m) for m in ruler_b[1]], lag_ratio=0.35), run_time=0.8)
+            self.cue(tr, t, 1)
+            self.play(FadeIn(sum_b, shift=UP * 0.1), run_time=0.7)
+            self.cue(tr, t, 2)
+            self.play(Indicate(ruler_b[1][-1], color=RLRED, scale_factor=1.3), Indicate(ctr_b, color=RLRED), run_time=1.0)
 
         ratio = VGroup(tagged(f"×{L['bottle_spread_ratio']:g}", label("spread"), after=False, size=34, weight=BOLD,
                               color=RLORANGE),
@@ -144,7 +194,8 @@ class S07Bottles(LectureScene):
         ratio.move_to(target)
         still = txt(f"{label('mean', 1)}: {TARGET:g} ml, {label('unchanged')}", size=24).next_to(mean_ln, UP, buff=0.1)
         with self.say("7.5") as (tr, t):
-            self.play(FadeOut(target), FadeOut(name_b), FadeIn(ratio, shift=UP * 0.2), run_time=0.9)
+            self.play(FadeOut(target), FadeOut(name_b), FadeOut(ruler_b), FadeOut(sum_b), FadeIn(ratio, shift=UP * 0.2),
+                      run_time=0.9)
             self.cue(tr, t, 1)
             self.play(Indicate(mean_ln, color=WHITE), FadeIn(still), run_time=1.2)
         self.clear_all()

@@ -58,6 +58,15 @@ def hist_bars(gap=0.0, color=RLBLUE):
                     for c, n in enumerate(COUNTS)])
 
 
+def k_bars(k, top=3.0, color=RLBLUE):
+    """The 600 salaries in k equal classes over the section's axis; the tallest bar is `top` high."""
+    counts, _ = np.histogram(SAL, bins=k, range=(S0, S1))
+    w = (X1 - X0) / k
+    return VGroup(*[Rectangle(width=w, height=max(n * top / counts.max(), 1e-3), stroke_color=BLACK,
+                              stroke_width=1 if k > 20 else 1.5, fill_color=color, fill_opacity=1)
+                    .move_to([X0 + (c + 0.5) * w, AY + n * top / counts.max() / 2, 0]) for c, n in enumerate(counts)])
+
+
 def step_head(step, words):
     return txt(f"{step}: {words}", size=34, weight=BOLD, color=HILITE).to_edge(UP, buff=SAFE + 0.3)
 
@@ -161,12 +170,30 @@ class S03Classes(LectureScene):
             self.play(FadeIn(div[5:], shift=LEFT * 0.2), run_time=0.7)
             self.play(LaggedStart(*[Create(e) for e in edges], lag_ratio=0.12), run_time=1.4)
 
+        # how many classes: too few hides the shape, too many shreds it
+        few, many, ok = k_bars(2), k_bars(60), k_bars(L["hist_k"])
+        verdict = [(2, label("too_few"), RLRED), (60, label("too_many"), RLRED), (L["hist_k"], label("good"), GOOD)]
+        tags = [VGroup(tagged(k, label("classes_count"), size=32), txt(v, size=32, weight=BOLD, color=c))
+                .arrange(RIGHT, buff=0.4).move_to([0, 1.55, 0]) for k, v, c in verdict]
+        head_k = self.heading(label("number_of_classes"))
+        with self.say("3.5a") as (tr, t):
+            self.play(FadeOut(head3), FadeOut(div), hairs.animate.set_stroke(opacity=0),
+                      edges.animate.set_opacity(0), FadeIn(head_k), run_time=0.7)
+            self.cue(tr, t, 1)
+            self.play(LaggedStart(*[GrowFromEdge(b, DOWN) for b in few], lag_ratio=0.2), FadeIn(tags[0]), run_time=1.0)
+            self.cue(tr, t, 2)
+            self.play(ReplacementTransform(few, many), ReplacementTransform(tags[0], tags[1]), run_time=1.4)
+            self.cue(tr, t, 3)
+            self.play(ReplacementTransform(many, ok), ReplacementTransform(tags[1], tags[2]), run_time=1.4)
+        self.play(FadeOut(ok), FadeOut(tags[2]), FadeOut(head_k), hairs.animate.set_stroke(opacity=1),
+                  edges.animate.set_opacity(1), FadeIn(head3), run_time=0.6)
+
         head4 = step_head(label("step_4"), label("count_each_class"))
         stacks = VGroup(*[Dot(p, radius=DR, color=RLBLUE, fill_opacity=1) for p in stack_positions()])
         nums = VGroup(*[Integer(0, font_size=34).move_to([X0 + (c + 0.5) * CW, AY + 0.08 + ((n - 1) // PER_ROW + 1) * DS + 0.3, 0])
                         for c, n in enumerate(COUNTS)])
         with self.say("3.6"):
-            self.play(FadeOut(head3), FadeIn(head4), FadeOut(div), edges.animate.set_opacity(0.35), run_time=0.7)
+            self.play(FadeOut(head3), FadeIn(head4), edges.animate.set_opacity(0.35), run_time=0.7)
             self.play(FadeIn(nums), run_time=0.3)
             self.play(ReplacementTransform(hairs, stacks),
                       *[ChangeDecimalToValue(nm, n) for nm, n in zip(nums, COUNTS)], run_time=2.6)
@@ -209,6 +236,40 @@ class S03Classes(LectureScene):
             self.play(FadeOut(head5), FadeIn(name, shift=DOWN * 0.2), run_time=0.8)
             self.cue(tr, t, 2)
             self.play(GrowArrow(skew), FadeIn(skew_lab), run_time=1.0)
+        self.clear_all()
+
+        # three shapes to read: symmetric (a sketch), right-skewed (our salaries), two peaks (a sketch)
+        def sketch(f, bins=14, width=3.6, height=2.0):
+            xs = (np.arange(bins) + 0.5) / bins
+            ys = np.array([f(x) for x in xs]); ys = ys * height / ys.max()
+            bw = width / bins
+            bars = VGroup(*[Rectangle(width=bw, height=max(y, 1e-3), stroke_color=BLACK, stroke_width=1,
+                                      fill_color=RLBLUE, fill_opacity=1).move_to([-width / 2 + (i + 0.5) * bw, y / 2, 0])
+                            for i, y in enumerate(ys)])
+            return VGroup(bars, Line(LEFT * width / 2, RIGHT * width / 2, color=GREY_B, stroke_width=2))
+
+        bell = lambda x: np.exp(-((x - 0.5) / 0.16) ** 2 / 2)
+        twin = lambda x: np.exp(-((x - 0.27) / 0.09) ** 2 / 2) + 0.85 * np.exp(-((x - 0.72) / 0.1) ** 2 / 2)
+        sal_g, _ = mini_hist(SAL, S0, S1, 14, label("salary"))
+        panels = [sketch(bell), VGroup(sal_g[0], sal_g[1]), sketch(twin)]
+        names = [label("symmetric"), label("skewed_right"), label("two_peaks")]
+        cols = (RLGREEN, HILITE, BLUE_B)
+        shapes = VGroup()
+        for g, nm, c, x in zip(panels, names, cols, (-4.5, 0, 4.5)):
+            title = txt(nm, size=30, weight=BOLD, color=c).next_to(g, DOWN, buff=0.3)
+            shapes.add(VGroup(g, title).scale(1.1).move_to([x, 0.1, 0]))
+        head_s = self.heading(label("histogram"))
+        sal_tag = txt(label("salary"), size=22, color=GREY_B).next_to(shapes[1][1], DOWN, buff=0.15)
+        ill = VGroup(*[txt(label("illustration", 1), size=20, color=GREY_B).next_to(shapes[i][1], DOWN, buff=0.15)
+                       for i in (0, 2)])
+        with self.say("3.9a") as (tr, t):
+            self.play(FadeIn(head_s), run_time=0.5)
+            self.cue(tr, t, 1)
+            self.play(FadeIn(shapes[0], shift=UP * 0.3), FadeIn(ill[0]), run_time=0.9)
+            self.cue(tr, t, {"uz": 2, "en": 3})
+            self.play(FadeIn(shapes[1], shift=UP * 0.3), FadeIn(sal_tag), run_time=0.9)
+            self.cue(tr, t, {"uz": 3, "en": 5})
+            self.play(FadeIn(shapes[2], shift=UP * 0.3), FadeIn(ill[1]), run_time=0.9)
         self.clear_all()
 
 

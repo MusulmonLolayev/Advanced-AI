@@ -158,7 +158,7 @@ class S04Mean(LectureScene):
         dots, axis = hist_dots(), hist_axis()
         self.add(dots, axis)
         bars, level = salary_bars(), level_bars()
-        formula = MathTex(r"\bar{x} \;=\; \frac{1}{n}\sum_{i=1}^{n} x_i", font_size=50)
+        formula = MathTex(r"\bar{x}", r"\;=\;", r"\frac{1}{n}", r"\sum_{i=1}^{n} x_i", font_size=50)
         formula.to_edge(UP, buff=SAFE + 0.35)
 
         t = say("s2a")
@@ -176,6 +176,19 @@ class S04Mean(LectureScene):
             self.until(tr, t, 1)
             self.play(FadeIn(mean_tag), FadeIn(formula), run_time=0.8)
 
+        # 4.s2d: the formula read aloud; section 2's sigma sign is the "add them all up"
+        longhand = MathTex(r"x_1 + x_2 + \dots + x_n", font_size=40, color=HILITE)
+        longhand.next_to(formula, DOWN, buff=0.3)
+        t = say("s2d")
+        with self.voiceover(t) as tr:
+            self.play(Indicate(formula, color=HILITE, scale_factor=1.05), run_time=0.8)
+            self.until(tr, t, 1)
+            self.play(formula[3].animate.set_color(HILITE), FadeIn(longhand, shift=DOWN * 0.2), run_time=0.8)
+            self.play(Indicate(formula[2], color=HILITE, scale_factor=1.3), run_time=0.9)
+            self.until(tr, t, 2)
+            self.play(ReplacementTransform(longhand, formula[3].copy().set_opacity(0)), run_time=1.0)
+            self.play(Indicate(formula[3], color=HILITE, scale_factor=1.15), run_time=0.9)
+
         # The same people again: what sits above the line is exactly what is missing below it.
         base = VGroup(*[bar(i, min(s * BSCALE, HM)) for i, s in enumerate(SAL)])
         tops = VGroup(*[bar(i, s * BSCALE - HM, HILITE, y0=BBASE + HM) for i, s in enumerate(SAL) if s * BSCALE > HM])
@@ -191,7 +204,7 @@ class S04Mean(LectureScene):
         fills.next_to(line, UP, buff=0.25)
         t = say("s2c")
         with self.voiceover(t) as tr:
-            self.play(FadeOut(value), FadeOut(mean_tag), run_time=0.5)
+            self.play(FadeOut(value), FadeOut(mean_tag), formula[3].animate.set_color(WHITE), run_time=0.5)
             self.remove(bars)
             self.add(base)
             self.play(LaggedStart(*[GrowFromEdge(r, DOWN) for r in tops], lag_ratio=0.002, run_time=1.4),
@@ -207,6 +220,54 @@ class S04Mean(LectureScene):
 
 
 class S04Totals(LectureScene):
+    def balance_beam(self, head, rect):
+        """4.s3e: the dot histogram on a beam; a fulcrum slides until the beam is level, at the mean."""
+        lift = 0.9                                              # the dot histogram sits low; centre the picture
+        y0 = HBASE + lift
+        dots, beam = hist_dots().shift(UP * lift), Line([HX0, y0, 0], [HX1, y0, 0], stroke_width=5, color=GREY_B)
+        load = VGroup(beam, dots)
+        level = load.copy()
+        fx0, fx1 = hx(H0 + (H1 - H0) / 2), hx(PAYROLL_MEAN)     # start mid-axis, end at the mean
+        tri_h = 0.55
+
+        def fulcrum(x):
+            return Polygon([x, y0, 0], [x - 0.32, y0 - tri_h, 0], [x + 0.32, y0 - tri_h, 0],
+                           stroke_width=0, fill_color=RLRED, fill_opacity=1)
+
+        tilt = 0.07                                             # radians, left end down: the crowd is left of mid
+        tri = fulcrum(fx0)
+        load.rotate(tilt, about_point=[fx0, y0, 0])
+        tag = txt(label("balance_point"), size=28, color=RLRED)
+        tag.add_background_rectangle(opacity=0.85, buff=0.08)
+        tag.next_to([fx1, y0 - tri_h, 0], DOWN, buff=0.2)
+        far = max(dots, key=lambda d: d.get_center()[0])
+        t = say("s3e")
+        with self.voiceover(t) as tr:
+            self.play(FadeOut(rect), FadeOut(head), run_time=0.6)
+            self.play(FadeIn(load), FadeIn(tri), run_time=0.9)
+            self.until(tr, t, 1)
+            alpha = ValueTracker(0)
+
+            def settle(m):
+                a = alpha.get_value()
+                x = fx0 + (fx1 - fx0) * a
+                m.become(level.copy().rotate(tilt * (1 - a), about_point=[x, y0, 0]))
+            load.add_updater(settle)
+            tri.add_updater(lambda m: m.become(fulcrum(fx0 + (fx1 - fx0) * alpha.get_value())))
+            self.play(alpha.animate.set_value(1), run_time=2.4, rate_func=smooth)
+            load.clear_updaters()
+            tri.clear_updaters()
+            self.play(FadeIn(tag, shift=UP * 0.2), run_time=0.6)
+            self.until(tr, t, 2)
+            lever = DoubleArrow([fx1 + 0.4, y0 - 0.25, 0], [far.get_center()[0], y0 - 0.25, 0], buff=0,
+                                color=HILITE, stroke_width=4, tip_length=0.18)
+            push = Arrow(far.get_center() + UP * 1.3, far.get_center() + UP * 0.12, buff=0, color=HILITE,
+                         stroke_width=6, max_tip_length_to_length_ratio=0.25)
+            self.play(far.animate.scale(2.2).set_color(HILITE), GrowArrow(push), run_time=0.8)
+            self.play(GrowFromCenter(lever), run_time=0.8)
+            self.play(Indicate(tag, color=RLRED, scale_factor=1.08), run_time=0.9)
+        self.play(FadeOut(VGroup(load, tri, tag, lever, push)), FadeIn(rect), FadeIn(head), run_time=0.8)
+
     def construct(self):
         bars, line = level_bars(), mean_line(BBASE + HM)
         self.add(bars, line)
@@ -222,6 +283,9 @@ class S04Totals(LectureScene):
             self.remove(bars)
             self.add(rect)
             self.play(FadeOut(line), Transform(rect, big), run_time=1.4)
+
+        # 4.s3e: the mean as the balance point of the 600 salaries on a beam
+        self.balance_beam(head, rect)
 
         b_n = Brace(rect, DOWN, buff=0.12, color=GREY_B)
         l_n = tagged(N_EMP, label("people"), size=26, color=GREY_B).next_to(b_n, DOWN, buff=0.12)

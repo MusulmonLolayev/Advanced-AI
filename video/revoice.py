@@ -17,7 +17,7 @@ import urllib.request
 from pathlib import Path
 
 from audio_fx import cap_pauses, trim_silence
-from voice_check import MAX_CER, MAX_MISSING_RUN, MAX_TAIL_DB, MODELS, cer, missing_run, missing_tail, tail_db, words
+from voice_check import MAX_CER, MAX_MISSING_RUN, MAX_NOISE_S, MAX_TAIL_DB, MODELS, cer, missing_run, missing_tail, noise_run, tail_db, words
 
 URL = "http://127.0.0.1:8765/tts"
 SEEDS = (1986, 7, 42, 123, 2024, 31337)
@@ -34,10 +34,12 @@ def synth(text, out, seed):
 
 
 def score(asrs, path, text):
-    """(cut off?, longest run of missed words, CER), lower is better: a take that ends mid-word never wins."""
+    """(cut off or noisy?, longest run of missed words, CER), lower is better: a take that ends mid-word or
+    carries a stretch of hiss never wins."""
     ref = words(re.sub(r"<[^>]+>", "", text))
     heard = [a(str(path))["text"] for a in asrs]
-    cut = int(tail_db(path) > MAX_TAIL_DB or min(missing_tail(ref, words(h)) for h in heard) > 0)
+    cut = int(tail_db(path) > MAX_TAIL_DB or noise_run(path) >= MAX_NOISE_S
+              or min(missing_tail(ref, words(h)) for h in heard) > 0)
     return (cut, *min((missing_run(ref, words(h)), round(cer(ref, words(h)), 3)) for h in heard)), heard
 
 
@@ -62,7 +64,8 @@ def main(build):
     replaced = []
     for r in [r for r in report if not r["ok"]]:
         f, text = Path(r["file"]), r["text"]
-        old = (int(r["tail_db"] > MAX_TAIL_DB or r["missing_tail"] > 0), r["missing_run"], r["cer"])
+        old = (int(r["tail_db"] > MAX_TAIL_DB or r.get("noise_s", 0) >= MAX_NOISE_S or r["missing_tail"] > 0),
+               r["missing_run"], r["cer"])
         pieces = []
         for k, sent in enumerate(p for p in re.split(r"(?<=[.?!:;])\s+", text.strip()) if p):
             best = None

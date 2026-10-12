@@ -145,6 +145,35 @@ class S14Empirical(LectureScene):
             self.play(Indicate(count[1], color=RLBLUE), run_time=0.8)
         self.clear_all()
 
+        # 14.5a: the share of rainy days wobbles, then settles (an illustration from a fixed seed)
+        R = L["rain_share"]
+        days, share = R["days"], R["share"]
+        ax = Axes(x_range=[0, 4, 1], y_range=[0, 1, 0.25], x_length=9.4, y_length=4.2,
+                  axis_config={"color": GREY_B, "stroke_width": 2, "include_tip": False},
+                  y_axis_config={"numbers_to_include": [0, 0.25, 0.5, 0.75, 1], "font_size": 22,
+                                 "decimal_number_config": {"num_decimal_places": 2}}).move_to([0.3, -0.2, 0])
+        xt = VGroup(*[txt(f"{10 ** k:,}".replace(",", " "), size=20, color=GREY_B).next_to(ax.c2p(k, 0), DOWN, buff=0.15)
+                      for k in range(5)])
+        xl = txt(label("number_of_days"), size=22, color=GREY_B).next_to(xt, DOWN, buff=0.2)
+        yl = txt(label("share_of_rainy_days"), size=22, color=GREY_B).rotate(PI / 2).next_to(ax.y_axis, LEFT, buff=0.6)
+        truth = DashedLine(ax.c2p(0, R["p"]), ax.c2p(4, R["p"]), color=GREY_B, stroke_width=2)
+        tl = txt(f"{R['p']}", size=22, color=GREY_B).next_to(ax.c2p(4, R["p"]), UR, buff=0.1)
+        pts = [ax.c2p(np.log10(d), v) for d, v in zip(days, share)]
+        path = VMobject(color=LBLUE, stroke_width=4).set_points_as_corners(pts)
+        i10, iend = days.index(10), len(days) - 1
+        m10 = Dot(pts[i10], radius=0.09, color=RLRED)
+        mend = Dot(pts[iend], radius=0.09, color=RLGREEN)
+        ill = txt(label("illustration", 2), size=20, color=GREY_B).next_to(ax, UP, buff=0.1).align_to(ax, RIGHT)
+        t = line("14.5a")
+        with self.voiceover(t) as tr:
+            self.play(Create(ax), FadeIn(xt), FadeIn(xl), FadeIn(yl), FadeIn(ill), Create(truth), FadeIn(tl),
+                      run_time=0.9)
+            self.play(Create(path), run_time=2.4, rate_func=linear)
+            self.cue(tr, t, 1)
+            self.play(FadeIn(m10, scale=0.5), Flash(m10, color=RLRED), run_time=0.7)
+            self.play(FadeIn(mend, scale=0.5), Flash(mend, color=RLGREEN), run_time=0.7)
+        self.clear_all()
+
         bars, axis, nums = histogram()
         lab = tagged(N_EMP, label("salaries"), size=24, color=GREY_B).next_to(axis, DOWN, buff=0.5)
         res = VGroup(MathTex(rf"\frac{{{COUNTS[1]}}}{{{N_EMP}}}", "=", f"{P4060:.3f}", font_size=60),

@@ -226,6 +226,15 @@ V["no_six_4"] = (5 / 6) ** 4                                    # §11: no six i
 V["at_least_one_six_4"] = 1 - (5 / 6) ** 4
 V["bday_last_factor_23"] = 365 - 22                             # §12: the product ends at 343/365
 V["sal_mean_k"], V["sal_median_k"] = round(V["sal_mean"] / 1000, 1), round(V["sal_median"] / 1000, 1)
+# §10 6a, §14 5a: two illustrations (labelled so on screen), from fixed seeds
+ROLL_SEED, ROLLS = 18, 24                                       # a strip of die rolls with a run of three evens
+V["roll_strip"] = np.random.default_rng(ROLL_SEED).integers(1, 7, size=ROLLS).tolist()
+V["roll_strip_evens"] = sum(r % 2 == 0 for r in V["roll_strip"])
+RAIN_SEED, RAIN_DAYS, RAIN_P = 0, 10_000, 0.7                   # rainy days, share settling as days grow
+_rain = np.random.default_rng(RAIN_SEED).random(RAIN_DAYS) < RAIN_P
+_share = np.cumsum(_rain) / np.arange(1, RAIN_DAYS + 1)
+_at = sorted({int(round(x)) for x in np.logspace(0, 4, 160)})
+V["rain_share"] = {"p": RAIN_P, "days": _at, "share": [float(_share[d - 1]) for d in _at]}
 (OUT / "l01_arrays.json").write_text(json.dumps(A) + "\n")
 
 (OUT / "l01_numbers.json").write_text(json.dumps(V, indent=2) + "\n")

@@ -91,6 +91,26 @@ class S13Definitions(LectureScene):
             self.play(FadeIn(know), run_time=0.7)
         self.clear_all()
 
+        # 13.3a: a coin and a die thrown together: nothing passes from one to the other
+        coin = VGroup(Circle(radius=0.95, color=RLORANGE, stroke_width=5).set_fill(RLORANGE, 0.2),
+                      txt(label("heads"), size=30, weight=BOLD, color=RLORANGE)).move_to([-3.2, 0.4, 0])
+        die = die_face(4, 1.7).move_to([3.2, 0.4, 0])
+        link = DashedLine(coin.get_right() + RIGHT * 0.3, die.get_left() + LEFT * 0.3, color=GREY_B, stroke_width=4)
+        link.add_tip(tip_length=0.25)
+        cross = Cross(Square(0.7).move_to(link.get_center()), stroke_color=RLRED, stroke_width=7)
+        none = txt(label("no_effect"), size=28, color=RLRED).next_to(cross, UP, buff=0.3)
+        ind = txt(label("independent"), size=40, weight=BOLD, color=RLGREEN).move_to([0, -2.2, 0])
+        t = line("13.3a")
+        with self.voiceover(t) as tr:
+            self.cue(tr, t, 1)
+            self.play(FadeIn(coin, shift=RIGHT * 0.3), FadeIn(die, shift=LEFT * 0.3), run_time=0.8)
+            self.cue(tr, t, 2)
+            self.play(Create(link), run_time=0.6)
+            self.play(Create(cross), FadeIn(none), run_time=0.6)
+            self.cue(tr, t, 3)
+            self.play(FadeIn(ind, scale=0.8), run_time=0.6)
+        self.clear_all()
+
 
 # one die, two events: A = even, B = more than four
 FACE_AB = {2: (-4.3, 0.2, 0), 4: (-4.3, -1.2, 0), 6: (-2.55, -0.5, 0), 5: (-1.2, -0.5, 0),
@@ -198,6 +218,28 @@ class S13EvenOdd(LectureScene):
             self.play(FadeOut(VGroup(prod, neq, both, dep, excl, ask, knows, knows_l)), run_time=0.5)
             self.cue(tr, t, 1)
             self.play(FadeIn(rg, scale=0.9), run_time=0.9)
+        self.clear_all()
+
+        # 13.9a: exclusive is a picture, independent is a number
+        div = Line(UP * 2.6, DOWN * 2.8, color=GREY_D, stroke_width=2)
+        lt = txt(label("mutually_exclusive"), size=32, weight=BOLD, color=RLRED).move_to([-3.6, 2.4, 0])
+        rt = txt(label("independent"), size=32, weight=BOLD, color=RLGREEN).move_to([3.6, 2.4, 0])
+        ca = Circle(radius=1.0, color=RLBLUE, stroke_width=4).set_fill(RLBLUE, 0.15).move_to([-4.85, 0.1, 0])
+        cb = Circle(radius=1.0, color=HILITE, stroke_width=4).set_fill(HILITE, 0.15).move_to([-2.35, 0.1, 0])
+        abl = VGroup(txt("A", size=30, weight=BOLD, color=LBLUE).move_to(ca),
+                     txt("B", size=30, weight=BOLD, color=HILITE).move_to(cb))
+        pic = txt(label("picture"), size=30, color=GREY_B).move_to([-3.6, -2.0, 0])
+        eqn = MathTex(r"P(A\cap B)", "=", r"P(A)\cdot P(B)", font_size=46, color=RLGREEN).move_to([3.6, 0.1, 0])
+        num = txt(label("numbers"), size=30, color=GREY_B).move_to([3.6, -2.0, 0])
+        t = line("13.9a")
+        with self.voiceover(t) as tr:
+            self.play(Create(div), FadeIn(lt), FadeIn(rt), run_time=0.7)
+            self.cue(tr, t, 1)
+            self.play(GrowFromCenter(ca), GrowFromCenter(cb), FadeIn(abl), run_time=0.8)
+            self.play(FadeIn(pic, shift=UP * 0.2), run_time=0.5)
+            self.cue(tr, t, 2)
+            self.play(Write(eqn), run_time=1.0)
+            self.play(FadeIn(num, shift=UP * 0.2), run_time=0.5)
         self.clear_all()
 
 

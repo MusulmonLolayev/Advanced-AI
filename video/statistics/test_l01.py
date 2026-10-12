@@ -143,5 +143,26 @@ class Draft4AddedLines(unittest.TestCase):
         self.assertEqual(((5 + 1) // 2, (9 + 1) // 2), (3, 5))
 
 
+class Draft4Illustrations(unittest.TestCase):
+    """§10 6a's strip of rolls and §14 5a's settling share (illustrations from fixed seeds)."""
+    def test_roll_strip(self):
+        r = L["roll_strip"]
+        self.assertEqual(len(r), 24)
+        self.assertEqual(L["roll_strip_evens"], sum(x % 2 == 0 for x in r))
+        self.assertEqual(L["roll_strip_evens"], len(r) // 2)                # "about half"
+        run = best = 0
+        for x in r:
+            run = run + 1 if x % 2 == 0 else 0
+            best = max(best, run)
+        self.assertEqual(best, 3)                                            # a run of three evens
+
+    def test_rain_share_settles(self):
+        s = L["rain_share"]
+        self.assertEqual((s["days"][0], s["days"][-1]), (1, 10_000))
+        early = s["share"][s["days"].index(10)]
+        self.assertGreater(abs(early - s["p"]), 0.05)                        # ten days: risky
+        self.assertLess(abs(s["share"][-1] - s["p"]), 0.01)                  # ten thousand: settled
+
+
 if __name__ == "__main__":
     unittest.main()

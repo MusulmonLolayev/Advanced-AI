@@ -7,6 +7,7 @@ salaries of section 4. The narration is the approved section 5 of narration/lect
 from lecture01_kit import *
 from lecture01_s04 import (AFTER_MEAN, BILLIONAIRE, DRINKERS, hist_axis, hist_dots, hx, xpos,
                            HBASE, LEFT_X, RIGHT_X)
+from lecture01_s03 import AY, ROWH, hist_bars, salary_axis, sx
 
 FIVE, FOUR = L["five"], L["four"]
 FIVE_MEAN, FIVE_MED, FOUR_MED = L["five_mean"], L["five_median"], L["four_median"]
@@ -98,6 +99,20 @@ class S05Middle(LectureScene):
             mid = by_value[FIVE[2]]
             self.play(mid.animate.set_fill(RLGREEN), FadeIn(head), run_time=0.8)
 
+        # 5.2a: where the middle is, for any n
+        n5, n9 = len(FIVE), len(NINE)
+        pos = MathTex(r"\frac{n+1}{2}", font_size=50, color=RLGREEN)
+        ex5 = MathTex(rf"n = {n5} \;\to\; {(n5 + 1) // 2}", font_size=42)
+        ex9 = MathTex(rf"n = {n9} \;\to\; {(n9 + 1) // 2}", font_size=42)
+        rule = VGroup(pos, ex5, ex9).arrange(RIGHT, buff=0.9).move_to([0, 2.2, 0])
+        t = line("5.2a")
+        with self.voiceover(t) as tr:
+            self.cue(tr, t, 1)
+            self.play(FadeIn(pos, shift=DOWN * 0.2), run_time=0.8)
+            self.cue(tr, t, 2)
+            self.play(FadeIn(ex5), Indicate(mid, color=RLGREEN, scale_factor=1.06), run_time=0.9)
+            self.play(FadeIn(ex9), run_time=0.8)
+
         bars = VGroup(*[by_value[v] for v in FIVE])
         nums = VGroup(*[txt(str(v), size=30, weight=BOLD).next_to(b, UP, buff=0.12) for v, b in zip(FIVE, bars)])
         subs = VGroup(*[MathTex(f"x_{i}", font_size=40, color=GREY_B).next_to(b, DOWN, buff=0.15)
@@ -105,7 +120,7 @@ class S05Middle(LectureScene):
         n_lab = MathTex("n = 5", font_size=40).to_corner(UR, buff=SAFE + 0.4)
         t = line("5.3")
         with self.voiceover(t) as tr:
-            self.play(bars[2].animate.set_fill(RLBLUE), run_time=0.3)
+            self.play(bars[2].animate.set_fill(RLBLUE), FadeOut(rule), run_time=0.3)
             self.cue(tr, t, 1)
             self.play(LaggedStart(*[FadeIn(n) for n in nums], lag_ratio=0.2), FadeIn(subs), run_time=1.4)
             self.cue(tr, t, 2)
@@ -174,6 +189,37 @@ class S05Middle(LectureScene):
             self.play(FadeOut(n5), FadeIn(typ, shift=RIGHT * 0.3), Indicate(med_l, color=RLGREEN), run_time=1.0)
             self.cue(tr, t, 1)
             self.play(FadeIn(share, shift=RIGHT * 0.3), Indicate(mean_l, color=RLRED), run_time=1.0)
+        self.clear_all()
+
+
+class S05Skew(LectureScene):
+    """5.7a: section 3's histogram with the mean and the median: the mean above the median is a right tail."""
+    def construct(self):
+        axis, bars = salary_axis(), hist_bars()
+        top = AY + max(L["hist_counts"]) * ROWH + 0.9
+        xm, xd = sx(L["sal_mean"]), sx(L["sal_median"])
+        med = DashedLine([xd, AY, 0], [xd, top, 0], color=RLGREEN, stroke_width=5)
+        mean = Line([xm, AY, 0], [xm, top, 0], color=RLRED, stroke_width=5)
+        med_t = tagged(money(L["sal_median"]), label("median", 1), after=False, size=26, color=RLGREEN)
+        med_t.next_to([xd, top, 0], LEFT, buff=0.15).shift(UP * 0.1)
+        mean_t = tagged(money(L["sal_mean"]), label("mean", 1), after=False, size=26, color=RLRED)
+        mean_t.next_to([xm, top, 0], RIGHT, buff=0.15).shift(UP * 0.1)
+        x_tail = sx(L["hist_edges"][2]) + 0.15                  # starts just right of the 40-60k class, above its neighbour
+        tail = Arrow([x_tail, AY + L["hist_counts"][2] * ROWH + 0.35, 0], [sx(L["sal_max"]), AY + 0.35, 0],
+                     buff=0, color=HILITE,
+                     stroke_width=6, max_tip_length_to_length_ratio=0.06)
+        tail_t = txt(label("skewed_right"), size=30, color=HILITE).next_to(tail.get_center(), UP, buff=0.35)
+        t = line("5.7a")
+        with self.voiceover(t) as tr:
+            self.play(Create(axis), LaggedStart(*[GrowFromEdge(b, DOWN) for b in bars], lag_ratio=0.1),
+                      run_time=1.4)
+            self.cue(tr, t, 1)
+            self.play(Create(mean), FadeIn(mean_t), run_time=0.8)
+            self.play(Create(med), FadeIn(med_t), run_time=0.8)
+            self.cue(tr, t, 2)
+            self.play(Indicate(mean_t, color=RLRED, scale_factor=1.1), run_time=0.8)
+            self.play(GrowArrow(tail), FadeIn(tail_t, shift=RIGHT * 0.2), run_time=1.0)
+            self.play(*[b.animate.set_fill(HILITE) for b in bars[3:]], run_time=0.8)
         self.clear_all()
 
 
@@ -381,4 +427,4 @@ class S05Teaser(LectureScene):
         self.clear_all()
 
 
-SCENES = ["S05Callback", "S05Middle", "S05Histogram", "S05Mode", "S05Typo", "S05HandsOn", "S05Teaser"]
+SCENES = ["S05Callback", "S05Middle", "S05Skew", "S05Histogram", "S05Mode", "S05Typo", "S05HandsOn", "S05Teaser"]

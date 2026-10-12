@@ -125,6 +125,23 @@ class S11Addition(LectureScene):
             self.play(Indicate(koh, color=RLGREEN, scale_factor=1.6), run_time=1.0)
             self.play(Indicate(koh, color=RLGREEN, scale_factor=1.6), run_time=1.0)
 
+        # 11.5a: the same double count as two overlapping circles
+        cards.save_state()
+        ch = Circle(radius=1.55, color=RLRED, stroke_width=5).set_fill(RLRED, 0.18).move_to([-0.95, -0.55, 0])
+        ck = Circle(radius=1.55, color=HILITE, stroke_width=5).set_fill(HILITE, 0.18).move_to([0.95, -0.55, 0])
+        both = Intersection(ch, ck, stroke_width=0, fill_color=RLGREEN, fill_opacity=0.85)
+        n_h = MathTex(rf"\heartsuit:\ {C['hearts']}", font_size=38, color=RLRED).move_to([-1.55, -0.55, 0])
+        n_k = MathTex(rf"K:\ {C['kings']}", font_size=38, color=HILITE).move_to([1.6, -0.55, 0])
+        n_b = MathTex(str(C["both"]), font_size=40, color=BLACK).move_to(both)
+        with self.say("11.5a") as (tr, t):
+            self.play(cards.animate.set_opacity(0.12), run_time=0.5)
+            self.play(Create(ch), Create(ck), FadeIn(n_h), FadeIn(n_k), run_time=0.9)
+            self.cue(tr, t, 1)
+            self.play(FadeIn(both), FadeIn(n_b), run_time=0.5)
+            for _ in range(2):          # counted once with the hearts, once with the kings
+                self.play(Indicate(VGroup(both, n_b), color=RLGREEN, scale_factor=1.15), run_time=0.7)
+        self.play(FadeOut(VGroup(ch, ck, both, n_h, n_k, n_b)), Restore(cards), run_time=0.6)
+
         a, b = C["union"], 52
         right = MathTex(r"P(\heartsuit \cup K)", "=", r"\tfrac{13 + 4 - 1}{52}", "=", rf"\tfrac{{{a}}}{{{b}}}",
                         font_size=42).move_to([0, 3.2, 0])
@@ -173,6 +190,33 @@ class S11Multiply(LectureScene):
             self.play(FadeOut(calc), Create(hl), run_time=0.7)
             self.play(FadeIn(cond, shift=UP * 0.15), run_time=0.7)
         self.play(FadeOut(cards), FadeOut(cond), FadeOut(hl), FadeOut(rule), FadeOut(head), run_time=0.6)
+
+        # 11.9a: complement and multiplication together: at least one six in four rolls
+        rolls = VGroup(*[die_face(6, size=0.95) for _ in range(4)]).arrange(RIGHT, buff=0.9).move_to([0, 0.95, 0])
+        crosses = VGroup(*[Cross(f, stroke_color=RLRED, stroke_width=5, scale_factor=0.9) for f in rolls])
+        each = VGroup(*[MathTex(r"\tfrac{5}{6}", font_size=40).next_to(f, DOWN, buff=0.35) for f in rolls])
+        not6 = txt(label("not_a_six"), size=24, color=GREY_B).next_to(each, LEFT, buff=0.5)
+        n4 = tagged(len(rolls), label("times_rolled"), size=28, color=GREY_B).next_to(rolls, UP, buff=0.35)
+        none = VGroup(txt(f"P({label('none')})", size=34), MathTex(
+            rf"= \left(\tfrac{{5}}{{6}}\right)^{{4}} \approx {L['no_six_4']:.2f}", font_size=44))
+        none.arrange(RIGHT, buff=0.2).move_to([0, -1.45, 0])
+        least = VGroup(txt(f"P({label('at_least_one')})", size=34, color=HILITE), MathTex(
+            rf"= 1 - {L['no_six_4']:.2f} \approx {L['at_least_one_six_4']:.2f}", font_size=44, color=HILITE))
+        least.arrange(RIGHT, buff=0.2).next_to(none, DOWN, buff=0.45)
+        rules = VGroup(chip(f"1. {label('complement')}", size=24), chip(f"3. {label('multiplication')}", size=24))
+        rules.arrange(RIGHT, buff=0.4).to_edge(UP, buff=SAFE + 0.1)
+        with self.say("11.9a") as (tr, t):
+            self.play(FadeIn(rules, shift=DOWN * 0.2), run_time=0.6)
+            self.cue(tr, t, 1)
+            self.play(LaggedStart(*[FadeIn(f, scale=0.6) for f in rolls], lag_ratio=0.15), FadeIn(n4), run_time=1.0)
+            self.cue(tr, t, {"en": "No six on one", "uz": "Bitta tashlashda"})
+            self.play(LaggedStart(*[Create(c) for c in crosses], lag_ratio=0.15), FadeIn(each), FadeIn(not6),
+                      run_time=1.2)
+            self.cue(tr, t, {"en": "No six in four", "uz": "Toʻrt marta chiqmasligi"})
+            self.play(Write(none), run_time=1.0)
+            self.cue(tr, t, {"en": "So at least", "uz": "Demak"})
+            self.play(Write(least), run_time=1.0)
+        self.play(FadeOut(VGroup(rolls, crosses, each, not6, n4, none, least, rules)), run_time=0.5)
 
         words = [label("the"), label("weather"), label("is"), label("hot")]
         terms = [r"P(w_1)", r"P(w_2 \mid w_1)", r"P(w_3 \mid w_1, w_2)", r"P(w_4 \mid w_1, w_2, w_3)"]

@@ -116,7 +116,17 @@ class S01DataTypes(LectureScene):
             neq = MathTex(r"\neq", font_size=56, color=BAD).move_to((q[0].get_center() + q[1].get_center()) / 2)
             self.play(GrowFromCenter(gaps[0]), GrowFromCenter(gaps[1]), FadeIn(q), run_time=0.8)
             self.play(FadeIn(neq, scale=1.3), run_time=0.5)
-        ordinal = VGroup(ax, pts, names, gaps, q, neq)
+
+        # codes 1, 2, 3 do not make the steps equal, so an average of them is suspect
+        codes = VGroup(*[txt(str(k), size=36, weight=BOLD, color=HILITE).next_to(n, UP, buff=0.3)
+                         for k, n in zip((1, 2, 3), names)])
+        caution = MathTex(r"\bar{x}", "=", "?", font_size=64, color=BAD).move_to([0, 1.55, 0])
+        with self.say("1.5a") as (tr, t):
+            self.play(LaggedStart(*[FadeIn(c, shift=DOWN * 0.2) for c in codes], lag_ratio=0.35), run_time=1.3)
+            self.play(Indicate(VGroup(gaps, q, neq), color=HILITE, scale_factor=1.05), run_time=1.0)
+            self.cue(tr, t, 1)
+            self.play(FadeIn(caution, scale=1.2), run_time=0.7)
+        ordinal = VGroup(ax, pts, names, gaps, q, neq, codes, caution)
 
         # discrete: whole numbers only
         with self.say("1.6") as (tr, t):
@@ -174,7 +184,45 @@ class S01WhyItMatters(LectureScene):
             cat_ops = txt(label("count_proportion"), size=28, color=RLBLUE)
             cat_ops.next_to(header[1][:2], DOWN, buff=0.7)
             self.play(FadeIn(cat_ops, shift=DOWN * 0.2), run_time=0.7)
-        self.play(FadeOut(VGroup(header, num_ops, cat_ops)), run_time=0.6)
+
+        # digits that are not numbers: postcodes and phone numbers are categories
+        top = tree_header()
+        extra = VGroup(card(label("postcode"), width=2.6, height=0.95, size=22),
+                       card(label("phone_number"), width=2.6, height=0.95, size=22))
+        extra.arrange(RIGHT, buff=0.8).move_to(UP * 0.9)
+        avg = MathTex(r"\frac{\text{" + label("postcode") + r"}_1 + \text{" + label("postcode") + r"}_2}{2}",
+                      "=", "?", font_size=50).move_to(DOWN * 1.0)
+        cross = Cross(avg, stroke_color=BAD, stroke_width=7)
+        test = box(label("does_adding_mean_anything_q"), color=HILITE, width=7.4, height=0.95, size=30)
+        test.move_to(DOWN * 2.6)
+        with self.say("1.8a") as (tr, t):
+            self.play(FadeOut(num_ops), FadeOut(cat_ops), Transform(header, top), run_time=0.8)
+            self.play(LaggedStart(*[FadeIn(c, shift=DOWN * 0.3) for c in extra], lag_ratio=0.3), run_time=1.0)
+            self.cue(tr, t, {"uz": 2, "en": 1})
+            self.play(Write(avg), run_time=1.2)
+            self.play(Create(cross), run_time=0.5)
+            self.cue(tr, t, {"uz": 3, "en": 2})
+            self.play(FadeIn(test, scale=0.9), run_time=0.7)
+
+        # the map: every card under its type
+        cols = [[0, 1], [2], [3], [4, 5]]           # VARS indices under nominal, ordinal, discrete, continuous
+        cells = VGroup()
+        for leaf, idx in zip(header[1], cols):
+            for k, i in enumerate(idx):
+                lab, val, _ = VARS[i]
+                c = card(lab, val, width=2.6, height=0.95, size=20)
+                c.move_to([leaf.get_x(), leaf.get_bottom()[1] - 0.75 - 1.07 * k, 0])
+                cells.add(c)
+        nominal_x, y0 = header[1][0].get_x(), header[1][0].get_bottom()[1] - 0.75
+        with self.say("1.8b") as (tr, t):
+            self.play(FadeOut(avg), FadeOut(cross), FadeOut(test),
+                      *[c.animate.move_to([nominal_x, y0 - 1.07 * (2 + k), 0]) for k, c in enumerate(extra)],
+                      run_time=0.9)
+            self.cue(tr, t, 1)
+            self.play(LaggedStart(*[FadeIn(c, shift=DOWN * 0.2) for c in cells], lag_ratio=0.15), run_time=1.6)
+            self.play(Indicate(header[0][0], color=RLBLUE), run_time=0.7)
+            self.play(Indicate(header[0][1], color=RLGREEN), run_time=0.7)
+        self.clear_all()
 
         # a city name cannot be a number; it becomes a category code
         cities = ("Toshkent", "Samarqand", "Buxoro")
