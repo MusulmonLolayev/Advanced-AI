@@ -26,6 +26,12 @@ class Section1Pmf(unittest.TestCase):
         self.assertEqual(V["dice_p7"], [1, 6])                  # 6/36
         self.assertEqual(V["dice_7_vs_2"], 6)                   # six times more likely than 2
         self.assertEqual(V["dice_p11"], [1, 18])                # hands-on: 2/36
+        self.assertEqual(V["dice_ways"][V["hands_on_sum"]], 2)
+        self.assertEqual((V["example_roll"], V["example_sum"]), ([3, 4], 7))
+
+    def test_monopoly(self):
+        self.assertEqual(V["monopoly_orange"], [6, 9])          # the most likely stretch past Jail
+        self.assertAlmostEqual(V["monopoly_orange_p"], 20 / 36)
 
     def test_pastries(self):
         self.assertEqual(V["pastry_pmf"], {"0": 0.7, "1": 0.2, "2": 0.1})
@@ -118,6 +124,9 @@ class Section6ShiftScale(unittest.TestCase):
 
 
 class Section7Bernoulli(unittest.TestCase):
+    def test_coin(self):
+        self.assertEqual(V["bern_coin"], 0.5)
+
     def test_any_pastry(self):
         self.assertAlmostEqual(V["bern_p"], 0.3)
         self.assertAlmostEqual(V["bern_var"], 0.21)
@@ -139,12 +148,15 @@ class Section8Binomial(unittest.TestCase):
         self.assertEqual((V["bin_mean"], round(V["bin_var"], 2), round(V["bin_sd"], 2)), (3.0, 2.1, 1.45))
 
     def test_tail_and_hands_on(self):
+        self.assertEqual(V["bin_tail_from"], 6)
         self.assertEqual(round(V["bin_ge6"], 3), 0.047)
         self.assertEqual(round(V["bin_p0"], 3), 0.028)               # hands-on: nobody buys
 
     def test_ai_accuracy(self):
         self.assertEqual((V["test_mean"], round(V["test_sd"], 6)), (90.0, 3.0))
         self.assertEqual([round(x) for x in V["test_band"]], [87, 93])
+        self.assertAlmostEqual(sum(V["test_pmf"]), 1.0)
+        self.assertEqual(max(range(101), key=lambda k: V["test_pmf"][k]), 90)
 
 
 class Section9Categorical(unittest.TestCase):
@@ -177,6 +189,8 @@ class Section10Poisson(unittest.TestCase):
     def test_binomial_meets_poisson(self):
         self.assertEqual(V["p_second"], [1, 150])
         self.assertLess(V["bin_vs_pois"], 0.001)
+        for b, q in zip(V["bin600_pmf"], V["pois_pmf"]):            # the bars section 10 draws
+            self.assertLess(abs(b - q), 0.001)
 
 
 class Section11Dirichlet(unittest.TestCase):

@@ -39,6 +39,12 @@ Narrated Manim videos built from the same material as the slide decks.
   them differently ("100 kishidan 1", "9,900 ning 5% i"), show the number as math the languages share
   (`P(kasal) = 1/100`, `5% × 9,900`) with the label beside or under it — never assemble grammar in code. Fixed
   names keep their number ("0-qism", "2-maʼruza", "1-bosqich"). `labels.py` rejects a `{placeholder}` in a label.
+- **Building sections in parallel:** each builder keeps its new labels in its own file in a scratch directory and
+  renders with `LABEL_DRAFTS=<dir>`; `common.py` merges those files over `labels.yaml` and stops on a key defined two
+  ways. Merge them into `labels.yaml` (`labels.write`) before the full build. `label()` takes its key as a plain
+  string — for a loop over data keys, build a dict of labels once (`CUP_NAME` in `lecture03_kit.py`) so `labels.py`
+  can see every key. Seed the full build's voice cache by copying `out/<dev>/media/voiceovers/*` into
+  `out/<lecture>/media/voiceovers/` (file names are relative), so no line is voiced twice.
 - A section file renders on its own while it is being written:
   `LANG_CODE=uz uv run --frozen manim -ql --media_dir out/l02dev_uz/media lecture02_s04.py S04Table`.
 
@@ -81,6 +87,9 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
   (`UnboundLocalError`). The move to `labels.yaml` was checked by logging every string each scene hands to
   `Text`/`MathTex` before and after, in both lectures and both languages: identical, so no re-render was needed.
   That probe caught a key reused for two different labels.
+- **edge-tts can be refused outright** (HTTP 403 from speech.platform.bing.com on 2026-10-12, version 7.2.8 and the
+  latest alike; the clock was right and announcing a newer Edge version did not help). Lines already in a voice cache
+  still render; new English lines wait until the service answers again.
 - **Labels next to a curve get a black backing** (`add_background_rectangle`), or the curve runs through the text.
 - **`Indicate` grows a mobject by 20 %**, which pushed a full-width bell curve onto the frame edge; use
   `scale_factor=1.04` on anything near full width.

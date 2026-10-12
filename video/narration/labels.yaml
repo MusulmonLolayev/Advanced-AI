@@ -31,7 +31,7 @@ part_1_probability:
   en: "Part 1 · Probability"
   uz: "1-qism · Ehtimollik"
 
-# L1 opening, §14
+# L1 opening, §14; L3 §1
 lecture_1:
   en: "Lecture 1"
   uz: "1-maʼruza"
@@ -51,7 +51,7 @@ numerical:
   en: "numerical"
   uz: "sonli"
 
-# L1 §1
+# L1 §1; L3 §1
 discrete:
   en: "discrete"
   uz: "diskret"
@@ -86,7 +86,7 @@ rating:
   en: "rating"
   uz: "baho"
 
-# L1 §1
+# L1 §1; L3 (all), §8, §11
 medium:
   en: "medium"
   uz: "oʻrta"
@@ -311,7 +311,7 @@ one_number_q:
   en: "one number?"
   uz: "bitta son?"
 
-# L1 §3
+# L1 §3; L3 §1
 how_many_q:
   en: "how many?"
   uz: "nechta?"
@@ -366,7 +366,7 @@ no_other_summary_does_that:
   en: "No other summary does that."
   uz: "Boshqa hech bir koʻrsatkich buni qilolmaydi."
 
-# L1 §4
+# L1 §4; L3 §2, §3, §4
 error:
   en: "error"
   uz: "xato"
@@ -871,7 +871,7 @@ sample_space:
   en: "sample space"
   uz: "namunalar fazosi"
 
-# L1 §10
+# L1 §10; L3 §7
 coin:
   en: "coin"
   uz: "tanga"
@@ -896,7 +896,7 @@ classifier_output:
   en: "classifier output"
   uz: "klassifikator natijasi"
 
-# L1 §10, §14; L2 §6, §7, §9
+# L1 §10, §14; L2 §6, §7, §9; L3 §1, §3, §4, §5, §9, §10
 illustration:
   en: "illustration"
   uz: ["tasvir uchun", "misol", "illustratsiya"]
@@ -976,7 +976,7 @@ sentence:
   en: "sentence"
   uz: "gap"
 
-# L1 §11
+# L1 §11; L3 §1
 language_model:
   en: "language model"
   uz: "til modeli"
@@ -1321,7 +1321,7 @@ classical:
   en: "classical"
   uz: "klassik"
 
-# L1 §14
+# L1 §14; L3 §7
 spam:
   en: "spam"
   uz: "spam"
@@ -1331,7 +1331,7 @@ training_data:
   en: "Training data"
   uz: "Oʻqitish berilganlari"
 
-# L1 §14; L2 §10
+# L1 §14; L2 §10; L3 §11
 next:
   en: "Next"
   uz: "Keyingi"
@@ -1346,7 +1346,7 @@ tomorrow_rain:
   en: "Tomorrow: rain"
   uz: "Ertaga: yomgʻir"
 
-# L1 §14; L2 §10
+# L1 §14; L2 §10; L3 §11
 the_end:
   en: "the end"
   uz: "tugadi"
@@ -1368,7 +1368,7 @@ part_1_bayes_theorem:
   en: "Part 1 · Bayes' theorem"
   uz: "1-qism · Bayes teoremasi"
 
-# L2 (all), §4
+# L2 (all), §4; L3 §2
 bike:
   en: "bike"
   uz: ["velosipedli", "velosiped"]
@@ -1393,7 +1393,7 @@ conditional_probability_independence_and_bayes_theorem:
   en: "Conditional probability, independence and Bayes' theorem"
   uz: "Shartli ehtimollik, erklilik va Bayes teoremasi"
 
-# L2 §1
+# L2 §1; L3 §1
 it_s_even:
   en: "“It's even.”"
   uz: "«Juft son chiqdi»"
@@ -1453,7 +1453,7 @@ p_bus_bike:
   en: "P(bus | bike)"
   uz: "P(avtobusda | velosipedli)"
 
-# L2 §1
+# L2 §1; L3 §7
 classifier:
   en: "classifier"
   uz: "klassifikator"
@@ -1563,7 +1563,7 @@ dataset:
   en: "dataset"
   uz: "berilganlar toʻplami"
 
-# L2 §3
+# L2 §3; L3 §2
 training:
   en: "training"
   uz: "oʻqitish"
@@ -1608,7 +1608,7 @@ put_back:
   en: "put back"
   uz: "qaytarib"
 
-# L2 §3
+# L2 §3; L3 §8
 without_replacement:
   en: "without replacement"
   uz: "qaytarmasdan"
@@ -2153,7 +2153,7 @@ bayesian_inference:
   en: "Bayesian inference"
   uz: "Bayes xulosasi"
 
-# L2 §10
+# L2 §10; L3 §11
 module_3:
   en: "Module 3"
   uz: "3-modul"
@@ -2217,3 +2217,725 @@ ill_people_found:
 lecture_3_discrete_random_variables_and:
   en: "Lecture 3 · Discrete random variables and key distributions"
   uz: "3-maʼruza · Diskret tasodifiy miqdorlar va asosiy taqsimotlar"
+
+# ══ Lecture 3 ═════════════════════════════════════════════════════════════
+
+# L3 (all)
+part_0_random_variables:
+  en: "Part 0 · Random variables"
+  uz: "0-qism · Tasodifiy miqdorlar"
+
+# L3 (all)
+part_1_key_distributions:
+  en: "Part 1 · Key distributions"
+  uz: "1-qism · Asosiy taqsimotlar"
+
+# L3 (all), §8
+small:
+  en: "small"
+  uz: "kichik"
+
+# L3 (all), §8
+large:
+  en: "large"
+  uz: "katta"
+
+# L3 opening, §11
+lecture_3:
+  en: "Lecture 3"
+  uz: "3-maʼruza"
+
+# L3 opening
+random_variables_and_key_distributions:
+  en: "Random variables and key distributions"
+  uz: "Tasodifiy miqdorlar va asosiy taqsimotlar"
+
+# L3 §1
+equally_likely_pairs:
+  en: "equally likely pairs"
+  uz: "teng ehtimolli juftlik"
+
+# L3 §1
+probability_mass_function:
+  en: "probability mass function"
+  uz: "ehtimollik taqsimoti"
+
+# L3 §1
+squares_past_jail:
+  en: "squares past Jail"
+  uz: "qamoqxonadan keyingi kataklar"
+
+# L3 §1
+orange_properties:
+  en: "orange properties"
+  uz: "toʻq sariq uylar"
+
+# L3 §1
+counts_in_a_sample_we_measured:
+  en: "counts in a sample we measured"
+  uz: "oʻlchangan tanlanmadagi sonlar"
+
+# L3 §1
+probabilities_for_a_customer_not_yet_served:
+  en: "probabilities for a customer who has not come in yet"
+  uz: "hali kelmagan mijoz uchun ehtimollar"
+
+# L3 §1
+lm_next_a:
+  en: "hot"
+  uz: "issiq"
+
+# L3 §1
+lm_next_b:
+  en: "good"
+  uz: "mazali"
+
+# L3 §1
+lm_next_c:
+  en: "strong"
+  uz: "achchiq"
+
+# L3 §1
+lm_next_d:
+  en: "sweet"
+  uz: "shirin"
+
+# L3 §1
+how_many_pastries_on_average_q:
+  en: "how many pastries on average?"
+  uz: "oʻrtacha nechta pishiriq?"
+
+# L3 §1
+the_student_takes_the_bus:
+  en: "“The student takes the bus.”"
+  uz: "«Talaba avtobusda qatnaydi»"
+
+# L3 §1
+events:
+  en: "events"
+  uz: "hodisalar"
+
+# L3 §1
+numbers:
+  en: "numbers"
+  uz: "sonlar"
+
+# L3 §1
+random_variable:
+  en: "random variable"
+  uz: "tasodifiy miqdor"
+
+# L3 §1
+first_die:
+  en: "first die"
+  uz: "birinchi kubik"
+
+# L3 §1
+jail:
+  en: "Jail"
+  uz: "Qamoqxona"
+
+# L3 §1
+monopoly:
+  en: "Monopoly"
+  uz: "Monopoliya"
+
+# L3 §1, §2, §4, §6, §7
+pastries:
+  en: "pastries in one order"
+  uz: "bitta buyurtmadagi pishiriqlar"
+
+# L3 §1
+lm_prompt:
+  en: "The coffee is very …"
+  uz: "Qahva juda …"
+
+# L3 §1
+second_die:
+  en: "second die"
+  uz: "ikkinchi kubik"
+
+# L3 §1
+outcome:
+  en: "outcome"
+  uz: "natija"
+
+# L3 §1
+number:
+  en: "number"
+  uz: "son"
+
+# L3 §1
+how_much_q:
+  en: "how much?"
+  uz: "qancha?"
+
+# L3 §1
+how_long_q:
+  en: "how long?"
+  uz: "qancha vaqt?"
+
+# L3 §2
+customers:
+  en: "customers"
+  uz: "mijoz"
+
+# L3 §2
+pastries_short:
+  en: "pastries"
+  uz: "pishiriq"
+
+# L3 §2
+no_order_holds_this:
+  en: "no order holds this"
+  uz: "bunday buyurtma yoʻq"
+
+# L3 §2
+long_run_average:
+  en: "the long-run average"
+  uz: "uzoq muddatdagi oʻrtacha"
+
+# L3 §2
+expectation:
+  en: "expectation"
+  uz: "matematik kutilma"
+
+# L3 §2
+raffle:
+  en: "Raffle"
+  uz: "Lotereya"
+
+# L3 §2, §4
+tickets:
+  en: "tickets"
+  uz: "chipta"
+
+# L3 §2
+net_gain:
+  en: "X = the buyer's net gain"
+  uz: "X = chipta egasining sof yutugʻi"
+
+# L3 §2
+the_school_keeps:
+  en: "the school keeps"
+  uz: "maktabga qoladi"
+
+# L3 §2
+all_examples:
+  en: "all the examples"
+  uz: "barcha misollar"
+
+# L3 §2
+no_face_shows_it:
+  en: "no face shows this number"
+  uz: "bu son hech bir yoqda yoʻq"
+
+# L3 §2
+what_a_buyer_gets:
+  en: "what a buyer gets"
+  uz: "xaridor oladigani"
+
+# L3 §2
+what_the_school_budgets_on:
+  en: "what the school budgets on"
+  uz: "maktab rejalashtiradigani"
+
+# L3 §3
+rolls_so_far:
+  en: "rolls so far"
+  uz: "shu paytgacha tashlashlar soni"
+
+# L3 §3, §4
+raffle_a:
+  en: "Raffle A"
+  uz: "A lotereya"
+
+# L3 §3, §4
+raffle_b:
+  en: "Raffle B"
+  uz: "B lotereya"
+
+# L3 §3
+how_fast_lecture_5:
+  en: "how fast? → Lecture 5"
+  uz: "qanchalik tez? → 5-maʼruza"
+
+# L3 §3
+batch_average:
+  en: "batch average"
+  uz: "toʻplam boʻyicha oʻrtacha"
+
+# L3 §3
+from_the_data_we_have:
+  en: "computed from the data we have"
+  uz: "bizdagi berilganlardan hisoblanadi"
+
+# L3 §3
+fixed_before_any_data_exists:
+  en: "fixed before any data exists"
+  uz: "berilganlar paydo boʻlmasidan oldin aniq"
+
+# L3 §3
+small_batch:
+  en: "small batch"
+  uz: "kichik toʻplam"
+
+# L3 §3
+big_batch:
+  en: "big batch"
+  uz: "katta toʻplam"
+
+# L3 §3
+same_mean:
+  en: "same mean"
+  uz: "oʻrtachasi bir xil"
+
+# L3 §4
+variance_of_raffle_b_q:
+  en: "What is the variance of raffle B?"
+  uz: "B lotereyaning dispersiyasi qancha?"
+
+# L3 §4
+a_lottery:
+  en: "a lottery"
+  uz: "omad oʻyini"
+
+# L3 §4
+a_mild_discount:
+  en: "a mild discount"
+  uz: "kichik chegirma"
+
+# L3 §4
+same_average_error:
+  en: "same average error"
+  uz: "oʻrtacha xato bir xil"
+
+# L3 §4
+model_a:
+  en: "model A"
+  uz: "A model"
+
+# L3 §4
+model_b:
+  en: "model B"
+  uz: "B model"
+
+# L3 §5
+red:
+  en: "red"
+  uz: "qizil"
+
+# L3 §5
+per_dollar:
+  en: "per dollar"
+  uz: "har bir dollarga"
+
+# L3 §5
+number_of_bets:
+  en: "number of bets"
+  uz: "tikishlar soni"
+
+# L3 §5
+per_session:
+  en: "per session"
+  uz: "har oʻyinda"
+
+# L3 §5
+expected_balance_q:
+  en: "What is the expected balance?"
+  uz: "Kutilayotgan balans qancha?"
+
+# L3 §5
+bet_on_red:
+  en: "bet on red"
+  uz: "qizilga tikamiz"
+
+# L3 §5
+chance_of_being_ahead:
+  en: "chance of being ahead"
+  uz: "foydada boʻlish ehtimoli"
+
+# L3 §5
+losses_in_a_row:
+  en: "stakes lost in a row"
+  uz: "ketma-ket yutqazilgan tikishlar"
+
+# L3 §5
+next_bet:
+  en: "next bet"
+  uz: "keyingi tikish"
+
+# L3 §5
+step:
+  en: "step"
+  uz: "qadam"
+
+# L3 §5
+agent:
+  en: "agent"
+  uz: "agent"
+
+# L3 §5
+expected_balance_dollars:
+  en: "expected balance, $"
+  uz: "kutilayotgan balans, $"
+
+# L3 §5
+bankroll:
+  en: "money in hand"
+  uz: "bor pul"
+
+# L3 §6
+dollars:
+  en: "dollars"
+  uz: "dollar"
+
+# L3 §6
+no_b:
+  en: "b drops out"
+  uz: "b tushib qoladi"
+
+# L3 §6
+standardizing_a_feature:
+  en: "standardizing a feature"
+  uz: "belgini standartlashtirish"
+
+# L3 §6
+pastry_price:
+  en: "pastry price"
+  uz: "pishiriq narxi"
+
+# L3 §7
+no_answer:
+  en: "no"
+  uz: "yoʻq"
+
+# L3 §7
+yes_answer:
+  en: "yes"
+  uz: "ha"
+
+# L3 §7
+answer_already_known:
+  en: "answer already known"
+  uz: "javob oldindan maʼlum"
+
+# L3 §7
+q_did_this_customer_buy:
+  en: "Did this customer buy a pastry?"
+  uz: "Bu mijoz pishiriq oldimi?"
+
+# L3 §7, §9
+dist_bernoulli:
+  en: "Bernoulli"
+  uz: "Bernulli"
+
+# L3 §7
+q_how_many_of_the_next:
+  en: "How many of the next customers bought one?"
+  uz: "Keyingi mijozlardan nechtasi oldi?"
+
+# L3 §7, §8, §9, §10
+dist_binomial:
+  en: "Binomial"
+  uz: "Binomial"
+
+# L3 §7
+q_which_cup_size:
+  en: "Which cup size did this customer pick?"
+  uz: "Bu mijoz qaysi stakanni tanladi?"
+
+# L3 §7, §9
+dist_categorical:
+  en: "Categorical"
+  uz: "Kategorial"
+
+# L3 §7
+q_how_many_walk_in:
+  en: "How many customers walk in during a window?"
+  uz: "Bir oraliqda nechta mijoz kiradi?"
+
+# L3 §7, §10
+dist_poisson:
+  en: "Poisson"
+  uz: "Puasson"
+
+# L3 §7
+newborn_girl:
+  en: "newborn girl"
+  uz: "chaqaloq qiz"
+
+# L3 §7
+at_least_one_pastry:
+  en: "at least one pastry"
+  uz: "kamida bitta pishiriq"
+
+# L3 §7
+lecture_5_its_loss_function:
+  en: "Lecture 5: its loss function"
+  uz: "5-maʼruza: uning xato funksiyasi"
+
+# L3 §8
+same_p_every_time:
+  en: "the same p every time"
+  uz: "har safar bir xil p"
+
+# L3 §8
+no_trial_affects_another:
+  en: "no trial affects another"
+  uz: "tajribalar bir-biriga taʼsir qilmaydi"
+
+# L3 §8
+probability_of_one_order:
+  en: "probability of one order"
+  uz: "bitta tartibning ehtimoli"
+
+# L3 §8
+lecture_2_socks:
+  en: "Lecture 2: socks"
+  uz: "2-maʼruza: paypoqlar"
+
+# L3 §8
+correct_answers:
+  en: "correct answers"
+  uz: "toʻgʻri javoblar"
+
+# L3 §8
+nobody_buys:
+  en: "nobody buys"
+  uz: "hech kim olmaydi"
+
+# L3 §8
+number_of_orders:
+  en: "number of orders"
+  uz: "tartiblar soni"
+
+# L3 §9
+dist_multinomial:
+  en: "Multinomial"
+  uz: "Multinomial"
+
+# L3 §9
+every_morning_differs:
+  en: "every morning differs"
+  uz: "har bir ertalab boshqacha"
+
+# L3 §9
+output_layer:
+  en: "output layer"
+  uz: "chiqish qatlami"
+
+# L3 §9, §11
+softmax:
+  en: "softmax"
+  uz: "softmaks"
+
+# L3 §9
+classes:
+  en: "classes"
+  uz: "sinflar"
+
+# L3 §9
+more_answers:
+  en: "more than two answers"
+  uz: "ikkitadan koʻp javob"
+
+# L3 §10
+simulated_windows:
+  en: "simulated windows"
+  uz: "simulyatsiya qilingan oraliq"
+
+# L3 §10
+how_many_empty_windows_in_a_day_q:
+  en: "How many empty windows in a day?"
+  uz: "Bir kunda nechta boʻsh oraliq boʻladi?"
+
+# L3 §10
+ten_minute_window:
+  en: "a ten-minute window"
+  uz: "oʻn daqiqalik oraliq"
+
+# L3 §10
+we_never_count_who_stayed_away:
+  en: "we never count who stayed away"
+  uz: "kirmaganlarni hech qachon sanamaymiz"
+
+# L3 §10
+a_strong_checkable_claim:
+  en: "a strong claim we can check"
+  uz: "tekshirsa boʻladigan kuchli daʼvo"
+
+# L3 §10
+customers_in_a_window:
+  en: "customers in one window"
+  uz: "bitta oraliqdagi mijozlar"
+
+# L3 §10
+poisson_formula:
+  en: "Poisson formula"
+  uz: "Puasson formulasi"
+
+# L3 §10
+seconds:
+  en: "seconds"
+  uz: "soniya"
+
+# L3 §10
+model_server:
+  en: "model server"
+  uz: "model serveri"
+
+# L3 §10
+requests_per_second:
+  en: "requests per second"
+  uz: "bir soniyadagi soʻrovlar"
+
+# L3 §10
+empty:
+  en: "empty"
+  uz: "boʻsh"
+
+# L3 §10
+average_rate:
+  en: "average rate"
+  uz: "oʻrtacha tezlik"
+
+# L3 §10
+rush:
+  en: "rush"
+  uz: "tirbandlik"
+
+# L3 §10
+a_ten_hour_day:
+  en: "a ten-hour day"
+  uz: "oʻn soatlik ish kuni"
+
+# L3 §10
+windows:
+  en: "windows"
+  uz: "oraliq"
+
+# L3 §10
+largest_difference:
+  en: "largest difference"
+  uz: "eng katta farq"
+
+# L3 §10
+unusual:
+  en: "unusual"
+  uz: "gʻayrioddiy"
+
+# L3 §11
+the_first_orders:
+  en: "the first orders:"
+  uz: "dastlabki buyurtmalar:"
+
+# L3 §11
+lecture_3_summary:
+  en: "Lecture 3 — summary"
+  uz: "3-maʼruza — xulosa"
+
+# L3 §11
+orders_seen:
+  en: "orders seen"
+  uz: "buyurtma koʻrilgan"
+
+# L3 §11
+cup_shares:
+  en: "cup shares"
+  uz: "stakan ulushlari"
+
+# L3 §11
+which_sets_of_shares_are_plausible_q:
+  en: "Which sets of shares are plausible?"
+  uz: "Qaysi ulushlar toʻplami ishonchli?"
+
+# L3 §11
+dist_dirichlet:
+  en: "Dirichlet"
+  uz: "Dirixle"
+
+# L3 §11
+each_draw_a_whole_set_of_shares:
+  en: "each draw: a whole set of shares, adding up to one"
+  uz: "har bir tanlov — yigʻindisi bir boʻlgan butun ulushlar toʻplami"
+
+# L3 §11
+updating_is_counting:
+  en: "updating is counting"
+  uz: "yangilash — bu sanash"
+
+# L3 §11
+how_sure_q:
+  en: "how sure?"
+  uz: "qanchalik ishonchli?"
+
+# L3 §11
+i_have_barely_seen_this:
+  en: "“I have barely seen this”"
+  uz: "«buni deyarli koʻrmaganman»"
+
+# L3 §11
+medium_cup_share:
+  en: "the medium cup's expected share"
+  uz: "oʻrta stakanning kutilayotgan ulushi"
+
+# L3 §11
+summary_random_variable:
+  en: "Random variable: a number per outcome; probabilities add up to one"
+  uz: "Tasodifiy miqdor har bir natijaga son beradi; ehtimollar yigʻindisi bir"
+
+# L3 §11
+summary_expectation_variance:
+  en: "Expectation and variance: the population mean and spread"
+  uz: "Kutilma va dispersiya — bosh toʻplamdagi oʻrtacha va tarqoqlik"
+
+# L3 §11
+summary_shift_scale:
+  en: "A shift keeps the variance; multiplying by a multiplies it by a²"
+  uz: "Siljitish dispersiyani saqlaydi; a ga koʻpaytirish uni a² ga koʻpaytiradi"
+
+# L3 §11
+summary_bernoulli_binomial:
+  en: "Bernoulli: one yes or no · binomial: the yeses in n trials"
+  uz: "Bernulli — bitta «ha yoki yoʻq» · binomial — n tadagi «ha»lar soni"
+
+# L3 §11
+summary_categorical_multinomial:
+  en: "Categorical and multinomial: the same pair, more answers"
+  uz: "Kategorial va multinomial — xuddi shu juftlik, javoblar koʻproq"
+
+# L3 §11
+summary_poisson:
+  en: "Poisson: events in a window, mean = variance = λ"
+  uz: "Puasson — oraliqdagi hodisalar, kutilma = dispersiya = λ"
+
+# L3 §11
+summary_dirichlet:
+  en: "Dirichlet: a distribution over the probabilities themselves"
+  uz: "Dirixle — ehtimollarning oʻzi ustidagi taqsimot"
+
+# L3 §11
+new_alpha:
+  en: "new α"
+  uz: "yangi α"
+
+# L3 §11
+lecture_4_continuous_random_variables_and_the_gaussian:
+  en: "Lecture 4 · Continuous random variables and the Gaussian"
+  uz: "4-maʼruza · Uzluksiz tasodifiy miqdorlar va normal taqsimot"
+
+# L3 §11
+module_5:
+  en: "Module 5"
+  uz: "5-modul"
+
+# L3 §11
+topic_models:
+  en: "topic models"
+  uz: "mavzular modeli"
+
+# L3 §11
+alphazero_move_priors:
+  en: "AlphaZero move priors"
+  uz: "AlphaZero yurish ehtimollari"

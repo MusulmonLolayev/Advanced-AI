@@ -27,6 +27,9 @@ FIGURE_SCRIPT = REPO / "statistics/scripts/generate_discrete_rv_graphics.py"
 
 # ─── raw inputs: the only typed numbers (all from the slides) ─────────────
 DIE = 6
+EXAMPLE_ROLL = (3, 4)                                  # the slide's example outcome: X = 7
+MONOPOLY_ORANGE = (6, 9)                               # orange properties: 6 to 9 squares past Jail
+HANDS_ON_SUM = 11                                      # section 1's pause
 PASTRY = {0: F(7, 10), 1: F(2, 10), 2: F(1, 10)}      # pastries in one order
 PASTRY_PRICE, COFFEE_PRICE = 2, 3                      # dollars
 HANDS_ON_PRICE = 3                                     # section 6's pause: a $3 pastry
@@ -38,6 +41,8 @@ ROULETTE_POCKETS, ROULETTE_RED = 37, 18
 ROULETTE_N = (10, 100, 1000, 10000)
 BANKROLL = 1000                                        # the doubling system's purse
 BERNOULLI_GIRL = 0.49                                  # a newborn being a girl
+BERNOULLI_COIN = 0.5                                   # a fair coin
+BIN_TAIL_FROM = 6                                      # "six or more buy": the baker's sell-out
 BIN_N, BIN_P = 10, F(3, 10)                            # next ten customers, any pastry
 CUPS = {"small": F(2, 10), "medium": F(5, 10), "large": F(3, 10)}
 CUP_CUSTOMERS, CUP_HANDS_ON = 10, 20
@@ -97,7 +102,11 @@ def compute():
     V["dice_p7"] = frac(F(ways[7], DIE * DIE))
     V["dice_p2"] = frac(F(ways[2], DIE * DIE))
     V["dice_7_vs_2"] = ways[7] // ways[2]
-    V["dice_p11"] = frac(F(ways[11], DIE * DIE))                      # hands-on
+    V["dice_p11"] = frac(F(ways[HANDS_ON_SUM], DIE * DIE))            # hands-on
+    V["hands_on_sum"] = HANDS_ON_SUM
+    V["example_roll"], V["example_sum"] = list(EXAMPLE_ROLL), sum(EXAMPLE_ROLL)
+    V["monopoly_orange"] = list(MONOPOLY_ORANGE)
+    V["monopoly_orange_p"] = float(sum(F(ways[s], DIE * DIE) for s in range(MONOPOLY_ORANGE[0], MONOPOLY_ORANGE[1] + 1)))
     V["dice_mean"], _, dvar = [float(v) for v in moments({s: F(w, DIE * DIE) for s, w in ways.items()})]
     V["dice_var"] = float(F(sum(s * s * w for s, w in ways.items()), DIE * DIE) - 49)
     V["pastry_pmf"] = {str(k): float(p) for k, p in PASTRY.items()}
@@ -164,6 +173,7 @@ def compute():
     p_any = PASTRY[1] + PASTRY[2]
     V["bern_p"], V["bern_var"] = float(p_any), float(p_any * (1 - p_any))
     V["bern_max_var"] = 0.25
+    V["bern_coin"] = BERNOULLI_COIN
     V["bern_girl"], V["bern_girl_var"] = BERNOULLI_GIRL, BERNOULLI_GIRL * (1 - BERNOULLI_GIRL)
 
     # section 8: Binomial
@@ -175,10 +185,12 @@ def compute():
     V["bin_p3_parts"] = [float(BIN_P ** 3), float((1 - BIN_P) ** 7)]
     V["bin_mean"], V["bin_var"] = float(BIN_N * BIN_P), float(BIN_N * BIN_P * (1 - BIN_P))
     V["bin_sd"] = sqrt(V["bin_var"])
-    V["bin_ge6"] = float(sum(pmf[6:]))
+    V["bin_tail_from"] = BIN_TAIL_FROM
+    V["bin_ge6"] = float(sum(pmf[BIN_TAIL_FROM:]))
     V["bin_p0"] = float(pmf[0])                                       # hands-on: nobody buys
     V["test_n"], V["test_acc"] = TEST_N, float(TEST_ACC)
     V["test_mean"], V["test_sd"] = float(TEST_N * TEST_ACC), sqrt(TEST_N * TEST_ACC * (1 - TEST_ACC))
+    V["test_pmf"] = [binom_pmf(k, TEST_N, float(TEST_ACC)) for k in range(TEST_N + 1)]
     V["test_band"] = [V["test_mean"] - V["test_sd"], V["test_mean"] + V["test_sd"]]
 
     # section 9: Categorical and Multinomial
@@ -207,6 +219,7 @@ def compute():
                      "var": float(counts.var(ddof=1)), "freq": [float((counts == k).mean()) for k in range(13)]}
     p_sec = F(LAM, SECONDS)
     V["seconds"], V["p_second"] = SECONDS, frac(p_sec)
+    V["bin600_pmf"] = [binom_pmf(k, SECONDS, float(p_sec)) for k in range(13)]
     V["bin_vs_pois"] = max(abs(binom_pmf(k, SECONDS, float(p_sec)) - poisson_pmf(k, LAM)) for k in range(SECONDS + 1))
 
     # section 11: Dirichlet

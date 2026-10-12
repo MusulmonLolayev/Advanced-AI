@@ -35,6 +35,12 @@ PAUSE_AFTER_VOICEOVER = 0.3
 # ─── on-screen labels ──────────────────────────────────────────────────────
 # Every word a video shows lives in narration/labels.yaml, by key, with its interchangeable forms.
 LABELS = yaml.safe_load((Path(__file__).parent / "narration" / "labels.yaml").read_text())
+# While sections are written in parallel, each keeps its new labels in its own file in
+# $LABEL_DRAFTS; they are merged into labels.yaml before the lecture is built.
+for _f in sorted(Path(os.environ["LABEL_DRAFTS"]).glob("*.yaml")) if os.environ.get("LABEL_DRAFTS") else []:
+    for _k, _v in (yaml.safe_load(_f.read_text()) or {}).items():
+        assert LABELS.get(_k, _v) == _v, f"{_f.name}: label {_k!r} is already in labels.yaml with other words"
+        LABELS[_k] = _v
 
 
 def forms(key, lang=None):
