@@ -94,7 +94,7 @@ class S05Glasses(LectureScene):
             sq.add(Square(side, stroke_width=0, fill_color=BUS_C if i < N["glasses_bus"] else NOBUS_C,
                           fill_opacity=1).move_to([c * (side + gap), -r * (side + gap), 0]))
         sq.move_to([-3.3, 0.4, 0])
-        cap = txt(label("n_wear_glasses").format(n=N["glasses"]), size=26)
+        cap = tagged(N["glasses"], label("wear_glasses"), size=26)
         cap.next_to(icon, RIGHT, buff=0.35)
         calc = VGroup(frac(N["glasses_bus"], N["glasses"], size=60), MathTex("=", font_size=54),
                       MathTex(dec(N["p_bus_given_glasses"]), font_size=54, color=BUS_C)).arrange(RIGHT, buff=0.3)

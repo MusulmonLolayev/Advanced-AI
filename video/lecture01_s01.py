@@ -12,7 +12,7 @@ VARS = [  # (label, example value, categorical?)
     (label("rating"), label("medium"), True),
     (label("number_of_children"), "2", False),
     (label("salary"), money(EXAMPLE_SALARY), False),
-    (label("height"), label("172_4_cm"), False),
+    (label("height"), f"{L['height_example']:g} {label('cm')}", False),
 ]
 CAT, NUM = label("categorical"), label("numerical")
 LEAVES = ["nominal", "ordinal", label("discrete"), label("continuous")]
@@ -150,7 +150,8 @@ class S01DataTypes(LectureScene):
             read = txt("172", size=56, weight=BOLD).move_to(UP * 0.7)
             self.add(mark)
             self.play(FadeIn(read), run_time=0.4)
-            for v, s in ((172.4, "172.4"), (172.43, "172.43")):
+            h = L["height_example"]
+            for v, s in ((h, f"{h:g}"), (h + 0.03, f"{h + 0.03:.2f}")):
                 self.play(val.animate.set_value(v), Transform(read, txt(s, size=56, weight=BOLD).move_to(read)),
                           run_time=1.0)
             self.cue(tr, t, 1)

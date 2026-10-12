@@ -7,7 +7,8 @@ stdout): every bar of the bells and every cell of the 1000-bottle grid is one of
 from lecture01_kit import *
 
 FA, FB = np.array(ARR["fills_A"]), np.array(ARR["fills_B"])
-LO_ML, HI_ML = 495.0, 505.0
+TARGET, TOL, SD, N_BOTTLES = L["bottle_target"], L["bottle_tol"], L["bottle_sd"], L["bottles"]
+LO_ML, HI_ML = TARGET - TOL, TARGET + TOL
 REJ_A, REJ_B = L["bottle_A_rejected"], L["bottle_B_rejected"]
 SHIFT = {int(k): v for k, v in L["bottle_B_shift"].items()}
 NINE = V1["nine"]
@@ -89,28 +90,29 @@ class S07Bottles(LectureScene):
     def construct(self):
         self.section_card(7)
         ax = fill_axis()
-        target = txt(label("label_500_ml"), size=30, weight=BOLD).to_edge(UP, buff=SAFE + 0.3)
+        target = tagged(f"{TARGET:g} ml", f"{label('bottle_label')}:", after=False, size=30, weight=BOLD)
+        target.to_edge(UP, buff=SAFE + 0.3)
         target.set_x(mx(500))
-        allowed = txt("495–505 ml", size=24, color=RLGREEN).next_to(ax[0], UP, buff=0.12)
+        allowed = txt(f"{LO_ML:g}–{HI_ML:g} ml", size=24, color=RLGREEN).next_to(ax[0], UP, buff=0.12)
         with self.say("7.1") as (tr, t):
             self.play(Create(ax[2]), FadeIn(ax[3]), FadeIn(ax[4]), FadeIn(target), run_time=1.0)
             self.cue(tr, t, {"en": "and the law", "uz": "Qonun"})
             self.play(FadeIn(ax[0]), Create(ax[1]), FadeIn(allowed), run_time=1.0)
 
-        mean_ln = DashedLine([mx(500), BASE, 0], [mx(500), BASE + 3.9, 0], color=WHITE, stroke_width=3)
+        mean_ln = DashedLine([mx(TARGET), BASE, 0], [mx(TARGET), BASE + 3.9, 0], color=WHITE, stroke_width=3)
         grid = bottle_grid()
-        g_lab = txt(label("1000_bottles"), size=22, color=GREY_B).next_to(grid, UP, buff=0.15)
-        m_lab = txt(label("a_and_b_mean_500_ml"), size=24).next_to(target, DOWN, buff=0.2)
+        g_lab = tagged(N_BOTTLES, label("bottles"), size=22, color=GREY_B).next_to(grid, UP, buff=0.15)
+        m_lab = tagged(f"{TARGET:g} ml", f"{label('a_and_b')}: {label('mean', 1)}", after=False, size=24).next_to(target, DOWN, buff=0.2)
         with self.say("7.2") as (tr, t):
             self.play(Create(mean_ln), FadeIn(m_lab), FadeOut(allowed), run_time=0.9)
             self.play(FadeIn(grid, lag_ratio=0.001), FadeIn(g_lab), run_time=1.2)
 
         ha = hist(FA, RLGREEN)
-        name_a = txt(label("machine_a_s_2_ml"), size=26, color=RLGREEN)
+        name_a = tagged(f"s = {SD['A']:g} ml", f"{label('machine_a')}: ", after=False, size=26, color=RLGREEN)
         name_a.next_to(m_lab, DOWN, buff=0.2).set_x(mx(500))
-        sd_a = txt(label("limits_2_5_s_away"), size=22, color=GREY_B)
+        sd_a = tagged(f"± {L['bottle_A_limits_sd']:g} s", f"{label('limits')}:", after=False, size=22, color=GREY_B)
         sd_a.move_to([mx(509.5), BASE + 2.6, 0])
-        ctr_a = txt(label("rejected_of_1000", n=REJ_A), size=24, color=RLRED)
+        ctr_a = tagged(f"{REJ_A} / {N_BOTTLES}", label("rejected"), after=False, size=24, color=RLRED)
         ctr_a.next_to(grid, DOWN, buff=0.15)
         with self.say("7.3") as (tr, t):
             self.play(FadeOut(m_lab), FadeIn(name_a), LaggedStart(*[GrowFromEdge(r, DOWN) for r in ha],
@@ -121,10 +123,11 @@ class S07Bottles(LectureScene):
             self.play(*[c.animate.set_fill(RLRED) for c in bad_cells(grid, FA)], FadeIn(ctr_a), run_time=0.9)
 
         hb = hist(FB, RLORANGE)
-        name_b = txt(label("machine_b_s_4_ml"), size=26, color=RLORANGE).move_to(name_a)
-        sd_b = txt(label("limits_1_25_s_away"), size=22, color=GREY_B).move_to(sd_a)
-        ctr_b = txt(label("rejected_of_1000", n=REJ_B), size=24,
-                    color=RLRED).move_to(ctr_a)
+        name_b = tagged(f"s = {SD['B']:g} ml", f"{label('machine_b')}: ", after=False, size=26,
+                        color=RLORANGE).move_to(name_a)
+        sd_b = tagged(f"± {L['bottle_B_limits_sd']:g} s", f"{label('limits')}:", after=False, size=22,
+                      color=GREY_B).move_to(sd_a)
+        ctr_b = tagged(f"{REJ_B} / {N_BOTTLES}", label("rejected"), after=False, size=24, color=RLRED).move_to(ctr_a)
         with self.say("7.4") as (tr, t):
             self.play(ha.animate.set_opacity(0.18), FadeOut(name_a), FadeIn(name_b), *[c.animate.set_fill(GREY_D) for c
                       in bad_cells(grid, FA)], FadeOut(ctr_a), run_time=0.8)
@@ -134,11 +137,12 @@ class S07Bottles(LectureScene):
             self.cue(tr, t, 2)
             self.play(*[c.animate.set_fill(RLRED) for c in bad_cells(grid, FB)], FadeIn(ctr_b), run_time=1.2)
 
-        ratio = VGroup(txt(label("spread_2"), size=34, weight=BOLD, color=RLORANGE),
-                       txt("→", size=34), txt(label("waste_n", bottle_ratio=L['bottle_ratio']),
-                                              size=34, weight=BOLD, color=RLRED)).arrange(RIGHT, buff=0.3)
+        ratio = VGroup(tagged(f"×{L['bottle_spread_ratio']:g}", label("spread"), after=False, size=34, weight=BOLD,
+                              color=RLORANGE),
+                       txt("→", size=34), tagged(f"×{L['bottle_ratio']}", label("waste"), after=False, size=34,
+                                                 weight=BOLD, color=RLRED)).arrange(RIGHT, buff=0.3)
         ratio.move_to(target)
-        still = txt(label("mean_500_ml_unchanged"), size=24).next_to(mean_ln, UP, buff=0.1)
+        still = txt(f"{label('mean', 1)}: {TARGET:g} ml, {label('unchanged')}", size=24).next_to(mean_ln, UP, buff=0.1)
         with self.say("7.5") as (tr, t):
             self.play(FadeOut(target), FadeOut(name_b), FadeIn(ratio, shift=UP * 0.2), run_time=0.9)
             self.cue(tr, t, 1)
@@ -224,16 +228,16 @@ class S07HandsOn(LectureScene):
             self.play(FadeIn(card_), run_time=0.8)
         self.hands_on()
 
-        mean_ln = DashedLine([mx(500), BASE, 0], [mx(500), BASE + 3.9, 0], color=WHITE, stroke_width=3)
+        mean_ln = DashedLine([mx(TARGET), BASE, 0], [mx(TARGET), BASE + 3.9, 0], color=WHITE, stroke_width=3)
         cnt_lab = txt(label("rejected"), size=30)
         num = txt(str(SHIFT[0]), size=40, weight=BOLD, color=RLRED)
         counter = VGroup(cnt_lab, num).arrange(RIGHT, buff=0.25).move_to([4.6, 1.0, 0])
-        shift_lab = txt(label("mean_500_ml"), size=26).next_to(counter, DOWN, buff=0.35)
+        shift_lab = tagged(f"{TARGET:g} ml", label("mean", 1), after=False, size=26).next_to(counter, DOWN, buff=0.35)
         moving = VGroup(hb, mean_ln)
 
         def step(d, rt=0.55):
             new = txt(str(SHIFT[d]), size=40, weight=BOLD, color=RLRED).move_to(num, aligned_edge=LEFT)
-            new_s = txt(label("mean_n_ml", n=500 + d), size=26).move_to(shift_lab)
+            new_s = tagged(f"{TARGET + d:g} ml", label("mean", 1), after=False, size=26).move_to(shift_lab)
             self.play(moving.animate.set_x(mx(500 + d) - mx(500) + cx), *recolor(hb, FB, RLORANGE, d),
                       Transform(num, new), Transform(shift_lab, new_s), run_time=rt)
 
@@ -254,8 +258,8 @@ class S07Teaser(LectureScene):
         unit.next_to(floor, DOWN, buff=0.2)
         with_ = MathTex(r"s^2 = " + f"{L['nine_var']:g}", font_size=44, color=RLRED)
         without = MathTex(r"s^2 = " + f"{L['eight_var']:.1f}", font_size=44, color=RLGREEN)
-        lab_w = txt(label("with_88"), size=28)
-        lab_wo = txt(label("without_88"), size=28)
+        lab_w = tagged(NINE[-1], f"{label('included')}:", size=28)
+        lab_wo = tagged(NINE[-1], f"{label('left_out')}:", size=28)
         rows = VGroup(VGroup(lab_wo, without).arrange(RIGHT, buff=0.3),
                       VGroup(lab_w, with_).arrange(RIGHT, buff=0.3)).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
         rows.to_edge(UP, buff=SAFE + 0.3)

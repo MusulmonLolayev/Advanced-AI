@@ -117,7 +117,7 @@ class S12Problem(LectureScene):
         # a 365-day calendar; each new person must find a free day
         cells = VGroup(*[Square(0.2, stroke_color=GREY_D, stroke_width=1) for _ in range(365)])
         cells.arrange_in_grid(rows=15, cols=25, buff=0.03).move_to([-3.4, -0.9, 0])
-        cal_lab = txt(label("365_days"), size=22, color=GREY_B).next_to(cells, DOWN, buff=0.2)
+        cal_lab = tagged(len(cells), label("days"), size=22, color=GREY_B).next_to(cells, DOWN, buff=0.2)
         who_lab = txt(label("person"), size=22, color=RLBLUE)
         taken = [40, 211, 300]
         fr = [MathTex(r"\frac{365}{365}", font_size=48), MathTex(r"\cdot\,\frac{364}{365}", font_size=48),
@@ -195,7 +195,7 @@ class S12Pairs(LectureScene):
         allp = VGroup(*[Line(pos[i], pos[j], color="#8C88F0", stroke_width=1.3, stroke_opacity=0.6)
                         for i in range(23) for j in range(i + 1, 23)])
         assert len(allp) == PAIRS
-        n_me = txt(label("me_vs_the_others_n", n_me=len(me)), size=28, color=HILITE)
+        n_me = tagged(len(me), f"{label('me_vs_the_others')}:", after=False, size=28, color=HILITE)
         n_all = VGroup(txt(label("every_pair"), size=28),
                        MathTex(rf"\frac{{23\cdot 22}}{{2}} = {PAIRS}", font_size=52))
         n_all.arrange(DOWN, buff=0.3)
@@ -233,7 +233,7 @@ class S12HandsOn(LectureScene):
             self.cue(tr, t, 1)
             self.play(Indicate(m23[1], scale_factor=2.0, color=RLRED), run_time=0.8)
 
-        card = pause_card([label("a_class_of_30_what_is_q"),
+        card = pause_card([f"n = {L['bday_class']}:  {label('what_is_the_chance_q')}",
                            label("we_read_it_off_the_curve")])
         card.scale_to_fit_width(min(card.width, 5.9)).move_to([-3.75, 0.3, 0])
         with self.voiceover(line("12.10")):

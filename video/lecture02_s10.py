@@ -74,7 +74,7 @@ class S10Curve(LectureScene):
         for k, v in MARKS.items():
             p = ax.c2p(100 * float(k), 100 * v)
             d = Dot(p, radius=0.09, color=HILITE)
-            lab = VGroup(txt(label("1_in_n", n=round(1 / float(k))), size=22, color=GREY_B),
+            lab = VGroup(txt(f"1/{round(1 / float(k)):,}", size=22, color=GREY_B),
                          txt(pct(v), size=30, weight=BOLD, color=HILITE)).arrange(DOWN, buff=0.08).move_to(p + offs[k])
             lab.add_background_rectangle(color=BLACK, opacity=0.9, buff=0.06)   # the curve must not cross the text
             marks.add(VGroup(d, lab, Line(d.get_center(), lab.get_center(), color=GREY_D, stroke_width=1.5)
@@ -93,7 +93,10 @@ class S10Curve(LectureScene):
         band_l = txt(label("almost_everyone_is_well"), size=22, color=RLRED)
         band_l.next_to(band, RIGHT, buff=0.15).align_to(band, UP).shift(DOWN * 0.15)
         second = node(label("positive_a_second_different_test"), color=HILITE, size=24)
-        second.move_to(ax.c2p(13.5, 30))
+        # below the curve on the right, clear of the 1/100 and 1/10 marks
+        second.move_to(ax.c2p(15, 27))
+        if second.get_right()[0] > ax.get_right()[0]:
+            second.shift(LEFT * (second.get_right()[0] - ax.get_right()[0]))
         with self.say("10.4") as (tr, t):
             self.play(FadeOut(fixed), FadeIn(band), FadeIn(band_l), run_time=0.8)
             self.cue(tr, t, {"en": "So a positive", "uz": "Shuning uchun musbat"})
@@ -123,7 +126,7 @@ class S10Accuracy(LectureScene):
         self.clear_all()
 
         n = one_in(S1000)
-        card = pause_card([label("1_person_in_n_is_ill", n=n),
+        card = pause_card([f"P({label('ill')}) = 1/{n:,}",
                            label("the_model_always_answers_healthy"),
                            label("accuracy_q")])
         with self.say("10.6"):
@@ -221,7 +224,7 @@ class S10Summary(LectureScene):
                 self.play(FadeIn(r, shift=RIGHT * 0.3), run_time=0.6)
         self.clear_all()
 
-        end = VGroup(txt(label("lecture_n", n=2), size=56, weight=BOLD, color=RLBLUE),
+        end = VGroup(txt(label("lecture_2"), size=56, weight=BOLD, color=RLBLUE),
                      txt(label("the_end"), size=34, color=GREY_B)).arrange(DOWN, buff=0.3).move_to(UP * 0.4)
         nxt = VGroup(txt(label("next"), size=28, color=GREY_B),
                      txt(label("lecture_3_discrete_random_variables_and"), size=40, weight=BOLD,

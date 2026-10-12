@@ -255,8 +255,8 @@ class S06HandsOn(LectureScene):
         VGroup(gb, gn).arrange(RIGHT, buff=0.08, aligned_edge=DOWN).move_to([-2.6, floor_y, 0], aligned_edge=DOWN)
         gl = VGroup(txt(BIKE, size=22, color=GREY_B).next_to(gb, DOWN, buff=0.15),
                     txt(NOBIKE, size=22, color=GREY_B).next_to(gn, DOWN, buff=0.15))
-        wts = VGroup(txt(STUDENTS.format(n=N["bike"]), size=22).next_to(gb, UP, buff=0.12),
-                     txt(STUDENTS.format(n=N["nobike"]), size=22).next_to(gn, UP, buff=0.12))
+        wts = VGroup(tagged(N["bike"], STUDENTS, size=22).next_to(gb, UP, buff=0.12),
+                     tagged(N["nobike"], STUDENTS, size=22).next_to(gn, UP, buff=0.12))
         nxt = txt(PARTS[1], size=32, weight=BOLD, color=HILITE)
         nxt.next_to(VGroup(gb, gn), RIGHT, buff=1.0).set_y(-0.9)
         if nxt.get_right()[0] > 6.5:

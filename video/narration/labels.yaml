@@ -6,8 +6,9 @@
 #     uz: ["oʻrtacha qiymat", "oʻrtacha"]
 #
 # A scene shows label("mean") (the first form) or label("mean", 1) (the second); a language with
-# fewer forms gives its first. {n} is filled in from the lecture's captured numbers. To change
-# a word, edit its form here and re-render; to allow another word, add it to the list.
+# fewer forms gives its first. A label is words only: numbers come from the captured data and the
+# scene sets them beside the words or as math. To change a word, edit its form here and re-render;
+# to allow another word, add it to the list.
 # The comment above each key says where it is shown. `uv run python labels.py` checks this file
 # against the scenes and regenerates the order and comments; your edits to the forms are kept.
 
@@ -17,16 +18,6 @@
 pause:
   en: "⏸  Pause the video"
   uz: "⏸  Videoni toʻxtating"
-
-# all lectures; L1 §14; L2 §10
-next:
-  en: "Next"
-  uz: "Keyingi"
-
-# all lectures
-video_n:
-  en: "Video {n} — {t}"
-  uz: "{n}-video — {t}"
 
 # ══ Lecture 1 ═════════════════════════════════════════════════════════════
 
@@ -40,10 +31,10 @@ part_1_probability:
   en: "Part 1 · Probability"
   uz: "1-qism · Ehtimollik"
 
-# L1 opening, §14; L2 opening, §10
-lecture_n:
-  en: "Lecture {n}"
-  uz: "{n}-maʼruza"
+# L1 opening, §14
+lecture_1:
+  en: "Lecture 1"
+  uz: "1-maʼruza"
 
 # L1 opening
 data_descriptive_statistics_and_probability:
@@ -116,11 +107,6 @@ height:
   uz: "boʻy"
 
 # L1 §1
-"172_4_cm":
-  en: "172.4 cm"
-  uz: "172.4 sm"
-
-# L1 §1
 blood_type_q:
   en: "Blood type?"
   uz: "Qon guruhi?"
@@ -136,6 +122,11 @@ room_temperature_q:
   uz: "Xonadagi harorat?"
 
 # L1 §1
+cm:
+  en: "cm"
+  uz: "sm"
+
+# L1 §1
 mean_std_deviation:
   en: "mean, std. deviation"
   uz: "oʻrtacha, standart chetlanish"
@@ -144,11 +135,6 @@ mean_std_deviation:
 count_proportion:
   en: "count, proportion"
   uz: "sanash, ulush"
-
-# L1 §1
-cm:
-  en: "cm"
-  uz: "sm"
 
 # L1 §1
 tashkent:
@@ -196,11 +182,11 @@ salaries_thousand:
   uz: "maoshlar, ming $"
 
 # L1 §2, §14
-"600_salaries":
-  en: "600 salaries"
-  uz: "600 ta maosh"
+salaries:
+  en: "salaries"
+  uz: "maosh"
 
-# L1 §2
+# L1 §2, §14
 training_set:
   en: "training set"
   uz: "oʻqitish toʻplami"
@@ -221,9 +207,59 @@ x_x_q:
   uz: "x₁ + x₅ = ?"
 
 # L1 §3
-"311_of_600_more_than_half":
-  en: "311 of 600: more than half"
-  uz: "600 tadan 311: yarmidan koʻpi"
+step_1:
+  en: "Step 1"
+  uz: "1-qadam"
+
+# L1 §3
+the_range:
+  en: "the range"
+  uz: "oraliq"
+
+# L1 §3
+step_2:
+  en: "Step 2"
+  uz: "2-qadam"
+
+# L1 §3
+number_of_classes:
+  en: "number of classes"
+  uz: "sinflar soni"
+
+# L1 §3
+step_3:
+  en: "Step 3"
+  uz: "3-qadam"
+
+# L1 §3
+class_width:
+  en: "class width"
+  uz: "sinf kengligi"
+
+# L1 §3
+step_4:
+  en: "Step 4"
+  uz: "4-qadam"
+
+# L1 §3
+count_each_class:
+  en: "count each class"
+  uz: "har bir sinfni sanaymiz"
+
+# L1 §3
+more_than_half:
+  en: "more than half"
+  uz: "yarmidan koʻpi"
+
+# L1 §3
+step_5:
+  en: "Step 5"
+  uz: "5-qadam"
+
+# L1 §3
+draw_touching_bars:
+  en: "draw touching bars"
+  uz: "tegib turgan ustunlar"
 
 # L1 §3
 every_feature_one_histogram:
@@ -234,11 +270,6 @@ every_feature_one_histogram:
 strange_values:
   en: "strange values"
   uz: "gʻalati qiymatlar"
-
-# L1 §3
-step_n_n:
-  en: "Step {n}: {en}"
-  uz: "{n}-qadam: {uz}"
 
 # L1 §3
 bottle_fill_ml:
@@ -255,15 +286,10 @@ class:
   en: "class"
   uz: "sinf"
 
-# L1 §3
+# L1 §3, §4
 people:
   en: "people"
   uz: "kishi"
-
-# L1 §3
-we_find_how_many_earn_more:
-  en: "We find how many earn more than $80k."
-  uz: "$80k dan koʻp oladiganlar sonini topamiz."
 
 # L1 §3
 each_value_once:
@@ -286,19 +312,19 @@ one_number_q:
   uz: "bitta son?"
 
 # L1 §3
+how_many_q:
+  en: "how many?"
+  uz: "nechta?"
+
+# L1 §3
 thin_tail:
   en: "thin tail"
   uz: "ingichka dum"
 
 # L1 §4
-v_each:
-  en: "{v} each"
-  uz: "har biriga {v}"
-
-# L1 §4
-v_missing:
-  en: "{v} missing"
-  uz: "{v} yetishmaydi"
+missing:
+  en: "missing"
+  uz: "yetishmaydi"
 
 # L1 §4
 each_tick_is_ten_times:
@@ -306,11 +332,11 @@ each_tick_is_ten_times:
   uz: "har bir belgi oldingisidan 10 marta katta"
 
 # L1 §4
-k_of_the_n_earn_less:
-  en: "{k} of the {n} earn less than that"
-  uz: "{n} kishidan {k} nafari undan kam oladi"
+earn_less_than_that:
+  en: "earn less than that"
+  uz: "undan kam oladi"
 
-# L1 §4, §5, §6
+# L1 §4, §5, §6, §7
 mean:
   en: "mean"
   uz: ["oʻrtacha qiymat", "oʻrtacha"]
@@ -321,9 +347,9 @@ median:
   uz: ["Mediana", "mediana"]
 
 # L1 §4
-n_employees:
-  en: "{n} employees"
-  uz: "{n} xodim"
+employees:
+  en: "employees"
+  uz: "xodim"
 
 # L1 §4
 the_mean:
@@ -331,19 +357,9 @@ the_mean:
   uz: "oʻrtacha qiymat"
 
 # L1 §4
-v_above_the_line_v_missing:
-  en: "{v} above the line  =  {v} missing below it"
-  uz: "chiziq ustidagi {v}  =  ostida yetishmagan {v}"
-
-# L1 §4
 the_mean_remembers_the_total:
   en: "The mean remembers the total"
   uz: "Oʻrtacha qiymat umumiy summani eslab qoladi"
-
-# L1 §4
-n_people:
-  en: "{n} people"
-  uz: "{n} kishi"
 
 # L1 §4
 no_other_summary_does_that:
@@ -400,6 +416,11 @@ what_do_people_earn_here_q:
   en: "What do people earn here?"
   uz: "Bu yerda odamlar qancha maosh oladi?"
 
+# L1 §4, §13
+each:
+  en: "each"
+  uz: ["har biri", "har biriga"]
+
 # L1 §4
 we_work_out_the_mean_nine:
   en: "We work out the mean of these nine."
@@ -409,6 +430,16 @@ we_work_out_the_mean_nine:
 we_count_how_many_earn_less:
   en: "We count how many of the nine earn less than it."
   uz: "Nechtasi undan kam olishini sanaymiz."
+
+# L1 §4
+above_the_line:
+  en: "above the line"
+  uz: "chiziq ustida"
+
+# L1 §4
+missing_below_it:
+  en: "missing below it"
+  uz: "ostida yetishmaydi"
 
 # L1 §4; L2 (all)
 total:
@@ -434,11 +465,6 @@ mode:
 rule_of_thumb:
   en: "Rule of thumb"
   uz: "Qoidamiz"
-
-# L1 §5
-one_typo_52_520:
-  en: "One typo: 52 → 520"
-  uz: "Bitta xato: 52 → 520"
 
 # L1 §5
 categorical_data:
@@ -474,6 +500,11 @@ a_number_that_holds_its_ground_q:
 bus_minutes:
   en: "bus, minutes"
   uz: "avtobus, daqiqa"
+
+# L1 §5
+one_typo:
+  en: "One typo"
+  uz: "Bitta xato"
 
 # L1 §5
 household_income_median:
@@ -541,19 +572,9 @@ minutes:
   uz: "daqiqa"
 
 # L1 §7
-machine_a_s_2_ml:
-  en: "Machine A:  s = 2 ml"
-  uz: "A mashina:  s = 2 ml"
-
-# L1 §7
-limits_2_5_s_away:
-  en: "limits = 2.5 s away"
-  uz: "chegaralar 2.5 s uzoqda"
-
-# L1 §7
-rejected_of_1000:
-  en: "rejected: {n} / 1000"
-  uz: "yaroqsiz: {n} / 1000"
+rejected:
+  en: "rejected:"
+  uz: "yaroqsiz:"
 
 # L1 §7
 six_sigma_control_the_spread:
@@ -581,21 +602,6 @@ large_spread_we_are_careful:
   uz: "tarqoqlik katta: ehtiyot boʻlamiz"
 
 # L1 §7
-rejected:
-  en: "rejected:"
-  uz: "yaroqsiz:"
-
-# L1 §7
-with_88:
-  en: "with 88:"
-  uz: "88 bilan:"
-
-# L1 §7
-without_88:
-  en: "without 88:"
-  uz: "88 siz:"
-
-# L1 §7
 bus_timetable:
   en: "bus timetable"
   uz: "avtobus jadvali"
@@ -621,54 +627,74 @@ where_do_we_set_its_mean_q:
   uz: "Oʻrtachasini qayerga qoʻyamiz?"
 
 # L1 §7
-label_500_ml:
-  en: "label: 500 ml"
-  uz: "yorliq: 500 ml"
+bottle_label:
+  en: "label"
+  uz: "yorliq"
 
 # L1 §7
-"1000_bottles":
-  en: "1000 bottles"
-  uz: "1000 ta shisha"
+bottles:
+  en: "bottles"
+  uz: "shisha"
 
 # L1 §7
-a_and_b_mean_500_ml:
-  en: "A and B: mean 500 ml"
-  uz: "A va B: oʻrtacha 500 ml"
+machine_a:
+  en: "Machine A"
+  uz: "A mashina"
 
 # L1 §7
-machine_b_s_4_ml:
-  en: "Machine B:  s = 4 ml"
-  uz: "B mashina:  s = 4 ml"
+limits:
+  en: "limits"
+  uz: "chegaralar"
 
 # L1 §7
-limits_1_25_s_away:
-  en: "limits = 1.25 s away"
-  uz: "chegaralar 1.25 s uzoqda"
+included:
+  en: "included"
+  uz: "bilan"
 
 # L1 §7
-mean_500_ml_unchanged:
-  en: "mean: 500 ml, unchanged"
-  uz: "oʻrtacha: 500 ml, oʻzgarmadi"
+left_out:
+  en: "left out"
+  uz: "siz"
 
 # L1 §7
-mean_500_ml:
-  en: "mean 500 ml"
-  uz: "oʻrtacha 500 ml"
+spread:
+  en: "spread"
+  uz: "tarqoqlik"
 
 # L1 §7
-spread_2:
-  en: "spread ×2"
-  uz: "tarqoqlik ×2"
+waste:
+  en: "waste"
+  uz: "chiqindi"
 
 # L1 §7
-waste_n:
-  en: "waste ×{bottle_ratio}"
-  uz: "chiqindi ×{bottle_ratio}"
+a_and_b:
+  en: "A and B"
+  uz: "A va B"
 
 # L1 §7
-mean_n_ml:
-  en: "mean {n} ml"
-  uz: "oʻrtacha {n} ml"
+machine_b:
+  en: "Machine B"
+  uz: "B mashina"
+
+# L1 §7
+unchanged:
+  en: "unchanged"
+  uz: "oʻzgarmadi"
+
+# L1 §8
+branch_a:
+  en: "branch A"
+  uz: "A filial"
+
+# L1 §8
+branch_b:
+  en: "branch B"
+  uz: "B filial"
+
+# L1 §8
+branch_c:
+  en: "branch C"
+  uz: "C filial"
 
 # L1 §8
 minimum:
@@ -721,24 +747,14 @@ box_plot:
   uz: "quti diagrammasi"
 
 # L1 §8
-iqr_n_min:
-  en: "IQR ≈ {iqrx:.1f} min"
-  uz: "IQR ≈ {iqrx:.1f} daqiqa"
-
-# L1 §8
-"31_15_25_no_outlier_at":
-  en: "31 > 15.25: no outlier at the bottom"
-  uz: "31 > 15.25: pastda chetga chiqqan qiymat yoʻq"
-
-# L1 §8
 thousand:
   en: "thousand $"
   uz: "ming $"
 
 # L1 §8
-branch_n:
-  en: "branch {name}"
-  uz: "{name} filial"
+no_outlier_at_the_bottom:
+  en: "no outlier at the bottom"
+  uz: "pastda chetga chiqqan qiymat yoʻq"
 
 # L1 §9
 a_straight_line:
@@ -1011,11 +1027,6 @@ person:
   uz: "odam"
 
 # L1 §12
-me_vs_the_others_n:
-  en: "me vs the others: {n_me}"
-  uz: "men va boshqalar: {n_me}"
-
-# L1 §12
 a_pair:
   en: "a pair"
   uz: "juftlik"
@@ -1046,24 +1057,24 @@ duplicate_records:
   uz: "takroriy yozuvlar"
 
 # L1 §12
-a_class_of_30_what_is_q:
-  en: "A class of 30: what is the chance?"
-  uz: "Oʻttiz kishilik guruh: ehtimol qancha?"
-
-# L1 §12
 we_read_it_off_the_curve:
   en: "We read it off the curve."
   uz: "Grafikdan topamiz."
 
 # L1 §12
-"365_days":
-  en: "365 days"
-  uz: "365 kun"
+days:
+  en: "days"
+  uz: "kun"
 
 # L1 §12
 all_different:
   en: "all different"
   uz: "hammasi har xil"
+
+# L1 §12
+me_vs_the_others:
+  en: "me vs the others"
+  uz: "men va boshqalar"
 
 # L1 §12
 person_1:
@@ -1079,6 +1090,11 @@ person_2:
 unrelated_q:
   en: "unrelated?"
   uz: "bogʻliq emas?"
+
+# L1 §12
+what_is_the_chance_q:
+  en: "what is the chance?"
+  uz: "ehtimol qancha?"
 
 # L1 §12
 most_people_guess:
@@ -1201,11 +1217,6 @@ each_word_independent_of_the_others:
   uz: "har bir soʻz boshqalaridan erkli"
 
 # L1 §13
-each:
-  en: "each"
-  uz: "har biri"
-
-# L1 §13
 "no":
   en: "no!"
   uz: "yoʻq!"
@@ -1256,11 +1267,6 @@ real_email_population:
   uz: "haqiqiy pochta (bosh toʻplam)"
 
 # L1 §14
-training_set_90_percent_spam:
-  en: "training set: 90% spam"
-  uz: "oʻqitish toʻplami: 90% spam"
-
-# L1 §14
 sample_population:
   en: "sample ≠ population"
   uz: "tanlanma ≠ bosh toʻplam"
@@ -1279,11 +1285,6 @@ times_the_event_was_observed:
 total_observations:
   en: "total observations"
   uz: "jami kuzatuvlar soni"
-
-# L1 §14
-training_data_90_percent_of_emails:
-  en: "Training data: 90% of emails are spam."
-  uz: "Oʻqitish berilganlari: xatlarning 90% i spam."
 
 # L1 §14
 is_that_spam_probability_right_for_q:
@@ -1321,9 +1322,19 @@ classical:
   uz: "klassik"
 
 # L1 §14
-"9_of_10_spam":
-  en: "9 of 10: spam"
-  uz: "10 tadan 9 tasi: spam"
+spam:
+  en: "spam"
+  uz: "spam"
+
+# L1 §14
+training_data:
+  en: "Training data"
+  uz: "Oʻqitish berilganlari"
+
+# L1 §14; L2 §10
+next:
+  en: "Next"
+  uz: "Keyingi"
 
 # L1 §14
 lecture_2_conditional_probability_and_bayes:
@@ -1343,9 +1354,9 @@ the_end:
 # ══ Lecture 2 ═════════════════════════════════════════════════════════════
 
 # L2 (all)
-n_students:
-  en: "{n} students"
-  uz: "{n} talaba"
+students:
+  en: "students"
+  uz: "talaba"
 
 # L2 (all)
 part_0_conditional_probability_and_independence:
@@ -1371,6 +1382,11 @@ no_bike:
 no_bus:
   en: "no bus"
   uz: "avtobussiz"
+
+# L2 opening, §10
+lecture_2:
+  en: "Lecture 2"
+  uz: "2-maʼruza"
 
 # L2 opening
 conditional_probability_independence_and_bayes_theorem:
@@ -1418,6 +1434,11 @@ p_bus_no_bike:
   uz: "P(avtobusda | velosipedsiz)"
 
 # L2 §1
+look_only_at_the_students_with_no_bike:
+  en: "Look only at the students with no bike"
+  uz: "Faqat velosipedsiz talabalarga qaraymiz"
+
+# L2 §1
 how_many_of_them_take_the_q:
   en: "How many of them take the bus?"
   uz: "Ulardan nechtasi avtobusda qatnaydi?"
@@ -1428,11 +1449,6 @@ p_bus:
   uz: "P(avtobusda)"
 
 # L2 §1
-bike_n:
-  en: "bike: {n}"
-  uz: "velosipedli: {n}"
-
-# L2 §1
 p_bus_bike:
   en: "P(bus | bike)"
   uz: "P(avtobusda | velosipedli)"
@@ -1441,11 +1457,6 @@ p_bus_bike:
 classifier:
   en: "classifier"
   uz: "klassifikator"
-
-# L2 §1
-look_only_at_the_n_students:
-  en: "Look only at the {n} students with no bike"
-  uz: "Faqat {n} ta velosipedsiz talabaga qaraymiz"
 
 # L2 §1
 top:
@@ -1678,6 +1689,11 @@ not_independent:
   uz: "erkli emas"
 
 # L2 §5
+wear_glasses:
+  en: "wear glasses"
+  uz: "talaba koʻzoynak taqadi"
+
+# L2 §5
 all:
   en: "all"
   uz: "hamma"
@@ -1716,11 +1732,6 @@ suppose_bike_and_bus_were_independent:
 how_many_students_in_no_bike_q:
   en: "How many students in “no bike, bus”?"
   uz: "«Velosipedsiz, avtobusda» katagida nechta talaba?"
-
-# L2 §5
-n_wear_glasses:
-  en: "{n} wear glasses"
-  uz: "{n} talaba koʻzoynak taqadi"
 
 # L2 §5
 share_of_label_y:
@@ -2018,9 +2029,9 @@ innocent:
   uz: "begunoh"
 
 # L2 §9
-n_false_alarms_per_real_case:
-  en: "≈ {false_per_real} false alarms per real case"
-  uz: "har bir haqiqiy holatga ≈ {false_per_real} yolgʻon signal"
+false_alarms_real_case:
+  en: "false alarms : real cases"
+  uz: "yolgʻon signal : haqiqiy holat"
 
 # L2 §9
 fraud_detector:
@@ -2028,29 +2039,14 @@ fraud_detector:
   uz: "Firibgarlikni aniqlovchi model"
 
 # L2 §9
-"1_person_in_n_has_the":
-  en: "1 person in {n} has the disease."
-  uz: "{n} kishidan biri kasal."
-
-# L2 §9
-same_test_never_misses_n_false:
-  en: "Same test: never misses, {fp_rate} false alarms."
-  uz: "Test oʻsha: kasalni oʻtkazib yubormaydi, {fp_rate} yolgʻon signal."
+false_alarms:
+  en: "false alarms"
+  uz: "yolgʻon signal"
 
 # L2 §9
 p_ill_positive_q:
   en: "P(ill | positive) = ?"
   uz: "P(kasal | musbat) = ?"
-
-# L2 §9
-"1_in_100":
-  en: "1 in 100"
-  uz: "100 kishidan 1"
-
-# L2 §9
-"1_in_10":
-  en: "1 in 10"
-  uz: "10 kishidan 1"
 
 # L2 §9
 known_to_be_ill:
@@ -2063,34 +2059,14 @@ how_common_the_illness_is:
   uz: "+ kasallik qanchalik keng tarqalgani"
 
 # L2 §9
-"1_in_n_is_ill":
-  en: "1 in {n} is ill"
-  uz: "{n} kishidan biri kasal"
+test_positive:
+  en: "test positive"
+  uz: "kishi musbat"
 
 # L2 §9
-n_test_positive:
-  en: "{positives} test positive"
-  uz: "{positives} kishi musbat"
-
-# L2 §9
-n_of_n:
-  en: "{fp_rate} of {healthy}"
-  uz: "{healthy} ning {fp_rate} i"
-
-# L2 §9
-"100_percent_of_n":
-  en: "100% of {ill}"
-  uz: "{ill} ning 100% i"
-
-# L2 §9
-healthy_ill_n_1:
-  en: "healthy : ill = {healthy_per_ill:g} : 1"
-  uz: "sogʻlom : kasal = {healthy_per_ill:g} : 1"
-
-# L2 §9
-n_alarms_n_real_fraud:
-  en: "{n_flagged} alarms, {n_fraud} real fraud"
-  uz: "{n_flagged} ta signal, {n_fraud} tasi haqiqiy"
+healthy_ill:
+  en: "healthy : ill"
+  uz: "sogʻlom : kasal"
 
 # L2 §9
 the_same_test:
@@ -2098,29 +2074,24 @@ the_same_test:
   uz: "test oʻsha-oʻsha"
 
 # L2 §9
-false_alarms:
-  en: "false alarms"
-  uz: "yolgʻon signal"
+alarms:
+  en: "alarms"
+  uz: "signal"
 
 # L2 §9
-n_people_tested:
-  en: "{tested} people tested"
-  uz: "{tested} kishi tekshirildi"
-
-# L2 §9
-n_ill:
-  en: "{ill} ill"
-  uz: "{ill} kasal"
-
-# L2 §9
-n_healthy:
-  en: "{healthy} healthy"
-  uz: "{healthy} sogʻlom"
+real_fraud:
+  en: "real fraud"
+  uz: "haqiqiy firibgarlik"
 
 # L2 §9
 healthy:
   en: "healthy"
   uz: "sogʻlom"
+
+# L2 §9
+people_tested:
+  en: "people tested"
+  uz: "kishi tekshirildi"
 
 # L2 §10
 base_rate_the_prior:
@@ -2161,11 +2132,6 @@ where_bayes_theorem_comes_back:
 lecture_2_summary:
   en: "Lecture 2 — summary"
   uz: "2-maʼruza — xulosa"
-
-# L2 §10
-"1_person_in_n_is_ill":
-  en: "1 person in {n:,} is ill."
-  uz: "{n:,} kishidan biri kasal."
 
 # L2 §10
 the_model_always_answers_healthy:
@@ -2251,8 +2217,3 @@ ill_people_found:
 lecture_3_discrete_random_variables_and:
   en: "Lecture 3 · Discrete random variables and key distributions"
   uz: "3-maʼruza · Diskret tasodifiy miqdorlar va asosiy taqsimotlar"
-
-# L2 §10
-"1_in_n":
-  en: "1 in {n}"
-  uz: "{n} kishidan 1"

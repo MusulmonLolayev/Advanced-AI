@@ -143,10 +143,12 @@ class Section9Screening(unittest.TestCase):
         self.assertEqual(round(100 * s["ppv"]), 17)
         self.assertEqual(round(V["false_per_real"]), 5)
         self.assertEqual(V["healthy_per_ill"], 99)
+        self.assertEqual(s["tested"] // s["ill"], 100)          # shown as P(ill) = 1/100
 
     def test_hands_on(self):
         s = V["screen_1in10"]
         self.assertEqual((s["ill"], s["healthy"], s["false_pos"], s["positives"]), (1000, 9000, 450, 1450))
+        self.assertEqual(s["tested"] // s["ill"], 10)           # shown as P(ill) = 1/10
         self.assertEqual(round(100 * s["ppv"]), 69)
 
 

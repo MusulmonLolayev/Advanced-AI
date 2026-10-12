@@ -287,7 +287,8 @@ class S05Typo(LectureScene):
         mean_l, med_l = lvl(FIVE_MEAN, RLRED), lvl(FIVE_MED, RLGREEN, dashed=True)
         i_bad = TYPO.index(520)
         assert FIVE[i_bad] == 52
-        head = self.heading(label("one_typo_52_520"), color=HILITE)
+        head = tagged(f"{FIVE[i_bad]} → {TYPO[i_bad]}", f"{label('one_typo')}:", after=False, size=34,
+                      weight=BOLD, color=HILITE).to_edge(UP, buff=SAFE + 0.3)
         top = 2.55
         assert BASE + TYPO_MEAN * k < top - 0.9
         bad = Rectangle(width=1.05, height=top - BASE, stroke_width=0, fill_color=HILITE, fill_opacity=1)

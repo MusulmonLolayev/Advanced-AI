@@ -58,8 +58,8 @@ def hist_bars(gap=0.0, color=RLBLUE):
                     for c, n in enumerate(COUNTS)])
 
 
-def step_head(n, en, uz):
-    return txt(label("step_n_n", n=n, en=en, uz=uz), size=34, weight=BOLD, color=HILITE).to_edge(UP, buff=SAFE + 0.3)
+def step_head(step, words):
+    return txt(f"{step}: {words}", size=34, weight=BOLD, color=HILITE).to_edge(UP, buff=SAFE + 0.3)
 
 
 def mini_hist(values, lo, hi, bins, title, width=3.6, height=2.0, flag_above=None):
@@ -122,7 +122,7 @@ class S03Classes(LectureScene):
             self.play(FadeIn(once, shift=UP * 0.2), FadeIn(one), run_time=0.8)
 
         lo, hi = hairs[0], hairs[-1]
-        head = step_head(1, "the range", "oraliq")
+        head = step_head(label("step_1"), label("the_range"))
         lab_lo = txt(money(L["sal_min"]), size=24, color=HILITE).next_to(lo, UP, buff=0.15)
         lab_hi = txt(money(L["sal_max"]), size=24, color=HILITE).next_to(hi, UP, buff=0.15)
         br = BraceBetweenPoints([sx(L["sal_min"]), AY + 1.95, 0], [sx(L["sal_max"]), AY + 1.95, 0], UP, color=GREY_B)
@@ -137,7 +137,7 @@ class S03Classes(LectureScene):
             self.cue(tr, t, 3)
             self.play(GrowFromCenter(br), FadeIn(rng_lab, shift=UP * 0.2), run_time=1.0)
 
-        head2 = step_head(2, "number of classes", "sinflar soni")
+        head2 = step_head(label("step_2"), label("number_of_classes"))
         k_lab = MathTex("k", "=", str(L["hist_k"]), font_size=72).move_to([0, 1.7, 0])
         k_lab[0].set_color(HILITE)
         with self.say("3.4") as (tr, t):
@@ -146,7 +146,7 @@ class S03Classes(LectureScene):
             self.cue(tr, t, 2)
             self.play(FadeIn(k_lab, scale=1.2), run_time=0.8)
 
-        head3 = step_head(3, "class width", "sinf kengligi")
+        head3 = step_head(label("step_3"), label("class_width"))
         div = MathTex(f"{L['sal_range']:,.0f}".replace(",", "{,}"), r"\div", str(L["hist_k"]), "=",
                       f"{L['hist_width_raw']:,.0f}".replace(",", "{,}"), r"\;\to\;", "20{,}000", font_size=54)
         div.move_to([0, 1.7, 0])
@@ -161,7 +161,7 @@ class S03Classes(LectureScene):
             self.play(FadeIn(div[5:], shift=LEFT * 0.2), run_time=0.7)
             self.play(LaggedStart(*[Create(e) for e in edges], lag_ratio=0.12), run_time=1.4)
 
-        head4 = step_head(4, "count each class", "har bir sinfni sanaymiz")
+        head4 = step_head(label("step_4"), label("count_each_class"))
         stacks = VGroup(*[Dot(p, radius=DR, color=RLBLUE, fill_opacity=1) for p in stack_positions()])
         nums = VGroup(*[Integer(0, font_size=34).move_to([X0 + (c + 0.5) * CW, AY + 0.08 + ((n - 1) // PER_ROW + 1) * DS + 0.3, 0])
                         for c, n in enumerate(COUNTS)])
@@ -174,7 +174,7 @@ class S03Classes(LectureScene):
 
         hl = SurroundingRectangle(VGroup(*[d for d, s in zip(stacks, SAL) if class_of(s) == 1]), buff=0.12,
                                   color=HILITE, stroke_width=4)
-        half = txt(label("311_of_600_more_than_half"), size=28, color=HILITE)
+        half = tagged(f"{COUNTS[1]}/{sum(COUNTS)}:", label("more_than_half"), size=28, color=HILITE)
         half.next_to(hl, RIGHT, buff=0.3).shift(UP * 0.6)
         tail = Arrow([sx(85_000), AY + 1.25, 0], [sx(158_000), AY + 0.9, 0], buff=0, color=RLRED, stroke_width=5)
         tail_lab = txt(label("thin_tail"), size=26, color=RLRED).next_to(tail, UP, buff=0.15).shift(RIGHT * 1.2)
@@ -186,7 +186,7 @@ class S03Classes(LectureScene):
 
         bars = hist_bars()
         gapped = hist_bars(gap=0.35)
-        head5 = step_head(5, "draw touching bars", "tegib turgan ustunlar")
+        head5 = step_head(label("step_5"), label("draw_touching_bars"))
         gaps = VGroup(*[Rectangle(width=0.35, height=2.4, stroke_width=0, fill_color=RLRED, fill_opacity=0.5)
                         .move_to([X0 + c * CW, AY + 1.2, 0]) for c in range(1, len(COUNTS))])
         with self.say("3.8") as (tr, t):
@@ -252,7 +252,8 @@ class S03HandsOn(LectureScene):
         for r in rows:
             r[1].set_x(hdr[1].get_right()[0], RIGHT)
         table.move_to([-3.3, -0.4, 0])
-        card_ = pause_card([label("we_find_how_many_earn_more")])
+        edge = L["above_80k_edge"]
+        card_ = pause_card([f"{label('salary')} > ${edge / 1000:g}k:  {label('how_many_q')}"])
         card_.move_to([3.2, 1.2, 0])
         if card_.width > 6.4:
             card_.scale_to_fit_width(6.4)

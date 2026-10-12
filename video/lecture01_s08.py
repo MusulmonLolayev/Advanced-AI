@@ -16,6 +16,7 @@ assert L["outliers"] == [88]
 W_HI = max(v for v in NINE if v <= F_HI)          # upper whisker: largest value inside the fence
 assert (min(NINE), W_HI) == (31, 61)
 BR = L["branches"]
+BRANCH = {"A": label("branch_a"), "B": label("branch_b"), "C": label("branch_c")}
 assert [b["median"] for b in BR] == [11.8, 17.7, 29.5] and round(BR[2]["iqrx"], 1) == 19.9
 assert [len(b["fliers"]) for b in BR] == [2, 3, 3]
 
@@ -193,7 +194,7 @@ class S08Branches(LectureScene):
                         Line([x - 0.3, my(b["wlo"]), 0], [x + 0.3, my(b["wlo"]), 0], stroke_width=3),
                         Line([x - 0.3, my(b["whi"]), 0], [x + 0.3, my(b["whi"]), 0], stroke_width=3))
             fl = VGroup(*[Dot([x, my(v), 0], radius=0.08, color=RLRED) for v in b["fliers"]])
-            name = txt(label("branch_n", name=b['name']), size=24).next_to([x, MB, 0], DOWN, buff=0.2)
+            name = txt(BRANCH[b['name']], size=24).next_to([x, MB, 0], DOWN, buff=0.2)
             plots.add(VGroup(wk, bx, md, fl, name))
             meds.add(txt(num(b["median"]), size=26, weight=BOLD, color=c).next_to(bx, LEFT, buff=0.15).set_y(my(b["medx"])))
             fliers.add(fl)
@@ -208,7 +209,7 @@ class S08Branches(LectureScene):
 
         c_box = plots[2][1]
         br = Brace(c_box, RIGHT, buff=0.15, color=RLORANGE)
-        br_t = txt(label("iqr_n_min", iqrx=BR[2]['iqrx']), size=24,
+        br_t = txt(f"IQR ≈ {BR[2]['iqrx']:.1f} {label('minutes')}", size=24,
                    color=RLORANGE).next_to(br, RIGHT, buff=0.1)
         with self.say("8.11") as (tr, t):
             self.play(Indicate(c_box, color=RLORANGE, scale_factor=1.05), run_time=0.9)
@@ -244,7 +245,7 @@ class S08HandsOn(LectureScene):
         fence = DashedLine([px(F_LO), -2.2, 0], [px(F_LO), 0.2, 0], color=RLRED, stroke_width=4)
         f_lab = txt(num(F_LO), size=26, weight=BOLD, color=RLRED).next_to(fence, UP, buff=0.1)
         gap = DoubleArrow([px(F_LO), -1.0, 0], [px(min(NINE)), -1.0, 0], buff=0, color=RLGREEN, stroke_width=4)
-        none = txt(label("31_15_25_no_outlier_at"),
+        none = txt(f"{min(NINE)} > {num(F_LO)}:  {label('no_outlier_at_the_bottom')}",
                    size=28, color=RLGREEN).move_to([0, 0.75, 0])
         with self.say("8.14") as (tr, t):
             self.play(FadeOut(card_), FadeIn(calc), run_time=0.8)

@@ -7,6 +7,9 @@ from lecture01_kit import *
 
 EDGES, COUNTS = L["hist_edges"], L["hist_counts"]
 N_EMP = sum(COUNTS)
+SPAM = L["spam_train"]
+assert SPAM["emails"] - SPAM["spam"] == 1
+SPAM_SHARE = f"{round(100 * SPAM['spam'] / SPAM['emails'])}%"
 P4060 = L["p_40_60k"]
 # the narration speaks these
 assert N_EMP == 600 and COUNTS[1] == 311 and EDGES[1:3] == [40_000, 60_000]
@@ -143,7 +146,7 @@ class S14Empirical(LectureScene):
         self.clear_all()
 
         bars, axis, nums = histogram()
-        lab = txt(label("600_salaries"), size=24, color=GREY_B).next_to(axis, DOWN, buff=0.5)
+        lab = tagged(N_EMP, label("salaries"), size=24, color=GREY_B).next_to(axis, DOWN, buff=0.5)
         res = VGroup(MathTex(rf"\frac{{{COUNTS[1]}}}{{{N_EMP}}}", "=", f"{P4060:.3f}", font_size=60),
                      txt(f"≈ {round(P4060 * 100)}%", size=48, weight=BOLD, color=HILITE)).arrange(DOWN, buff=0.4)
         res.move_to([4.4, 0.4, 0])
@@ -181,17 +184,17 @@ class S14Empirical(LectureScene):
 
 class S14HandsOn(LectureScene):
     def construct(self):
-        card = pause_card([label("training_data_90_percent_of_emails"),
+        card = pause_card([f"{label('training_data')}:  P({label('spam')}) = {SPAM_SHARE}",
                            label("is_that_spam_probability_right_for_q")])
         card.to_edge(UP, buff=SAFE + 0.3)
         mails = VGroup(*[RoundedRectangle(corner_radius=0.05, width=0.8, height=0.55, stroke_width=2,
-                                          stroke_color=RLRED if i < 9 else RLGREEN,
-                                          fill_color=RLRED if i < 9 else RLGREEN, fill_opacity=0.25)
-                         for i in range(10)]).arrange(RIGHT, buff=0.18).move_to(DOWN * 1.9)
+                                          stroke_color=RLRED if i < SPAM["spam"] else RLGREEN,
+                                          fill_color=RLRED if i < SPAM["spam"] else RLGREEN, fill_opacity=0.25)
+                         for i in range(SPAM["emails"])]).arrange(RIGHT, buff=0.18).move_to(DOWN * 1.9)
         for m in mails:
             m.add(VMobject(stroke_width=2, stroke_color=m.get_stroke_color()).set_points_as_corners(
                 [m.get_corner(UL), m.get_center() + DOWN * 0.05, m.get_corner(UR)]))
-        nine = txt(label("9_of_10_spam"), size=24, color=RLRED).next_to(mails, DOWN, buff=0.25)
+        nine = tagged(f"{SPAM['spam']}/{SPAM['emails']}:", label("spam"), size=24, color=RLRED).next_to(mails, DOWN, buff=0.25)
         with self.voiceover(line("14.8")):
             self.play(FadeIn(card), run_time=0.8)
             self.play(LaggedStart(*[FadeIn(m, shift=DOWN * 0.2) for m in mails], lag_ratio=0.08), FadeIn(nine),
@@ -210,10 +213,10 @@ class S14HandsOn(LectureScene):
         samp_box = RoundedRectangle(corner_radius=0.15, width=2.6, height=1.8, color=WHITE, stroke_width=3)
         samp_box.move_to([2.6, -0.6, 0])
         samp = VGroup(*[Dot([2.6 + (i % 5 - 2) * 0.4, -0.6 + (i // 5 - 0.5) * 0.5, 0], radius=0.08,
-                            color=RLRED if i != 7 else RLGREEN) for i in range(10)])
+                            color=RLRED if i != 7 else RLGREEN) for i in range(SPAM["emails"])])   # one not spam
         pop_l = txt(label("real_email_population"), size=26, color=GREY_B)
         pop_l.next_to(cloud, UP, buff=0.15).set_x(-2.0)
-        samp_l = txt(label("training_set_90_percent_spam"), size=24, color=RLRED)
+        samp_l = txt(f"{label('training_set')}:  P({label('spam')}) = {SPAM_SHARE}", size=24, color=RLRED)
         samp_l.next_to(samp_box, UP, buff=0.15)
         samp_l.add_background_rectangle(opacity=0.85, buff=0.05)
         neq = txt(label("sample_population"), size=34, weight=BOLD, color=HILITE)
@@ -285,7 +288,7 @@ class S14Summary(LectureScene):
                 self.play(FadeIn(r, shift=RIGHT * 0.3), run_time=0.6)
         self.clear_all()
 
-        end = VGroup(txt(label("lecture_n", n=1), size=56, weight=BOLD, color=RLBLUE),
+        end = VGroup(txt(label("lecture_1"), size=56, weight=BOLD, color=RLBLUE),
                      txt(label("the_end"), size=34, color=GREY_B)).arrange(DOWN, buff=0.3).move_to(UP * 0.4)
         nxt = VGroup(txt(label("next"), size=28, color=GREY_B),
                      txt(label("lecture_2_conditional_probability_and_bayes"), size=40, weight=BOLD, color=RLBLUE),

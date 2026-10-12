@@ -104,7 +104,7 @@ def mean_line(y):
 class S04Problem(LectureScene):
     def construct(self):
         self.section_card(4)
-        head = txt(label("n_employees", n=N_EMP), size=34, color=GREY_B).to_edge(UP, buff=SAFE + 0.3)
+        head = tagged(N_EMP, label("employees"), size=34, color=GREY_B).to_edge(UP, buff=SAFE + 0.3)
         rng = np.random.default_rng(7)
         order = rng.permutation(N_EMP)
         grid = VGroup(*[Dot(radius=0.045) for _ in range(N_EMP)])
@@ -183,7 +183,12 @@ class S04Mean(LectureScene):
                         for i, s in enumerate(SAL) if s * BSCALE < HM])
         for g in gaps:
             g.set_stroke(HILITE, width=0.6, opacity=0.8)
-        fills = txt(label("v_above_the_line_v_missing", v=money(EXCESS)), size=26, color=HILITE).next_to(line, UP, buff=0.25)
+        # the same amount twice, each with its words under it: the two languages order these differently
+        fills = VGroup(*[VGroup(txt(money(EXCESS), size=26, weight=BOLD, color=HILITE),
+                                txt(k, size=22, color=HILITE)).arrange(DOWN, buff=0.08)
+                         for k in (label("above_the_line"), label("missing_below_it"))])
+        fills = VGroup(fills[0], txt("=", size=30, color=HILITE), fills[1]).arrange(RIGHT, buff=0.35)
+        fills.next_to(line, UP, buff=0.25)
         t = say("s2c")
         with self.voiceover(t) as tr:
             self.play(FadeOut(value), FadeOut(mean_tag), run_time=0.5)
@@ -219,9 +224,10 @@ class S04Totals(LectureScene):
             self.play(FadeOut(line), Transform(rect, big), run_time=1.4)
 
         b_n = Brace(rect, DOWN, buff=0.12, color=GREY_B)
-        l_n = txt(label("n_people", n=N_EMP), size=26, color=GREY_B).next_to(b_n, DOWN, buff=0.12)
+        l_n = tagged(N_EMP, label("people"), size=26, color=GREY_B).next_to(b_n, DOWN, buff=0.12)
         b_m = Brace(rect, LEFT, buff=0.12, color=GREY_B)
-        l_m = txt(label("v_each", v=money(PAYROLL_MEAN, cents=True)), size=24, color=GREY_B)
+        l_m = VGroup(txt(money(PAYROLL_MEAN, cents=True), size=24, color=GREY_B),
+                     txt(label("each", 1), size=20, color=GREY_B)).arrange(DOWN, buff=0.06)
         l_m.rotate(PI / 2).next_to(b_m, LEFT, buff=0.12)
         eq = MathTex(rf"\${PAYROLL_MEAN:,.2f}".replace(",", "{,}"), r"\times", str(N_EMP), "=",
                      rf"\${PAYROLL_TOTAL:,.0f}".replace(",", "{,}"), font_size=46)
@@ -245,7 +251,7 @@ class S04Totals(LectureScene):
         med_txt = MathTex(r"\text{" + label("median", 1) + r"}\times" + str(N_EMP) + "=" +
                           rf"\${MEDIAN_TOTAL:,.0f}".replace(",", "{,}"), font_size=40, color=RLGREEN)
         med_txt.move_to(eq)
-        miss = txt(label("v_missing", v=money(MEDIAN_SHORT)), size=26, color=RLRED)
+        miss = tagged(money(MEDIAN_SHORT), label("missing"), size=26, color=RLRED)
         miss.next_to(strip, UP, buff=0.12).set_x(3.4)
         no = txt(label("no_other_summary_does_that"), size=30, color=GREY_B).move_to(eq)
         t = say("s3c")
@@ -385,8 +391,8 @@ class S04Median(LectureScene):
         def braces(left, right):
             bl = Brace(VGroup(*left), DOWN, buff=0.12, color=GREY_B)
             br = Brace(VGroup(*right), DOWN, buff=0.12, color=GREY_B)
-            return VGroup(bl, br, txt(label("n_people", n=len(left)), size=22, color=GREY_B).next_to(bl, DOWN, buff=0.1),
-                          txt(label("n_people", n=len(right)), size=22, color=GREY_B).next_to(br, DOWN, buff=0.1))
+            return VGroup(bl, br, tagged(len(left), label("people"), size=22, color=GREY_B).next_to(bl, DOWN, buff=0.1),
+                          tagged(len(right), label("people"), size=22, color=GREY_B).next_to(br, DOWN, buff=0.1))
 
         ln, lab = level(DRINK_MED)
         tag = txt(label("before"), size=24, color=GREY_B).next_to(lab, LEFT, buff=0.25)
@@ -464,7 +470,7 @@ class S04HandsOn(LectureScene):
         assert len(lows) == NINE_BELOW
         counts = VGroup(*[txt(str(j + 1), size=28, weight=BOLD, color=HILITE).next_to(saved[i], UP, buff=0.12)
                           for j, i in enumerate(lows)])
-        sting = txt(label("k_of_the_n_earn_less", k=NINE_BELOW, n=len(NINE)), size=34, weight=BOLD, color=HILITE)
+        sting = tagged(f"{NINE_BELOW}/{len(NINE)}:", label("earn_less_than_that"), size=34, weight=BOLD, color=HILITE)
         sting.move_to([0, 0.95, 0])
         with self.voiceover(say("s6c")):
             self.play(Transform(bars, saved), run_time=1.0)

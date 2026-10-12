@@ -51,8 +51,8 @@ def positives_bar(ill, false_pos, width=10.0, height=0.9):
     a = Rectangle(width=width * ill / total, height=height, stroke_width=0, fill_color=ILL_C, fill_opacity=1)
     b = Rectangle(width=width * false_pos / total, height=height, stroke_width=0, fill_color=FALSE_C, fill_opacity=1)
     VGroup(a, b).arrange(RIGHT, buff=0)
-    la = txt(f"{num(ill)} {label("ill")}", size=26, weight=BOLD).next_to(a, DOWN, buff=0.2)
-    lb = txt(f"{num(false_pos)} {label("false_alarms")}", size=26, weight=BOLD).next_to(b, DOWN, buff=0.2)
+    la = tagged(num(ill), label("ill"), size=26, weight=BOLD).next_to(a, DOWN, buff=0.2)
+    lb = tagged(num(false_pos), label("false_alarms"), size=26, weight=BOLD).next_to(b, DOWN, buff=0.2)
     if la.get_right()[0] > lb.get_left()[0] - 0.2:      # a thin red slice: keep its label clear of the orange one
         la.next_to(a, UP, buff=0.2)
     return VGroup(a, b), VGroup(la, lb)
@@ -119,14 +119,13 @@ class S09Count(LectureScene):
         # 10,000 tested: 100 ill, 9,900 healthy
         img = people_image(S1["ill"], 0).move_to(LEFT * 2.6 + DOWN * 0.15)
         side = VGroup(
-            txt(label("n_people_tested", tested=num(S1['tested'])), size=30, weight=BOLD),
+            tagged(num(S1['tested']), label("people_tested"), size=30, weight=BOLD),
             VGroup(Square(0.3, stroke_width=0, fill_color=ILL_C, fill_opacity=1),
-                   txt(f"{num(S1['ill'])} {label("ill")}", size=28)).arrange(RIGHT, buff=0.2),
+                   tagged(num(S1['ill']), ILL, size=28)).arrange(RIGHT, buff=0.2),
             VGroup(Square(0.3, stroke_width=0, fill_color=WELL_C, fill_opacity=1),
-                   txt(f"{num(S1['healthy'])} {label("healthy")}", size=28)).arrange(RIGHT, buff=0.2),
+                   tagged(num(S1['healthy']), label("healthy"), size=28)).arrange(RIGHT, buff=0.2),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.4).move_to(RIGHT * 3.6 + UP * 1.0)
-        rate = txt(label("1_in_n_is_ill", n=S1['tested'] // S1['ill']),
-                   size=26, color=GREY_B).next_to(side, UP, buff=0.4, aligned_edge=LEFT)
+        rate = txt(f"P({ILL}) = 1/{S1['tested'] // S1['ill']}", size=26, color=GREY_B).next_to(side, UP, buff=0.4, aligned_edge=LEFT)
         with self.say("9.4") as (tr, t):
             self.play(FadeIn(rate), run_time=0.5)
             self.cue(tr, t, {"en": "We test", "uz": "Oʻn ming"})
@@ -142,7 +141,7 @@ class S09Count(LectureScene):
         # the test catches every ill person, and flags 5 % of the healthy too
         img2 = people_image(S1["ill"], S1["false_pos"]).move_to(img)
         fa = VGroup(Square(0.3, stroke_width=0, fill_color=FALSE_C, fill_opacity=1),
-                    txt(f"{num(S1['false_pos'])} {label("false_alarms")}", size=28)).arrange(RIGHT, buff=0.2)
+                    tagged(num(S1['false_pos']), label("false_alarms"), size=28)).arrange(RIGHT, buff=0.2)
         fa.next_to(side, DOWN, buff=0.4, aligned_edge=LEFT)
         five = MathTex(rf"{pct(FP_RATE)[:-1]}\% \times {num(S1['healthy'])} = {num(S1['false_pos'])}".replace(",", "{,}"),
                        font_size=38, color=FALSE_C).next_to(fa, DOWN, buff=0.4, aligned_edge=LEFT)
@@ -157,8 +156,7 @@ class S09Count(LectureScene):
         # the positives, magnified
         bar, labs = positives_bar(S1["ill"], S1["false_pos"])
         bgroup = VGroup(bar, labs).move_to(DOWN * 1.2)
-        head = txt(label("n_test_positive", positives=num(S1['positives'])),
-                   size=34, weight=BOLD).next_to(bar, UP, buff=0.9)
+        head = tagged(num(S1['positives']), label("test_positive"), size=34, weight=BOLD).next_to(bar, UP, buff=0.9)
         ppv = MathTex(rf"\frac{{{S1['ill']}}}{{{S1['positives']}}} \approx {pct(S1['ppv'])[:-1]}\%",
                       font_size=56, color=HILITE).next_to(head, UP, buff=0.5)
         with self.say("9.6") as (tr, t):
@@ -179,16 +177,17 @@ class S09Count(LectureScene):
         small = Rectangle(width=1.6, height=S1["ill"] * k, stroke_width=0, fill_color=ILL_C, fill_opacity=1)
         big.move_to([-2.2, floor + big.height / 2, 0])
         small.move_to([2.2, floor + small.height / 2, 0])
-        lb = txt(label("n_of_n", fp_rate=pct(FP_RATE), healthy=num(S1['healthy'])),
-                 size=28).next_to(big, DOWN, buff=0.25)
-        ls = txt(label("100_percent_of_n", ill=num(S1['ill'])), size=28).next_to(small, DOWN, buff=0.25)
+        # the share times the group, with the group's name under it: the same in both languages
+        lb = VGroup(txt(f"{pct(FP_RATE)} × {num(S1['healthy'])}", size=28),
+                    txt(label("healthy"), size=24, color=GREY_B)).arrange(DOWN, buff=0.1).next_to(big, DOWN, buff=0.25)
+        ls = VGroup(txt(f"100% × {num(S1['ill'])}", size=28),
+                    txt(ILL, size=24, color=GREY_B)).arrange(DOWN, buff=0.1).next_to(small, DOWN, buff=0.25)
         vb = txt(num(S1["false_pos"]), size=34, weight=BOLD).next_to(big, UP, buff=0.15)
         vs = txt(num(S1["ill"]), size=34, weight=BOLD).next_to(small, UP, buff=0.15)
-        ratio = txt(label("healthy_ill_n_1", healthy_per_ill=N['healthy_per_ill']),
-                    size=30, color=GREY_B).to_edge(UP, buff=SAFE + 0.4)
+        ratio = tagged(f"= {N['healthy_per_ill']:g} : 1", label("healthy_ill"), after=False, size=30, color=GREY_B).to_edge(UP, buff=SAFE + 0.4)
         per = VGroup(*[Dot(radius=0.14, color=FALSE_C) for _ in range(round(N["false_per_real"]))],
                      Dot(radius=0.14, color=ILL_C)).arrange(RIGHT, buff=0.18)
-        per_l = txt(label("n_false_alarms_per_real_case", false_per_real=round(N['false_per_real'])), size=28)
+        per_l = tagged(f"≈ {round(N['false_per_real'])} : 1", label("false_alarms_real_case"), after=False, size=28)
         per_g = VGroup(per, per_l).arrange(RIGHT, buff=0.4).next_to(ratio, DOWN, buff=0.3)
         with self.say("9.7") as (tr, t):
             self.cue(tr, t, {"en": "Five percent", "uz": "Katta guruhning"})
@@ -211,8 +210,9 @@ class S09Fraud(LectureScene):
         bells = VGroup(*[Triangle(color=FALSE_C if i not in fraud else RLRED, fill_opacity=1, stroke_width=0)
                          .scale(0.13).next_to(cards[i], UP, buff=0.06) for i in sorted(flagged)])
         head = self.heading(label("fraud_detector"), color=LBLUE)
-        tally = txt(label("n_alarms_n_real_fraud", n_flagged=len(flagged), n_fraud=len(fraud)),
-                    size=28, color=FALSE_C).next_to(cards, DOWN, buff=0.5)
+        tally = VGroup(tagged(len(flagged), label("alarms"), size=28, color=FALSE_C),
+                       tagged(len(fraud), label("real_fraud"), size=28, color=RLRED)).arrange(RIGHT, buff=0.9)
+        tally.next_to(cards, DOWN, buff=0.5)
         note = info(label("illustration"))
         with self.say("9.8") as (tr, t):
             self.play(FadeIn(head), LaggedStart(*[FadeIn(c) for c in cards], lag_ratio=0.02), FadeIn(note), run_time=1.2)
@@ -224,8 +224,9 @@ class S09Fraud(LectureScene):
 
 class S09HandsOn(LectureScene):
     def construct(self):
-        card = pause_card([label("1_person_in_n_has_the", n=S10['tested'] // S10['ill']),
-                           label("same_test_never_misses_n_false", fp_rate=pct(FP_RATE)),
+        # the task as the section's own notation: the numbers in math, the words as labels
+        card = pause_card([f"P({ILL}) = 1/{S10['tested'] // S10['ill']}",
+                           f"P({POS} | {ILL}) = 1,   P({POS} | {label('healthy')}) = {pct(FP_RATE)}",
                            label("p_ill_positive_q")])
         with self.say("9.9"):
             self.play(FadeIn(card), run_time=0.8)
@@ -234,8 +235,8 @@ class S09HandsOn(LectureScene):
 
         img = people_image(S10["ill"], S10["false_pos"], height=4.2).move_to(LEFT * 3.9 + UP * 0.6)
         rows = VGroup(
-            txt(label("n_ill", ill=num(S10['ill'])), size=28, color=ILL_C),
-            txt(label("n_healthy", healthy=num(S10['healthy'])), size=28, color=GREY_B),
+            tagged(num(S10['ill']), ILL, size=28, color=ILL_C),
+            tagged(num(S10['healthy']), label("healthy"), size=28, color=GREY_B),
             MathTex(rf"{pct(FP_RATE)[:-1]}\% \times {num(S10['healthy'])} = {num(S10['false_pos'])}".replace(",", "{,}"),
                     font_size=36, color=FALSE_C),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.3).move_to(RIGHT * 2.6 + UP * 1.6)
@@ -253,7 +254,7 @@ class S09HandsOn(LectureScene):
         self.clear_all()
 
         # same test, two base rates
-        cases = [(S1, label("1_in_100")), (S10, label("1_in_10"))]
+        cases = [(s, f"P({ILL}) = 1/{s['tested'] // s['ill']}") for s in (S1, S10)]
         floor, hk = -2.0, 3.6
         bars = VGroup()
         for i, (s, lab) in enumerate(cases):

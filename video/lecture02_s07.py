@@ -68,7 +68,7 @@ class S07Groups(LectureScene):
                           font_size=40).move_to([3.8, 0.9, 0])
         cross = Cross(half_eq, stroke_color=BAD, stroke_width=6)
         wide = bars((P_BIKE, P_NOBIKE))
-        sizes = VGroup(*[txt(STUDENTS.format(n=k), size=26, color=LBLUE).next_to(wb[3], DOWN, buff=0.12)
+        sizes = VGroup(*[tagged(k, STUDENTS, size=26, color=LBLUE).next_to(wb[3], DOWN, buff=0.12)
                          for k, wb in zip((N["bike"], N["nobike"]), wide)])
         with self.say("7.2") as (tr, t):
             self.play(Create(half), Write(half_eq), run_time=1.0)
@@ -136,7 +136,7 @@ class S07Formula(LectureScene):
         for wd, k in zip((P_BIKE, P_NOBIKE), (N["bike"], N["nobike"])):
             W = wd * (X1 - X0)
             br = BraceBetweenPoints([x + 0.04, BASE + H + 0.1, 0], [x + W - 0.04, BASE + H + 0.1, 0], UP, color=LBLUE)
-            wbr.add(VGroup(br, txt(STUDENTS.format(n=k), size=24, color=LBLUE).next_to(br, UP, buff=0.08)))
+            wbr.add(VGroup(br, tagged(k, STUDENTS, size=24, color=LBLUE).next_to(br, UP, buff=0.08)))
             x += W
         line_45 = DashedLine([X0, py(N["total_bus"]), 0], [X1 + 0.3, py(N["total_bus"]), 0], color=WHITE, stroke_width=4)
         l45 = MathTex(dec(N["total_bus"]), font_size=44).next_to(line_45, RIGHT, buff=0.15)

@@ -23,7 +23,7 @@ BUS_C, NOBUS_C, OUT_C = RLORANGE, RLGREEN, GREY_D
 BIKE, NOBIKE = label("bike"), label("no_bike")
 BUS, NOBUS = label("bus", 1), label("no_bus")
 TOTAL = label("total")
-STUDENTS = label("n_students")
+STUDENTS = label("students")
 
 
 def dec(x):
@@ -64,7 +64,8 @@ def legend(items, size=24):
 
 # ─── the tree ─────────────────────────────────────────────────────────────
 def node(label, color=RLBLUE, size=24):
-    t = txt(label, size=size)
+    """A tree node: a label, or (value, label) for a count such as 100 students."""
+    t = tagged(*label, size=size) if isinstance(label, tuple) else txt(label, size=size)
     r = RoundedRectangle(corner_radius=0.1, width=t.width + 0.4, height=t.height + 0.3, stroke_color=color,
                          stroke_width=2.5, fill_color=BLACK, fill_opacity=0.8)
     return VGroup(r, t.move_to(r))

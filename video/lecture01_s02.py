@@ -61,7 +61,7 @@ class S02Population(LectureScene):
         ring.move_to(dots)
         smp = txt(label("sample"), size=36, weight=BOLD, color=RLBLUE)
         smp.next_to(ring, RIGHT, buff=0.4)
-        n_lab = txt(label("600_salaries"), size=24, color=GREY_B).next_to(smp, DOWN, buff=0.15)
+        n_lab = tagged(len(SAL), label("salaries"), size=24, color=GREY_B).next_to(smp, DOWN, buff=0.15)
         with self.say("2.3") as (tr, t):
             self.play(Create(ring), FadeIn(smp, shift=LEFT * 0.2), run_time=1.0)
             self.cue(tr, t, 1)

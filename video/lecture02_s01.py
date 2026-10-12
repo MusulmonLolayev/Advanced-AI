@@ -96,7 +96,7 @@ class S01Students(LectureScene):
         grid, who = student_grid()
         grid.move_to([-3.1, -0.15, 0])
         leg = legend([(BUS_C, BUS), (NOBUS_C, NOBUS)]).next_to(grid, DOWN, buff=0.3)
-        title = txt(STUDENTS.format(n=N["n"]), size=34, weight=BOLD).next_to(grid, UP, buff=0.3)
+        title = tagged(N["n"], STUDENTS, size=34, weight=BOLD).next_to(grid, UP, buff=0.3)
         fr = vfrac(N["bus"], N["n"]).move_to([2.4, 0.4, 0])
         eq = MathTex("=", dec(N["p_bus"]), font_size=56).next_to(fr, RIGHT, buff=0.35)
         p_lab = txt(label("p_bus"), size=34, color=GREY_B).next_to(VGroup(fr, eq), UP, buff=0.6)
@@ -111,7 +111,7 @@ class S01Students(LectureScene):
             self.play(FadeIn(p_lab), Write(fr), Write(eq), run_time=1.0)
 
         box = group_box(grid, who, lambda k: k[0] == "bike")
-        blab = txt(label("bike_n").format(n=N["bike"]), size=28, color=LBLUE, weight=BOLD)
+        blab = tagged(N["bike"], f"{BIKE}:", after=False, size=28, color=LBLUE, weight=BOLD)
         blab.next_to(box, UP, buff=0.12).align_to(box, LEFT)
         with self.say("1.7") as (tr, t):
             self.play(*grey_where(grid, who, lambda k: k[0] == "bike"), FadeOut(title), run_time=0.9)
@@ -170,7 +170,7 @@ class S01HandsOn(LectureScene):
     def construct(self):
         grid, who = student_grid(side=0.3, gap=0.05)
         grid.move_to([4.0, -0.3, 0])
-        pc = pause_card([label("look_only_at_the_n_students").format(n=N["nobike"]),
+        pc = pause_card([label("look_only_at_the_students_with_no_bike"),
                          label("how_many_of_them_take_the_q")])
         pc.move_to([-2.4, 0.2, 0])
         if pc.width > 7.6:
@@ -194,7 +194,7 @@ class S01HandsOn(LectureScene):
             self.play(FadeIn(lab), Write(fr), Write(eq), run_time=1.0)
         self.clear_all()
 
-        stages = VGroup(node(STUDENTS.format(n=N["n"]), size=32), node(BIKE, size=32), node(BUS, color=GREY_B, size=32))
+        stages = VGroup(node((N["n"], STUDENTS), size=32), node(BIKE, size=32), node(BUS, color=GREY_B, size=32))
         stages.arrange(RIGHT, buff=1.0)
         arrows = VGroup(*[Arrow(a.get_right(), b.get_left(), buff=0.1, color=GREY_B) for a, b in zip(stages, stages[1:])])
         with self.say("1.13") as (tr, t):

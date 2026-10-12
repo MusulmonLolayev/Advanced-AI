@@ -13,7 +13,9 @@ Narrated Manim videos built from the same material as the slide decks.
 - `statistics/capture_lNN.py` computes a lecture's numbers (`compute()` is pure) and writes `raw/lNN_numbers.json`;
   `statistics/test_lNN.py` unit-tests every one of them against the slides and the narration (`unittest`, no
   pytest): `uv run python -m unittest discover -s statistics -p 'test_l02.py'`. Run by discovery, not by dotted
-  path — the folder name `statistics` shadows the standard library module. The test caught a narration claim the
+  path — the folder name `statistics` shadows the standard library module (`test_l01.py` covers the Lecture 1 numbers
+  set beside labels; its example inputs — bottle settings, spam share, class of 30 — live in `capture_l01.py`).
+  The test caught a narration claim the
   numbers did not support ("the three hardest departments"), so run it after every narration edit.
 - `statistics/screens/figures/` — figures rasterised from the committed PDFs, cached so a video re-renders later.
 - `render.sh <module> [l|m|h|k]`, `check_edges.py <mp4>`. `JOBS=N` renders scenes in parallel (keep N <= 4 with
@@ -26,12 +28,17 @@ Narrated Manim videos built from the same material as the slide decks.
   words verbatim: never copy narration into Python. `lecture02_kit.py` adds the 100-student grid, the tree and the
   contingency table used across Lecture 2's sections.
 - **Every on-screen word lives in `narration/labels.yaml`**, one file for all lectures (and the shared cards: pause,
-  next, "N-maʼruza"). Each label has a key and its interchangeable forms per language, the default first; a scene
-  shows `label("mean")` or `label("mean", 1)` and never holds label text itself (`{n}` placeholders are filled by
-  `label("key", n=...)`). Reuse an existing key, or add a form to it, before coining a new one. After any label
-  change run `uv run python labels.py`: it checks every `label()` call against the file (key, form, placeholders,
-  unused keys, ʻ/ʼ spelling) and rewrites the file in lecture order with a "where shown" comment per key.
-  `txt()` refuses a string with an unfilled `{placeholder}`. Narration stays in `narration/lectureNN.md`.
+  "Keyingi", "N-maʼruza"). Each label has a key and its interchangeable forms per language, the default first; a scene
+  shows `label("mean")` or `label("mean", 1)` and never holds label text itself. Reuse an existing key, or add a form
+  to it, before coining a new one. After any label change run `uv run python labels.py`: it checks every `label()`
+  call against the file (key, form, unused keys, ʻ/ʼ spelling) and rewrites the file in lecture order with a "where
+  shown" comment per key. Narration stays in `narration/lectureNN.md`.
+- **A label is words only, never a value** (instructor's rule). The number comes from the captured data and is set
+  beside the words: `tagged(value, words)` when both languages put the words on the same side ("40 talaba",
+  "yaroqsiz: 11 / 1000"), as one line split into two objects so they share a baseline. Where the languages order
+  them differently ("100 kishidan 1", "9,900 ning 5% i"), show the number as math the languages share
+  (`P(kasal) = 1/100`, `5% × 9,900`) with the label beside or under it — never assemble grammar in code. Fixed
+  names keep their number ("0-qism", "2-maʼruza", "1-bosqich"). `labels.py` rejects a `{placeholder}` in a label.
 - A section file renders on its own while it is being written:
   `LANG_CODE=uz uv run --frozen manim -ql --media_dir out/l02dev_uz/media lecture02_s04.py S04Table`.
 
@@ -68,6 +75,8 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 - **The cloned voice can stop early on a long run of repeated words** (Lecture 2's line of spelled decimals), and
   its fixed seed repeats the same cut on every retry. `NavoiyService` then voices that line sentence by sentence and
   joins the pieces with a 0.2 s breath; lines that voice whole are untouched.
+- **`tagged()` turns ligatures off**: Pango sets "fi" as one glyph, which shifted the split between number and words
+  ("1 haqiqiy firibgarlik"). Without ligatures a Text has one submobject per character, spaces included.
 - **Never name a local variable `label`**: it shadows the label function for the whole function body
   (`UnboundLocalError`). The move to `labels.yaml` was checked by logging every string each scene hands to
   `Text`/`MathTex` before and after, in both lectures and both languages: identical, so no re-render was needed.

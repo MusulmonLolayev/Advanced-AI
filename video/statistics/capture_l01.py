@@ -62,6 +62,7 @@ assert (V["five_sum"], V["five_mean"], V["five_median"], V["four_median"]) == (2
 assert V["five_above_mean"] == 4
 V["x2"], V["x1_plus_x5"] = five[1], five[0] + five[4]
 V["above_80k"] = int(counts[3:].sum())
+V["above_80k_edge"] = float(edges[3])               # the class boundary the hands-on counts above
 assert (V["x2"], V["x1_plus_x5"], V["above_80k"]) == (45, 119, 44)
 
 # ─── commute: same mean, different variance ───────────────────────────────
@@ -145,19 +146,24 @@ V["bday_pairs_23"] = 23 * 22 // 2
 # Same generators, same order of draws as generate_data_probability_graphics.py, then
 # checked against the stdout it printed, so the video draws the slides' own data.
 A = {}
+# the bottling example's settings, as the figure script sets them: label 500 ml, legal limits ±5 ml,
+# machine spreads 2 ml and 4 ml, 1000 bottles each
+V["bottle_target"], V["bottle_tol"], V["bottle_sd"], V["bottles"] = 500.0, 5.0, {"A": 2.0, "B": 4.0}, 1000
+V["bottle_spread_ratio"] = V["bottle_sd"]["B"] / V["bottle_sd"]["A"]
+lo, hi = V["bottle_target"] - V["bottle_tol"], V["bottle_target"] + V["bottle_tol"]
 rng3 = np.random.default_rng(11)
-for name, sd in (("A", 2.0), ("B", 4.0)):
-    f = rng3.normal(500.0, sd, size=1000)
+for name, sd in V["bottle_sd"].items():
+    f = rng3.normal(V["bottle_target"], sd, size=V["bottles"])
     A[f"fills_{name}"] = f.tolist()
-    bad = (f < 495) | (f > 505)
+    bad = (f < lo) | (f > hi)
     assert int(bad.sum()) == V[f"bottle_{name}_rejected"]
     V[f"bottle_{name}_mean"] = float(f.mean())
     V[f"bottle_{name}_std"] = float(f.std(ddof=1))
-    V[f"bottle_{name}_limits_sd"] = 5.0 / sd
+    V[f"bottle_{name}_limits_sd"] = V["bottle_tol"] / sd
 assert f"mean={V['bottle_B_mean']:.2f}ml  std={V['bottle_B_std']:.2f}ml" in fig
 # machine B with its mean moved off-centre: every shift rejects more bottles
 fB = np.array(A["fills_B"])
-V["bottle_B_shift"] = {str(d): int(((fB + d < 495) | (fB + d > 505)).sum()) for d in range(-3, 4)}
+V["bottle_B_shift"] = {str(d): int(((fB + d < lo) | (fB + d > hi)).sum()) for d in range(-3, 4)}
 assert min(V["bottle_B_shift"].values()) == V["bottle_B_shift"]["0"] == 210
 
 rng4 = np.random.default_rng(5)
@@ -203,6 +209,11 @@ V["five_typo_mean"] = sum(V["five_typo"]) / 5
 V["five_typo_median"] = sorted(V["five_typo"])[2]
 assert (V["five_typo_mean"], V["five_typo_median"]) == (146.2, 47)
 V["sal_median"] = float(np.median(sal))
+
+# ─── example values the videos show, fixed by the slides (kept here so no scene types them) ──
+V["height_example"] = 172.4                         # a continuous value, read off a ruler
+V["spam_train"] = {"spam": 9, "emails": 10}         # "trained on a dataset where 90% of emails are spam"
+V["bday_class"] = 30                                # the hands-on: a class of thirty
 V["sal_mean"] = float(sal.mean())
 # section 7's closing question: how much one extreme value moves the variance
 V["nine_var"] = float(np.var(nine, ddof=1))

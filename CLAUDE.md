@@ -104,7 +104,8 @@ own voice, so it must sound like them, not like a translation. Apply these whene
   Add new term decisions here as the instructor makes them.
 - **Video screen labels** live in one structured file for all lectures, `video/narration/labels.yaml`: each label
   has a key and its interchangeable forms (e.g. mean → "oʻrtacha qiymat", "oʻrtacha"), so a word can vary the way a
-  person varies it. A term approved there is reused, not re-translated.
+  person varies it. A term approved there is reused, not re-translated. A label is words only: numbers come from the data and are set
+  beside the label, or as math where Uzbek and English order them differently.
 - **Never translate word-for-word from English.** Write the sentence the way it would be said aloud in Uzbek: short
   active clauses, first-person-plural verbs, verb last. Example: "Toshkent qoʻshuv Samarqand, boʻlinsin ikki" (calque)
   → "Toshkent qoʻshuv Samarqand, va boʻlamiz ikkiga". Prefer "maʼnosi yoʻq" over "maʼnoga ega emas".

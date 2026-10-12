@@ -10,7 +10,7 @@ KEYS = [["bike_bus", "bike_nobus"], ["nobike_bus", "nobike_nobus"]]
 
 
 def student_tree():
-    return tree(STUDENTS.format(n=N["n"]), [(BIKE, PB), (NOBIKE, 1 - PB)],
+    return tree((N["n"], STUDENTS), [(BIKE, PB), (NOBIKE, 1 - PB)],
                 [[(BUS, PBB), (NOBUS, 1 - PBB)], [(BUS, PBN), (NOBUS, 1 - PBN)]])
 
 
@@ -112,7 +112,7 @@ class S02HandsOn(LectureScene):
         pc.move_to([-2.6, 0.4, 0])
         if pc.width > 7.4:
             pc.scale_to_fit_width(7.4).move_to([-2.6, 0.4, 0])
-        root = node(STUDENTS.format(n=N["n"]), size=26).move_to([2.6, 0, 0])
+        root = node((N["n"], STUDENTS), size=26).move_to([2.6, 0, 0])
         ends = [node(BUS, size=26).move_to([5.3, 1.3, 0]), node(NOBUS, size=26).move_to([5.3, -1.3, 0])]
         edges = [Line(root.get_right(), e.get_left(), color=GREY_B, stroke_width=2.5) for e in ends]
         qs = [MathTex("?", font_size=40, color=HILITE).move_to(e.get_center() + (UP if k == 0 else DOWN) * 0.35)

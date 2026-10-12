@@ -4,8 +4,10 @@ narration/labels.yaml holds every on-screen label of every lecture, by key, with
 forms in each language (the default first). Scenes show a label with label("key") or label("key", i),
 never with text of their own. This script
 
-- checks every label() call names a key that exists, with a form index the key has and the
-  {placeholders} its forms need, and that every key is still used;
+- checks every label() call names a key that exists, with a form index the key has, and that
+  every key is still used;
+- checks no label holds a {placeholder}: a label is words only, and the number it goes with comes
+  from the data and is drawn beside it (common.tagged) or as math;
 - checks the Uzbek forms' spelling (ʻ is U+02BB, ʼ is U+02BC, no Cyrillic or Turkish letters);
 - rewrites the file in lecture order, with a comment above each key listing where it is shown.
   Hand edits to the forms are kept; only the order and the comments are regenerated.
@@ -16,7 +18,6 @@ never with text of their own. This script
 import ast
 import json
 import re
-import string
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -37,8 +38,9 @@ HEADER = """\
 #     uz: ["oʻrtacha qiymat", "oʻrtacha"]
 #
 # A scene shows label("mean") (the first form) or label("mean", 1) (the second); a language with
-# fewer forms gives its first. {n} is filled in from the lecture's captured numbers. To change
-# a word, edit its form here and re-render; to allow another word, add it to the list.
+# fewer forms gives its first. A label is words only: numbers come from the captured data and the
+# scene sets them beside the words or as math. To change a word, edit its form here and re-render;
+# to allow another word, add it to the list.
 # The comment above each key says where it is shown. `uv run python labels.py` checks this file
 # against the scenes and regenerates the order and comments; your edits to the forms are kept.
 """
@@ -66,23 +68,19 @@ def where(path):
 
 
 def uses():
-    """[(key, form index, {kwarg names}, (lecture, place), 'file:line')] for every label() call."""
+    """[(key, form index, number of keyword args, (lecture, place), 'file:line')] for every label() call."""
     out = []
     for path in scene_files():
         for node in ast.walk(ast.parse(path.read_text())):
             if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "label":
                 key = node.args[0].value if node.args and isinstance(node.args[0], ast.Constant) else None
                 i = node.args[1].value if len(node.args) > 1 and isinstance(node.args[1], ast.Constant) else 0
-                out.append((key, i, {k.arg for k in node.keywords}, where(path), f"{path.name}:{node.lineno}"))
+                out.append((key, i, len(node.keywords), where(path), f"{path.name}:{node.lineno}"))
     return out
 
 
 def as_list(f):
     return [f] if isinstance(f, str) else list(f)
-
-
-def fields(s):
-    return {f.split(".")[0].split("[")[0] for _, f, _, _ in string.Formatter().parse(s) if f}
 
 
 def check(labels, used):
@@ -95,13 +93,8 @@ def check(labels, used):
             errs.append(f"{at}: no label {key!r} in labels.yaml")
             continue
         fs = {lang: as_list(labels[key].get(lang, [])) for lang in LANGS}
-        for lang in LANGS:
-            if not fs[lang]:
-                errs.append(f"{key}: no {lang} form")
-                continue
-            s = fs[lang][i] if i < len(fs[lang]) else fs[lang][0]
-            if kw and fields(s) - kw:
-                errs.append(f"{at}: {key} [{lang}] needs {sorted(fields(s) - kw)}")
+        if kw:
+            errs.append(f"{at}: label() takes a key and a form index only; set numbers beside the label")
         if i and all(i >= len(fs[lang]) for lang in LANGS):
             errs.append(f"{at}: {key} has no form {i}")
     for key in labels.keys() - {u[0] for u in used}:
@@ -109,6 +102,9 @@ def check(labels, used):
     for key, v in labels.items():
         if set(v) != set(LANGS):
             errs.append(f"{key}: needs exactly en and uz, has {sorted(v)}")
+        for s in as_list(v.get("en", [])) + as_list(v.get("uz", [])):
+            if re.search(r"\{[^}]*\}", s):
+                errs.append(f"{key}: a label holds words only, not a {{placeholder}}: {s!r}")
         for s in as_list(v.get("uz", [])):
             if re.search(r"[Ѐ-ӿığşçöü]", s):
                 errs.append(f"{key}: Cyrillic or Turkish letter in {s!r}")

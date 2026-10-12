@@ -43,14 +43,14 @@ def forms(key, lang=None):
     return [f] if isinstance(f, str) else f
 
 
-def label(key, i=0, **fmt):
+def label(key, i=0):
     """On-screen label `key` from narration/labels.yaml in the current language: form i (a language
-    with fewer forms gives its first), with any {placeholders} filled from fmt."""
+    with fewer forms gives its first). A label is words only; numbers come from the data and are
+    set beside it (tagged()) or as math, never inside it."""
     if key not in LABELS:
         raise KeyError(f"label {key!r} is not in narration/labels.yaml")
     f = forms(key)
-    s = f[i] if i < len(f) else f[0]
-    return s.format(**fmt) if fmt else s
+    return f[i] if i < len(f) else f[0]
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -217,6 +217,24 @@ def txt(text, size=32, color=WHITE, weight=NORMAL):
     return Text(text, font_size=size, color=color, weight=weight)
 
 
+def tagged(value, words, after=True, size=32, color=WHITE, weight=NORMAL, value_color=None, value_weight=None):
+    """A number and its label on one line, as two objects (value, words). The value comes from
+    the data, the words from labels.yaml: a label never holds a number. Use it only where both
+    languages put the words on the same side of the number ("40 talaba" / "40 students");
+    where they differ, show the number as math with the label under it.
+
+    Typeset as one Text and split, so the two parts share a baseline."""
+    value = str(value)
+    s = f"{value} {words}" if after else f"{words} {value}"
+    assert not re.search(r"\{[A-Za-z_]\w*(?::[^}]*)?\}", s), f"unfilled label: {s!r}"
+    # no ligatures: "fi" set as one glyph would shift the split between number and words
+    t = Text(s, font_size=size, color=color, weight=weight, disable_ligatures=True,
+             t2c={value: value_color} if value_color else {}, t2w={value: value_weight} if value_weight else {})
+    assert len(t) == len(s), (s, len(t))           # without ligatures: one submobject per character
+    nv, nw = len(value), len(words)
+    return VGroup(t[:nv], t[nv + 1:]) if after else VGroup(t[nw + 1:], t[:nw])
+
+
 def box(label, color=RLBLUE, width=3.2, height=1.1, size=26):
     rect = RoundedRectangle(corner_radius=0.12, width=width, height=height,
                             stroke_color=color, stroke_width=3, fill_opacity=0)
@@ -269,12 +287,6 @@ def pause_card(steps, note=None):
     items.arrange(DOWN, aligned_edge=LEFT, buff=0.3)
     g = VGroup(head, items).arrange(DOWN, buff=0.55)
     return g if note is None else VGroup(g, info(note))
-
-
-def next_card(number, title):
-    head = txt(label("next"), size=30, color=GREY_B)
-    body = txt(label("video_n", n=number, t=title), size=40, weight=BOLD, color=RLBLUE)
-    return VGroup(head, body).arrange(DOWN, buff=0.35)
 
 
 def brand_mark():
