@@ -15,7 +15,7 @@ espresso shots are the figure script's own, regenerated from its seed.
 σ = 1.5, so the slide now says so.
 
 **Terms to confirm** (new in this lecture): tanlanma oʻrtachasining taqsimoti (sampling distribution of the mean) ·
-siljimagan baho (unbiased estimate) · standart xato (standard error) · markaziy limit teoremasi (central limit
+tarafkash boʻlmagan baho (unbiased estimate; instructor’s term) · standart xato (standard error) · markaziy limit teoremasi (central limit
 theorem) · katta sonlar qonuni (law of large numbers) · ogʻir dum (heavy tail) · mini-paket (mini-batch) · gradient ·
 gradient tushishi (gradient descent) · haqiqatga oʻxshashlik funksiyasi (likelihood; approved in Lecture 2) ·
 logarifmik haqiqatga oʻxshashlik (log-likelihood) · maksimal haqiqatga oʻxshashlik usuli (maximum likelihood
@@ -47,7 +47,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 5. **Ikki mijozda oʻrtacha beshta qiymat oladi: nol, nol butun oʻndan besh, bir, bir butun oʻndan besh va ikki. Ehtimollari: nol butun yuzdan qirq toʻqqiz, yigirma sakkiz, oʻn sakkiz, toʻrt va bir.**
    *With two customers the average takes five values: zero, zero point five, one, one point five and two. Their probabilities: zero point four nine, two eight, one eight, zero four and zero one.*
    ▸ the table of five averages and their probabilities; then as bars
-6. **Bu taqsimotning kutilmasi nol butun oʻndan toʻrt — xuddi bitta mijozdagidek. Tanlanma oʻrtachasi haqiqatga markazlashgan, yaʼni siljimagan baho.**
+6. **Bu taqsimotning kutilmasi nol butun oʻndan toʻrt — xuddi bitta mijozdagidek. Tanlanma oʻrtachasi haqiqatga markazlashgan, yaʼni tarafkash boʻlmagan baho.**
    *The expectation of this distribution is zero point four, the same as for one customer. The sample mean is centred on the truth: it is an unbiased estimate.*
 7. **Dispersiyasi esa nol butun yuzdan yigirma ikki: nol butun yuzdan qirq toʻrtning yarmi. Umumiy qoida: oʻrtachaning dispersiyasi — sigma kvadratni en ga boʻlganimiz.**
    *Its variance is zero point two two: half of zero point four four. The general rule: the variance of the mean is sigma squared divided by n.*
@@ -140,7 +140,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 1. **Neyron tarmoqni oʻqitish gradientni hisoblashni talab qiladi. Haqiqiy gradient barcha oʻqitish misollari boʻyicha oʻrtacha, lekin bu juda sekin. Shuning uchun bir nechta misoldan iborat mini-paket boʻyicha oʻrtacha olinadi.**
    *Training a neural network means computing a gradient. The honest one averages over all training examples, but that is far too slow. So we average over a mini-batch of a few examples instead.*
    ▸ the full data set; a small batch lifted out of it
-2. **Mini-paket gradienti — tanlanma oʻrtachasining oʻzi. Demak, u siljimagan: toʻliq gradientga markazlashgan. Uning shovqini esa gradient sigmasini paket hajmining kvadrat ildiziga boʻlganimizga teng.**
+2. **Mini-paket gradienti — tanlanma oʻrtachasining oʻzi. Demak, u tarafkash emas: toʻliq gradientga markazlashgan. Uning shovqini esa gradient sigmasini paket hajmining kvadrat ildiziga boʻlganimizga teng.**
    *A mini-batch gradient is a sample mean. So it is unbiased, centred on the full gradient, and its noise is the gradient's sigma divided by the square root of the batch size.*
    ▸ SE = σ_g / √B
 3. **Oʻqitish umuman ishlashining sababi shu.**

@@ -109,6 +109,8 @@ own voice, so it must sound like them, not like a translation. Apply these whene
     «zed-qiymat»); mean vector → **oʻrtachalar vektori**; covariance (matrix) → **kovariatsiya (matritsasi)**;
     correlation → **korrelyatsiya**; PCA → **bosh komponentalar tahlili**; GMM → **Gauss aralashmasi modeli**; batch
     normalization → **paketli normallashtirish**; diffusion model → **diffuziya modeli**. Euler's e is read «e».
+  - Lecture 5: unbiased (estimate) → **tarafkash boʻlmagan (baho)** (instructor's correction; not «siljimagan»);
+    biased → **tarafkash**.
 - **Latin letters are spoken by their English names**, written in Uzbek spelling in the narration so the voice reads
   them right: x → eks, f → ef, n → en, s → es, i → ay, y → uay, A → ey, B → bi, C → si, Q → kyu, IQR → ay kyu ar
   (capitalized at a sentence start: "Eks ikki — …"). Greek letters keep their names (sigma, mu, omega). The screen
