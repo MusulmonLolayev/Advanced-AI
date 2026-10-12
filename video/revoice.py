@@ -7,8 +7,10 @@ replaces the cached file in place only if it scores better than the old one. The
 in <build>/revoiced/. The scenes that use a replaced clip must be re-rendered.
 
     ~/navoiy-stack/CosyVoice/.venv/bin/python revoice.py out/lecture03_uz_navoiy
+    SEEDS=5,11,99,777,4096,65537 ...revoice.py ...     # second pass on what still fails, with new seeds
 """
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -20,7 +22,7 @@ from audio_fx import cap_pauses, trim_silence
 from voice_check import MODELS, judge
 
 URL = "http://127.0.0.1:8765/tts"
-SEEDS = (1986, 7, 42, 123, 2024, 31337)
+SEEDS = tuple(int(x) for x in os.environ.get("SEEDS", "1986,7,42,123,2024,31337").split(","))   # a second pass: other seeds
 
 
 def synth(text, out, seed):
