@@ -31,7 +31,7 @@ part_1_probability:
   en: "Part 1 · Probability"
   uz: "1-qism · Ehtimollik"
 
-# L1 opening, §14; L3 §1
+# L1 opening, §14; L3 §1; L5 §8
 lecture_1:
   en: "Lecture 1"
   uz: "1-maʼruza"
@@ -166,7 +166,7 @@ high:
   en: "high"
   uz: "yuqori"
 
-# L1 §2
+# L1 §2; L5 §1
 population:
   en: "population"
   uz: "bosh toʻplam"
@@ -871,7 +871,7 @@ sample_space:
   en: "sample space"
   uz: "namunalar fazosi"
 
-# L1 §10; L3 §7
+# L1 §10; L3 §7; L5 §3
 coin:
   en: "coin"
   uz: "tanga"
@@ -896,7 +896,7 @@ classifier_output:
   en: "classifier output"
   uz: "klassifikator natijasi"
 
-# L1 §10, §14; L2 §6, §7, §9; L3 §1, §3, §4, §5, §9, §10; L4 §1, §2, §3, §4, §6, §7, §8, §10
+# L1 §10, §14; L2 §6, §7, §9; L3 §1, §3, §4, §5, §9, §10; L4 §1, §2, §3, §4, §6, §7, §8, §10; L5 §1, §2, §3, §4, §5, §6, §8, §10
 illustration:
   en: "illustration"
   uz: ["tasvir uchun", "misol", "illustratsiya"]
@@ -1326,12 +1326,12 @@ spam:
   en: "spam"
   uz: "spam"
 
-# L1 §14
+# L1 §14; L5 §6
 training_data:
   en: "Training data"
   uz: "Oʻqitish berilganlari"
 
-# L1 §14; L2 §10; L3 §11; L4 §10
+# L1 §14; L2 §10; L3 §11; L4 §10; L5 §10
 next:
   en: "Next"
   uz: "Keyingi"
@@ -1346,7 +1346,7 @@ tomorrow_rain:
   en: "Tomorrow: rain"
   uz: "Ertaga: yomgʻir"
 
-# L1 §14; L2 §10; L3 §11; L4 §10
+# L1 §14; L2 §10; L3 §11; L4 §10; L5 §10
 the_end:
   en: "the end"
   uz: "tugadi"
@@ -1453,7 +1453,7 @@ p_bus_bike:
   en: "P(bus | bike)"
   uz: "P(avtobusda | velosipedli)"
 
-# L2 §1; L3 §7
+# L2 §1; L3 §7; L5 §10
 classifier:
   en: "classifier"
   uz: "klassifikator"
@@ -1928,12 +1928,12 @@ law_of_total_probability:
   en: "law of total probability"
   uz: "toʻla ehtimollik formulasi"
 
-# L2 §8
+# L2 §8; L5 §6
 likelihood:
   en: "likelihood"
   uz: "haqiqatga oʻxshashlik"
 
-# L2 §8
+# L2 §8; L5 §7
 posterior:
   en: "posterior"
   uz: ["aposterior ehtimollik", "aposterior"]
@@ -1943,7 +1943,7 @@ wet_pavement:
   en: "wet pavement"
   uz: "hoʻl yoʻlak"
 
-# L2 §8
+# L2 §8; L5 §6
 evidence:
   en: "evidence"
   uz: "dalil"
@@ -2143,7 +2143,7 @@ accuracy_q:
   en: "Accuracy = ?"
   uz: "Aniqlik = ?"
 
-# L2 §10; L4 §5, §10
+# L2 §10; L4 §5, §10; L5 §7
 lecture_6:
   en: "Lecture 6"
   uz: "6-maʼruza"
@@ -2203,7 +2203,7 @@ rarer_disease_a_useless_model_looks:
   en: "rarer disease → a useless model looks better"
   uz: "kasallik kamroq → foydasiz model yaxshiroq koʻrinadi"
 
-# L2 §10
+# L2 §10; L5 §1
 accuracy:
   en: "accuracy"
   uz: "aniqlik"
@@ -2340,7 +2340,7 @@ monopoly:
   en: "Monopoly"
   uz: "Monopoliya"
 
-# L3 §1, §2, §4, §6, §7
+# L3 §1, §2, §4, §6, §7; L5 §1
 pastries:
   en: "pastries in one order"
   uz: "bitta buyurtmadagi pishiriqlar"
@@ -2380,7 +2380,7 @@ customers:
   en: "customers"
   uz: "mijoz"
 
-# L3 §2; L4 §4, §5
+# L3 §2; L4 §4, §5; L5 §3, §4, §6
 pastries_short:
   en: "pastries"
   uz: "pishiriq"
@@ -2625,7 +2625,7 @@ q_did_this_customer_buy:
   en: "Did this customer buy a pastry?"
   uz: "Bu mijoz pishiriq oldimi?"
 
-# L3 §7, §9
+# L3 §7, §9; L5 §10
 dist_bernoulli:
   en: "Bernoulli"
   uz: "Bernulli"
@@ -2645,7 +2645,7 @@ q_which_cup_size:
   en: "Which cup size did this customer pick?"
   uz: "Bu mijoz qaysi stakanni tanladi?"
 
-# L3 §7, §9
+# L3 §7, §9; L5 §10
 dist_categorical:
   en: "Categorical"
   uz: "Kategorial"
@@ -2997,7 +2997,7 @@ gap_axis:
   en: "gap between customers, min"
   uz: "mijozlar orasidagi tanaffus, daqiqa"
 
-# L4 §1, §2
+# L4 §1, §2; L5 §9
 density:
   en: "density"
   uz: "zichlik"
@@ -3512,7 +3512,7 @@ kilograms:
   en: "kilograms"
   uz: "kilogramm"
 
-# L4 §8
+# L4 §8; L5 §5
 batch_normalization:
   en: "batch normalization"
   uz: "paketli normallashtirish"
@@ -3686,3 +3686,875 @@ gaussian_mixture_model:
 layer_width:
   en: "layer width"
   uz: "qatlam kengligi"
+
+# ══ Lecture 5 ═════════════════════════════════════════════════════════════
+
+# L5 (all)
+part_0_the_central_limit_theorem:
+  en: "Part 0 · The central limit theorem"
+  uz: "0-qism · Markaziy limit teoremasi"
+
+# L5 (all)
+part_1_maximum_likelihood_estimation:
+  en: "Part 1 · Maximum likelihood estimation"
+  uz: "1-qism · Maksimal haqiqatga oʻxshashlik usuli"
+
+# L5 opening, §10
+lecture_5:
+  en: "Lecture 5"
+  uz: "5-maʼruza"
+
+# L5 opening
+the_clt_and_maximum_likelihood:
+  en: "The central limit theorem and maximum likelihood"
+  uz: "Markaziy limit teoremasi va maksimal haqiqatga oʻxshashlik usuli"
+
+# L5 §1
+sampling_distribution_of_the_mean:
+  en: "sampling distribution of the mean"
+  uz: "tanlanma oʻrtachasining taqsimoti"
+
+# L5 §1, §2
+test_set:
+  en: "test set"
+  uz: "test toʻplami"
+
+# L5 §1
+another_test_set:
+  en: "another test set"
+  uz: "boshqa test toʻplami"
+
+# L5 §1
+probability_word:
+  en: "probability"
+  uz: "ehtimol"
+
+# L5 §1
+neither_of_two_buys_q:
+  en: "Two customers: neither buys a pastry?"
+  uz: "Ikki mijoz: ikkalasi ham pishiriq olmaydi?"
+
+# L5 §1
+the_average_changes:
+  en: "the average changes"
+  uz: "oʻrtacha oʻzgaradi"
+
+# L5 §1
+two_customers:
+  en: "two customers"
+  uz: "ikki mijoz"
+
+# L5 §1
+same_shop_different_answer:
+  en: "same shop, same day, a different answer"
+  uz: "qahvaxona oʻsha, kun oʻsha, javob boshqa"
+
+# L5 §1
+sample_mean_is_a_random_variable:
+  en: "the sample mean is a random variable"
+  uz: "tanlanma oʻrtachasi — tasodifiy miqdor"
+
+# L5 §1
+average_of_two_orders:
+  en: "average of two orders"
+  uz: "ikki buyurtma oʻrtachasi"
+
+# L5 §1
+unbiased_estimate:
+  en: "unbiased estimate"
+  uz: "tarafkash boʻlmagan baho"
+
+# L5 §1
+a_different_accuracy:
+  en: "a different accuracy"
+  uz: "boshqa aniqlik"
+
+# L5 §1
+first_number_in_the_table:
+  en: "the first number in the table"
+  uz: "jadvaldagi birinchi son"
+
+# L5 §1
+how_far_from_the_truth_q:
+  en: "How far from the truth?"
+  uz: "Haqiqatdan qanchalik uzoqda?"
+
+# L5 §1
+the_truth:
+  en: "the truth"
+  uz: "haqiqat"
+
+# L5 §1
+one_sample:
+  en: "one sample"
+  uz: "bitta tanlanma"
+
+# L5 §1
+another_sample:
+  en: "another sample"
+  uz: "boshqa tanlanma"
+
+# L5 §2
+steadier:
+  en: "steadier"
+  uz: "barqarorroq"
+
+# L5 §2
+standard_error_q:
+  en: "What is the standard error?"
+  uz: "Standart xato qancha?"
+
+# L5 §2
+standard_error:
+  en: "standard error"
+  uz: "standart xato"
+
+# L5 §2
+one_customer:
+  en: "one customer"
+  uz: "bitta mijoz"
+
+# L5 §2
+orders_axis:
+  en: "orders, n"
+  uz: "buyurtmalar soni, n"
+
+# L5 §2
+never_steep_again:
+  en: "never steep again"
+  uz: "hech qachon yana tik boʻlmaydi"
+
+# L5 §2
+reported_accuracy:
+  en: "reported accuracy"
+  uz: "eʼlon qilingan aniqlik"
+
+# L5 §2
+the_error_around_it:
+  en: "the error around it"
+  uz: "atrofidagi xato"
+
+# L5 §2
+its_shape_q:
+  en: "Its shape?"
+  uz: "Shakli qanday?"
+
+# L5 §2
+average_of_the_orders:
+  en: "average of the orders"
+  uz: "buyurtmalar oʻrtachasi"
+
+# L5 §2
+four_times_the_data:
+  en: "four times the data"
+  uz: "toʻrt baravar koʻp berilganlar"
+
+# L5 §2
+half_the_error:
+  en: "half the error"
+  uz: "ikki baravar kam xato"
+
+# L5 §2
+accuracy_at_quadratic_cost:
+  en: "accuracy is bought at quadratic cost"
+  uz: "aniqlik kvadratik narxda sotib olinadi"
+
+# L5 §3
+independent_draws_any_distribution_finite_variance:
+  en: "independent draws · any distribution · finite variance"
+  uz: "mustaqil qiymatlar · istalgan taqsimot · chekli dispersiya"
+
+# L5 §3
+die:
+  en: "die"
+  uz: "kubik"
+
+# L5 §3
+waiting_time:
+  en: "waiting time"
+  uz: "kutish vaqti"
+
+# L5 §3
+within_one_standard_error:
+  en: "within one standard error:"
+  uz: "bir standart xato ichida:"
+
+# L5 §3
+independent_draws:
+  en: "independent draws"
+  uz: "mustaqil qiymatlar"
+
+# L5 §3
+same_distribution:
+  en: "the same distribution"
+  uz: "bitta taqsimot"
+
+# L5 §3
+finite_variance:
+  en: "finite variance"
+  uz: "chekli dispersiya"
+
+# L5 §3
+is_thirty_always_enough_q:
+  en: "Is thirty always enough?"
+  uz: "Oʻttizta har doim yetarlimi?"
+
+# L5 §3
+central_limit_theorem:
+  en: "The central limit theorem"
+  uz: "Markaziy limit teoremasi"
+
+# L5 §3
+law_of_large_numbers_where:
+  en: "law of large numbers: where it lands"
+  uz: "katta sonlar qonuni: qayerga boradi"
+
+# L5 §3
+clt_the_whole_distribution:
+  en: "central limit theorem: the whole distribution"
+  uz: "markaziy limit teoremasi: butun taqsimot"
+
+# L5 §3
+exact_not_simulated:
+  en: "exact distribution, not a simulation"
+  uz: "aniq taqsimot, simulyatsiya emas"
+
+# L5 §3
+three_conditions:
+  en: "Three conditions"
+  uz: "Uchta shart"
+
+# L5 §3
+confidence_interval:
+  en: "confidence interval"
+  uz: "ishonch oraligʻi"
+
+# L5 §3
+normal_distribution_says:
+  en: "the normal distribution says"
+  uz: "normal taqsimot boʻyicha"
+
+# L5 §3
+normal_distribution:
+  en: "normal distribution"
+  uz: "normal taqsimot"
+
+# L5 §3
+exact_count:
+  en: "exact count"
+  uz: "aniq hisob"
+
+# L5 §3
+accuracy_on_a_test_set:
+  en: "accuracy on a test set"
+  uz: "test toʻplamidagi aniqlik"
+
+# L5 §4
+ordinary_order:
+  en: "an ordinary order"
+  uz: "oddiy buyurtma"
+
+# L5 §4
+where_does_it_matter_most_in_ai_q:
+  en: "Where does it matter most in AI?"
+  uz: "Sunʼiy intellektda eng muhim qoʻllanishi qayerda?"
+
+# L5 §4
+office_runs:
+  en: "office runs"
+  uz: "ofis buyurtmasi"
+
+# L5 §4
+total_coffees:
+  en: "total coffees"
+  uz: "jami qahva"
+
+# L5 §4
+average_word:
+  en: "average"
+  uz: "oʻrtacha"
+
+# L5 §4, §7
+orders_word:
+  en: "orders"
+  uz: "buyurtma"
+
+# L5 §4
+office_runs_among_thirty_orders:
+  en: "Office runs among thirty orders"
+  uz: "Oʻttizta buyurtma orasidagi ofis buyurtmalari"
+
+# L5 §4
+no_average_here:
+  en: "no average here"
+  uz: "bu yerda oʻrtacha yoʻq"
+
+# L5 §4
+coffees:
+  en: "coffees"
+  uz: "qahva"
+
+# L5 §4
+office_runs_inside:
+  en: "office runs inside"
+  uz: "ichidagi ofis buyurtmalari"
+
+# L5 §4
+a_rule_of_thumb_not_a_theorem:
+  en: "a rule of thumb, not a theorem"
+  uz: "teorema emas, tajribadan kelgan qoida"
+
+# L5 §4
+a_rare_huge_value_breaks_it:
+  en: "a rare huge value breaks it"
+  uz: "kam uchraydigan katta qiymat uni buzadi"
+
+# L5 §4
+gradient_size:
+  en: "gradient size, step by step"
+  uz: "gradient kattaligi, qadam-baqadam"
+
+# L5 §4
+office_run:
+  en: "office run"
+  uz: "ofis buyurtmasi"
+
+# L5 §4
+gradient_clipping:
+  en: "gradient clipping"
+  uz: "gradientni kesish"
+
+# L5 §5
+unbiased_centred_on_the_full_gradient:
+  en: "unbiased: centred on the full gradient"
+  uz: "tarafkash emas: toʻliq gradientga markazlashgan"
+
+# L5 §5
+noise_halves:
+  en: "the noise halves"
+  uz: "shovqin ikki baravar kamayadi"
+
+# L5 §5
+data:
+  en: "data"
+  uz: "berilganlar"
+
+# L5 §5
+small_mini_batch:
+  en: "small batch"
+  uz: "kichik paket"
+
+# L5 §5
+large_mini_batch:
+  en: "large batch"
+  uz: "katta paket"
+
+# L5 §5
+how_many_times_less_noise_q:
+  en: "How many times less noise?"
+  uz: "Shovqin necha marta kamayadi?"
+
+# L5 §5
+all_training_examples:
+  en: "all training examples"
+  uz: "barcha oʻqitish misollari"
+
+# L5 §5
+far_too_slow:
+  en: "far too slow"
+  uz: "juda sekin"
+
+# L5 §5
+mini_batch:
+  en: "mini-batch"
+  uz: "mini-paket"
+
+# L5 §5
+full_gradient:
+  en: "full gradient"
+  uz: "toʻliq gradient"
+
+# L5 §5
+why_training_works:
+  en: "Why training works at all"
+  uz: "Oʻqitish ishlashining sababi"
+
+# L5 §5
+layer_and_group_normalization:
+  en: "→ layer and group normalization"
+  uz: "→ qatlam va guruh normallashtirish"
+
+# L5 §5
+whose_gradient_q:
+  en: "whose gradient? what are we training for?"
+  uz: "qaysi funksiyaning gradienti? nima uchun oʻqitamiz?"
+
+# L5 §5
+noise:
+  en: "noise"
+  uz: "shovqin"
+
+# L5 §5
+estimated_mean:
+  en: "mean estimated from the batch"
+  uz: "paketdan baholangan oʻrtacha"
+
+# L5 §5
+true_mean:
+  en: "true mean"
+  uz: "haqiqiy oʻrtacha"
+
+# L5 §6
+least_surprising_parameter_q:
+  en: "Which parameter makes the data least surprising?"
+  uz: "Qaysi parametr berilganlarni eng kam ajablanarli qiladi?"
+
+# L5 §6
+independent_orders_multiply:
+  en: "independent orders: the probabilities multiply"
+  uz: "buyurtmalar mustaqil: ehtimollar koʻpaytiriladi"
+
+# L5 §6
+powers_add:
+  en: "powers of the same base add"
+  uz: "bir xil asosning darajalari qoʻshiladi"
+
+# L5 §6
+without_pastry:
+  en: "without a pastry"
+  uz: "pishiriqsiz"
+
+# L5 §6
+parameter_fixed:
+  en: "parameter fixed"
+  uz: "parametr belgilangan"
+
+# L5 §6
+a_distribution_over_data:
+  en: "a distribution over the data"
+  uz: "berilganlar ustidagi taqsimot"
+
+# L5 §6
+model_parameters:
+  en: "model parameters"
+  uz: "model parametrlari"
+
+# L5 §6
+three_orders_pastry_none_pastry:
+  en: "Three orders: pastry, none, pastry."
+  uz: "Uchta buyurtma: pishiriq bor, yoʻq, bor."
+
+# L5 §6
+where_do_these_come_from_q:
+  en: "Where do these numbers come from?"
+  uz: "Bu sonlar qayerdan keladi?"
+
+# L5 §6, §7
+a_bit_of_a_fluke:
+  en: "a bit of a fluke"
+  uz: "biroz tasodif"
+
+# L5 §6
+the_most_ordinary:
+  en: "the most ordinary"
+  uz: "eng oddiy hol"
+
+# L5 §6
+only_the_counts_survived:
+  en: "only the counts survived"
+  uz: "faqat sonlar qoldi"
+
+# L5 §6
+data_fixed:
+  en: "data fixed"
+  uz: "berilganlar belgilangan"
+
+# L5 §6
+a_curve_over_the_parameter:
+  en: "a curve over the parameter, not a distribution"
+  uz: "parametr ustidagi egri chiziq, taqsimot emas"
+
+# L5 §6
+maximum_likelihood_estimate:
+  en: "maximum likelihood estimate"
+  uz: "maksimal haqiqatga oʻxshashlik bahosi"
+
+# L5 §6
+least_surprising:
+  en: "least surprising"
+  uz: "eng kam ajablanarli"
+
+# L5 §6
+a_tiny_number_q:
+  en: "a tiny number: how do we work with it?"
+  uz: "juda kichik son: u bilan qanday ishlaymiz?"
+
+# L5 §6
+with_pastry:
+  en: "pastry"
+  uz: "pishiriq bor"
+
+# L5 §6
+no_pastry:
+  en: "none"
+  uz: "yoʻq"
+
+# L5 §7
+log_is_increasing:
+  en: "the logarithm is strictly increasing"
+  uz: "logarifm qatʼiy oʻsuvchi"
+
+# L5 §7
+product_into_sum:
+  en: "a product becomes a sum"
+  uz: "koʻpaytma yigʻindiga aylanadi"
+
+# L5 §7
+it_grades_them:
+  en: "the data grades the values"
+  uz: "berilganlar qiymatlarni baholaydi"
+
+# L5 §7
+the_number_of_ways:
+  en: "the number of ways"
+  uz: "nechta usulda boʻlishi mumkin"
+
+# L5 §7
+no_p_the_peak_stays:
+  en: "no p in it: the peak does not move"
+  uz: "unda pi yoʻq: choʻqqi qimirlamaydi"
+
+# L5 §7
+relative_to_the_peak:
+  en: "relative to the peak"
+  uz: "choʻqqiga nisbatan"
+
+# L5 §7
+frameworks:
+  en: "every framework"
+  uz: "har bir freymvork"
+
+# L5 §7
+a_formula_for_the_peak_q:
+  en: "a formula for the peak?"
+  uz: "choʻqqi uchun formula?"
+
+# L5 §7
+one_exact_sequence:
+  en: "the chance of one exact sequence of"
+  uz: "aynan bitta ketma-ketlikning ehtimoli:"
+
+# L5 §7
+in_the_computer:
+  en: "in the computer"
+  uz: "kompyuterda"
+
+# L5 §7
+rescaled_likelihood:
+  en: "likelihood, rescaled"
+  uz: "haqiqatga oʻxshashlik, masshtablangan"
+
+# L5 §7
+log_likelihood:
+  en: "log-likelihood"
+  uz: "logarifmik haqiqatga oʻxshashlik"
+
+# L5 §8
+mle_deviations_cancel:
+  en: "the deviations cancel"
+  uz: "chetlanishlar bir-birini yoʻq qiladi"
+
+# L5 §8
+mle_starting_probabilities:
+  en: "starting probabilities of the classes"
+  uz: "sinflarning boshlangʻich ehtimollari"
+
+# L5 §8
+mle_class_share:
+  en: "each class's share of the training data"
+  uz: "har bir sinfning oʻqitish berilganlaridagi ulushi"
+
+# L5 §8
+mle_the_peak:
+  en: "the peak"
+  uz: "choʻqqi"
+
+# L5 §8
+mle_observed_share:
+  en: "the observed share"
+  uz: "kuzatilgan ulush"
+
+# L5 §8
+mle_derived_not_assumed:
+  en: "derived, not assumed"
+  uz: "farazdan emas, hisobdan"
+
+# L5 §8, §9
+espresso_ml:
+  en: "espresso shot, ml"
+  uz: "espresso hajmi, ml"
+
+# L5 §8
+mle_sample_mean:
+  en: "the sample mean"
+  uz: "tanlanma oʻrtachasi"
+
+# L5 §8
+mle_slightly_small:
+  en: "slightly small"
+  uz: "biroz kichik"
+
+# L5 §8
+mle_fitted_to_the_same_data:
+  en: "spread measured around an average fitted to the same data"
+  uz: "tarqoqlik oʻsha berilganlarga moslangan oʻrtacha atrofida oʻlchanadi"
+
+# L5 §8
+mle_best_curve_q:
+  en: "the best curve?"
+  uz: "eng yaxshi egri chiziq?"
+
+# L5 §8, §9
+mle_log_likelihood:
+  en: "log-likelihood"
+  uz: "logarifmik haqiqatga oʻxshashlik"
+
+# L5 §8
+mle_k_successes:
+  en: "successes"
+  uz: "muvaffaqiyat"
+
+# L5 §8
+mle_trials:
+  en: "trials"
+  uz: "tajriba"
+
+# L5 §8
+mle_max_likelihood:
+  en: "maximum likelihood"
+  uz: "maksimal haqiqatga oʻxshashlik"
+
+# L5 §8
+mle_orders_with_a_pastry:
+  en: "orders with a pastry"
+  uz: "pishiriqli buyurtma"
+
+# L5 §8
+mle_class:
+  en: "class"
+  uz: "sinf"
+
+# L5 §9
+mle_fit:
+  en: "maximum likelihood fit"
+  uz: "maksimal haqiqatga oʻxshashlik bahosi"
+
+# L5 §9
+mle_centre_too_low:
+  en: "centre too low"
+  uz: "markaz past"
+
+# L5 §9
+mle_too_wide:
+  en: "too wide"
+  uz: "juda keng"
+
+# L5 §9
+mle_ahead:
+  en: "ahead"
+  uz: "oldinda"
+
+# L5 §9
+mle_espresso_shots:
+  en: "espresso shots"
+  uz: "espresso"
+
+# L5 §9
+mle_the_winner:
+  en: "the winner"
+  uz: "gʻolib"
+
+# L5 §9
+mle_larger:
+  en: "larger"
+  uz: "kattaroq"
+
+# L5 §9
+mle_neural_network:
+  en: "neural network"
+  uz: "neyron tarmoq"
+
+# L5 §9
+mle_which_loss_q:
+  en: "which loss, and where from?"
+  uz: "qanday yoʻqotish funksiyasi va u qayerdan?"
+
+# L5 §9
+mle_search_over_curves:
+  en: "a search over curves"
+  uz: "egri chiziqlar orasida qidiruv"
+
+# L5 §9
+mle_every_candidate_gets_a_score:
+  en: "every candidate gets a score"
+  uz: "har bir nomzod baho oladi"
+
+# L5 §9
+mle_gradient_descent:
+  en: "gradient descent"
+  uz: "gradient tushishi"
+
+# L5 §9
+mle_step_by_step:
+  en: "step by step"
+  uz: "qadam-baqadam"
+
+# L5 §9
+mle_larger_or_smaller_q:
+  en: "larger or smaller?"
+  uz: "kattami yoki kichikmi?"
+
+# L5 §10
+mle_binary_cross_entropy:
+  en: "binary cross-entropy"
+  uz: "ikkilik kross-entropiya"
+
+# L5 §10
+mle_a_constant:
+  en: "a constant"
+  uz: "oʻzgarmas son"
+
+# L5 §10
+mle_multiple_of_mse:
+  en: "a multiple of the mean squared error"
+  uz: "oʻrtacha kvadratik xatoning karralisi"
+
+# L5 §10
+mle_what_to_optimise:
+  en: "maximum likelihood: what to optimise"
+  uz: "maksimal haqiqatga oʻxshashlik: nimani optimallashtirish"
+
+# L5 §10
+mle_why_a_few_examples:
+  en: "central limit theorem: why a few examples at a time"
+  uz: "markaziy limit teoremasi: nega bir necha misolda"
+
+# L5 §10
+lecture_5_summary:
+  en: "Lecture 5 — summary"
+  uz: "5-maʼruza — xulosa"
+
+# L5 §10
+lecture_6_bayesian_inference:
+  en: "Lecture 6 · Bayesian inference"
+  uz: "6-maʼruza · Bayes xulosasi"
+
+# L5 §10
+mle_predicted_chance:
+  en: "predicted chance"
+  uz: "bashorat qilingan ehtimol"
+
+# L5 §10
+mle_in_every_framework:
+  en: "as written in every deep learning framework"
+  uz: "har bir chuqur oʻqitish freymvorkida shunday yozilgan"
+
+# L5 §10
+mle_not_approximately:
+  en: "not approximately: identically"
+  uz: "taxminan emas, aynan"
+
+# L5 §10
+mle_regression_model:
+  en: "regression model"
+  uz: "regressiya modeli"
+
+# L5 §10
+mle_residuals_normal:
+  en: "residuals assumed normal"
+  uz: "qoldiqlar normal deb faraz qilinadi"
+
+# L5 §10
+mle_no_formula:
+  en: "no formula"
+  uz: "formula yoʻq"
+
+# L5 §10
+mle_sum_over_examples:
+  en: "a sum over examples"
+  uz: "misollar boʻyicha yigʻindi"
+
+# L5 §10
+mle_mini_batch:
+  en: "mini-batch"
+  uz: "mini-paket"
+
+# L5 §10
+mle_confident_and_right:
+  en: "confident and right: a small loss"
+  uz: "ishonchli va toʻgʻri: yoʻqotish kichik"
+
+# L5 §10
+l05_summary_sample_mean:
+  en: "The sample mean: centred on μ, standard error σ/√n"
+  uz: "Tanlanma oʻrtachasi: markazi μ, standart xatosi σ/√n"
+
+# L5 §10
+l05_summary_clt:
+  en: "Central limit theorem: averages become normal; a heavy tail slows it"
+  uz: "Markaziy limit teoremasi: oʻrtacha normal taqsimotga keladi; ogʻir dum sekinlashtiradi"
+
+# L5 §10
+l05_summary_likelihood:
+  en: "Likelihood: the data's probability as a function of the parameter; we maximise its log"
+  uz: "Haqiqatga oʻxshashlik: berilganlar ehtimoli parametr funksiyasi sifatida; logarifmini maksimallashtiramiz"
+
+# L5 §10
+l05_summary_estimates:
+  en: "Estimates: the observed share (Bernoulli); the average and the spread (Gaussian)"
+  uz: "Baholar: kuzatilgan ulush (Bernulli); oʻrtacha va tarqoqlik (Gauss)"
+
+# L5 §10
+l05_summary_losses:
+  en: "Cross-entropy and squared error: negative log-likelihoods"
+  uz: "Kross-entropiya va kvadratik xato: minus logarifmik haqiqatga oʻxshashliklar"
+
+# L5 §10
+mle_labels:
+  en: "labels"
+  uz: "belgilanganlar"
+
+# L5 §10
+mle_categorical_cross_entropy:
+  en: "categorical cross-entropy"
+  uz: "kategorial kross-entropiya"
+
+# L5 §10
+mle_two_losses_one_idea:
+  en: "two losses, one idea"
+  uz: "ikki yoʻqotish — bitta gʻoya"
+
+# L5 §10
+mle_minus_log_likelihood_assumed:
+  en: "minus the log-likelihood of the assumed distribution"
+  uz: "farazdagi taqsimotning minus logarifmik haqiqatga oʻxshashligi"
+
+# L5 §10
+mle_cross_entropy:
+  en: "cross-entropy"
+  uz: "kross-entropiya"
+
+# L5 §10
+mle_normal:
+  en: "Normal"
+  uz: "Normal"
+
+# L5 §10
+mle_squared_error:
+  en: "squared error"
+  uz: "kvadratik xato"
+
+# L5 §10
+mle_chases_outliers:
+  en: "chases outliers"
+  uz: "chetga chiqqan qiymatlar ortidan quvadi"

@@ -90,6 +90,9 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 - **edge-tts can be refused outright** (HTTP 403 from speech.platform.bing.com on 2026-10-12, version 7.2.8 and the
   latest alike; the clock was right and announcing a newer Edge version did not help). Lines already in a voice cache
   still render; new English lines wait until the service answers again.
+- **The cloned voice can also pause too long inside a line** (2.3 s between two sentences of Lecture 5's 10.9).
+  `NavoiyService` now runs `common.cap_pauses` on every clip: silences over 0.8 s shrink to under a second, normal
+  breaths (~0.4 s) stay. Clips cached before the fix keep their audio; cap one by hand with `cap_pauses(path)`.
 - **Labels next to a curve get a black backing** (`add_background_rectangle`), or the curve runs through the text.
 - **`Indicate` grows a mobject by 20 %**, which pushed a full-width bell curve onto the frame edge; use
   `scale_factor=1.04` on anything near full width.
