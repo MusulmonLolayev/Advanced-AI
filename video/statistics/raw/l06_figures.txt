@@ -1,0 +1,43 @@
+The 7:40 bus -- 100 simulated mornings, true on-time rate 0.7
+  day 1 was LATE
+     on_time  late     mle  post_a  post_b  post_mean  post_map   ci_lo   ci_hi
+n                                                                              
+1          0     1  0.0000     8.0     3.0     0.7273    0.7778  0.4439  0.9333
+10         6     4  0.6000    14.0     6.0     0.7000    0.7222  0.4880  0.8742
+30        22     8  0.7333    30.0    10.0     0.7500    0.7632  0.6067  0.8696
+100       68    32  0.6800    76.0    34.0     0.6909    0.6944  0.6019  0.7734
+
+Figure 1: prior and posteriors after 1, 10, 30, 100 mornings …
+✓ bayesian_posterior_updates.pdf
+✓ bayesian_posterior_updates.svg
+
+Figure 2: three priors, same data …
+  flat: no opinion                 prior mean=0.500  posterior Beta(69,33) mean=0.6765
+  ours: 8 on time, 2 late          prior mean=0.800  posterior Beta(76,34) mean=0.6909
+  stubborn: 80 on time, 20 late    prior mean=0.800  posterior Beta(148,52) mean=0.7400
+✓ bayesian_three_priors.pdf
+✓ bayesian_three_priors.svg
+
+Figure 3: MLE, MAP and posterior mean after 10 mornings …
+  MLE              0.6000
+  posterior mean   0.7000
+  MAP              0.7222
+  95% credible interval [0.488, 0.874]
+✓ bayesian_point_estimates.pdf
+✓ bayesian_point_estimates.svg
+
+Figure 4: the walk to the station -- Gaussian update …
+  timings [13.0, 14.0, 16.0, 17.0]  mean=15.00
+  prior precision=0.1111  data precision=0.4444  weight on data=0.800
+  posterior mean=14.4000  sd=1.3416
+✓ bayesian_gaussian_update.pdf
+✓ bayesian_gaussian_update.svg
+
+Figure 5: Gaussian prior on a weight, and the penalty it becomes …
+  tau=2.0  penalty coefficient 1/(2 tau^2) = 0.125
+  tau=1.0  penalty coefficient 1/(2 tau^2) = 0.500
+  tau=0.5  penalty coefficient 1/(2 tau^2) = 2.000
+✓ bayesian_prior_to_penalty.pdf
+✓ bayesian_prior_to_penalty.svg
+
+All Lecture 6 figures written to /home/musulmon/teaching/Advanced AI/statistics/figures/bayesian

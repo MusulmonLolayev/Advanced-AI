@@ -125,3 +125,9 @@ Lessons from building it:
 - **CosyVoice2 flow training needs a patch** for clips not a multiple of 40 ms (25 Hz tokens vs 50 Hz mel). See
   `~/navoiy-stack/CosyVoice/cosyvoice/flow/flow.py` vs `flow.py.orig`.
 - The TTS server runs from another directory, so the service must send it **absolute** output paths.
+- **English in the instructor's voice (tested 2026-10-12, not yet used; English is on hold by the instructor's
+  choice):** the fine-tuned LLM no longer reads English (Whisper heard gibberish), and English respelled in Uzbek
+  orthography drops whole sentences. The stock CosyVoice2 LLM with the fine-tuned flow (epoch 12),
+  `inference_cross_lingual(text, prompt_wav)`, was word-perfect under Whisper large-v3 with speaker similarity 0.63
+  (the Uzbek clips score ~0.67, two real recordings ~0.80). A true English fine-tune would need 30-60 min of the
+  instructor reading English.
