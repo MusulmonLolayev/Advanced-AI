@@ -26,9 +26,9 @@ def bday_axes():
               y_axis_config={"numbers_to_include": [0, 0.25, 0.5, 0.75, 1], "font_size": 22,
                              "decimal_number_config": {"num_decimal_places": 2}})
     ax.move_to([0.2, -0.55, 0])
-    xl = txt(w("people in the room (n)", "xonadagi odamlar soni (n)"), size=22, color=GREY_B)
+    xl = txt(label("people_in_the_room_n"), size=22, color=GREY_B)
     xl.next_to(ax.x_axis, DOWN, buff=0.45)
-    yl = txt(w("P(shared birthday)", "P(bir xil tugʻilgan kun)"), size=22, color=GREY_B)
+    yl = txt(label("p_shared_birthday"), size=22, color=GREY_B)
     yl.rotate(PI / 2).next_to(ax.y_axis, LEFT, buff=0.55)
     return ax, VGroup(xl, yl)
 
@@ -61,11 +61,10 @@ class S12Problem(LectureScene):
                 pos.append(p)
         people = VGroup(*[Dot(p, radius=0.11, color=RLBLUE) for p in pos])
         q = txt("?", size=96, weight=BOLD, color=HILITE).move_to([3.6, 0.6, 0])
-        head = self.heading(w("How many people before P(shared birthday) > 1/2 ?",
-                              "Nechta odamda P(bir xil tugʻilgan kun) > 1/2 ?"), size=30)
+        head = self.heading(label("how_many_people_before_p_shared_q"), size=30)
         bubble = RoundedRectangle(corner_radius=0.25, width=3.6, height=1.7, stroke_color=GREY_B,
                                   fill_color=BLACK, fill_opacity=0.8).move_to([3.8, -1.3, 0])
-        guess = VGroup(txt(w("most people guess", "koʻpchilikning taxmini"), size=22, color=GREY_B),
+        guess = VGroup(txt(label("most_people_guess"), size=22, color=GREY_B),
                        txt("≈ 180", size=48, weight=BOLD)).arrange(DOWN, buff=0.15).move_to(bubble)
 
         t = line("12.1")
@@ -82,9 +81,9 @@ class S12Problem(LectureScene):
         pair = link(0, 5)
         triple = VGroup(link(2, 7), link(7, 11), link(11, 2))
         two_pairs = VGroup(link(3, 9, RLGREEN), link(13, 17, RLGREEN))
-        tags = VGroup(txt(w("a pair", "juftlik"), size=22, color=HILITE),
-                      txt(w("a triple", "uchlik"), size=22, color=HILITE),
-                      txt(w("two pairs", "ikki juftlik"), size=22, color=RLGREEN))
+        tags = VGroup(txt(label("a_pair"), size=22, color=HILITE),
+                      txt(label("a_triple"), size=22, color=HILITE),
+                      txt(label("two_pairs"), size=22, color=RLGREEN))
         tags.arrange(DOWN, aligned_edge=LEFT, buff=0.25).move_to([3.8, -1.3, 0])
         tangle = VGroup(*[link(i, j).set_stroke(width=1.5, opacity=0.6)
                           for i, j in rng.integers(0, 23, size=(40, 2)) if i != j])
@@ -100,10 +99,10 @@ class S12Problem(LectureScene):
                       run_time=1.6)
 
         # the complement: everyone different
-        lhs = txt(w("P(a shared pair)", "P(juftlik bor)"), size=34, color=HILITE)
+        lhs = txt(label("p_a_shared_pair"), size=34, color=HILITE)
         eq = txt("=", size=34)
         one = txt("1  −", size=34)
-        rhs = txt(w("P(all different)", "P(hammasi har xil)"), size=34, color=RLGREEN)
+        rhs = txt(label("p_all_different"), size=34, color=RLGREEN)
         formula = VGroup(lhs, eq, one, rhs).arrange(RIGHT, buff=0.3).move_to(UP * 1.2)
         t = line("12.3")
         with self.voiceover(t) as tr:
@@ -118,8 +117,8 @@ class S12Problem(LectureScene):
         # a 365-day calendar; each new person must find a free day
         cells = VGroup(*[Square(0.2, stroke_color=GREY_D, stroke_width=1) for _ in range(365)])
         cells.arrange_in_grid(rows=15, cols=25, buff=0.03).move_to([-3.4, -0.9, 0])
-        cal_lab = txt(w("365 days", "365 kun"), size=22, color=GREY_B).next_to(cells, DOWN, buff=0.2)
-        who_lab = txt(w("person", "odam"), size=22, color=RLBLUE)
+        cal_lab = txt(label("365_days"), size=22, color=GREY_B).next_to(cells, DOWN, buff=0.2)
+        who_lab = txt(label("person"), size=22, color=RLBLUE)
         taken = [40, 211, 300]
         fr = [MathTex(r"\frac{365}{365}", font_size=48), MathTex(r"\cdot\,\frac{364}{365}", font_size=48),
               MathTex(r"\cdot\,\frac{363}{365}\,\cdots", font_size=48)]
@@ -147,7 +146,7 @@ class S12Problem(LectureScene):
         prod_.next_to(formula, DOWN, buff=0.8)
         prod_.set_x(0)
         brace = Brace(prod_[0][3:], DOWN, color=RLGREEN)
-        blab = txt(w("all different", "hammasi har xil"), size=24, color=RLGREEN).next_to(brace, DOWN, buff=0.12)
+        blab = txt(label("all_different"), size=24, color=RLGREEN).next_to(brace, DOWN, buff=0.12)
         t = line("12.5")
         with self.voiceover(t) as tr:
             self.play(FadeOut(VGroup(cells, cal_lab, who_lab, *who)), ReplacementTransform(VGroup(*fr), prod_[0][3:]),
@@ -196,8 +195,8 @@ class S12Pairs(LectureScene):
         allp = VGroup(*[Line(pos[i], pos[j], color="#8C88F0", stroke_width=1.3, stroke_opacity=0.6)
                         for i in range(23) for j in range(i + 1, 23)])
         assert len(allp) == PAIRS
-        n_me = txt(w(f"me vs the others: {len(me)}", f"men va boshqalar: {len(me)}"), size=28, color=HILITE)
-        n_all = VGroup(txt(w("every pair:", "har bir juftlik:"), size=28),
+        n_me = txt(label("me_vs_the_others_n", n_me=len(me)), size=28, color=HILITE)
+        n_all = VGroup(txt(label("every_pair"), size=28),
                        MathTex(rf"\frac{{23\cdot 22}}{{2}} = {PAIRS}", font_size=52))
         n_all.arrange(DOWN, buff=0.3)
         VGroup(n_me, n_all).arrange(DOWN, buff=0.8).move_to([3.7, 0, 0])
@@ -222,8 +221,8 @@ class S12HandsOn(LectureScene):
         curve = curve_part(ax, 1, 70)
         half = DashedLine(ax.c2p(0, 0.5), ax.c2p(70, 0.5), color=GREY_B, stroke_width=2)
         m23 = marker(ax, 23)
-        uses = VGroup(txt(w("hash collisions", "xesh toʻqnashuvlari"), size=26, color=HILITE),
-                      txt(w("duplicate records", "takroriy yozuvlar"), size=26, color=HILITE))
+        uses = VGroup(txt(label("hash_collisions"), size=26, color=HILITE),
+                      txt(label("duplicate_records"), size=26, color=HILITE))
         uses.arrange(DOWN, aligned_edge=LEFT, buff=0.25)
         uses_box = SurroundingRectangle(uses, buff=0.25, color=HILITE, corner_radius=0.12)
         uses_g = VGroup(uses_box, uses).move_to(ax.c2p(47, 0.27))
@@ -234,8 +233,8 @@ class S12HandsOn(LectureScene):
             self.cue(tr, t, 1)
             self.play(Indicate(m23[1], scale_factor=2.0, color=RLRED), run_time=0.8)
 
-        card = pause_card([w("A class of 30: what is the chance?", "Oʻttiz kishilik guruh: ehtimol qancha?"),
-                           w("We read it off the curve.", "Grafikdan topamiz.")])
+        card = pause_card([label("a_class_of_30_what_is_q"),
+                           label("we_read_it_off_the_curve")])
         card.scale_to_fit_width(min(card.width, 5.9)).move_to([-3.75, 0.3, 0])
         with self.voiceover(line("12.10")):
             self.play(FadeOut(uses_g), FadeOut(m23), run_time=0.4)
@@ -254,10 +253,10 @@ class S12HandsOn(LectureScene):
 
         # what "unrelated" assumed: two people, two independent days
         a, b = Dot([-2.5, -0.2, 0], radius=0.16, color=RLBLUE), Dot([2.5, -0.2, 0], radius=0.16, color=RLBLUE)
-        la = txt(w("person 1", "1-odam"), size=24, color=GREY_B).next_to(a, DOWN, buff=0.25)
-        lb = txt(w("person 2", "2-odam"), size=24, color=GREY_B).next_to(b, DOWN, buff=0.25)
+        la = txt(label("person_1"), size=24, color=GREY_B).next_to(a, DOWN, buff=0.25)
+        lb = txt(label("person_2"), size=24, color=GREY_B).next_to(b, DOWN, buff=0.25)
         tie = DashedLine(a.get_right(), b.get_left(), color=HILITE, stroke_width=4)
-        ask = txt(w("unrelated?", "bogʻliq emas?"), size=40, weight=BOLD, color=HILITE).next_to(tie, UP, buff=0.3)
+        ask = txt(label("unrelated_q"), size=40, weight=BOLD, color=HILITE).next_to(tie, UP, buff=0.3)
         t = line("12.12")
         with self.voiceover(t) as tr:
             self.play(FadeOut(VGroup(ax, labs, curve, half, m30, across)), run_time=0.6)

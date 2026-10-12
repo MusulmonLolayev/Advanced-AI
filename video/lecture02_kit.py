@@ -12,18 +12,18 @@ N = json.loads((RAW / "l02_numbers.json").read_text())
 NARRATION, HEADS = narration(2)
 assert len(HEADS) == 10 and "0.0" in NARRATION and "6.5" in NARRATION and "10.10" in NARRATION
 
-PARTS = {0: w("Part 0 · Conditional probability and independence", "0-qism · Shartli ehtimollik va erklilik"),
-         1: w("Part 1 · Bayes' theorem", "1-qism · Bayes teoremasi")}
+PARTS = {0: label("part_0_conditional_probability_and_independence"),
+         1: label("part_1_bayes_theorem")}
 
 LectureScene, line = bind(_BaseScene, (NARRATION, HEADS), PARTS, {1: 0, 7: 1})
 
 LBLUE = "#8C88F0"                  # course blue is dim on black; use this for blue text
 BUS_C, NOBUS_C, OUT_C = RLORANGE, RLGREEN, GREY_D
 
-BIKE, NOBIKE = w("bike", "velosipedli"), w("no bike", "velosipedsiz")
-BUS, NOBUS = w("bus", "avtobusda"), w("no bus", "avtobussiz")
-TOTAL = w("total", "jami")
-STUDENTS = w("{n} students", "{n} talaba")
+BIKE, NOBIKE = label("bike"), label("no_bike")
+BUS, NOBUS = label("bus", 1), label("no_bus")
+TOTAL = label("total")
+STUDENTS = label("n_students")
 
 
 def dec(x):

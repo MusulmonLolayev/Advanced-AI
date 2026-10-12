@@ -38,7 +38,7 @@ def nine_axis(y):
     for v in range(20, 100, 10):
         t = Line(UP * 0.08, DOWN * 0.08, color=GREY_B, stroke_width=2).move_to([px(v), y, 0])
         marks.add(t, txt(str(v), size=20, color=GREY_B).next_to(t, DOWN, buff=0.12))
-    unit = txt(w("thousand $", "ming $"), size=20, color=GREY_B).next_to(axis, DOWN, buff=0.55).set_x(PX1 - 0.6)
+    unit = txt(label("thousand"), size=20, color=GREY_B).next_to(axis, DOWN, buff=0.55).set_x(PX1 - 0.6)
     return VGroup(axis, marks, unit)
 
 
@@ -62,7 +62,7 @@ class S08Quartiles(LectureScene):
 
         def y(v):
             return -2.5 + v * k
-        unit = txt(w("salaries, in thousands of dollars", "maoshlar, ming dollarda"), size=20, color=GREY_B)
+        unit = txt(label("salaries_in_thousands_of_dollars"), size=20, color=GREY_B)
         unit.next_to(floor, DOWN, buff=0.15)
         with self.say("8.1") as (tr, t):
             self.play(Create(floor), LaggedStart(*[GrowFromEdge(b, DOWN) for b in bars], lag_ratio=0.1),
@@ -71,8 +71,8 @@ class S08Quartiles(LectureScene):
         div = DashedLine([xs[4], -2.6, 0], [xs[4], 1.6, 0], color=RLGREEN, stroke_width=3)
         b_lo = Brace(bars[:4], DOWN, buff=0.5, color=GREY_B)
         b_hi = Brace(bars[5:], DOWN, buff=0.5, color=GREY_B)
-        l_lo = txt(w("lower half", "pastki yarmi"), size=22, color=GREY_B).next_to(b_lo, DOWN, buff=0.08)
-        l_hi = txt(w("upper half", "yuqori yarmi"), size=22, color=GREY_B).next_to(b_hi, DOWN, buff=0.08)
+        l_lo = txt(label("lower_half"), size=22, color=GREY_B).next_to(b_lo, DOWN, buff=0.08)
+        l_hi = txt(label("upper_half"), size=22, color=GREY_B).next_to(b_hi, DOWN, buff=0.08)
         with self.say("8.2") as (tr, t):
             self.cue(tr, t, 1)
             self.play(bars[4].animate.set_fill(RLGREEN), Indicate(nums[4], color=RLGREEN), run_time=0.9)
@@ -103,7 +103,7 @@ class S08Quartiles(LectureScene):
             self.play(bars[6].animate.set_fill(HILITE), bars[7].animate.set_fill(HILITE), FadeIn(q3_sum), run_time=0.8)
             self.play(Create(q3_ln), FadeIn(q3_lab), run_time=0.8)
 
-        names = [w("min", "eng kichigi"), "Q1", w("median", "mediana"), "Q3", w("max", "eng kattasi")]
+        names = [label("minimum"), "Q1", label("median", 1), "Q3", label("max")]
         vals = [min(NINE), Q1, Q2, Q3, max(NINE)]
         row = VGroup(*[VGroup(txt(n, size=22, color=GREY_B), txt(num(v), size=34, weight=BOLD))
                        .arrange(DOWN, buff=0.1) for n, v in zip(names, vals)]).arrange(RIGHT, buff=0.75)
@@ -135,7 +135,7 @@ class S08Quartiles(LectureScene):
             self.play(FadeIn(fence_t), run_time=0.8)
             self.play(Create(fence), FadeIn(fence_lab), run_time=0.9)
 
-        tag = txt(w("outlier", "chetga chiqqan"), size=26, weight=BOLD, color=RLRED)
+        tag = txt(label("outlier"), size=26, weight=BOLD, color=RLRED)
         tag.next_to(nums[8], LEFT, buff=0.25)
         with self.say("8.8") as (tr, t):
             self.play(bars[8].animate.set_fill(RLRED), Indicate(nums[8], color=RLRED), run_time=1.0)
@@ -147,9 +147,9 @@ class S08Quartiles(LectureScene):
         dots = VGroup(*[Dot([px(v), -1.6 + 0.0, 0], radius=0.09, color=RLRED if v > F_HI else RLBLUE) for v in NINE])
         box = nine_box(0.0)
         labs = VGroup(MathTex("Q_1", font_size=32).next_to(box[0], UP, buff=0.12).set_x(px(Q1)),
-                      txt(w("median", "mediana"), size=22, color=RLGREEN).next_to(box[0], UP, buff=0.12).set_x(px(Q2)),
+                      txt(label("median", 1), size=22, color=RLGREEN).next_to(box[0], UP, buff=0.12).set_x(px(Q2)),
                       MathTex("Q_3", font_size=32).next_to(box[0], UP, buff=0.12).set_x(px(Q3)))
-        name = txt(w("box plot", "quti diagrammasi"), size=34, weight=BOLD, color=RLBLUE).move_to([0, 1.6, 0])
+        name = txt(label("box_plot"), size=34, weight=BOLD, color=RLBLUE).move_to([0, 1.6, 0])
         with self.say("8.9") as (tr, t):
             self.play(FadeOut(VGroup(band, iqr_t, fence, fence_lab, fence_t, tag, q1_ln, q1_lab, q3_ln, q3_lab,
                                      b_lo, b_hi, l_lo, l_hi, nums, floor)), run_time=0.6)
@@ -180,7 +180,7 @@ class S08Branches(LectureScene):
         for m in range(0, 81, 20):
             tk = Line(LEFT * 0.08, RIGHT * 0.08, color=GREY_B, stroke_width=2).move_to([-6.0, my(m), 0])
             ticks.add(tk, txt(str(m), size=20, color=GREY_B).next_to(tk, LEFT, buff=0.1))
-        unit = txt(w("minutes", "daqiqa"), size=20, color=GREY_B).next_to(axis, UP, buff=0.12)
+        unit = txt(label("minutes", 1), size=20, color=GREY_B).next_to(axis, UP, buff=0.12)
         cols = [RLBLUE, RLGREEN, RLORANGE]
         plots, meds, fliers = VGroup(), VGroup(), VGroup()
         for i, (b, c) in enumerate(zip(BR, cols)):
@@ -193,11 +193,11 @@ class S08Branches(LectureScene):
                         Line([x - 0.3, my(b["wlo"]), 0], [x + 0.3, my(b["wlo"]), 0], stroke_width=3),
                         Line([x - 0.3, my(b["whi"]), 0], [x + 0.3, my(b["whi"]), 0], stroke_width=3))
             fl = VGroup(*[Dot([x, my(v), 0], radius=0.08, color=RLRED) for v in b["fliers"]])
-            name = txt(w(f"branch {b['name']}", f"{b['name']} filial"), size=24).next_to([x, MB, 0], DOWN, buff=0.2)
+            name = txt(label("branch_n", name=b['name']), size=24).next_to([x, MB, 0], DOWN, buff=0.2)
             plots.add(VGroup(wk, bx, md, fl, name))
             meds.add(txt(num(b["median"]), size=26, weight=BOLD, color=c).next_to(bx, LEFT, buff=0.15).set_y(my(b["medx"])))
             fliers.add(fl)
-        head = self.heading(w("Waiting time at three branches", "Uchta filialda kutish vaqti"))
+        head = self.heading(label("waiting_time_at_three_branches"))
         with self.say("8.10") as (tr, t):
             self.play(FadeIn(head), Create(axis), Create(floor), FadeIn(ticks), FadeIn(unit), run_time=0.9)
             self.cue(tr, t, 1)
@@ -208,15 +208,14 @@ class S08Branches(LectureScene):
 
         c_box = plots[2][1]
         br = Brace(c_box, RIGHT, buff=0.15, color=RLORANGE)
-        br_t = txt(w(f"IQR ≈ {BR[2]['iqrx']:.1f} min", f"IQR ≈ {BR[2]['iqrx']:.1f} daqiqa"), size=24,
+        br_t = txt(label("iqr_n_min", iqrx=BR[2]['iqrx']), size=24,
                    color=RLORANGE).next_to(br, RIGHT, buff=0.1)
         with self.say("8.11") as (tr, t):
             self.play(Indicate(c_box, color=RLORANGE, scale_factor=1.05), run_time=0.9)
             self.cue(tr, t, 1)
             self.play(GrowFromCenter(br), FadeIn(br_t), run_time=0.8)
 
-        head2 = self.heading(w("AI: catch strange values before training",
-                               "Sunʼiy intellekt: gʻalati qiymatlarni oʻqitishdan oldin topamiz"), color=HILITE)
+        head2 = self.heading(label("ai_catch_strange_values_before_training"), color=HILITE)
         if head2.width > 12.4:
             head2.scale_to_fit_width(12.4)
         with self.say("8.12") as (tr, t):
@@ -229,8 +228,8 @@ class S08Branches(LectureScene):
 
 class S08HandsOn(LectureScene):
     def construct(self):
-        card_ = pause_card([w("Lower fence: Q1 − 1.5 × IQR.", "Pastki chegara: Q1 − 1.5 × IQR ni hisoblaymiz."),
-                            w("Is any salary below it?", "Undan pastda maosh bormi?")])
+        card_ = pause_card([label("lower_fence_q1_1_5_iqr"),
+                            label("is_any_salary_below_it_q")])
         card_.scale(0.85).to_edge(UP, buff=SAFE + 0.15)
         ax = nine_axis(-2.2)
         box = nine_box(-1.0)
@@ -245,7 +244,7 @@ class S08HandsOn(LectureScene):
         fence = DashedLine([px(F_LO), -2.2, 0], [px(F_LO), 0.2, 0], color=RLRED, stroke_width=4)
         f_lab = txt(num(F_LO), size=26, weight=BOLD, color=RLRED).next_to(fence, UP, buff=0.1)
         gap = DoubleArrow([px(F_LO), -1.0, 0], [px(min(NINE)), -1.0, 0], buff=0, color=RLGREEN, stroke_width=4)
-        none = txt(w("31 > 15.25: no outlier at the bottom", "31 > 15.25: pastda chetga chiqqan qiymat yoʻq"),
+        none = txt(label("31_15_25_no_outlier_at"),
                    size=28, color=RLGREEN).move_to([0, 0.75, 0])
         with self.say("8.14") as (tr, t):
             self.play(FadeOut(card_), FadeIn(calc), run_time=0.8)

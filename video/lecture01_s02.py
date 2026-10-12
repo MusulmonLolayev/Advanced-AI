@@ -51,7 +51,7 @@ class S02Population(LectureScene):
             self.play(FadeOut(axis), dots.animate.scale(0.26).move_to([1.4, -1.0, 0]), run_time=1.6)
             self.play(FadeIn(fog, lag_ratio=0.0005), run_time=1.6)
 
-        pop = txt(w("population", "bosh toʻplam"), size=40, weight=BOLD, color=GREY_A)
+        pop = txt(label("population"), size=40, weight=BOLD, color=GREY_A)
         pop.move_to([-3.0, 1.9, 0])
         with self.say("2.2") as (tr, t):
             self.cue(tr, t, 1)
@@ -59,9 +59,9 @@ class S02Population(LectureScene):
 
         ring = Ellipse(width=dots.width + 0.5, height=dots.height + 0.5, color=RLBLUE, stroke_width=4)
         ring.move_to(dots)
-        smp = txt(w("sample", "tanlanma"), size=36, weight=BOLD, color=RLBLUE)
+        smp = txt(label("sample"), size=36, weight=BOLD, color=RLBLUE)
         smp.next_to(ring, RIGHT, buff=0.4)
-        n_lab = txt(w("600 salaries", "600 ta maosh"), size=24, color=GREY_B).next_to(smp, DOWN, buff=0.15)
+        n_lab = txt(label("600_salaries"), size=24, color=GREY_B).next_to(smp, DOWN, buff=0.15)
         with self.say("2.3") as (tr, t):
             self.play(Create(ring), FadeIn(smp, shift=LEFT * 0.2), run_time=1.0)
             self.cue(tr, t, 1)
@@ -72,7 +72,7 @@ class S02Population(LectureScene):
 class S02Notation(LectureScene):
     def construct(self):
         cards = five_cards()
-        unit = txt(w("salaries, thousand $", "maoshlar, ming $"), size=26, color=GREY_B)
+        unit = txt(label("salaries_thousand"), size=26, color=GREY_B)
         unit.next_to(cards, UP, buff=0.5)
         with self.say("2.4") as (tr, t):
             self.play(LaggedStart(*[FadeIn(c[0], scale=0.8) for c in cards], lag_ratio=0.15), run_time=1.2)
@@ -126,13 +126,13 @@ class S02Symbols(LectureScene):
         rim = Ellipse(width=6.2, height=4.6, color=GREY_B, stroke_width=2).move_to([-3.6, 0.1, 0]).set_stroke(opacity=0.5)
         dots = hist_dots().scale(0.15).move_to([-3.0, -0.6, 0])
         ring = Ellipse(width=dots.width + 0.35, height=dots.height + 0.35, color=RLBLUE, stroke_width=3).move_to(dots)
-        pop = txt(w("population", "bosh toʻplam"), size=30, weight=BOLD, color=GREY_A).next_to(rim, UP, buff=0.2)
-        smp = txt(w("sample", "tanlanma"), size=28, weight=BOLD, color=RLBLUE).next_to(ring, DOWN, buff=0.25)
+        pop = txt(label("population"), size=30, weight=BOLD, color=GREY_A).next_to(rim, UP, buff=0.2)
+        smp = txt(label("sample"), size=28, weight=BOLD, color=RLBLUE).next_to(ring, DOWN, buff=0.25)
 
         cx_s, cx_p, y0 = 2.5, 4.9, 1.7
         div = Line([3.4, y0 + 0.3, 0], [3.4, -2.0, 0], color=GREY_D, stroke_width=2)
-        h_s = txt(w("sample", "tanlanma"), size=32, color=RLBLUE).move_to([cx_s, y0, 0])
-        h_p = txt(w("population", "bosh toʻplam"), size=32, color=GREY_A).move_to([cx_p, y0, 0])
+        h_s = txt(label("sample"), size=32, color=RLBLUE).move_to([cx_s, y0, 0])
+        h_p = txt(label("population"), size=32, color=GREY_A).move_to([cx_p, y0, 0])
         latin = VGroup(MathTex(r"\bar{x}", font_size=96), MathTex("s", font_size=96)).arrange(DOWN, buff=0.7)
         greek = VGroup(MathTex(r"\mu", font_size=96), MathTex(r"\sigma", font_size=96)).arrange(DOWN, buff=0.7)
         # headers hug the divider, so a long label never crosses it
@@ -150,10 +150,10 @@ class S02Symbols(LectureScene):
             self.cue(tr, t, 4)
             self.play(FadeIn(greek, shift=UP * 0.2), Indicate(rim, color=HILITE, scale_factor=1.0), run_time=1.0)
 
-        smp2 = txt(w("training set", "oʻqitish toʻplami"), size=28, weight=BOLD, color=RLBLUE).move_to(smp)
-        pop2 = txt(w("the whole world", "butun dunyo"), size=30, weight=BOLD, color=GREY_A).move_to(pop)
-        tag_s = txt(f"= {w('sample', 'tanlanma')}", size=22, color=RLBLUE).next_to(smp2, DOWN, buff=0.1)
-        tag_p = txt(f"= {w('population', 'bosh toʻplam')}", size=22, color=GREY_A).next_to(pop2, RIGHT, buff=0.2)
+        smp2 = txt(label("training_set"), size=28, weight=BOLD, color=RLBLUE).move_to(smp)
+        pop2 = txt(label("the_whole_world"), size=30, weight=BOLD, color=GREY_A).move_to(pop)
+        tag_s = txt(f"= {label("sample")}", size=22, color=RLBLUE).next_to(smp2, DOWN, buff=0.1)
+        tag_p = txt(f"= {label("population")}", size=22, color=GREY_A).next_to(pop2, RIGHT, buff=0.2)
         gap = DoubleArrow(ring.get_left() + LEFT * 0.05, rim.get_left() + RIGHT * 0.25, buff=0.05,
                           color=RLRED, stroke_width=4, tip_length=0.2)
         with self.say("2.10") as (tr, t):
@@ -169,7 +169,7 @@ class S02HandsOn(LectureScene):
     def construct(self):
         cards = five_cards(y=-1.2, step=1.9, size=40).scale(0.85)
         subs = sub_labels(cards)
-        card_ = pause_card([w("x₂ = ?", "x₂ = ?"), w("x₁ + x₅ = ?", "x₁ + x₅ = ?")]).to_edge(UP, buff=SAFE + 0.3)
+        card_ = pause_card([label("x_q"), label("x_x_q")]).to_edge(UP, buff=SAFE + 0.3)
         with self.say("2.11"):
             self.play(FadeIn(card_), FadeIn(cards), FadeIn(subs), run_time=1.0)
         self.hands_on()

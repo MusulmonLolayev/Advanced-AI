@@ -38,12 +38,12 @@ def one_in(s):
 class S10Curve(LectureScene):
     def construct(self):
         self.section_card(10)
-        ill, pos = w("ill", "kasal"), w("positive", "musbat")
+        ill, pos = label("ill"), label("positive")
         f = MathTex(rf"P(\text{{{ill}}} \mid \text{{{pos}}})", "=", rf"P(\text{{{pos}}} \mid \text{{{ill}}})",
                     r"\cdot", rf"P(\text{{{ill}}})", "/", rf"P(\text{{{pos}}})", font_size=46)
         f.move_to(UP * 1.0)
         prior_box = SurroundingRectangle(f[4], color=HILITE, buff=0.12)
-        prior_l = txt(w("base rate = the prior", "asosiy ulush = aprior ehtimollik"), size=30, color=HILITE)
+        prior_l = txt(label("base_rate_the_prior"), size=30, color=HILITE)
         prior_l.next_to(prior_box, DOWN, buff=0.5)
         with self.say("10.1") as (tr, t):
             self.play(Write(f), run_time=1.2)
@@ -56,14 +56,14 @@ class S10Curve(LectureScene):
         ax = Axes(x_range=[0, 20, 5], y_range=[0, 100, 25], x_length=8.0, y_length=4.6, tips=False,
                   axis_config={"color": GREY_B, "stroke_width": 2, "include_numbers": True, "font_size": 24})
         ax.move_to(DOWN * 0.35 + RIGHT * 0.3)
-        xl = txt(w("how common the disease is (%)", "asosiy ulush (%)"), size=24, color=GREY_B)
+        xl = txt(label("how_common_the_disease_is_percent"), size=24, color=GREY_B)
         xl.next_to(ax.x_axis, DOWN, buff=0.45)
-        yl = txt(w("P(ill | positive), %", "P(kasal | musbat), %"), size=24, color=GREY_B)
+        yl = txt(label("p_ill_positive_percent"), size=24, color=GREY_B)
         yl.next_to(ax, UP, buff=0.2).align_to(ax, LEFT).shift(LEFT * 0.4)
         xs = [100 * p for p, _ in N["base_curve"]]
         ys = [100 * y for _, y in N["base_curve"]]
         curve = ax.plot_line_graph(xs, ys, add_vertex_dots=False, line_color=LBLUE, stroke_width=4)["line_graph"]
-        fixed = txt(w("same test throughout", "test oʻzgarmaydi"), size=26, color=LBLUE).move_to(ax.c2p(14, 30))
+        fixed = txt(label("same_test_throughout"), size=26, color=LBLUE).move_to(ax.c2p(14, 30))
         with self.say("10.2") as (tr, t):
             self.play(Create(ax), FadeIn(xl), FadeIn(yl), run_time=1.0)
             self.play(Create(curve), FadeIn(fixed), run_time=1.8)
@@ -74,7 +74,7 @@ class S10Curve(LectureScene):
         for k, v in MARKS.items():
             p = ax.c2p(100 * float(k), 100 * v)
             d = Dot(p, radius=0.09, color=HILITE)
-            lab = VGroup(txt(w(f"1 in {round(1 / float(k))}", f"{round(1 / float(k))} kishidan 1"), size=22, color=GREY_B),
+            lab = VGroup(txt(label("1_in_n", n=round(1 / float(k))), size=22, color=GREY_B),
                          txt(pct(v), size=30, weight=BOLD, color=HILITE)).arrange(DOWN, buff=0.08).move_to(p + offs[k])
             lab.add_background_rectangle(color=BLACK, opacity=0.9, buff=0.06)   # the curve must not cross the text
             marks.add(VGroup(d, lab, Line(d.get_center(), lab.get_center(), color=GREY_D, stroke_width=1.5)
@@ -90,9 +90,9 @@ class S10Curve(LectureScene):
         band = Rectangle(width=ax.c2p(1, 0)[0] - ax.c2p(0, 0)[0], height=ax.y_length, stroke_width=0,
                          fill_color=RLRED, fill_opacity=0.18)
         band.move_to([(ax.c2p(0, 0)[0] + ax.c2p(1, 0)[0]) / 2, ax.c2p(0, 50)[1], 0])
-        band_l = txt(w("almost everyone is well", "deyarli hamma sogʻlom"), size=22, color=RLRED)
+        band_l = txt(label("almost_everyone_is_well"), size=22, color=RLRED)
         band_l.next_to(band, RIGHT, buff=0.15).align_to(band, UP).shift(DOWN * 0.15)
-        second = node(w("positive → a second, different test", "musbat → boshqa, ikkinchi test"), color=HILITE, size=24)
+        second = node(label("positive_a_second_different_test"), color=HILITE, size=24)
         second.move_to(ax.c2p(13.5, 30))
         with self.say("10.4") as (tr, t):
             self.play(FadeOut(fixed), FadeIn(band), FadeIn(band_l), run_time=0.8)
@@ -106,11 +106,11 @@ class S10Accuracy(LectureScene):
         # 100 people, 1 ill; a "model" that always says healthy
         n100 = one_in(S1)
         img = cells_image(n100, 1, 10, 4.0).move_to(LEFT * 3.5 + DOWN * 0.2)
-        model = node(w("model: always “healthy”", "model: doim «sogʻlom»"), color=LBLUE, size=26)
+        model = node(label("model_always_healthy"), color=LBLUE, size=26)
         model.move_to(RIGHT * 2.6 + UP * 1.7)
-        acc = VGroup(txt(w("accuracy", "aniqlik"), size=30, color=GREY_B),
+        acc = VGroup(txt(label("accuracy"), size=30, color=GREY_B),
                      txt(pct(ACC["0.01"]), size=60, weight=BOLD, color=RLGREEN)).arrange(RIGHT, buff=0.4)
-        found = VGroup(txt(w("ill people found", "topilgan kasallar"), size=30, color=GREY_B),
+        found = VGroup(txt(label("ill_people_found"), size=30, color=GREY_B),
                        txt("0", size=60, weight=BOLD, color=RLRED)).arrange(RIGHT, buff=0.4)
         VGroup(acc, found).arrange(DOWN, aligned_edge=LEFT, buff=0.5).move_to(RIGHT * 2.6 + DOWN * 0.6)
         with self.say("10.5") as (tr, t):
@@ -123,9 +123,9 @@ class S10Accuracy(LectureScene):
         self.clear_all()
 
         n = one_in(S1000)
-        card = pause_card([w(f"1 person in {n:,} is ill.", f"{n:,} kishidan biri kasal."),
-                           w("The model always answers “healthy”.", "Model doim «sogʻlom» deydi."),
-                           w("Accuracy = ?", "Aniqlik = ?")])
+        card = pause_card([label("1_person_in_n_is_ill", n=n),
+                           label("the_model_always_answers_healthy"),
+                           label("accuracy_q")])
         with self.say("10.6"):
             self.play(FadeIn(card), run_time=0.8)
         self.hands_on()
@@ -134,7 +134,7 @@ class S10Accuracy(LectureScene):
         img = cells_image(n, 1, 40, 3.0).move_to(LEFT * 3.6 + DOWN * 0.1)
         frac_ = MathTex(rf"\frac{{{n - 1}}}{{{n}}}".replace(",", "{,}"), "=", rf"{100 * ACC['0.001']:.1f}\%",
                         font_size=60, color=RLGREEN).move_to(RIGHT * 2.8 + UP * 0.6)
-        useless = txt(w("rarer disease → a useless model looks better", "kasallik kamroq → foydasiz model yaxshiroq koʻrinadi"),
+        useless = txt(label("rarer_disease_a_useless_model_looks"),
                       size=26, color=GREY_B).move_to(RIGHT * 2.7 + DOWN * 1.4)
         if useless.width > 5.6:
             useless.scale_to_fit_width(5.6)
@@ -147,12 +147,12 @@ class S10Accuracy(LectureScene):
 
 class S10Next(LectureScene):
     def construct(self):
-        head = self.heading(w("Where Bayes' theorem comes back", "Bayes teoremasi qayerda qaytadi"), color=LBLUE)
-        items = [(w("Lecture 6", "6-maʼruza"), w("Bayesian inference", "Bayes xulosasi"),
+        head = self.heading(label("where_bayes_theorem_comes_back"), color=LBLUE)
+        items = [(label("lecture_6"), label("bayesian_inference"),
                   {"en": "in Lecture 6", "uz": "oltinchi maʼruzada"}),
-                 (w("Module 3", "3-modul"), w("Naive Bayes", "Sodda Bayes\nklassifikatori"),
+                 (label("module_3"), label("naive_bayes"),
                   {"en": "in Module 3", "uz": "uchinchi modulda"}),
-                 (w("Module 1", "1-modul"), w("Classification\nmetrics", "Tasniflash\nkoʻrsatkichlari"),
+                 (label("module_1"), label("classification_metrics"),
                   {"en": "in Module 1", "uz": "birinchi modulda"})]
         cards = VGroup(*[card(b, a, color=c, width=3.8, height=2.2, size=30)
                          for (a, b, _), c in zip(items, (RLBLUE, RLGREEN, HILITE))]).arrange(RIGHT, buff=0.4)
@@ -169,7 +169,7 @@ class S10Next(LectureScene):
 
 class S10Summary(LectureScene):
     def construct(self):
-        head = self.heading(w("Lecture 2 — summary", "2-maʼruza — xulosa"), color=LBLUE)
+        head = self.heading(label("lecture_2_summary"), color=LBLUE)
 
         def mini_grid():
             sq = VGroup(*[Square(0.11, stroke_width=0, fill_color=BUS_C if i in (0, 1, 2, 7) else NOBUS_C,
@@ -198,13 +198,10 @@ class S10Summary(LectureScene):
                           Arrow(RIGHT * 0.35, LEFT * 0.35, buff=0, color=HILITE, stroke_width=3,
                                 max_tip_length_to_length_ratio=0.3).shift(DOWN * 0.1))
 
-        items = [(mini_grid, w("A condition shrinks the sample space", "Shart namunalar fazosini toraytiradi")),
-                 (mini_tree, w("Tree: multiply along branches · table: choose the denominator",
-                               "Daraxt: shoxlar boʻylab koʻpaytiramiz · jadval: maxrajni tanlaymiz")),
-                 (mini_bars, w("Independence: conditional = plain · pooling can reverse",
-                               "Erklilik: shartli = oddiy · birlashtirish teskari qilishi mumkin")),
-                 (mini_flip, w("Total probability: a weighted average · Bayes: turn the condition around",
-                               "Toʻla ehtimollik: vaznli oʻrtacha · Bayes: shartni teskari aylantiradi"))]
+        items = [(mini_grid, label("a_condition_shrinks_the_sample_space")),
+                 (mini_tree, label("tree_multiply_along_branches_table_choose")),
+                 (mini_bars, label("independence_conditional_plain_pooling_can_reverse")),
+                 (mini_flip, label("total_probability_a_weighted_average_bayes"))]
         rows = VGroup()
         for icon, text in items:
             ic = icon()
@@ -224,11 +221,10 @@ class S10Summary(LectureScene):
                 self.play(FadeIn(r, shift=RIGHT * 0.3), run_time=0.6)
         self.clear_all()
 
-        end = VGroup(txt(ui("lecture", n=2), size=56, weight=BOLD, color=RLBLUE),
-                     txt(w("the end", "tugadi"), size=34, color=GREY_B)).arrange(DOWN, buff=0.3).move_to(UP * 0.4)
-        nxt = VGroup(txt(ui("next"), size=28, color=GREY_B),
-                     txt(w("Lecture 3 · Discrete random variables and key distributions",
-                           "3-maʼruza · Diskret tasodifiy miqdorlar va asosiy taqsimotlar"), size=40, weight=BOLD,
+        end = VGroup(txt(label("lecture_n", n=2), size=56, weight=BOLD, color=RLBLUE),
+                     txt(label("the_end"), size=34, color=GREY_B)).arrange(DOWN, buff=0.3).move_to(UP * 0.4)
+        nxt = VGroup(txt(label("next"), size=28, color=GREY_B),
+                     txt(label("lecture_3_discrete_random_variables_and"), size=40, weight=BOLD,
                          color=RLBLUE),
                      MathTex(r"P(X = k)", font_size=64, color=HILITE)).arrange(DOWN, buff=0.4)
         if nxt.width > 12.4:

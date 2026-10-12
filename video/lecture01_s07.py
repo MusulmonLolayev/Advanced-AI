@@ -89,28 +89,28 @@ class S07Bottles(LectureScene):
     def construct(self):
         self.section_card(7)
         ax = fill_axis()
-        label = txt(w("label: 500 ml", "yorliq: 500 ml"), size=30, weight=BOLD).to_edge(UP, buff=SAFE + 0.3)
-        label.set_x(mx(500))
+        target = txt(label("label_500_ml"), size=30, weight=BOLD).to_edge(UP, buff=SAFE + 0.3)
+        target.set_x(mx(500))
         allowed = txt("495–505 ml", size=24, color=RLGREEN).next_to(ax[0], UP, buff=0.12)
         with self.say("7.1") as (tr, t):
-            self.play(Create(ax[2]), FadeIn(ax[3]), FadeIn(ax[4]), FadeIn(label), run_time=1.0)
+            self.play(Create(ax[2]), FadeIn(ax[3]), FadeIn(ax[4]), FadeIn(target), run_time=1.0)
             self.cue(tr, t, {"en": "and the law", "uz": "Qonun"})
             self.play(FadeIn(ax[0]), Create(ax[1]), FadeIn(allowed), run_time=1.0)
 
         mean_ln = DashedLine([mx(500), BASE, 0], [mx(500), BASE + 3.9, 0], color=WHITE, stroke_width=3)
         grid = bottle_grid()
-        g_lab = txt(w("1000 bottles", "1000 ta shisha"), size=22, color=GREY_B).next_to(grid, UP, buff=0.15)
-        m_lab = txt(w("A and B: mean 500 ml", "A va B: oʻrtacha 500 ml"), size=24).next_to(label, DOWN, buff=0.2)
+        g_lab = txt(label("1000_bottles"), size=22, color=GREY_B).next_to(grid, UP, buff=0.15)
+        m_lab = txt(label("a_and_b_mean_500_ml"), size=24).next_to(target, DOWN, buff=0.2)
         with self.say("7.2") as (tr, t):
             self.play(Create(mean_ln), FadeIn(m_lab), FadeOut(allowed), run_time=0.9)
             self.play(FadeIn(grid, lag_ratio=0.001), FadeIn(g_lab), run_time=1.2)
 
         ha = hist(FA, RLGREEN)
-        name_a = txt(w("Machine A:  s = 2 ml", "A mashina:  s = 2 ml"), size=26, color=RLGREEN)
+        name_a = txt(label("machine_a_s_2_ml"), size=26, color=RLGREEN)
         name_a.next_to(m_lab, DOWN, buff=0.2).set_x(mx(500))
-        sd_a = txt(w("limits = 2.5 s away", "chegaralar 2.5 s uzoqda"), size=22, color=GREY_B)
+        sd_a = txt(label("limits_2_5_s_away"), size=22, color=GREY_B)
         sd_a.move_to([mx(509.5), BASE + 2.6, 0])
-        ctr_a = txt(w(f"rejected: {REJ_A} / 1000", f"yaroqsiz: {REJ_A} / 1000"), size=24, color=RLRED)
+        ctr_a = txt(label("rejected_of_1000", n=REJ_A), size=24, color=RLRED)
         ctr_a.next_to(grid, DOWN, buff=0.15)
         with self.say("7.3") as (tr, t):
             self.play(FadeOut(m_lab), FadeIn(name_a), LaggedStart(*[GrowFromEdge(r, DOWN) for r in ha],
@@ -121,9 +121,9 @@ class S07Bottles(LectureScene):
             self.play(*[c.animate.set_fill(RLRED) for c in bad_cells(grid, FA)], FadeIn(ctr_a), run_time=0.9)
 
         hb = hist(FB, RLORANGE)
-        name_b = txt(w("Machine B:  s = 4 ml", "B mashina:  s = 4 ml"), size=26, color=RLORANGE).move_to(name_a)
-        sd_b = txt(w("limits = 1.25 s away", "chegaralar 1.25 s uzoqda"), size=22, color=GREY_B).move_to(sd_a)
-        ctr_b = txt(w(f"rejected: {REJ_B} / 1000", f"yaroqsiz: {REJ_B} / 1000"), size=24,
+        name_b = txt(label("machine_b_s_4_ml"), size=26, color=RLORANGE).move_to(name_a)
+        sd_b = txt(label("limits_1_25_s_away"), size=22, color=GREY_B).move_to(sd_a)
+        ctr_b = txt(label("rejected_of_1000", n=REJ_B), size=24,
                     color=RLRED).move_to(ctr_a)
         with self.say("7.4") as (tr, t):
             self.play(ha.animate.set_opacity(0.18), FadeOut(name_a), FadeIn(name_b), *[c.animate.set_fill(GREY_D) for c
@@ -134,13 +134,13 @@ class S07Bottles(LectureScene):
             self.cue(tr, t, 2)
             self.play(*[c.animate.set_fill(RLRED) for c in bad_cells(grid, FB)], FadeIn(ctr_b), run_time=1.2)
 
-        ratio = VGroup(txt(w("spread ×2", "tarqoqlik ×2"), size=34, weight=BOLD, color=RLORANGE),
-                       txt("→", size=34), txt(w(f"waste ×{L['bottle_ratio']}", f"chiqindi ×{L['bottle_ratio']}"),
+        ratio = VGroup(txt(label("spread_2"), size=34, weight=BOLD, color=RLORANGE),
+                       txt("→", size=34), txt(label("waste_n", bottle_ratio=L['bottle_ratio']),
                                               size=34, weight=BOLD, color=RLRED)).arrange(RIGHT, buff=0.3)
-        ratio.move_to(label)
-        still = txt(w("mean: 500 ml, unchanged", "oʻrtacha: 500 ml, oʻzgarmadi"), size=24).next_to(mean_ln, UP, buff=0.1)
+        ratio.move_to(target)
+        still = txt(label("mean_500_ml_unchanged"), size=24).next_to(mean_ln, UP, buff=0.1)
         with self.say("7.5") as (tr, t):
-            self.play(FadeOut(label), FadeOut(name_b), FadeIn(ratio, shift=UP * 0.2), run_time=0.9)
+            self.play(FadeOut(target), FadeOut(name_b), FadeIn(ratio, shift=UP * 0.2), run_time=0.9)
             self.cue(tr, t, 1)
             self.play(Indicate(mean_ln, color=WHITE), FadeIn(still), run_time=1.2)
         self.clear_all()
@@ -152,7 +152,7 @@ class S07Risk(LectureScene):
         sa, sb = L["bottle_A_std"], L["bottle_B_std"]
         ba = bell(L["bottle_A_mean"], sa, RLGREEN, 3.4)
         bb = bell(L["bottle_B_mean"], sb, RLORANGE, 1.7)
-        head = self.heading(w("Six Sigma: control the spread", "«Olti Sigma»: tarqoqlikni nazorat qilamiz"),
+        head = self.heading(label("six_sigma_control_the_spread"),
                             color=HILITE)
         ticks = VGroup()
         for k in (-2, -1, 1, 2):
@@ -182,13 +182,12 @@ class S07Risk(LectureScene):
             return VGroup(box_, door, Dot(box_.get_top() + DOWN * 0.1, radius=0.04))
 
         items = VGroup()
-        for icon, lab in ((bus(), w("bus timetable", "avtobus jadvali")),
-                          (clinic(), w("clinic waiting time", "klinika navbati")),
-                          (oven(), w("oven temperature", "pech harorati"))):
+        for icon, lab in ((bus(), label("bus_timetable")),
+                          (clinic(), label("clinic_waiting_time")),
+                          (oven(), label("oven_temperature"))):
             items.add(VGroup(icon, txt(lab, size=22)).arrange(RIGHT, buff=0.25))
         items.arrange(DOWN, aligned_edge=LEFT, buff=0.5).move_to([4.7, 0.2, 0])
-        often = txt(w("the mean never says how often it goes wrong",
-                      "oʻrtacha qiymat buzilish chastotasini aytmaydi"), size=24, color=GREY_B)
+        often = txt(label("the_mean_never_says_how_often"), size=24, color=GREY_B)
         often.next_to(head, DOWN, buff=0.25)
         with self.say("7.7") as (tr, t):
             self.play(FadeOut(ticks), run_time=0.5)
@@ -197,10 +196,10 @@ class S07Risk(LectureScene):
             self.cue(tr, t, 2)
             self.play(FadeIn(often), run_time=0.8)
 
-        head2 = self.heading(w("AI: a prediction and its uncertainty", "Sunʼiy intellekt: bashorat va noaniqlik"),
+        head2 = self.heading(label("ai_a_prediction_and_its_uncertainty"),
                              color=HILITE)
-        trust = txt(w("small spread: we can trust it", "tarqoqlik kichik: ishonsa boʻladi"), size=24, color=RLGREEN)
-        careful = txt(w("large spread: we are careful", "tarqoqlik katta: ehtiyot boʻlamiz"), size=24, color=RLORANGE)
+        trust = txt(label("small_spread_we_can_trust_it"), size=24, color=RLGREEN)
+        careful = txt(label("large_spread_we_are_careful"), size=24, color=RLORANGE)
         trust.move_to([4.3, 0.9, 0])
         careful.move_to([4.3, -1.2, 0])
         a_trust = Arrow(trust.get_left(), [mx(501.6), BASE + 2.6, 0], buff=0.1, color=RLGREEN, stroke_width=4)
@@ -217,8 +216,8 @@ class S07HandsOn(LectureScene):
     def construct(self):
         ax = fill_axis()
         hb = hist(FB, RLORANGE)
-        card_ = pause_card([w("We cannot shrink machine B's spread.", "B mashinaning tarqoqligini kamaytirolmaymiz."),
-                            w("Where do we set its mean?", "Oʻrtachasini qayerga qoʻyamiz?")])
+        card_ = pause_card([label("we_cannot_shrink_machine_b_s"),
+                            label("where_do_we_set_its_mean_q")])
         card_.scale(0.85).to_edge(UP, buff=SAFE + 0.15)
         with self.say("7.9"):
             self.play(FadeIn(ax), FadeIn(hb), run_time=1.0)
@@ -226,15 +225,15 @@ class S07HandsOn(LectureScene):
         self.hands_on()
 
         mean_ln = DashedLine([mx(500), BASE, 0], [mx(500), BASE + 3.9, 0], color=WHITE, stroke_width=3)
-        cnt_lab = txt(w("rejected:", "yaroqsiz:"), size=30)
+        cnt_lab = txt(label("rejected"), size=30)
         num = txt(str(SHIFT[0]), size=40, weight=BOLD, color=RLRED)
         counter = VGroup(cnt_lab, num).arrange(RIGHT, buff=0.25).move_to([4.6, 1.0, 0])
-        shift_lab = txt(w("mean 500 ml", "oʻrtacha 500 ml"), size=26).next_to(counter, DOWN, buff=0.35)
+        shift_lab = txt(label("mean_500_ml"), size=26).next_to(counter, DOWN, buff=0.35)
         moving = VGroup(hb, mean_ln)
 
         def step(d, rt=0.55):
             new = txt(str(SHIFT[d]), size=40, weight=BOLD, color=RLRED).move_to(num, aligned_edge=LEFT)
-            new_s = txt(w(f"mean {500 + d} ml", f"oʻrtacha {500 + d} ml"), size=26).move_to(shift_lab)
+            new_s = txt(label("mean_n_ml", n=500 + d), size=26).move_to(shift_lab)
             self.play(moving.animate.set_x(mx(500 + d) - mx(500) + cx), *recolor(hb, FB, RLORANGE, d),
                       Transform(num, new), Transform(shift_lab, new_s), run_time=rt)
 
@@ -251,12 +250,12 @@ class S07HandsOn(LectureScene):
 class S07Teaser(LectureScene):
     def construct(self):
         bars, nums, floor, k, xs = bars_row(NINE, base=-2.4, height=3.0)
-        unit = txt(w("salaries, in thousands of dollars", "maoshlar, ming dollarda"), size=22, color=GREY_B)
+        unit = txt(label("salaries_in_thousands_of_dollars"), size=22, color=GREY_B)
         unit.next_to(floor, DOWN, buff=0.2)
         with_ = MathTex(r"s^2 = " + f"{L['nine_var']:g}", font_size=44, color=RLRED)
         without = MathTex(r"s^2 = " + f"{L['eight_var']:.1f}", font_size=44, color=RLGREEN)
-        lab_w = txt(w("with 88:", "88 bilan:"), size=28)
-        lab_wo = txt(w("without 88:", "88 siz:"), size=28)
+        lab_w = txt(label("with_88"), size=28)
+        lab_wo = txt(label("without_88"), size=28)
         rows = VGroup(VGroup(lab_wo, without).arrange(RIGHT, buff=0.3),
                       VGroup(lab_w, with_).arrange(RIGHT, buff=0.3)).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
         rows.to_edge(UP, buff=SAFE + 0.3)

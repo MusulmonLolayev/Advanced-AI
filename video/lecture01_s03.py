@@ -59,7 +59,7 @@ def hist_bars(gap=0.0, color=RLBLUE):
 
 
 def step_head(n, en, uz):
-    return txt(w(f"Step {n}: {en}", f"{n}-qadam: {uz}"), size=34, weight=BOLD, color=HILITE).to_edge(UP, buff=SAFE + 0.3)
+    return txt(label("step_n_n", n=n, en=en, uz=uz), size=34, weight=BOLD, color=HILITE).to_edge(UP, buff=SAFE + 0.3)
 
 
 def mini_hist(values, lo, hi, bins, title, width=3.6, height=2.0, flag_above=None):
@@ -114,7 +114,7 @@ class S03Classes(LectureScene):
             self.play(LaggedStart(*[FadeIn(d, scale=0.5) for d in rest], lag_ratio=0.002), run_time=1.4)
 
         hairs = VGroup(*[Line([sx(s), AY, 0], [sx(s), AY + 1.2, 0], stroke_width=1.2, color=RLBLUE) for s in SAL])
-        once = txt(w("each value: once", "har bir qiymat: 1 marta"), size=30, color=HILITE).move_to([0, 0.6, 0])
+        once = txt(label("each_value_once"), size=30, color=HILITE).move_to([0, 0.6, 0])
         one = txt("1", size=26, color=GREY_B).move_to([X0 - 0.35, AY + 1.2, 0])
         with self.say("3.2") as (tr, t):
             self.play(ReplacementTransform(dots, hairs), run_time=1.6)
@@ -174,10 +174,10 @@ class S03Classes(LectureScene):
 
         hl = SurroundingRectangle(VGroup(*[d for d, s in zip(stacks, SAL) if class_of(s) == 1]), buff=0.12,
                                   color=HILITE, stroke_width=4)
-        half = txt(w("311 of 600: more than half", "600 tadan 311: yarmidan koʻpi"), size=28, color=HILITE)
+        half = txt(label("311_of_600_more_than_half"), size=28, color=HILITE)
         half.next_to(hl, RIGHT, buff=0.3).shift(UP * 0.6)
         tail = Arrow([sx(85_000), AY + 1.25, 0], [sx(158_000), AY + 0.9, 0], buff=0, color=RLRED, stroke_width=5)
-        tail_lab = txt(w("thin tail", "ingichka dum"), size=26, color=RLRED).next_to(tail, UP, buff=0.15).shift(RIGHT * 1.2)
+        tail_lab = txt(label("thin_tail"), size=26, color=RLRED).next_to(tail, UP, buff=0.15).shift(RIGHT * 1.2)
         with self.say("3.7") as (tr, t):
             self.play(Create(hl), nums[1].animate.set_color(HILITE), run_time=0.8)
             self.play(FadeIn(half), run_time=0.6)
@@ -202,9 +202,9 @@ class S03Classes(LectureScene):
             self.play(Indicate(gaps, color=RLRED, scale_factor=1.05), run_time=0.8)
             self.play(Transform(bars, hist_bars()), FadeOut(gaps), run_time=0.8)
 
-        name = txt(w("Histogram", "Gistogramma"), size=44, weight=BOLD, color=RLBLUE).to_edge(UP, buff=SAFE + 0.3)
+        name = txt(label("histogram"), size=44, weight=BOLD, color=RLBLUE).to_edge(UP, buff=SAFE + 0.3)
         skew = Arrow([sx(70_000), 0.4, 0], [sx(150_000), 0.4, 0], buff=0, color=HILITE, stroke_width=6)
-        skew_lab = txt(w("skewed right", "oʻngga qiyshaygan"), size=32, color=HILITE).next_to(skew, UP, buff=0.15)
+        skew_lab = txt(label("skewed_right"), size=32, color=HILITE).next_to(skew, UP, buff=0.15)
         with self.say("3.9") as (tr, t):
             self.play(FadeOut(head5), FadeIn(name, shift=DOWN * 0.2), run_time=0.8)
             self.cue(tr, t, 2)
@@ -216,13 +216,13 @@ class S03Features(LectureScene):
     def construct(self):
         wC = ARR["waits_C"]
         whiC = next(b for b in L["branches"] if b["name"] == "C")["whi"]
-        panels = [mini_hist(SAL, 20_000, 160_000, 14, w("salary", "maosh")),
-                  mini_hist(ARR["fills_B"], 486, 514, 28, w("bottle fill, ml", "shisha hajmi, ml")),
-                  mini_hist(wC, 0, 80, 16, w("waiting time, min", "kutish vaqti, daq"), flag_above=whiC)]
+        panels = [mini_hist(SAL, 20_000, 160_000, 14, label("salary")),
+                  mini_hist(ARR["fills_B"], 486, 514, 28, label("bottle_fill_ml")),
+                  mini_hist(wC, 0, 80, 16, label("waiting_time_min"), flag_above=whiC)]
         for (g, fl), x in zip(panels, (-4.6, 0, 4.6)):
             VGroup(g, fl).shift([x, -0.6, 0])
-        head = self.heading(w("every feature, one histogram", "har bir belgi — bitta gistogramma"))
-        strange = txt(w("strange values", "gʻalati qiymatlar"), size=26, color=RLRED)
+        head = self.heading(label("every_feature_one_histogram"))
+        strange = txt(label("strange_values"), size=26, color=RLRED)
         strange.move_to([4.6, 1.75, 0])
         pointer = Arrow(strange.get_bottom(), panels[2][1].get_center() + UP * 0.1, buff=0.1, color=RLRED,
                         stroke_width=4, tip_length=0.2)
@@ -245,14 +245,14 @@ class S03HandsOn(LectureScene):
             r[0].move_to([-2.0, 0, 0], aligned_edge=LEFT)
             rows.add(r)
         rows.arrange(DOWN, buff=0.22, aligned_edge=LEFT)
-        hdr = VGroup(txt(w("class", "sinf"), size=28, color=GREY_B), txt(w("people", "kishi"), size=28, color=GREY_B))
+        hdr = VGroup(txt(label("class"), size=28, color=GREY_B), txt(label("people"), size=28, color=GREY_B))
         hdr[0].move_to([-2.0, 0, 0], aligned_edge=LEFT)
         hdr[1].move_to([1.9, 0, 0], aligned_edge=RIGHT)
         table = VGroup(hdr, rows).arrange(DOWN, buff=0.3, aligned_edge=LEFT)
         for r in rows:
             r[1].set_x(hdr[1].get_right()[0], RIGHT)
         table.move_to([-3.3, -0.4, 0])
-        card_ = pause_card([w("We find how many earn more than $80k.", "$80k dan koʻp oladiganlar sonini topamiz.")])
+        card_ = pause_card([label("we_find_how_many_earn_more")])
         card_.move_to([3.2, 1.2, 0])
         if card_.width > 6.4:
             card_.scale_to_fit_width(6.4)
@@ -273,7 +273,7 @@ class S03HandsOn(LectureScene):
         self.clear_all()
 
         bars = hist_bars()
-        q = box(w("one number?", "bitta son?"), color=HILITE, width=3.4, height=1.1, size=32).move_to([2.6, 1.3, 0])
+        q = box(label("one_number_q"), color=HILITE, width=3.4, height=1.1, size=32).move_to([2.6, 1.3, 0])
         with self.say("3.13") as (tr, t):
             self.play(FadeIn(salary_axis()), LaggedStart(*[GrowFromEdge(b, DOWN) for b in bars], lag_ratio=0.1),
                       run_time=1.2)

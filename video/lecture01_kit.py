@@ -16,7 +16,7 @@ SAL = np.sort(np.loadtxt(RAW / "v01_salaries.txt"))
 NARRATION, HEADS = narration(1)
 assert len(HEADS) == 14 and "0.0" in NARRATION and "4.s3d" in NARRATION and "14.11" in NARRATION
 
-PARTS = {0: w("Part 0 · Data and descriptive statistics", "0-qism · Berilganlar va tavsiflovchi statistika"),
-         1: w("Part 1 · Probability", "1-qism · Ehtimollik")}
+PARTS = {0: label("part_0_data_and_descriptive_statistics"),
+         1: label("part_1_probability")}
 
 LectureScene, line = bind(_BaseScene, (NARRATION, HEADS), PARTS, {1: 0, 10: 1})

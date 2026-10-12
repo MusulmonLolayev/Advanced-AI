@@ -44,7 +44,7 @@ class S01Die(LectureScene):
             self.cue(tr, t, 1)
             self.play(FadeIn(probs), faces[5][0].animate.set_stroke(HILITE, width=5), run_time=0.8)
 
-        friend = txt(w("“It's even.”", "«Juft son chiqdi»"), size=36, weight=BOLD, color=HILITE)
+        friend = txt(label("it_s_even"), size=36, weight=BOLD, color=HILITE)
         friend.to_edge(UP, buff=SAFE + 0.4)
         g = N["die_p6_given_even"]
         even = [1, 3, 5]
@@ -59,8 +59,8 @@ class S01Die(LectureScene):
             self.play(*[Transform(probs[i], m) for i, m in zip(even, new)], run_time=0.7)
             self.play(Indicate(probs[5], color=HILITE), run_time=0.6)
 
-        same = txt(w("the die did not change", "kubik oʻzgarmadi"), size=28, color=GREY_B)
-        knew = txt(w("what we know changed", "bilganimiz oʻzgardi"), size=30, weight=BOLD, color=LBLUE)
+        same = txt(label("the_die_did_not_change"), size=28, color=GREY_B)
+        knew = txt(label("what_we_know_changed"), size=30, weight=BOLD, color=LBLUE)
         VGroup(same, knew).arrange(DOWN, buff=0.25).move_to(DOWN * 2.3)
         with self.say("1.3") as (tr, t):
             self.play(FadeIn(same), run_time=0.6)
@@ -68,9 +68,9 @@ class S01Die(LectureScene):
             self.play(FadeIn(knew, shift=UP * 0.2), run_time=0.6)
         self.clear_all()
 
-        head = self.heading(w("Conditional probability", "Shartli ehtimollik"), color=HILITE)
+        head = self.heading(label("conditional_probability"), color=HILITE)
         f = MathTex(r"P(B \mid A)", "=", r"\frac{P(A \cap B)}{P(A)}", font_size=72).move_to(UP * 0.5)
-        bar_lab = txt(w("“given”", "«… boʻlgandagi»"), size=28, color=HILITE)
+        bar_lab = txt(label("given"), size=28, color=HILITE)
         bar_lab.next_to(f[0], DOWN, buff=0.5)
         arrow = Arrow(bar_lab.get_top(), f[0].get_bottom() + DOWN * 0.05, buff=0.08, color=HILITE, stroke_width=4)
         with self.say("1.4") as (tr, t):
@@ -99,7 +99,7 @@ class S01Students(LectureScene):
         title = txt(STUDENTS.format(n=N["n"]), size=34, weight=BOLD).next_to(grid, UP, buff=0.3)
         fr = vfrac(N["bus"], N["n"]).move_to([2.4, 0.4, 0])
         eq = MathTex("=", dec(N["p_bus"]), font_size=56).next_to(fr, RIGHT, buff=0.35)
-        p_lab = txt(w("P(bus)", "P(avtobusda)"), size=34, color=GREY_B).next_to(VGroup(fr, eq), UP, buff=0.6)
+        p_lab = txt(label("p_bus"), size=34, color=GREY_B).next_to(VGroup(fr, eq), UP, buff=0.6)
         with self.say("1.6") as (tr, t):
             self.cue(tr, t, {"en": "A year group", "uz": "Bir kursda"})
             self.play(FadeIn(title), LaggedStart(*[FadeIn(s, scale=0.5) for s in grid], lag_ratio=0.008),
@@ -111,7 +111,7 @@ class S01Students(LectureScene):
             self.play(FadeIn(p_lab), Write(fr), Write(eq), run_time=1.0)
 
         box = group_box(grid, who, lambda k: k[0] == "bike")
-        blab = txt(w("bike: {n}", "velosipedli: {n}").format(n=N["bike"]), size=28, color=LBLUE, weight=BOLD)
+        blab = txt(label("bike_n").format(n=N["bike"]), size=28, color=LBLUE, weight=BOLD)
         blab.next_to(box, UP, buff=0.12).align_to(box, LEFT)
         with self.say("1.7") as (tr, t):
             self.play(*grey_where(grid, who, lambda k: k[0] == "bike"), FadeOut(title), run_time=0.9)
@@ -122,9 +122,9 @@ class S01Students(LectureScene):
 
         fr2 = vfrac(C["bike_bus"], N["bike"]).move_to(fr)
         eq2 = MathTex("=", dec(N["p_bus_given_bike"]), font_size=56, color=HILITE).next_to(fr2, RIGHT, buff=0.35)
-        p_lab2 = txt(w("P(bus | bike)", "P(avtobusda | velosipedli)"), size=34, color=HILITE).move_to(p_lab)
-        num_lab = txt(w("top", "surat"), size=24, color=GREY_B).next_to(fr2, LEFT, buff=0.6).align_to(fr2[0], DOWN)
-        den_lab = txt(w("bottom", "maxraj"), size=24, color=GREY_B).next_to(fr2, LEFT, buff=0.6).align_to(fr2[2], UP)
+        p_lab2 = txt(label("p_bus_bike"), size=34, color=HILITE).move_to(p_lab)
+        num_lab = txt(label("top"), size=24, color=GREY_B).next_to(fr2, LEFT, buff=0.6).align_to(fr2[0], DOWN)
+        den_lab = txt(label("bottom"), size=24, color=GREY_B).next_to(fr2, LEFT, buff=0.6).align_to(fr2[2], UP)
         with self.say("1.8") as (tr, t):
             self.play(Indicate(grid, color=WHITE, scale_factor=1.02), run_time=0.8)
             self.cue(tr, t, {"en": "The top", "uz": "Surat"})
@@ -134,7 +134,7 @@ class S01Students(LectureScene):
             self.cue(tr, t, {"en": "zero point two five", "uz": "nol butun yuzdan"})
             self.play(Transform(eq, eq2), Transform(p_lab, p_lab2), run_time=0.8)
 
-        omega = txt(w("new sample space = A", "yangi fazo = A"), size=28, weight=BOLD, color=LBLUE)
+        omega = txt(label("new_sample_space_a"), size=28, weight=BOLD, color=LBLUE)
         omega.move_to(blab, aligned_edge=LEFT)
         with self.say("1.9") as (tr, t):
             self.play(box.animate.set_stroke(HILITE, width=6), run_time=0.6)
@@ -148,11 +148,11 @@ class S01Spam(LectureScene):
         env = Rectangle(width=4.2, height=2.6, stroke_color=GREY_B, stroke_width=3).move_to([-3.4, 0.2, 0])
         flap = VMobject(stroke_color=GREY_B, stroke_width=3).set_points_as_corners(
             [env.get_corner(UL), env.get_center() + DOWN * 0.15, env.get_corner(UR)])
-        words = txt(w("“free prize!”", "«bepul sovrin!»"), size=34, weight=BOLD, color=HILITE).move_to(env).shift(DOWN * 0.6)
+        words = txt(label("free_prize"), size=34, weight=BOLD, color=HILITE).move_to(env).shift(DOWN * 0.6)
         mail = VGroup(env, flap, words)
-        model = node(w("classifier", "klassifikator"), color=LBLUE, size=28).move_to([1.0, 0.2, 0])
+        model = node(label("classifier"), color=LBLUE, size=28).move_to([1.0, 0.2, 0])
         a1 = Arrow(env.get_right(), model.get_left(), buff=0.15, color=GREY_B)
-        out = txt(w("P(spam | “free prize”)", "P(spam | «bepul sovrin»)"), size=32, weight=BOLD, color=HILITE)
+        out = txt(label("p_spam_free_prize"), size=32, weight=BOLD, color=HILITE)
         out.next_to(model, DOWN, buff=1.0).set_x(2.6)
         a2 = Arrow(model.get_bottom(), out.get_top(), buff=0.12, color=GREY_B)
         if out.get_right()[0] > 6.4:
@@ -170,8 +170,8 @@ class S01HandsOn(LectureScene):
     def construct(self):
         grid, who = student_grid(side=0.3, gap=0.05)
         grid.move_to([4.0, -0.3, 0])
-        pc = pause_card([w("Look only at the {n} students with no bike", "Faqat {n} ta velosipedsiz talabaga qaraymiz").format(n=N["nobike"]),
-                         w("How many of them take the bus?", "Ulardan nechtasi avtobusda qatnaydi?")])
+        pc = pause_card([label("look_only_at_the_n_students").format(n=N["nobike"]),
+                         label("how_many_of_them_take_the_q")])
         pc.move_to([-2.4, 0.2, 0])
         if pc.width > 7.6:
             pc.scale_to_fit_width(7.6).move_to([-2.4, 0.2, 0])
@@ -184,7 +184,7 @@ class S01HandsOn(LectureScene):
         box = group_box(grid, who, lambda k: k[0] == "nobike", color=HILITE)
         fr = vfrac(C["nobike_bus"], N["nobike"]).move_to([-2.4, -0.2, 0])
         eq = MathTex("=", dec(N["p_bus_given_nobike"]), font_size=56, color=HILITE).next_to(fr, RIGHT, buff=0.35)
-        lab = txt(w("P(bus | no bike)", "P(avtobusda | velosipedsiz)"), size=34, color=HILITE)
+        lab = txt(label("p_bus_no_bike"), size=34, color=HILITE)
         lab.next_to(VGroup(fr, eq), UP, buff=0.6)
         with self.say("1.12") as (tr, t):
             self.play(FadeOut(pc), Create(box), run_time=0.7)

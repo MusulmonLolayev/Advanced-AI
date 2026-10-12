@@ -1,0 +1,2258 @@
+# On-screen labels for every lecture video. Each label has a key, which the scenes use, and its
+# interchangeable forms in English and Uzbek, the default first:
+#
+#   mean:
+#     en: "mean"
+#     uz: ["oʻrtacha qiymat", "oʻrtacha"]
+#
+# A scene shows label("mean") (the first form) or label("mean", 1) (the second); a language with
+# fewer forms gives its first. {n} is filled in from the lecture's captured numbers. To change
+# a word, edit its form here and re-render; to allow another word, add it to the list.
+# The comment above each key says where it is shown. `uv run python labels.py` checks this file
+# against the scenes and regenerates the order and comments; your edits to the forms are kept.
+
+# ══ Every lecture ═════════════════════════════════════════════════════════
+
+# all lectures
+pause:
+  en: "⏸  Pause the video"
+  uz: "⏸  Videoni toʻxtating"
+
+# all lectures; L1 §14; L2 §10
+next:
+  en: "Next"
+  uz: "Keyingi"
+
+# all lectures
+video_n:
+  en: "Video {n} — {t}"
+  uz: "{n}-video — {t}"
+
+# ══ Lecture 1 ═════════════════════════════════════════════════════════════
+
+# L1 (all)
+part_0_data_and_descriptive_statistics:
+  en: "Part 0 · Data and descriptive statistics"
+  uz: "0-qism · Berilganlar va tavsiflovchi statistika"
+
+# L1 (all)
+part_1_probability:
+  en: "Part 1 · Probability"
+  uz: "1-qism · Ehtimollik"
+
+# L1 opening, §14; L2 opening, §10
+lecture_n:
+  en: "Lecture {n}"
+  uz: "{n}-maʼruza"
+
+# L1 opening
+data_descriptive_statistics_and_probability:
+  en: "Data, descriptive statistics and probability"
+  uz: "Berilganlar, tavsiflovchi statistika va ehtimollik"
+
+# L1 §1, §5
+categorical:
+  en: "categorical"
+  uz: "kategorial"
+
+# L1 §1
+numerical:
+  en: "numerical"
+  uz: "sonli"
+
+# L1 §1
+discrete:
+  en: "discrete"
+  uz: "diskret"
+
+# L1 §1
+continuous:
+  en: "continuous"
+  uz: "uzluksiz"
+
+# L1 §1
+eye_colour:
+  en: "eye colour"
+  uz: "koʻz rangi"
+
+# L1 §1
+brown:
+  en: "brown"
+  uz: "jigarrang"
+
+# L1 §1
+city_of_birth:
+  en: "city of birth"
+  uz: "tugʻilgan shahar"
+
+# L1 §1
+samarkand:
+  en: "Samarkand"
+  uz: "Samarqand"
+
+# L1 §1
+rating:
+  en: "rating"
+  uz: "baho"
+
+# L1 §1
+medium:
+  en: "medium"
+  uz: "oʻrta"
+
+# L1 §1
+number_of_children:
+  en: "number of\nchildren"
+  uz: "farzandlar soni"
+
+# L1 §1, §3, §4
+salary:
+  en: "salary"
+  uz: "maosh"
+
+# L1 §1
+height:
+  en: "height"
+  uz: "boʻy"
+
+# L1 §1
+"172_4_cm":
+  en: "172.4 cm"
+  uz: "172.4 sm"
+
+# L1 §1
+blood_type_q:
+  en: "Blood type?"
+  uz: "Qon guruhi?"
+
+# L1 §1
+finishing_place_in_an_exam_q:
+  en: "Finishing place in an exam?"
+  uz: "Imtihondagi oʻrin?"
+
+# L1 §1
+room_temperature_q:
+  en: "Room temperature?"
+  uz: "Xonadagi harorat?"
+
+# L1 §1
+mean_std_deviation:
+  en: "mean, std. deviation"
+  uz: "oʻrtacha, standart chetlanish"
+
+# L1 §1
+count_proportion:
+  en: "count, proportion"
+  uz: "sanash, ulush"
+
+# L1 §1
+cm:
+  en: "cm"
+  uz: "sm"
+
+# L1 §1
+tashkent:
+  en: "Tashkent"
+  uz: "Toshkent"
+
+# L1 §1
+blue:
+  en: "blue"
+  uz: "koʻk"
+
+# L1 §1
+green:
+  en: "green"
+  uz: "yashil"
+
+# L1 §1
+grey:
+  en: "grey"
+  uz: "kulrang"
+
+# L1 §1
+low:
+  en: "low"
+  uz: "past"
+
+# L1 §1
+high:
+  en: "high"
+  uz: "yuqori"
+
+# L1 §2
+population:
+  en: "population"
+  uz: "bosh toʻplam"
+
+# L1 §2
+sample:
+  en: "sample"
+  uz: "tanlanma"
+
+# L1 §2
+salaries_thousand:
+  en: "salaries, thousand $"
+  uz: "maoshlar, ming $"
+
+# L1 §2, §14
+"600_salaries":
+  en: "600 salaries"
+  uz: "600 ta maosh"
+
+# L1 §2
+training_set:
+  en: "training set"
+  uz: "oʻqitish toʻplami"
+
+# L1 §2
+the_whole_world:
+  en: "the whole world"
+  uz: "butun dunyo"
+
+# L1 §2
+x_q:
+  en: "x₂ = ?"
+  uz: "x₂ = ?"
+
+# L1 §2
+x_x_q:
+  en: "x₁ + x₅ = ?"
+  uz: "x₁ + x₅ = ?"
+
+# L1 §3
+"311_of_600_more_than_half":
+  en: "311 of 600: more than half"
+  uz: "600 tadan 311: yarmidan koʻpi"
+
+# L1 §3
+every_feature_one_histogram:
+  en: "every feature, one histogram"
+  uz: "har bir belgi — bitta gistogramma"
+
+# L1 §3
+strange_values:
+  en: "strange values"
+  uz: "gʻalati qiymatlar"
+
+# L1 §3
+step_n_n:
+  en: "Step {n}: {en}"
+  uz: "{n}-qadam: {uz}"
+
+# L1 §3
+bottle_fill_ml:
+  en: "bottle fill, ml"
+  uz: "shisha hajmi, ml"
+
+# L1 §3
+waiting_time_min:
+  en: "waiting time, min"
+  uz: "kutish vaqti, daq"
+
+# L1 §3
+class:
+  en: "class"
+  uz: "sinf"
+
+# L1 §3
+people:
+  en: "people"
+  uz: "kishi"
+
+# L1 §3
+we_find_how_many_earn_more:
+  en: "We find how many earn more than $80k."
+  uz: "$80k dan koʻp oladiganlar sonini topamiz."
+
+# L1 §3
+each_value_once:
+  en: "each value: once"
+  uz: "har bir qiymat: 1 marta"
+
+# L1 §3
+histogram:
+  en: "Histogram"
+  uz: "Gistogramma"
+
+# L1 §3
+skewed_right:
+  en: "skewed right"
+  uz: "oʻngga qiyshaygan"
+
+# L1 §3, §4
+one_number_q:
+  en: "one number?"
+  uz: "bitta son?"
+
+# L1 §3
+thin_tail:
+  en: "thin tail"
+  uz: "ingichka dum"
+
+# L1 §4
+v_each:
+  en: "{v} each"
+  uz: "har biriga {v}"
+
+# L1 §4
+v_missing:
+  en: "{v} missing"
+  uz: "{v} yetishmaydi"
+
+# L1 §4
+each_tick_is_ten_times:
+  en: "each tick is ten times the one before"
+  uz: "har bir belgi oldingisidan 10 marta katta"
+
+# L1 §4
+k_of_the_n_earn_less:
+  en: "{k} of the {n} earn less than that"
+  uz: "{n} kishidan {k} nafari undan kam oladi"
+
+# L1 §4, §5, §6
+mean:
+  en: "mean"
+  uz: ["oʻrtacha qiymat", "oʻrtacha"]
+
+# L1 §4, §5, §8
+median:
+  en: ["Median", "median"]
+  uz: ["Mediana", "mediana"]
+
+# L1 §4
+n_employees:
+  en: "{n} employees"
+  uz: "{n} xodim"
+
+# L1 §4
+the_mean:
+  en: "the mean"
+  uz: "oʻrtacha qiymat"
+
+# L1 §4
+v_above_the_line_v_missing:
+  en: "{v} above the line  =  {v} missing below it"
+  uz: "chiziq ustidagi {v}  =  ostida yetishmagan {v}"
+
+# L1 §4
+the_mean_remembers_the_total:
+  en: "The mean remembers the total"
+  uz: "Oʻrtacha qiymat umumiy summani eslab qoladi"
+
+# L1 §4
+n_people:
+  en: "{n} people"
+  uz: "{n} kishi"
+
+# L1 §4
+no_other_summary_does_that:
+  en: "No other summary does that."
+  uz: "Boshqa hech bir koʻrsatkich buni qilolmaydi."
+
+# L1 §4
+error:
+  en: "error"
+  uz: "xato"
+
+# L1 §4
+training_making_this_number_smaller:
+  en: "training = making this number smaller"
+  uz: "oʻqitish = shu sonni kichraytirish"
+
+# L1 §4, §5
+billionaire:
+  en: ["billionaire", "a billionaire"]
+  uz: "milliarder"
+
+# L1 §4
+describes_nobody_here:
+  en: "describes nobody here"
+  uz: "hech kimni tasvirlamaydi"
+
+# L1 §4
+the_line_that_did_not_move:
+  en: "The line that did not move"
+  uz: "Siljimagan chiziq"
+
+# L1 §4
+before:
+  en: "before"
+  uz: "avval"
+
+# L1 §4
+after:
+  en: "after"
+  uz: "keyin"
+
+# L1 §4
+that_line_is_the_median:
+  en: "That line is the median."
+  uz: "Bu chiziq — mediana."
+
+# L1 §4, §5, §7, §8
+salaries_in_thousands_of_dollars:
+  en: "salaries, in thousands of dollars"
+  uz: "maoshlar, ming dollarda"
+
+# L1 §4
+what_do_people_earn_here_q:
+  en: "What do people earn here?"
+  uz: "Bu yerda odamlar qancha maosh oladi?"
+
+# L1 §4
+we_work_out_the_mean_nine:
+  en: "We work out the mean of these nine."
+  uz: "Oʻrtacha qiymatini hisoblaymiz."
+
+# L1 §4
+we_count_how_many_earn_less:
+  en: "We count how many of the nine earn less than it."
+  uz: "Nechtasi undan kam olishini sanaymiz."
+
+# L1 §4; L2 (all)
+total:
+  en: "total"
+  uz: ["jami", "yigʻindi"]
+
+# L1 §5
+median_a_typical_member:
+  en: "median → a typical member"
+  uz: "mediana → odatiy odam"
+
+# L1 §5
+mean_each_person_s_equal_share:
+  en: "mean → each person's equal share"
+  uz: "oʻrtacha → teng ulush"
+
+# L1 §5
+mode:
+  en: ["Mode", "mode"]
+  uz: ["Mod", "mod"]
+
+# L1 §5
+rule_of_thumb:
+  en: "Rule of thumb"
+  uz: "Qoidamiz"
+
+# L1 §5
+one_typo_52_520:
+  en: "One typo: 52 → 520"
+  uz: "Bitta xato: 52 → 520"
+
+# L1 §5
+categorical_data:
+  en: "categorical data:"
+  uz: "kategorial berilganlar:"
+
+# L1 §5
+blood_type_shoe_size_mode:
+  en: "blood type, shoe size → mode"
+  uz: "qon guruhi, oyoq kiyim oʻlchami → mod"
+
+# L1 §5
+we_find_the_median_of_these:
+  en: "We find the median of these nine."
+  uz: "Shu toʻqqiztasining medianasini topamiz."
+
+# L1 §5, §6; L2 (all), §4
+bus:
+  en: "bus"
+  uz: ["avtobus", "avtobusda"]
+
+# L1 §5, §6
+car:
+  en: "car"
+  uz: "mashina"
+
+# L1 §5
+a_number_that_holds_its_ground_q:
+  en: "A number that holds its ground?"
+  uz: "Joyidan qimirlamaydigan son?"
+
+# L1 §5
+bus_minutes:
+  en: "bus, minutes"
+  uz: "avtobus, daqiqa"
+
+# L1 §5
+household_income_median:
+  en: "household income → median"
+  uz: "oilalar daromadi → mediana"
+
+# L1 §5
+house_prices_median:
+  en: "house prices → median"
+  uz: "uy narxlari → mediana"
+
+# L1 §5
+symmetric_totals:
+  en: "symmetric, totals"
+  uz: "simmetrik, jami"
+
+# L1 §5
+skewed_extremes:
+  en: "skewed, extremes"
+  uz: "qiyshiq, chetdagi qiymatlar"
+
+# L1 §6
+how_spread_out_q:
+  en: "How spread out?"
+  uz: "Qanchalik tarqoq?"
+
+# L1 §6
+variance:
+  en: "variance"
+  uz: "dispersiya"
+
+# L1 §6
+x_comes_from_this_same_sample:
+  en: "x̄ comes from this same sample"
+  uz: "x̄ shu tanlanmaning oʻzidan"
+
+# L1 §6
+same_mean_different_variance:
+  en: "same mean, different variance"
+  uz: "bir xil oʻrtacha, har xil dispersiya"
+
+# L1 §6
+we_work_out_the_bus_s:
+  en: "We work out the bus's variance."
+  uz: "Avtobusning dispersiyasini hisoblaymiz."
+
+# L1 §6
+steady:
+  en: "steady"
+  uz: "barqaror"
+
+# L1 §6
+jumpy:
+  en: "jumpy"
+  uz: "beqaror"
+
+# L1 §6
+min_late:
+  en: "min late"
+  uz: "daqiqa kech"
+
+# L1 §6, §8
+minutes:
+  en: ["min", "minutes"]
+  uz: "daqiqa"
+
+# L1 §7
+machine_a_s_2_ml:
+  en: "Machine A:  s = 2 ml"
+  uz: "A mashina:  s = 2 ml"
+
+# L1 §7
+limits_2_5_s_away:
+  en: "limits = 2.5 s away"
+  uz: "chegaralar 2.5 s uzoqda"
+
+# L1 §7
+rejected_of_1000:
+  en: "rejected: {n} / 1000"
+  uz: "yaroqsiz: {n} / 1000"
+
+# L1 §7
+six_sigma_control_the_spread:
+  en: "Six Sigma: control the spread"
+  uz: "«Olti Sigma»: tarqoqlikni nazorat qilamiz"
+
+# L1 §7
+the_mean_never_says_how_often:
+  en: "the mean never says how often it goes wrong"
+  uz: "oʻrtacha qiymat buzilish chastotasini aytmaydi"
+
+# L1 §7
+ai_a_prediction_and_its_uncertainty:
+  en: "AI: a prediction and its uncertainty"
+  uz: "Sunʼiy intellekt: bashorat va noaniqlik"
+
+# L1 §7
+small_spread_we_can_trust_it:
+  en: "small spread: we can trust it"
+  uz: "tarqoqlik kichik: ishonsa boʻladi"
+
+# L1 §7
+large_spread_we_are_careful:
+  en: "large spread: we are careful"
+  uz: "tarqoqlik katta: ehtiyot boʻlamiz"
+
+# L1 §7
+rejected:
+  en: "rejected:"
+  uz: "yaroqsiz:"
+
+# L1 §7
+with_88:
+  en: "with 88:"
+  uz: "88 bilan:"
+
+# L1 §7
+without_88:
+  en: "without 88:"
+  uz: "88 siz:"
+
+# L1 §7
+bus_timetable:
+  en: "bus timetable"
+  uz: "avtobus jadvali"
+
+# L1 §7
+clinic_waiting_time:
+  en: "clinic waiting time"
+  uz: "klinika navbati"
+
+# L1 §7
+oven_temperature:
+  en: "oven temperature"
+  uz: "pech harorati"
+
+# L1 §7
+we_cannot_shrink_machine_b_s:
+  en: "We cannot shrink machine B's spread."
+  uz: "B mashinaning tarqoqligini kamaytirolmaymiz."
+
+# L1 §7
+where_do_we_set_its_mean_q:
+  en: "Where do we set its mean?"
+  uz: "Oʻrtachasini qayerga qoʻyamiz?"
+
+# L1 §7
+label_500_ml:
+  en: "label: 500 ml"
+  uz: "yorliq: 500 ml"
+
+# L1 §7
+"1000_bottles":
+  en: "1000 bottles"
+  uz: "1000 ta shisha"
+
+# L1 §7
+a_and_b_mean_500_ml:
+  en: "A and B: mean 500 ml"
+  uz: "A va B: oʻrtacha 500 ml"
+
+# L1 §7
+machine_b_s_4_ml:
+  en: "Machine B:  s = 4 ml"
+  uz: "B mashina:  s = 4 ml"
+
+# L1 §7
+limits_1_25_s_away:
+  en: "limits = 1.25 s away"
+  uz: "chegaralar 1.25 s uzoqda"
+
+# L1 §7
+mean_500_ml_unchanged:
+  en: "mean: 500 ml, unchanged"
+  uz: "oʻrtacha: 500 ml, oʻzgarmadi"
+
+# L1 §7
+mean_500_ml:
+  en: "mean 500 ml"
+  uz: "oʻrtacha 500 ml"
+
+# L1 §7
+spread_2:
+  en: "spread ×2"
+  uz: "tarqoqlik ×2"
+
+# L1 §7
+waste_n:
+  en: "waste ×{bottle_ratio}"
+  uz: "chiqindi ×{bottle_ratio}"
+
+# L1 §7
+mean_n_ml:
+  en: "mean {n} ml"
+  uz: "oʻrtacha {n} ml"
+
+# L1 §8
+minimum:
+  en: "min"
+  uz: "eng kichigi"
+
+# L1 §8
+max:
+  en: "max"
+  uz: "eng kattasi"
+
+# L1 §8
+outlier:
+  en: "outlier"
+  uz: "chetga chiqqan"
+
+# L1 §8
+waiting_time_at_three_branches:
+  en: "Waiting time at three branches"
+  uz: "Uchta filialda kutish vaqti"
+
+# L1 §8
+ai_catch_strange_values_before_training:
+  en: "AI: catch strange values before training"
+  uz: "Sunʼiy intellekt: gʻalati qiymatlarni oʻqitishdan oldin topamiz"
+
+# L1 §8
+lower_fence_q1_1_5_iqr:
+  en: "Lower fence: Q1 − 1.5 × IQR."
+  uz: "Pastki chegara: Q1 − 1.5 × IQR ni hisoblaymiz."
+
+# L1 §8
+is_any_salary_below_it_q:
+  en: "Is any salary below it?"
+  uz: "Undan pastda maosh bormi?"
+
+# L1 §8
+lower_half:
+  en: "lower half"
+  uz: "pastki yarmi"
+
+# L1 §8
+upper_half:
+  en: "upper half"
+  uz: "yuqori yarmi"
+
+# L1 §8
+box_plot:
+  en: "box plot"
+  uz: "quti diagrammasi"
+
+# L1 §8
+iqr_n_min:
+  en: "IQR ≈ {iqrx:.1f} min"
+  uz: "IQR ≈ {iqrx:.1f} daqiqa"
+
+# L1 §8
+"31_15_25_no_outlier_at":
+  en: "31 > 15.25: no outlier at the bottom"
+  uz: "31 > 15.25: pastda chetga chiqqan qiymat yoʻq"
+
+# L1 §8
+thousand:
+  en: "thousand $"
+  uz: "ming $"
+
+# L1 §8
+branch_n:
+  en: "branch {name}"
+  uz: "{name} filial"
+
+# L1 §9
+a_straight_line:
+  en: "a straight line"
+  uz: "chiziqli"
+
+# L1 §9
+a_curve:
+  en: "a curve"
+  uz: "egri chiziq"
+
+# L1 §9
+one_outlier:
+  en: "one outlier"
+  uz: "bitta chetga chiqqan nuqta"
+
+# L1 §9
+no_relationship:
+  en: "no relationship"
+  uz: "bogʻlanish yoʻq"
+
+# L1 §9
+in_all_four:
+  en: "— in all four"
+  uz: "— toʻrttasida ham"
+
+# L1 §9
+accuracy_one_number:
+  en: "accuracy = one number"
+  uz: "aniqlik = bitta son"
+
+# L1 §9
+part_0_ok:
+  en: "Part 0  ✓"
+  uz: "0-qism  ✓"
+
+# L1 §9
+next_probability:
+  en: "next: probability"
+  uz: "keyingi: ehtimollik"
+
+# L1 §9
+in_which_panel_is_a_straight_q:
+  en: "In which panel is a straight line right?"
+  uz: "Qaysi birida toʻgʻri chiziq toʻgʻri keladi?"
+
+# L1 §10
+rain_tomorrow_q:
+  en: "Rain tomorrow?"
+  uz: "Ertaga yomgʻir?"
+
+# L1 §10
+tomorrow:
+  en: "tomorrow"
+  uz: "ertangi kun"
+
+# L1 §10
+cat:
+  en: "cat"
+  uz: "mushuk"
+
+# L1 §10
+dog:
+  en: "dog"
+  uz: "it"
+
+# L1 §10
+bird:
+  en: "bird"
+  uz: "qush"
+
+# L1 §10; L2 §8
+rain:
+  en: "rain"
+  uz: "yomgʻir"
+
+# L1 §10
+no_rain:
+  en: "no rain"
+  uz: "yomgʻir yoʻq"
+
+# L1 §10
+or:
+  en: "or"
+  uz: "yoki"
+
+# L1 §10
+and:
+  en: "and"
+  uz: "va"
+
+# L1 §10
+not:
+  en: "not"
+  uz: "emas"
+
+# L1 §10
+write_the_event_more_than_four:
+  en: "Write the event “more than four”; find its probability."
+  uz: "«Toʻrtdan katta son» hodisasini yozamiz, ehtimolini topamiz."
+
+# L1 §10
+impossible:
+  en: "impossible"
+  uz: "imkonsiz"
+
+# L1 §10; L2 §8
+certain:
+  en: "certain"
+  uz: "aniq"
+
+# L1 §10
+sample_space:
+  en: "sample space"
+  uz: "namunalar fazosi"
+
+# L1 §10
+coin:
+  en: "coin"
+  uz: "tanga"
+
+# L1 §10
+even_number_q:
+  en: "Even number?"
+  uz: "Juft son?"
+
+# L1 §10
+event:
+  en: "event"
+  uz: "hodisa"
+
+# L1 §10
+why_sets_q:
+  en: "Why sets?"
+  uz: "Nima uchun toʻplamlar?"
+
+# L1 §10
+classifier_output:
+  en: "classifier output"
+  uz: "klassifikator natijasi"
+
+# L1 §10, §14; L2 §6, §7, §9
+illustration:
+  en: "illustration"
+  uz: ["tasvir uchun", "misol", "illustratsiya"]
+
+# L1 §10
+"3_rules":
+  en: "3 rules"
+  uz: "3 ta qoida"
+
+# L1 §10
+heads:
+  en: "heads"
+  uz: "gerb"
+
+# L1 §10
+tails:
+  en: "tails"
+  uz: "raqam"
+
+# L1 §11
+complement:
+  en: "complement"
+  uz: "toʻldiruvchi"
+
+# L1 §11
+addition:
+  en: "addition"
+  uz: "qoʻshish"
+
+# L1 §11
+multiplication:
+  en: "multiplication"
+  uz: "koʻpaytirish"
+
+# L1 §11
+"3_multiplication":
+  en: "3. multiplication"
+  uz: "3. koʻpaytirish"
+
+# L1 §11
+conditional_probability_lecture_2:
+  en: "conditional probability → Lecture 2"
+  uz: "shartli ehtimollik → 2-maʼruza"
+
+# L1 §11
+the:
+  en: "The"
+  uz: "Bugun"
+
+# L1 §11
+weather:
+  en: "weather"
+  uz: "havo"
+
+# L1 §11
+is:
+  en: "is"
+  uz: "juda"
+
+# L1 §11
+hot:
+  en: "hot"
+  uz: "issiq"
+
+# L1 §11
+p_neither_a_heart_nor_a_q:
+  en: "P(neither a heart nor a king) = ?"
+  uz: "Yurak ham, qirol ham boʻlmaslik ehtimoli?"
+
+# L1 §11
+"2_addition":
+  en: "2. addition"
+  uz: "2. qoʻshish"
+
+# L1 §11
+sentence:
+  en: "sentence"
+  uz: "gap"
+
+# L1 §11
+language_model:
+  en: "language model"
+  uz: "til modeli"
+
+# L1 §11
+birthdays:
+  en: "birthdays"
+  uz: "tugʻilgan kun"
+
+# L1 §11
+at_least_one:
+  en: "at least one"
+  uz: "hech boʻlmaganda bitta"
+
+# L1 §11
+none:
+  en: "none"
+  uz: "hech biri"
+
+# L1 §12
+people_in_the_room_n:
+  en: "people in the room (n)"
+  uz: "xonadagi odamlar soni (n)"
+
+# L1 §12
+p_shared_birthday:
+  en: "P(shared birthday)"
+  uz: "P(bir xil tugʻilgan kun)"
+
+# L1 §12
+how_many_people_before_p_shared_q:
+  en: "How many people before P(shared birthday) > 1/2 ?"
+  uz: "Nechta odamda P(bir xil tugʻilgan kun) > 1/2 ?"
+
+# L1 §12
+p_a_shared_pair:
+  en: "P(a shared pair)"
+  uz: "P(juftlik bor)"
+
+# L1 §12
+p_all_different:
+  en: "P(all different)"
+  uz: "P(hammasi har xil)"
+
+# L1 §12
+person:
+  en: "person"
+  uz: "odam"
+
+# L1 §12
+me_vs_the_others_n:
+  en: "me vs the others: {n_me}"
+  uz: "men va boshqalar: {n_me}"
+
+# L1 §12
+a_pair:
+  en: "a pair"
+  uz: "juftlik"
+
+# L1 §12
+a_triple:
+  en: "a triple"
+  uz: "uchlik"
+
+# L1 §12
+two_pairs:
+  en: "two pairs"
+  uz: "ikki juftlik"
+
+# L1 §12
+every_pair:
+  en: "every pair:"
+  uz: "har bir juftlik:"
+
+# L1 §12
+hash_collisions:
+  en: "hash collisions"
+  uz: "xesh toʻqnashuvlari"
+
+# L1 §12
+duplicate_records:
+  en: "duplicate records"
+  uz: "takroriy yozuvlar"
+
+# L1 §12
+a_class_of_30_what_is_q:
+  en: "A class of 30: what is the chance?"
+  uz: "Oʻttiz kishilik guruh: ehtimol qancha?"
+
+# L1 §12
+we_read_it_off_the_curve:
+  en: "We read it off the curve."
+  uz: "Grafikdan topamiz."
+
+# L1 §12
+"365_days":
+  en: "365 days"
+  uz: "365 kun"
+
+# L1 §12
+all_different:
+  en: "all different"
+  uz: "hammasi har xil"
+
+# L1 §12
+person_1:
+  en: "person 1"
+  uz: "1-odam"
+
+# L1 §12
+person_2:
+  en: "person 2"
+  uz: "2-odam"
+
+# L1 §12
+unrelated_q:
+  en: "unrelated?"
+  uz: "bogʻliq emas?"
+
+# L1 §12
+most_people_guess:
+  en: "most people guess"
+  uz: "koʻpchilikning taxmini"
+
+# L1 §13
+mutually_exclusive:
+  en: "mutually exclusive"
+  uz: "istisno qiluvchi"
+
+# L1 §13; L2 §5
+independent:
+  en: "independent"
+  uz: "erkli"
+
+# L1 §13
+knowing_a_tells_us_nothing_about:
+  en: "knowing A tells us nothing about B"
+  uz: "A ni bilish B haqida hech narsa aytmaydi"
+
+# L1 §13
+independent_ok:
+  en: "independent ✓"
+  uz: "erkli ✓"
+
+# L1 §13
+not_exclusive_6_is_in_both:
+  en: "not exclusive: 6 is in both"
+  uz: "istisno emas: 6 ikkalasida"
+
+# L1 §13
+mutually_exclusive_ok:
+  en: "mutually exclusive ✓"
+  uz: "istisno qiluvchi ✓"
+
+# L1 §13
+independent_q:
+  en: "independent?"
+  uz: "erklimi?"
+
+# L1 §13; L2 §5
+dependent:
+  en: "dependent"
+  uz: "bogʻliq"
+
+# L1 §13
+even_certainly_not_odd:
+  en: "even → certainly not odd"
+  uz: "juft → aniq toq emas"
+
+# L1 §13
+free:
+  en: "free"
+  uz: "bepul"
+
+# L1 §13
+prize:
+  en: "prize"
+  uz: "yutuq"
+
+# L1 §13
+click:
+  en: "click"
+  uz: "bosing"
+
+# L1 §13
+equally_likely_q:
+  en: "equally likely?"
+  uz: "teng ehtimolli?"
+
+# L1 §13
+a_even:
+  en: "A: even"
+  uz: "A: juft"
+
+# L1 §13
+b_more_than_4:
+  en: "B: more than 4"
+  uz: "B: 4 dan katta"
+
+# L1 §13
+c_odd:
+  en: "C: odd"
+  uz: "C: toq"
+
+# L1 §13
+exclusive_p_0:
+  en: "exclusive  +  P > 0"
+  uz: "istisno qiluvchi  +  P > 0"
+
+# L1 §13
+always_dependent:
+  en: "always dependent"
+  uz: "doim bogʻliq"
+
+# L1 §13
+a_even_c_less_than_3:
+  en: "A: \"even\",  C: \"less than 3\""
+  uz: "A: «juft son»,  C: «uchdan kichik son»"
+
+# L1 §13
+are_a_and_c_independent_we:
+  en: "Are A and C independent? We check."
+  uz: "A va C erklimi? Tekshiramiz."
+
+# L1 §13
+c_less_than_3:
+  en: "C: less than 3"
+  uz: "C: 3 dan kichik"
+
+# L1 §13
+spam_q:
+  en: "spam?"
+  uz: "spammi?"
+
+# L1 §13
+each_word_independent_of_the_others:
+  en: "each word independent of the others"
+  uz: "har bir soʻz boshqalaridan erkli"
+
+# L1 §13
+each:
+  en: "each"
+  uz: "har biri"
+
+# L1 §13
+"no":
+  en: "no!"
+  uz: "yoʻq!"
+
+# L1 §14
+all_outcomes_equally_likely:
+  en: "all outcomes equally likely"
+  uz: "hamma natijalar teng ehtimolli"
+
+# L1 §14
+no_equally_likely_outcomes:
+  en: "no equally likely outcomes"
+  uz: "teng ehtimolli natijalar yoʻq"
+
+# L1 §14
+past_days_like_today:
+  en: "past days like today"
+  uz: "bugungidek oʻtgan kunlar"
+
+# L1 §14
+empirical_probability:
+  en: "empirical probability"
+  uz: "empirik ehtimollik"
+
+# L1 §14
+class_shares_in_a_training_set:
+  en: "class shares in a training set"
+  uz: "oʻqitish toʻplamidagi sinflar ulushi"
+
+# L1 §14
+word_frequencies_in_a_corpus:
+  en: "word frequencies in a corpus"
+  uz: "matnlardagi soʻzlar chastotasi"
+
+# L1 §14
+click_through_rates_in_logs:
+  en: "click-through rates in logs"
+  uz: "reklamani bosishlar ulushi"
+
+# L1 §14
+ai_counts_then_divides:
+  en: "AI counts, then divides"
+  uz: "Sunʼiy intellekt: sanaydi va boʻladi"
+
+# L1 §14
+real_email_population:
+  en: "real email (population)"
+  uz: "haqiqiy pochta (bosh toʻplam)"
+
+# L1 §14
+training_set_90_percent_spam:
+  en: "training set: 90% spam"
+  uz: "oʻqitish toʻplami: 90% spam"
+
+# L1 §14
+sample_population:
+  en: "sample ≠ population"
+  uz: "tanlanma ≠ bosh toʻplam"
+
+# L1 §14
+lecture_1_summary:
+  en: "Lecture 1 — summary"
+  uz: "1-maʼruza — xulosa"
+
+# L1 §14
+times_the_event_was_observed:
+  en: "times the event was observed"
+  uz: "hodisa kuzatilgan soni"
+
+# L1 §14
+total_observations:
+  en: "total observations"
+  uz: "jami kuzatuvlar soni"
+
+# L1 §14
+training_data_90_percent_of_emails:
+  en: "Training data: 90% of emails are spam."
+  uz: "Oʻqitish berilganlari: xatlarning 90% i spam."
+
+# L1 §14
+is_that_spam_probability_right_for_q:
+  en: "Is that spam probability right for real email?"
+  uz: "Shu ehtimol haqiqiy pochtaga toʻgʻri keladimi?"
+
+# L1 §14
+the_data_type_decides_the_calculation:
+  en: "The data type decides the calculation"
+  uz: "Berilganlar turi hisobni belgilaydi"
+
+# L1 §14
+mean_keeps_the_total_median_survives:
+  en: "Mean keeps the total; median survives outliers"
+  uz: "Oʻrtacha — umumiy summa; mediana — buzilmaydi"
+
+# L1 §14
+variance_and_iqr_measure_risk:
+  en: "Variance and IQR measure risk"
+  uz: "Dispersiya va IQR — xavf oʻlchovi"
+
+# L1 §14
+always_plot_the_data:
+  en: "Always plot the data"
+  uz: "Berilganlarni doim chizamiz"
+
+# L1 §14
+probability_rules_complex_from_simple:
+  en: "Probability rules: complex from simple"
+  uz: "Ehtimollik qoidalari: murakkab — oddiydan"
+
+# L1 §14
+classical:
+  en: "classical"
+  uz: "klassik"
+
+# L1 §14
+"9_of_10_spam":
+  en: "9 of 10: spam"
+  uz: "10 tadan 9 tasi: spam"
+
+# L1 §14
+lecture_2_conditional_probability_and_bayes:
+  en: "Lecture 2 · Conditional probability and Bayes' theorem"
+  uz: "2-maʼruza · Shartli ehtimollik va Bayes teoremasi"
+
+# L1 §14
+tomorrow_rain:
+  en: "Tomorrow: rain"
+  uz: "Ertaga: yomgʻir"
+
+# L1 §14; L2 §10
+the_end:
+  en: "the end"
+  uz: "tugadi"
+
+# ══ Lecture 2 ═════════════════════════════════════════════════════════════
+
+# L2 (all)
+n_students:
+  en: "{n} students"
+  uz: "{n} talaba"
+
+# L2 (all)
+part_0_conditional_probability_and_independence:
+  en: "Part 0 · Conditional probability and independence"
+  uz: "0-qism · Shartli ehtimollik va erklilik"
+
+# L2 (all)
+part_1_bayes_theorem:
+  en: "Part 1 · Bayes' theorem"
+  uz: "1-qism · Bayes teoremasi"
+
+# L2 (all), §4
+bike:
+  en: "bike"
+  uz: ["velosipedli", "velosiped"]
+
+# L2 (all)
+no_bike:
+  en: "no bike"
+  uz: "velosipedsiz"
+
+# L2 (all)
+no_bus:
+  en: "no bus"
+  uz: "avtobussiz"
+
+# L2 opening
+conditional_probability_independence_and_bayes_theorem:
+  en: "Conditional probability, independence and Bayes' theorem"
+  uz: "Shartli ehtimollik, erklilik va Bayes teoremasi"
+
+# L2 §1
+it_s_even:
+  en: "“It's even.”"
+  uz: "«Juft son chiqdi»"
+
+# L2 §1
+the_die_did_not_change:
+  en: "the die did not change"
+  uz: "kubik oʻzgarmadi"
+
+# L2 §1
+what_we_know_changed:
+  en: "what we know changed"
+  uz: "bilganimiz oʻzgardi"
+
+# L2 §1
+conditional_probability:
+  en: "Conditional probability"
+  uz: "Shartli ehtimollik"
+
+# L2 §1
+given:
+  en: "“given”"
+  uz: "«… boʻlgandagi»"
+
+# L2 §1
+new_sample_space_a:
+  en: "new sample space = A"
+  uz: "yangi fazo = A"
+
+# L2 §1
+p_spam_free_prize:
+  en: "P(spam | “free prize”)"
+  uz: "P(spam | «bepul sovrin»)"
+
+# L2 §1
+p_bus_no_bike:
+  en: "P(bus | no bike)"
+  uz: "P(avtobusda | velosipedsiz)"
+
+# L2 §1
+how_many_of_them_take_the_q:
+  en: "How many of them take the bus?"
+  uz: "Ulardan nechtasi avtobusda qatnaydi?"
+
+# L2 §1
+p_bus:
+  en: "P(bus)"
+  uz: "P(avtobusda)"
+
+# L2 §1
+bike_n:
+  en: "bike: {n}"
+  uz: "velosipedli: {n}"
+
+# L2 §1
+p_bus_bike:
+  en: "P(bus | bike)"
+  uz: "P(avtobusda | velosipedli)"
+
+# L2 §1
+classifier:
+  en: "classifier"
+  uz: "klassifikator"
+
+# L2 §1
+look_only_at_the_n_students:
+  en: "Look only at the {n} students with no bike"
+  uz: "Faqat {n} ta velosipedsiz talabaga qaraymiz"
+
+# L2 §1
+top:
+  en: "top"
+  uz: "surat"
+
+# L2 §1
+bottom:
+  en: "bottom"
+  uz: "maxraj"
+
+# L2 §1
+free_prize:
+  en: "“free prize!”"
+  uz: "«bepul sovrin!»"
+
+# L2 §2
+multiply_along_the_path:
+  en: "multiply along the path"
+  uz: "yoʻl boʻylab koʻpaytiramiz"
+
+# L2 §2
+lm_w1:
+  en: "The"
+  uz: "Bugun"
+
+# L2 §2
+lm_w2a:
+  en: "cat"
+  uz: "havo"
+
+# L2 §2
+lm_w2b:
+  en: "dog"
+  uz: "men"
+
+# L2 §2
+bus_first_then_bike:
+  en: "Bus first, then bike"
+  uz: "Avval avtobus, keyin velosiped"
+
+# L2 §2
+what_goes_on_the_first_two_q:
+  en: "What goes on the first two branches?"
+  uz: "Birinchi ikki shoxda qanday sonlar turadi?"
+
+# L2 §2
+stage_1_bike_q:
+  en: "stage 1: bike?"
+  uz: "1-bosqich: velosiped"
+
+# L2 §2
+stage_2_bus_q:
+  en: "stage 2: bus?"
+  uz: "2-bosqich: avtobus"
+
+# L2 §2
+lm_w3a:
+  en: "sat"
+  uz: "issiq"
+
+# L2 §2
+lm_w3b:
+  en: "ran"
+  uz: "sovuq"
+
+# L2 §2
+lm_w3c:
+  en: "barked"
+  uz: "keldim"
+
+# L2 §2
+lm_w3d:
+  en: "slept"
+  uz: "ketdim"
+
+# L2 §2
+stage_2_depends_on_stage_1:
+  en: "stage 2 depends on stage 1"
+  uz: "2-bosqich 1-bosqichga bogʻliq"
+
+# L2 §3
+the_2nd_draw_depends_on_the:
+  en: "the 2nd draw depends on the 1st"
+  uz: "2-olish 1-olishga bogʻliq"
+
+# L2 §3
+both_white_q:
+  en: "Both white?"
+  uz: "Ikkalasi ham oq?"
+
+# L2 §3
+a_matching_pair_both_black_or_q:
+  en: "A matching pair: both black or both white?"
+  uz: "Bir xil rangli juft: ikkalasi qora yoki ikkalasi oq?"
+
+# L2 §3
+p_both_black_q:
+  en: "P(both black) = ?"
+  uz: "P(ikkalasi qora) = ?"
+
+# L2 §3
+dataset:
+  en: "dataset"
+  uz: "berilganlar toʻplami"
+
+# L2 §3
+training:
+  en: "training"
+  uz: "oʻqitish"
+
+# L2 §3, §9
+test:
+  en: "test"
+  uz: "test"
+
+# L2 §3
+each_example_goes_to_one_part:
+  en: "each example goes to one part only"
+  uz: "har bir misol faqat bitta qismga tushadi"
+
+# L2 §3
+both_white:
+  en: "both white"
+  uz: "ikkalasi oq"
+
+# L2 §3
+pair:
+  en: "pair"
+  uz: "juft"
+
+# L2 §3
+less_than_half:
+  en: "less than half!"
+  uz: "yarimdan ham kam!"
+
+# L2 §3
+"1st_black":
+  en: "1st black"
+  uz: "1-si qora"
+
+# L2 §3
+"2nd_black_1st_black":
+  en: "2nd black | 1st black"
+  uz: "2-si qora | 1-si qora"
+
+# L2 §3
+put_back:
+  en: "put back"
+  uz: "qaytarib"
+
+# L2 §3
+without_replacement:
+  en: "without replacement"
+  uz: "qaytarmasdan"
+
+# L2 §3
+with_replacement:
+  en: "with replacement"
+  uz: "qaytarib"
+
+# L2 §4
+contingency_table:
+  en: "Contingency table"
+  uz: "Kontingentlik jadvali"
+
+# L2 §4
+confusion_matrix:
+  en: "Confusion matrix"
+  uz: "Xatolar matritsasi"
+
+# L2 §4
+model_spam:
+  en: "model: spam"
+  uz: "model: spam"
+
+# L2 §4
+model_not_spam:
+  en: "model: not spam"
+  uz: "model: spam emas"
+
+# L2 §4
+true_spam:
+  en: "true: spam"
+  uz: "haqiqiy: spam"
+
+# L2 §4
+true_not_spam:
+  en: "true: not spam"
+  uz: "haqiqiy: spam emas"
+
+# L2 §4
+a_student_takes_the_bus:
+  en: "A student takes the bus."
+  uz: "Talaba avtobusda qatnaydi."
+
+# L2 §4
+what_is_the_probability_they_own_q:
+  en: "What is the probability they own a bike?"
+  uz: "Velosipedi boʻlish ehtimoli qancha?"
+
+# L2 §4
+joint:
+  en: "joint"
+  uz: "birgalikdagi"
+
+# L2 §4
+marginal:
+  en: "marginal"
+  uz: "marginal"
+
+# L2 §4
+conditional:
+  en: "conditional"
+  uz: "shartli"
+
+# L2 §5
+all_students:
+  en: "all students"
+  uz: "hamma talabalar"
+
+# L2 §5
+takes_the_bus:
+  en: "Takes the bus"
+  uz: "Avtobusda qatnaydi"
+
+# L2 §5
+not_independent:
+  en: "not independent"
+  uz: "erkli emas"
+
+# L2 §5
+all:
+  en: "all"
+  uz: "hamma"
+
+# L2 §5
+glasses:
+  en: "glasses"
+  uz: "koʻzoynakli"
+
+# L2 §5
+row_total_column_total:
+  en: "row total × column total"
+  uz: "qator jami × ustun jami"
+
+# L2 §5
+grand_total:
+  en: "grand total"
+  uz: "umumiy son"
+
+# L2 §5
+expected_cell:
+  en: "expected cell ="
+  uz: "kutilgan katak ="
+
+# L2 §5
+if_independent:
+  en: "If independent"
+  uz: "Erkli boʻlsa"
+
+# L2 §5
+suppose_bike_and_bus_were_independent:
+  en: "Suppose bike and bus were independent."
+  uz: "Velosiped va avtobus erkli boʻlsin."
+
+# L2 §5
+how_many_students_in_no_bike_q:
+  en: "How many students in “no bike, bus”?"
+  uz: "«Velosipedsiz, avtobusda» katagida nechta talaba?"
+
+# L2 §5
+n_wear_glasses:
+  en: "{n} wear glasses"
+  uz: "{n} talaba koʻzoynak taqadi"
+
+# L2 §5
+share_of_label_y:
+  en: "share of label y"
+  uz: "y belgilanganlar ulushi"
+
+# L2 §5
+model:
+  en: "model"
+  uz: "model"
+
+# L2 §5
+learns_nothing:
+  en: "learns nothing"
+  uz: "hech narsa oʻrganmaydi"
+
+# L2 §5, §6
+group_1:
+  en: "group 1"
+  uz: "1-guruh"
+
+# L2 §5, §6
+group_2:
+  en: "group 2"
+  uz: "2-guruh"
+
+# L2 §5
+pooled:
+  en: "pooled"
+  uz: "birlashtirilgan"
+
+# L2 §5
+table:
+  en: "table:"
+  uz: "jadvalda:"
+
+# L2 §5
+observed:
+  en: "observed:"
+  uz: "kuzatilgan:"
+
+# L2 §5
+feature_0:
+  en: "feature = 0"
+  uz: "xususiyat = 0"
+
+# L2 §5
+feature_1:
+  en: "feature = 1"
+  uz: "xususiyat = 1"
+
+# L2 §6
+men:
+  en: "men"
+  uz: "erkaklar"
+
+# L2 §6
+women:
+  en: "women"
+  uz: "ayollar"
+
+# L2 §6
+berkeley_autumn_1973:
+  en: "Berkeley, autumn 1973"
+  uz: "Berkli, 1973-yil kuzi"
+
+# L2 §6
+all_six:
+  en: "all six"
+  uz: "hammasi"
+
+# L2 §6
+where_they_applied:
+  en: "Where they applied"
+  uz: "Qayerga hujjat topshirishgan"
+
+# L2 §6
+admission_rate:
+  en: "admission rate"
+  uz: "qabul ulushi"
+
+# L2 §6
+simpson_s_paradox:
+  en: "Simpson's paradox"
+  uz: "Simpson paradoksi"
+
+# L2 §6
+overall:
+  en: "overall"
+  uz: "umuman"
+
+# L2 §6
+within_one_department:
+  en: "within one department"
+  uz: "bitta fakultet ichida"
+
+# L2 §6
+how_were_the_data_selected_q:
+  en: "how were the data selected?"
+  uz: "berilganlar qanday tanlangan?"
+
+# L2 §6
+hospital_b_has_the_worse_overall:
+  en: "Hospital B has the worse overall recovery rate."
+  uz: "B kasalxonada umuman olganda kamroq bemor tuzaladi."
+
+# L2 §6
+can_it_be_better_at_every_q:
+  en: "Can it be better at every single operation?"
+  uz: "U har bir operatsiyada yaxshiroq boʻlishi mumkinmi?"
+
+# L2 §6
+graduate_admissions_six_largest_departments:
+  en: "graduate admissions · six largest departments"
+  uz: "magistraturaga qabul · eng katta oltita fakultet"
+
+# L2 §6
+pooled_model:
+  en: "pooled model"
+  uz: "birlashtirilgan model"
+
+# L2 §6
+hardest_cases:
+  en: "hardest cases"
+  uz: "eng ogʻir bemorlar"
+
+# L2 §6
+"yes":
+  en: "Yes"
+  uz: "Ha"
+
+# L2 §6
+hard:
+  en: "hard"
+  uz: "qiyin"
+
+# L2 §6
+easy:
+  en: "easy"
+  uz: "oson"
+
+# L2 §7
+the_law_of_total_probability:
+  en: "The law of total probability"
+  uz: "Toʻla ehtimollik formulasi"
+
+# L2 §7
+model_accuracy:
+  en: "Model accuracy"
+  uz: "Model aniqligi"
+
+# L2 §7
+large_group:
+  en: "large group"
+  uz: "katta guruh"
+
+# L2 §7
+small_group:
+  en: "small group"
+  uz: "kichik guruh"
+
+# L2 §7
+p_no_bus_with_the_same_q:
+  en: "P(no bus) with the same formula = ?"
+  uz: "Shu formula bilan: avtobusda qatnamaslik ehtimoli = ?"
+
+# L2 §7
+overall_accuracy:
+  en: "overall accuracy"
+  uz: "umumiy aniqlik"
+
+# L2 §8
+prior:
+  en: "prior"
+  uz: ["aprior ehtimollik", "aprior"]
+
+# L2 §8
+p_no_bike_bus_q:
+  en: "P(no bike | bus) = ?"
+  uz: "Avtobusda qatnaydigan talabaning velosipedi yoʻq boʻlish ehtimoli = ?"
+
+# L2 §8
+use_bayes_theorem:
+  en: "Use Bayes' theorem"
+  uz: "Bayes teoremasi bilan hisoblaymiz"
+
+# L2 §8
+bayes_theorem:
+  en: "Bayes' theorem"
+  uz: "Bayes teoremasi"
+
+# L2 §8
+law_of_total_probability:
+  en: "law of total probability"
+  uz: "toʻla ehtimollik formulasi"
+
+# L2 §8
+likelihood:
+  en: "likelihood"
+  uz: "haqiqatga oʻxshashlik"
+
+# L2 §8
+posterior:
+  en: "posterior"
+  uz: ["aposterior ehtimollik", "aposterior"]
+
+# L2 §8
+wet_pavement:
+  en: "wet pavement"
+  uz: "hoʻl yoʻlak"
+
+# L2 §8
+evidence:
+  en: "evidence"
+  uz: "dalil"
+
+# L2 §8
+street_cleaner:
+  en: "street cleaner"
+  uz: "koʻcha yuvadigan mashina"
+
+# L2 §8
+p_rain:
+  en: "P(rain)"
+  uz: "P(yomgʻir)"
+
+# L2 §8
+p_spam_words:
+  en: "P(spam | words)"
+  uz: "P(spam | soʻzlar)"
+
+# L2 §8
+belief:
+  en: "belief"
+  uz: "ishonch"
+
+# L2 §8
+evidence_data:
+  en: "evidence: data"
+  uz: "dalil: berilganlar"
+
+# L2 §8
+updated_belief:
+  en: "updated belief"
+  uz: "yangilangan ishonch"
+
+# L2 §8
+easy_to_measure:
+  en: "easy to measure"
+  uz: "oʻlchash oson"
+
+# L2 §8
+what_we_need:
+  en: "what we need"
+  uz: "bizga kerak"
+
+# L2 §9, §10
+positive:
+  en: "positive"
+  uz: "musbat"
+
+# L2 §9, §10
+ill:
+  en: "ill"
+  uz: "kasal"
+
+# L2 §9
+a_property_of_the_test:
+  en: "a property of the test"
+  uz: "testning xususiyati"
+
+# L2 §9
+what_the_patient_wants:
+  en: "what the patient wants"
+  uz: "bemorga kerak"
+
+# L2 §9
+the_prosecutor_s_fallacy:
+  en: "The prosecutor's fallacy"
+  uz: "Prokuror xatosi"
+
+# L2 §9
+only_1_innocent_person_in_a:
+  en: "“Only 1 innocent person in a million would match”"
+  uz: "«Million begunoh odamdan faqat bittasi mos keladi»"
+
+# L2 §9
+match:
+  en: "match"
+  uz: "moslik"
+
+# L2 §9
+innocent:
+  en: "innocent"
+  uz: "begunoh"
+
+# L2 §9
+n_false_alarms_per_real_case:
+  en: "≈ {false_per_real} false alarms per real case"
+  uz: "har bir haqiqiy holatga ≈ {false_per_real} yolgʻon signal"
+
+# L2 §9
+fraud_detector:
+  en: "Fraud detector"
+  uz: "Firibgarlikni aniqlovchi model"
+
+# L2 §9
+"1_person_in_n_has_the":
+  en: "1 person in {n} has the disease."
+  uz: "{n} kishidan biri kasal."
+
+# L2 §9
+same_test_never_misses_n_false:
+  en: "Same test: never misses, {fp_rate} false alarms."
+  uz: "Test oʻsha: kasalni oʻtkazib yubormaydi, {fp_rate} yolgʻon signal."
+
+# L2 §9
+p_ill_positive_q:
+  en: "P(ill | positive) = ?"
+  uz: "P(kasal | musbat) = ?"
+
+# L2 §9
+"1_in_100":
+  en: "1 in 100"
+  uz: "100 kishidan 1"
+
+# L2 §9
+"1_in_10":
+  en: "1 in 10"
+  uz: "10 kishidan 1"
+
+# L2 §9
+known_to_be_ill:
+  en: "known to be ill"
+  uz: "kasalligi aniq"
+
+# L2 §9
+how_common_the_illness_is:
+  en: "+ how common the illness is"
+  uz: "+ kasallik qanchalik keng tarqalgani"
+
+# L2 §9
+"1_in_n_is_ill":
+  en: "1 in {n} is ill"
+  uz: "{n} kishidan biri kasal"
+
+# L2 §9
+n_test_positive:
+  en: "{positives} test positive"
+  uz: "{positives} kishi musbat"
+
+# L2 §9
+n_of_n:
+  en: "{fp_rate} of {healthy}"
+  uz: "{healthy} ning {fp_rate} i"
+
+# L2 §9
+"100_percent_of_n":
+  en: "100% of {ill}"
+  uz: "{ill} ning 100% i"
+
+# L2 §9
+healthy_ill_n_1:
+  en: "healthy : ill = {healthy_per_ill:g} : 1"
+  uz: "sogʻlom : kasal = {healthy_per_ill:g} : 1"
+
+# L2 §9
+n_alarms_n_real_fraud:
+  en: "{n_flagged} alarms, {n_fraud} real fraud"
+  uz: "{n_flagged} ta signal, {n_fraud} tasi haqiqiy"
+
+# L2 §9
+the_same_test:
+  en: "the same test"
+  uz: "test oʻsha-oʻsha"
+
+# L2 §9
+false_alarms:
+  en: "false alarms"
+  uz: "yolgʻon signal"
+
+# L2 §9
+n_people_tested:
+  en: "{tested} people tested"
+  uz: "{tested} kishi tekshirildi"
+
+# L2 §9
+n_ill:
+  en: "{ill} ill"
+  uz: "{ill} kasal"
+
+# L2 §9
+n_healthy:
+  en: "{healthy} healthy"
+  uz: "{healthy} sogʻlom"
+
+# L2 §9
+healthy:
+  en: "healthy"
+  uz: "sogʻlom"
+
+# L2 §10
+base_rate_the_prior:
+  en: "base rate = the prior"
+  uz: "asosiy ulush = aprior ehtimollik"
+
+# L2 §10
+how_common_the_disease_is_percent:
+  en: "how common the disease is (%)"
+  uz: "asosiy ulush (%)"
+
+# L2 §10
+p_ill_positive_percent:
+  en: "P(ill | positive), %"
+  uz: "P(kasal | musbat), %"
+
+# L2 §10
+almost_everyone_is_well:
+  en: "almost everyone is well"
+  uz: "deyarli hamma sogʻlom"
+
+# L2 §10
+positive_a_second_different_test:
+  en: "positive → a second, different test"
+  uz: "musbat → boshqa, ikkinchi test"
+
+# L2 §10
+model_always_healthy:
+  en: "model: always “healthy”"
+  uz: "model: doim «sogʻlom»"
+
+# L2 §10
+where_bayes_theorem_comes_back:
+  en: "Where Bayes' theorem comes back"
+  uz: "Bayes teoremasi qayerda qaytadi"
+
+# L2 §10
+lecture_2_summary:
+  en: "Lecture 2 — summary"
+  uz: "2-maʼruza — xulosa"
+
+# L2 §10
+"1_person_in_n_is_ill":
+  en: "1 person in {n:,} is ill."
+  uz: "{n:,} kishidan biri kasal."
+
+# L2 §10
+the_model_always_answers_healthy:
+  en: "The model always answers “healthy”."
+  uz: "Model doim «sogʻlom» deydi."
+
+# L2 §10
+accuracy_q:
+  en: "Accuracy = ?"
+  uz: "Aniqlik = ?"
+
+# L2 §10
+lecture_6:
+  en: "Lecture 6"
+  uz: "6-maʼruza"
+
+# L2 §10
+bayesian_inference:
+  en: "Bayesian inference"
+  uz: "Bayes xulosasi"
+
+# L2 §10
+module_3:
+  en: "Module 3"
+  uz: "3-modul"
+
+# L2 §10
+naive_bayes:
+  en: "Naive Bayes"
+  uz: "Sodda Bayes\nklassifikatori"
+
+# L2 §10
+module_1:
+  en: "Module 1"
+  uz: "1-modul"
+
+# L2 §10
+classification_metrics:
+  en: "Classification\nmetrics"
+  uz: "Tasniflash\nkoʻrsatkichlari"
+
+# L2 §10
+a_condition_shrinks_the_sample_space:
+  en: "A condition shrinks the sample space"
+  uz: "Shart namunalar fazosini toraytiradi"
+
+# L2 §10
+tree_multiply_along_branches_table_choose:
+  en: "Tree: multiply along branches · table: choose the denominator"
+  uz: "Daraxt: shoxlar boʻylab koʻpaytiramiz · jadval: maxrajni tanlaymiz"
+
+# L2 §10
+independence_conditional_plain_pooling_can_reverse:
+  en: "Independence: conditional = plain · pooling can reverse"
+  uz: "Erklilik: shartli = oddiy · birlashtirish teskari qilishi mumkin"
+
+# L2 §10
+total_probability_a_weighted_average_bayes:
+  en: "Total probability: a weighted average · Bayes: turn the condition around"
+  uz: "Toʻla ehtimollik: vaznli oʻrtacha · Bayes: shartni teskari aylantiradi"
+
+# L2 §10
+same_test_throughout:
+  en: "same test throughout"
+  uz: "test oʻzgarmaydi"
+
+# L2 §10
+rarer_disease_a_useless_model_looks:
+  en: "rarer disease → a useless model looks better"
+  uz: "kasallik kamroq → foydasiz model yaxshiroq koʻrinadi"
+
+# L2 §10
+accuracy:
+  en: "accuracy"
+  uz: "aniqlik"
+
+# L2 §10
+ill_people_found:
+  en: "ill people found"
+  uz: "topilgan kasallar"
+
+# L2 §10
+lecture_3_discrete_random_variables_and:
+  en: "Lecture 3 · Discrete random variables and key distributions"
+  uz: "3-maʼruza · Diskret tasodifiy miqdorlar va asosiy taqsimotlar"
+
+# L2 §10
+"1_in_n":
+  en: "1 in {n}"
+  uz: "{n} kishidan 1"

@@ -43,11 +43,6 @@ def narration(n):
     return parse((HERE / "narration" / f"lecture{n:02d}.md").read_text())
 
 
-def w(en, uz):
-    """An on-screen label in the current language."""
-    return uz if LANG == "uz" else en
-
-
 def money(v, cents=False):
     return f"${v:,.2f}" if cents else f"${v:,.0f}"
 

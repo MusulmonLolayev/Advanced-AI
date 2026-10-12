@@ -67,7 +67,7 @@ class S08Reverse(LectureScene):
         eq = MathTex(r"P(B)\,P(A \mid B)", "=", r"P(A)\,P(B \mid A)", font_size=50).move_to(UP * 0.9)
         bayes = MathTex(r"P(A \mid B)", "=", BAYES, font_size=60).move_to(UP * 0.6)
         frame = SurroundingRectangle(bayes, color=HILITE, buff=0.25)
-        name = txt(w("Bayes' theorem", "Bayes teoremasi"), size=34, weight=BOLD, color=HILITE).next_to(frame, UP, buff=0.2)
+        name = txt(label("bayes_theorem"), size=34, weight=BOLD, color=HILITE).next_to(frame, UP, buff=0.2)
         with self.say("8.3") as (tr, t):
             self.play(FadeOut(b1), FadeOut(b2), TransformMatchingShapes(both, eq), run_time=1.2)
             self.play(TransformMatchingShapes(eq, bayes), run_time=1.4)
@@ -77,7 +77,7 @@ class S08Reverse(LectureScene):
         den = MathTex(r"P(B)", "=", r"P(B \mid A)\,P(A)", "+", r"P(B \mid A^c)\,P(A^c)", font_size=44)
         den.next_to(frame, DOWN, buff=1.0)
         arr = Arrow(bayes[2].get_bottom() + DOWN * 0.05, den[0].get_top(), buff=0.12, color=LBLUE, stroke_width=4)
-        tot = txt(w("law of total probability", "toʻla ehtimollik formulasi"), size=26, color=LBLUE).next_to(den, DOWN, buff=0.3)
+        tot = txt(label("law_of_total_probability"), size=26, color=LBLUE).next_to(den, DOWN, buff=0.3)
         with self.say("8.4"):
             self.play(GrowArrow(arr), Write(den), run_time=1.3)
             self.play(FadeIn(tot), run_time=0.5)
@@ -110,12 +110,12 @@ class S08Names(LectureScene):
         like_b = Brace(f[2], UP, color=HILITE, buff=0.12)
         prior_b = Brace(f[3], UP, color=LBLUE, buff=0.12)
         post_b = Brace(f[0], DOWN, color=RLGREEN, buff=0.12)
-        like_l = txt(w("likelihood", "haqiqatga oʻxshashlik"), size=28, weight=BOLD, color=HILITE).next_to(like_b, UP, buff=0.12)
+        like_l = txt(label("likelihood"), size=28, weight=BOLD, color=HILITE).next_to(like_b, UP, buff=0.12)
         # the prior's label sits one level higher and to the right, so the two never collide
-        prior_l = txt(w("prior", "aprior ehtimollik"), size=28, weight=BOLD, color=LBLUE)
+        prior_l = txt(label("prior"), size=28, weight=BOLD, color=LBLUE)
         prior_l.next_to(like_l, UP, buff=0.3).set_x(prior_b.get_tip()[0] + 0.5)
         prior_link = Line(prior_b.get_tip(), prior_l.get_bottom(), color=LBLUE, stroke_width=2)
-        post_l = txt(w("posterior", "aposterior ehtimollik"), size=28, weight=BOLD, color=RLGREEN).next_to(post_b, DOWN, buff=0.12)
+        post_l = txt(label("posterior"), size=28, weight=BOLD, color=RLGREEN).next_to(post_b, DOWN, buff=0.12)
         post_link = VMobject()
         with self.say("8.6") as (tr, t):
             self.play(Write(f), run_time=1.2)
@@ -135,31 +135,31 @@ class S08Names(LectureScene):
                          for r, p in ((0.45, [-0.35, 0, 0]), (0.6, [0.25, 0.15, 0]), (0.4, [0.85, 0, 0]))])
         cloud.move_to([-4.6, 1.5, 0])
         drops = VGroup(*[Line([x, 0.75, 0], [x - 0.12, 0.35, 0], color=LBLUE, stroke_width=4) for x in (-5.0, -4.6, -4.2)])
-        rain_l = txt(w("rain", "yomgʻir"), size=26, color=GREY_B).next_to(cloud, UP, buff=0.15)
+        rain_l = txt(label("rain"), size=26, color=GREY_B).next_to(cloud, UP, buff=0.15)
         pave = Rectangle(width=3.6, height=0.35, stroke_width=0, fill_color=GREY_D, fill_opacity=1).move_to([-3.4, -0.9, 0])
         wet = Rectangle(width=3.6, height=0.35, stroke_width=0, fill_color=LBLUE, fill_opacity=0.85).move_to(pave)
-        pave_l = txt(w("wet pavement", "hoʻl yoʻlak"), size=26, color=LBLUE).next_to(pave, DOWN, buff=0.15)
-        ev = txt(w("evidence", "dalil"), size=24, color=HILITE).next_to(pave_l, DOWN, buff=0.1)
+        pave_l = txt(label("wet_pavement"), size=26, color=LBLUE).next_to(pave, DOWN, buff=0.15)
+        ev = txt(label("evidence"), size=24, color=HILITE).next_to(pave_l, DOWN, buff=0.1)
         truck = VGroup(RoundedRectangle(corner_radius=0.1, width=1.3, height=0.6, fill_color=RLGREEN, fill_opacity=1,
                                         stroke_width=0),
                        Circle(radius=0.14, fill_color=GREY_B, fill_opacity=1, stroke_width=0).shift([-0.38, -0.32, 0]),
                        Circle(radius=0.14, fill_color=GREY_B, fill_opacity=1, stroke_width=0).shift([0.38, -0.32, 0]))
         truck.move_to([-1.0, -0.15, 0])
         spray = VGroup(*[Line([-1.7, -0.3 - 0.08 * k, 0], [-2.1, -0.65, 0], color=LBLUE, stroke_width=3) for k in range(3)])
-        truck_l = txt(w("street cleaner", "koʻcha yuvadigan mashina"), size=24, color=RLGREEN).next_to(truck, UP, buff=0.2)
+        truck_l = txt(label("street_cleaner"), size=24, color=RLGREEN).next_to(truck, UP, buff=0.2)
         # the belief in rain as a bar, drawn without numbers: it rises, but stops short of the top
         bx, bb, bh = 2.4, -2.6, 3.6
         frame_ = Rectangle(width=0.9, height=bh, stroke_color=GREY_B, stroke_width=2).move_to([bx, bb + bh / 2, 0])
         top = DashedLine([bx - 0.7, bb + bh, 0], [bx + 0.7, bb + bh, 0], color=GREY_B, stroke_width=2)
-        top_l = txt(w("certain", "aniq"), size=22, color=GREY_B).next_to(top, RIGHT, buff=0.1)
+        top_l = txt(label("certain"), size=22, color=GREY_B).next_to(top, RIGHT, buff=0.1)
         lo, hi = 0.3, 0.8                      # illustrative heights
         belief = Rectangle(width=0.86, height=lo * bh, stroke_width=0, fill_color=LBLUE, fill_opacity=0.9)
         belief.move_to([bx, bb + lo * bh / 2, 0])
         belief_hi = Rectangle(width=0.86, height=hi * bh, stroke_width=0, fill_color=RLGREEN, fill_opacity=0.9)
         belief_hi.move_to([bx, bb + hi * bh / 2, 0])
-        bl = txt(w("P(rain)", "P(yomgʻir)"), size=26).next_to(frame_, DOWN, buff=0.15)
-        stage = txt(w("prior", "aprior"), size=24, color=LBLUE).next_to(frame_, LEFT, buff=0.2).set_y(bb + lo * bh)
-        stage2 = txt(w("posterior", "aposterior"), size=24, color=RLGREEN).next_to(frame_, LEFT, buff=0.2).set_y(bb + hi * bh)
+        bl = txt(label("p_rain"), size=26).next_to(frame_, DOWN, buff=0.15)
+        stage = txt(label("prior", 1), size=24, color=LBLUE).next_to(frame_, LEFT, buff=0.2).set_y(bb + lo * bh)
+        stage2 = txt(label("posterior", 1), size=24, color=RLGREEN).next_to(frame_, LEFT, buff=0.2).set_y(bb + hi * bh)
         with self.say("8.8") as (tr, t):
             self.play(FadeIn(cloud), FadeIn(rain_l), FadeIn(frame_), Create(top), FadeIn(top_l), FadeIn(bl), run_time=0.8)
             self.play(GrowFromEdge(belief, DOWN), FadeIn(stage), run_time=0.7)
@@ -175,9 +175,9 @@ class S08Names(LectureScene):
         self.clear_all()
 
         # AI: update a belief with evidence; naive Bayes asks P(spam | words)
-        steps = VGroup(node(w("belief", "ishonch"), color=LBLUE, size=30),
-                       node(w("evidence: data", "dalil: berilganlar"), color=HILITE, size=30),
-                       node(w("updated belief", "yangilangan ishonch"), color=RLGREEN, size=30)).arrange(RIGHT, buff=1.0)
+        steps = VGroup(node(label("belief"), color=LBLUE, size=30),
+                       node(label("evidence_data"), color=HILITE, size=30),
+                       node(label("updated_belief"), color=RLGREEN, size=30)).arrange(RIGHT, buff=1.0)
         steps.move_to(UP * 1.4)
         arrows = VGroup(Arrow(steps[0].get_right(), steps[1].get_left(), buff=0.1, color=GREY_B),
                         Arrow(steps[1].get_right(), steps[2].get_left(), buff=0.1, color=GREY_B))
@@ -186,7 +186,7 @@ class S08Names(LectureScene):
         env = VGroup(Rectangle(width=2.2, height=1.4, stroke_color=WHITE, stroke_width=3),
                      Line([-1.1, 0.7, 0], [0, -0.05, 0], color=WHITE, stroke_width=3),
                      Line([1.1, 0.7, 0], [0, -0.05, 0], color=WHITE, stroke_width=3)).move_to([-2.3, -2.0, 0])
-        spam = txt(w("P(spam | words)", "P(spam | soʻzlar)"), size=34, color=HILITE).next_to(env, RIGHT, buff=0.6)
+        spam = txt(label("p_spam_words"), size=34, color=HILITE).next_to(env, RIGHT, buff=0.6)
         with self.say("8.9") as (tr, t):
             self.play(FadeIn(steps[0]), run_time=0.5)
             self.play(GrowArrow(arrows[0]), FadeIn(steps[1]), run_time=0.7)
@@ -203,8 +203,8 @@ class S08HandsOn(LectureScene):
     def construct(self):
         d = defs()
         f = MathTex(r"P(A \mid B)", "=", BAYES, font_size=46).to_corner(UR, buff=SAFE + 0.3)
-        task = pause_card([w("P(no bike | bus) = ?", "Avtobusda qatnaydigan talabaning velosipedi yoʻq boʻlish ehtimoli = ?"),
-                           w("Use Bayes' theorem", "Bayes teoremasi bilan hisoblaymiz")])
+        task = pause_card([label("p_no_bike_bus_q"),
+                           label("use_bayes_theorem")])
         if task.width > 12:
             task.scale_to_fit_width(12)
         task.move_to(DOWN * 0.6)
@@ -230,9 +230,9 @@ class S08HandsOn(LectureScene):
 
         # the question for the next section: one direction is easy to measure, the other is the one we want
         easy = VGroup(MathTex(r"P(B \mid A)", font_size=56, color=GREY_B),
-                      txt(w("easy to measure", "oʻlchash oson"), size=28, color=GREY_B)).arrange(DOWN, buff=0.25)
+                      txt(label("easy_to_measure"), size=28, color=GREY_B)).arrange(DOWN, buff=0.25)
         need = VGroup(MathTex(r"P(A \mid B)", font_size=56, color=HILITE),
-                      txt(w("what we need", "bizga kerak"), size=28, color=HILITE)).arrange(DOWN, buff=0.25)
+                      txt(label("what_we_need"), size=28, color=HILITE)).arrange(DOWN, buff=0.25)
         VGroup(easy, need).arrange(RIGHT, buff=2.4).move_to(UP * 0.2)
         swap = DoubleArrow(easy[0].get_right(), need[0].get_left(), buff=0.3, color=GREY_B, stroke_width=4)
         with self.say("8.12") as (tr, t):

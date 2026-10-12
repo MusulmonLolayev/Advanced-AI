@@ -5,6 +5,7 @@ videos and the slide decks look like one course.
 """
 import asyncio
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -14,6 +15,7 @@ from manim import *
 from manim_voiceover import VoiceoverScene
 from manim_voiceover.helper import remove_bookmarks
 from manim_voiceover.services.base import SpeechService, initialize_speech_service
+import yaml
 
 # ─── identity ─────────────────────────────────────────────────────────────
 # One voice per language. LANG picks it; render with LANG=uz ./render.sh ...
@@ -30,17 +32,26 @@ NAVOIY_URL = os.environ.get("NAVOIY_URL", "http://127.0.0.1:8765/tts")
 NAVOIY_VOICE_ID = "musulmon-ft-llm1-flow12-phone"
 PAUSE_AFTER_VOICEOVER = 0.3
 
-# Fixed card wording, per language. Video text lives in each video's own table.
-UI = {
-    "pause": {"en": "⏸  Pause the video", "uz": "⏸  Videoni toʻxtating"},
-    "next": {"en": "Next", "uz": "Keyingi"},
-    "video": {"en": "Video {n} — {t}", "uz": "{n}-video — {t}"},
-    "lecture": {"en": "Lecture {n}", "uz": "{n}-maʼruza"},
-}
+# ─── on-screen labels ──────────────────────────────────────────────────────
+# Every word a video shows lives in narration/labels.yaml, by key, with its interchangeable forms.
+LABELS = yaml.safe_load((Path(__file__).parent / "narration" / "labels.yaml").read_text())
 
 
-def ui(key, **kw):
-    return UI[key][LANG].format(**kw)
+def forms(key, lang=None):
+    """A label's interchangeable forms in one language, the default first."""
+    f = LABELS[key][lang or LANG]
+    return [f] if isinstance(f, str) else f
+
+
+def label(key, i=0, **fmt):
+    """On-screen label `key` from narration/labels.yaml in the current language: form i (a language
+    with fewer forms gives its first), with any {placeholders} filled from fmt."""
+    if key not in LABELS:
+        raise KeyError(f"label {key!r} is not in narration/labels.yaml")
+    f = forms(key)
+    s = f[i] if i < len(f) else f[0]
+    return s.format(**fmt) if fmt else s
+
 
 REPO = Path(__file__).resolve().parents[1]
 FIGURES = REPO / "statistics" / "figures"
@@ -201,6 +212,8 @@ class CourseScene(VoiceoverScene):
 
 # ─── helpers ──────────────────────────────────────────────────────────────
 def txt(text, size=32, color=WHITE, weight=NORMAL):
+    # a label template shown before its {placeholder} was filled in
+    assert not re.search(r"\{[A-Za-z_]\w*(?::[^}]*)?\}", text), f"unfilled label: {text!r}"
     return Text(text, font_size=size, color=color, weight=weight)
 
 
@@ -251,7 +264,7 @@ def title_card(line1, line2=None, color=RLBLUE):
 
 
 def pause_card(steps, note=None):
-    head = txt(ui("pause"), size=40, weight=BOLD, color=HILITE)
+    head = txt(label("pause"), size=40, weight=BOLD, color=HILITE)
     items = VGroup(*[txt(f"{i}. {s}", size=28) for i, s in enumerate(steps, 1)])
     items.arrange(DOWN, aligned_edge=LEFT, buff=0.3)
     g = VGroup(head, items).arrange(DOWN, buff=0.55)
@@ -259,8 +272,8 @@ def pause_card(steps, note=None):
 
 
 def next_card(number, title):
-    head = txt(ui("next"), size=30, color=GREY_B)
-    body = txt(ui("video", n=number, t=title), size=40, weight=BOLD, color=RLBLUE)
+    head = txt(label("next"), size=30, color=GREY_B)
+    body = txt(label("video_n", n=number, t=title), size=40, weight=BOLD, color=RLBLUE)
     return VGroup(head, body).arrange(DOWN, buff=0.35)
 
 

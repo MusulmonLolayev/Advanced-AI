@@ -4,7 +4,7 @@ from lecture02_kit import *
 B = N["berkeley"]
 DEPTS = list(B["dept"])
 MEN_C, WOM_C = LBLUE, HILITE
-MEN, WOMEN = w("men", "erkaklar"), w("women", "ayollar")
+MEN, WOMEN = label("men"), label("women")
 
 
 def pct(x):
@@ -29,8 +29,8 @@ def rate_color(r):
 class S06Pooled(LectureScene):
     def construct(self):
         self.section_card(6)
-        head = self.heading(w("Berkeley, autumn 1973", "Berkli, 1973-yil kuzi"), color=LBLUE)
-        sub = txt(w("graduate admissions · six largest departments", "magistraturaga qabul · eng katta oltita fakultet"),
+        head = self.heading(label("berkeley_autumn_1973"), color=LBLUE)
+        sub = txt(label("graduate_admissions_six_largest_departments"),
                   size=24, color=GREY_B).next_to(head, DOWN, buff=0.15)
         floor = Line([-2.0, BASE, 0], [2.0, BASE, 0], color=GREY_B, stroke_width=2)
         men = vbar(B["men_rate"], -0.85, MEN_C, width=1.1, size=34)
@@ -44,7 +44,7 @@ class S06Pooled(LectureScene):
             self.play(GrowFromEdge(wom[0], DOWN), FadeIn(wom[1]), FadeIn(wl), run_time=0.8)
 
         pooled = VGroup(floor, men, wom, ml, wl)
-        all_lab = txt(w("all six", "hammasi"), size=22, color=GREY_B)
+        all_lab = txt(label("all_six"), size=22, color=GREY_B)
         with self.say("6.2") as (tr, t):
             self.play(Indicate(VGroup(men, wom), color=WHITE, scale_factor=1.05), run_time=0.8)
             self.cue(tr, t, {"en": "But let's look", "uz": "Lekin"})
@@ -84,7 +84,7 @@ class S06Applicants(LectureScene):
 
     def construct(self):
         X0, W = -4.4, 10.6
-        heads = self.heading(w("Where they applied", "Qayerga hujjat topshirishgan"), color=LBLUE)
+        heads = self.heading(label("where_they_applied"), color=LBLUE)
 
         def strip(sex, y, color, name):
             n_all = B[f"{sex}_applied"]
@@ -105,9 +105,9 @@ class S06Applicants(LectureScene):
         wseg, wname = strip("women", -1.4, WOM_C, WOMEN)
         ramp = VGroup(*[Rectangle(width=0.2, height=0.22, stroke_width=0, fill_color=rate_color(0.65 * k / 10),
                                   fill_opacity=1) for k in range(11)]).arrange(RIGHT, buff=0)
-        scale = VGroup(txt(w("hard", "qiyin"), size=20, color=RLRED), ramp,
-                       txt(w("easy", "oson"), size=20, color=RLGREEN)).arrange(RIGHT, buff=0.2)
-        scale_cap = txt(w("admission rate", "qabul ulushi"), size=20, color=GREY_B)
+        scale = VGroup(txt(label("hard"), size=20, color=RLRED), ramp,
+                       txt(label("easy"), size=20, color=RLGREEN)).arrange(RIGHT, buff=0.2)
+        scale_cap = txt(label("admission_rate"), size=20, color=GREY_B)
         key = VGroup(scale_cap, scale).arrange(DOWN, buff=0.1).next_to(heads, DOWN, buff=0.25)
 
         ab = VGroup(mseg[0], mseg[1])
@@ -134,7 +134,7 @@ class S06Applicants(LectureScene):
                              .next_to(wseg[i], DOWN, buff=0.12) for i in cef])
             self.play(FadeIn(rates, shift=UP * 0.1), run_time=0.6)
 
-        name = txt(w("Simpson's paradox", "Simpson paradoksi"), size=40, weight=BOLD, color=HILITE)
+        name = txt(label("simpson_s_paradox"), size=40, weight=BOLD, color=HILITE)
         with self.say("6.6") as (tr, t):
             self.play(Indicate(VGroup(mseg, wseg), color=WHITE, scale_factor=1.03), run_time=1.0)
             self.cue(tr, t, {"en": "This is called", "uz": "Bu Simpson"})
@@ -156,8 +156,8 @@ class S06TwoQuestions(LectureScene):
             return VGroup(floor, bars, cap)
 
         a = B["dept"]["A"]
-        left = panel([B["men_rate"], B["women_rate"]], w("overall", "umuman"), -3.2)
-        right = panel([a["men_rate"], a["women_rate"]], w("within one department", "bitta fakultet ichida"), 3.2)
+        left = panel([B["men_rate"], B["women_rate"]], label("overall"), -3.2)
+        right = panel([a["men_rate"], a["women_rate"]], label("within_one_department"), 3.2)
         dlab = txt("A", size=26, weight=BOLD, color=GREY_B).next_to(right[1], UP, buff=0.25)
         leg = legend([(MEN_C, MEN), (WOM_C, WOMEN)], size=22).to_edge(UP, buff=SAFE + 0.4)
         checks = VGroup(*[txt("✓", size=48, weight=BOLD, color=RLGREEN).next_to(p[2], DOWN, buff=0.2)
@@ -185,12 +185,12 @@ class S06PooledModel(LectureScene):
         l1 = Line(ax.c2p(0.6, 5.6), ax.c2p(4.6, 9.2), color=LBLUE, stroke_width=4)
         l2 = Line(ax.c2p(5.2, 1.0), ax.c2p(9.2, 4.6), color=HILITE, stroke_width=4)
         pooled = DashedLine(ax.c2p(0.5, 8.8), ax.c2p(9.5, 1.8), color=RLRED, stroke_width=5)
-        tag1 = txt(w("group 1", "1-guruh"), size=22, color=LBLUE).next_to(l1, UP, buff=0.1)
-        tag2 = txt(w("group 2", "2-guruh"), size=22, color=HILITE).next_to(l2, UP, buff=0.1)
-        ptag = txt(w("pooled model", "birlashtirilgan model"), size=24, color=RLRED).move_to(ax.c2p(7.6, 7.6))
-        note = info(w("illustration", "tasvir uchun"))
+        tag1 = txt(label("group_1"), size=22, color=LBLUE).next_to(l1, UP, buff=0.1)
+        tag2 = txt(label("group_2"), size=22, color=HILITE).next_to(l2, UP, buff=0.1)
+        ptag = txt(label("pooled_model"), size=24, color=RLRED).move_to(ax.c2p(7.6, 7.6))
+        note = info(label("illustration"))
         q = VGroup(txt("?", size=80, weight=BOLD, color=HILITE),
-                   txt(w("how were the data selected?", "berilganlar qanday tanlangan?"), size=26))
+                   txt(label("how_were_the_data_selected_q"), size=26))
         q.arrange(DOWN, buff=0.2).move_to([4.6, 0.2, 0])
         if q.get_right()[0] > 6.5:
             q.shift(LEFT * (q.get_right()[0] - 6.5))
@@ -216,9 +216,8 @@ def hospital(color):
 class S06HandsOn(LectureScene):
     def construct(self):
         h1, h2 = hospital(LBLUE).move_to([-2.4, -1.0, 0]), hospital(HILITE).move_to([2.4, -1.0, 0])
-        pc = pause_card([w("Hospital B has the worse overall recovery rate.",
-                           "B kasalxonada umuman olganda kamroq bemor tuzaladi."),
-                         w("Can it be better at every single operation?", "U har bir operatsiyada yaxshiroq boʻlishi mumkinmi?")])
+        pc = pause_card([label("hospital_b_has_the_worse_overall"),
+                         label("can_it_be_better_at_every_q")])
         pc.scale(0.78).to_edge(UP, buff=SAFE + 0.15)
         tags = VGroup(txt("A", size=30, weight=BOLD, color=LBLUE).next_to(h1, DOWN, buff=0.2),
                       txt("B", size=30, weight=BOLD, color=HILITE).next_to(h2, DOWN, buff=0.2))
@@ -230,11 +229,11 @@ class S06HandsOn(LectureScene):
 
         hard = VGroup(*[Dot(radius=0.11, color=RLRED) for _ in range(8)]).arrange_in_grid(2, 4, buff=0.15)
         hard.next_to(h2, RIGHT, buff=0.35)
-        hard_l = txt(w("hardest cases", "eng ogʻir bemorlar"), size=24, color=RLRED).next_to(hard, DOWN, buff=0.2)
+        hard_l = txt(label("hardest_cases"), size=24, color=RLRED).next_to(hard, DOWN, buff=0.2)
         hard_l.align_to(hard, LEFT)
         easy = VGroup(*[Dot(radius=0.11, color=RLGREEN) for _ in range(8)]).arrange_in_grid(2, 4, buff=0.15)
         easy.next_to(h1, LEFT, buff=0.35)
-        yes = txt(w("Yes", "Ha"), size=44, weight=BOLD, color=RLGREEN).move_to([0, 1.6, 0])
+        yes = txt(label("yes"), size=44, weight=BOLD, color=RLGREEN).move_to([0, 1.6, 0])
         with self.say("6.10") as (tr, t):
             self.play(FadeOut(pc), FadeIn(yes, scale=1.3), run_time=0.6)
             self.cue(tr, t, {"en": "if it takes", "uz": "Agar u"})

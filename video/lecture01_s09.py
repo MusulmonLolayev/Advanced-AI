@@ -65,15 +65,15 @@ def stat_block(i, which):
     return MathTex(items[which], font_size=30)
 
 
-CAPTIONS = [w("a straight line", "chiziqli"), w("a curve", "egri chiziq"),
-            w("one outlier", "bitta chetga chiqqan nuqta"), w("no relationship", "bogʻlanish yoʻq")]
+CAPTIONS = [label("a_straight_line"), label("a_curve"),
+            label("one_outlier"), label("no_relationship")]
 
 
 def summary_line():
     s = ANS["I"]
     t = MathTex(rf"\bar{{x}} = {s['mean_x']:.0f} \quad \bar{{y}} = {s['mean_y']:.2f} \quad s_x^2 = {s['var_x']:.0f}"
                 rf" \quad r = {s['corr']:.3f} \quad y = {s['intercept']:.0f} + {s['slope']:.1f}x", font_size=32)
-    lab = txt(w("— in all four", "— toʻrttasida ham"), size=24, color=GREY_B)
+    lab = txt(label("in_all_four"), size=24, color=GREY_B)
     return VGroup(t, lab).arrange(RIGHT, buff=0.3).move_to([-0.3, -2.75, 0])
 
 
@@ -164,7 +164,7 @@ class S09Panels(LectureScene):
             self.cue(tr, t, 1)
             self.play(Indicate(VGroup(*dots), color=HILITE, scale_factor=1.05), run_time=1.2)
 
-        acc_t = txt(w("accuracy = one number", "aniqlik = bitta son"), size=30)
+        acc_t = txt(label("accuracy_one_number"), size=30)
         acc = VGroup(SurroundingRectangle(acc_t, buff=0.22, corner_radius=0.12, color=HILITE, stroke_width=3), acc_t)
         acc.to_edge(UP, buff=SAFE + 0.2)
         with self.say("9.10") as (tr, t):
@@ -180,8 +180,7 @@ class S09HandsOn(LectureScene):
         frames, dots = panels_static()
         lines = VGroup(*[fit_line(i) for i in range(4)])
         self.add(frames, dots, lines)
-        task = pause_card([w("In which panel is a straight line right?",
-                             "Qaysi birida toʻgʻri chiziq toʻgʻri keladi?")])
+        task = pause_card([label("in_which_panel_is_a_straight_q")])
         task.scale(0.8).to_edge(UP, buff=SAFE + 0.05)
         with self.say("9.11") as (tr, t):
             self.cue(tr, t, 1)
@@ -200,8 +199,8 @@ class S09HandsOn(LectureScene):
                       *[frames[i][0].animate.set_stroke(BAD, width=3) for i in range(1, 4)], run_time=1.2)
 
         everything = VGroup(frames, dots, lines, marks)
-        done = txt(w("Part 0  ✓", "0-qism  ✓"), size=48, weight=BOLD, color=RLBLUE)
-        nxt = txt(w("next: probability", "keyingi: ehtimollik"), size=30, color=GREY_B)
+        done = txt(label("part_0_ok"), size=48, weight=BOLD, color=RLBLUE)
+        nxt = txt(label("next_probability"), size=30, color=GREY_B)
         with self.say("9.13") as (tr, t):
             self.play(everything.animate.scale(0.45).move_to(UP * 1.6), run_time=1.0)
             done.next_to(everything, DOWN, buff=0.6)

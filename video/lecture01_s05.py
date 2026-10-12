@@ -61,10 +61,10 @@ class S05Callback(LectureScene):
         dots = VGroup(*[Dot([xpos(s), y + 0.55 + rng.uniform(-0.3, 0.3), 0], radius=0.055, color=RLBLUE)
                         for s in DRINKERS])
         bill = Dot([xpos(BILLIONAIRE), y + 0.55, 0], radius=0.11, color=HILITE)
-        bill_lab = txt(w("billionaire", "milliarder"), size=22, color=HILITE).next_to(bill, UP, buff=0.2)
+        bill_lab = txt(label("billionaire"), size=22, color=HILITE).next_to(bill, UP, buff=0.2)
         mline = Line([xpos(AFTER_MEAN), y - 0.25, 0], [xpos(AFTER_MEAN), y + 2.2, 0], color=RLRED, stroke_width=5)
-        mlab = txt(f"{w('mean', 'oʻrtacha')}: {money(AFTER_MEAN)}", size=24, color=RLRED).next_to(mline, UP, buff=0.15)
-        q = txt(w("A number that holds its ground?", "Joyidan qimirlamaydigan son?"), size=36, weight=BOLD,
+        mlab = txt(f"{label("mean", 1)}: {money(AFTER_MEAN)}", size=24, color=RLRED).next_to(mline, UP, buff=0.15)
+        q = txt(label("a_number_that_holds_its_ground_q"), size=36, weight=BOLD,
                 color=RLGREEN).to_edge(UP, buff=SAFE + 0.4)
         t = line("5.1")
         with self.voiceover(t) as tr:
@@ -86,7 +86,7 @@ class S05Middle(LectureScene):
         bars = [five_bar(v, x) for v, x in zip(shuffled, xs)]
         by_value = {v: b for v, b in zip(shuffled, bars)}
         floor = floor_line()
-        head = self.heading(w("Median", "Mediana"), color=RLGREEN)
+        head = self.heading(label("median"), color=RLGREEN)
 
         t = line("5.2")
         with self.voiceover(t) as tr:
@@ -146,9 +146,9 @@ class S05Middle(LectureScene):
         n5 = MathTex("n = 5", font_size=40).move_to(n4)
         mean_l = hline(FIVE_MEAN, RLRED)
         med_l = hline(FIVE_MED, RLGREEN, dashed=True)
-        mean_t = txt(f"{w('mean', 'oʻrtacha')} = {FIVE_MEAN:g}", size=26, color=RLRED).next_to(mean_l, RIGHT, buff=0.2)
+        mean_t = txt(f"{label("mean", 1)} = {FIVE_MEAN:g}", size=26, color=RLRED).next_to(mean_l, RIGHT, buff=0.2)
         mean_t.shift(UP * 0.2)
-        med_t = txt(f"{w('median', 'mediana')} = {FIVE_MED}", size=26, color=RLGREEN)
+        med_t = txt(f"{label("median", 1)} = {FIVE_MED}", size=26, color=RLGREEN)
         t = line("5.6")
         with self.voiceover(t) as tr:
             self.play(FadeOut(calc), FadeOut(mline), TransformMatchingTex(n4, n5),
@@ -166,8 +166,8 @@ class S05Middle(LectureScene):
             med_t.next_to(med_l, RIGHT, buff=0.2).shift(DOWN * 0.2)
             self.play(bars[2].animate.set_fill(RLGREEN), Create(med_l), FadeIn(med_t), run_time=0.9)
 
-        typ = txt(w("median → a typical member", "mediana → odatiy odam"), size=30, color=RLGREEN)
-        share = txt(w("mean → each person's equal share", "oʻrtacha → teng ulush"), size=30, color=RLRED)
+        typ = txt(label("median_a_typical_member"), size=30, color=RLGREEN)
+        share = txt(label("mean_each_person_s_equal_share"), size=30, color=RLRED)
         VGroup(typ, share).arrange(DOWN, aligned_edge=LEFT, buff=0.3).to_edge(UP, buff=SAFE + 0.3).set_x(-1.2)
         t = line("5.7")
         with self.voiceover(t) as tr:
@@ -184,13 +184,13 @@ class S05Histogram(LectureScene):
         top = HBASE + 4.6
         med = DashedLine([hx(L["sal_median"]), HBASE, 0], [hx(L["sal_median"]), top, 0], color=RLGREEN, stroke_width=5)
         mean = Line([hx(L["sal_mean"]), HBASE, 0], [hx(L["sal_mean"]), top, 0], color=RLRED, stroke_width=5)
-        med_t = txt(f"{w('median', 'mediana')}  {money(L['sal_median'])}", size=26, color=RLGREEN)
+        med_t = txt(f"{label("median", 1)}  {money(L['sal_median'])}", size=26, color=RLGREEN)
         med_t.next_to(med, LEFT, buff=0.15).set_y(top - 0.2)
-        mean_t = txt(f"{w('mean', 'oʻrtacha')}  {money(L['sal_mean'])}", size=26, color=RLRED)
+        mean_t = txt(f"{label("mean", 1)}  {money(L['sal_mean'])}", size=26, color=RLRED)
         mean_t.next_to(mean, RIGHT, buff=0.15).set_y(top - 0.2)
         reports = VGroup(
-            txt(w("household income → median", "oilalar daromadi → mediana"), size=26),
-            txt(w("house prices → median", "uy narxlari → mediana"), size=26),
+            txt(label("household_income_median"), size=26),
+            txt(label("house_prices_median"), size=26),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.25).move_to([3.4, 0.3, 0])
         t = line("5.8")
         with self.voiceover(t) as tr:
@@ -217,17 +217,17 @@ class S05Mode(LectureScene):
         for v in range(lo, hi + 1):
             tk = Line(UP * 0.08, DOWN * 0.08, color=GREY_B, stroke_width=2).move_to([mx(v), y, 0])
             ticks.add(tk, txt(str(v), size=24, color=GREY_B).next_to(tk, DOWN, buff=0.15))
-        unit = txt(w("bus, minutes", "avtobus, daqiqa"), size=24, color=GREY_B).next_to(axis, DOWN, buff=0.75)
+        unit = txt(label("bus_minutes"), size=24, color=GREY_B).next_to(axis, DOWN, buff=0.75)
         seen, dots = {}, VGroup()
         for v in BUS:
             k = seen.get(v, 0)
             seen[v] = k + 1
             dots.add(Dot([mx(v), y + 0.35 + 0.55 * k, 0], radius=0.2, color=RLBLUE))
-        head = self.heading(w("Mode", "Mod"), color=HILITE)
-        mode_t = txt(f"{w('mode', 'mod')} = 30  (×3)", size=34, weight=BOLD, color=HILITE)
+        head = self.heading(label("mode"), color=HILITE)
+        mode_t = txt(f"{label("mode", 1)} = 30  (×3)", size=34, weight=BOLD, color=HILITE)
         mode_t.next_to(dots, UP, buff=0.35)
-        cat = VGroup(txt(w("categorical data:", "kategorial berilganlar:"), size=26, color=GREY_B),
-                     txt(w("blood type, shoe size → mode", "qon guruhi, oyoq kiyim oʻlchami → mod"), size=26))
+        cat = VGroup(txt(label("categorical_data"), size=26, color=GREY_B),
+                     txt(label("blood_type_shoe_size_mode"), size=26))
         cat.arrange(DOWN, aligned_edge=LEFT, buff=0.15).to_edge(UP, buff=SAFE + 1.3)
         t = line("5.9")
         with self.voiceover(t) as tr:
@@ -241,11 +241,11 @@ class S05Mode(LectureScene):
         self.clear_all(run_time=0.5)
 
         cards = VGroup(
-            card(w("mean", "oʻrtacha qiymat"), w("symmetric, totals", "simmetrik, jami"), color=RLRED,
+            card(label("mean"), label("symmetric_totals"), color=RLRED,
                  width=4.0, height=2.3, size=30),
-            card(w("median", "mediana"), w("skewed, extremes", "qiyshiq, chetdagi qiymatlar"), color=RLGREEN,
+            card(label("median", 1), label("skewed_extremes"), color=RLGREEN,
                  width=4.0, height=2.3, size=30),
-            card(w("mode", "mod"), w("categorical", "kategorial"), color=HILITE, width=4.0, height=2.3, size=30),
+            card(label("mode", 1), label("categorical"), color=HILITE, width=4.0, height=2.3, size=30),
         ).arrange(RIGHT, buff=0.35).move_to(DOWN * 0.2)
         for c in cards:                    # long Uzbek values must stay inside their card
             if c[2].width > c[0].width - 0.3:
@@ -260,7 +260,7 @@ class S05Mode(LectureScene):
         )
         for ic, c in zip(icons, cards):
             ic.next_to(c, UP, buff=0.3)
-        head = self.heading(w("Rule of thumb", "Qoidamiz"))
+        head = self.heading(label("rule_of_thumb"))
         t = line("5.10")
         with self.voiceover(t) as tr:
             self.play(FadeIn(head), run_time=0.5)
@@ -287,7 +287,7 @@ class S05Typo(LectureScene):
         mean_l, med_l = lvl(FIVE_MEAN, RLRED), lvl(FIVE_MED, RLGREEN, dashed=True)
         i_bad = TYPO.index(520)
         assert FIVE[i_bad] == 52
-        head = self.heading(w("One typo: 52 → 520", "Bitta xato: 52 → 520"), color=HILITE)
+        head = self.heading(label("one_typo_52_520"), color=HILITE)
         top = 2.55
         assert BASE + TYPO_MEAN * k < top - 0.9
         bad = Rectangle(width=1.05, height=top - BASE, stroke_width=0, fill_color=HILITE, fill_opacity=1)
@@ -297,8 +297,8 @@ class S05Typo(LectureScene):
         bad_n = txt("520", size=30, weight=BOLD, color=BLACK).move_to(bad).set_y(BASE + 0.5)
         mean_new = lvl(TYPO_MEAN, RLRED)
         legend = VGroup(
-            txt(f"{w('mean', 'oʻrtacha')}:  {FIVE_MEAN:g} → {TYPO_MEAN:g}", size=30, color=RLRED),
-            txt(f"{w('median', 'mediana')}:  {FIVE_MED} → {TYPO_MED}", size=30, color=RLGREEN),
+            txt(f"{label("mean", 1)}:  {FIVE_MEAN:g} → {TYPO_MEAN:g}", size=30, color=RLRED),
+            txt(f"{label("median", 1)}:  {FIVE_MED} → {TYPO_MED}", size=30, color=RLGREEN),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.2)
         legend.move_to([0, 0.15, 0], aligned_edge=LEFT).set_x(-6.4, LEFT)
         t = line("5.11")
@@ -319,9 +319,9 @@ class S05Typo(LectureScene):
 class S05HandsOn(LectureScene):
     def construct(self):
         bars, nums, floor, k, xs = bars_row(NINE, base=-2.6, height=2.4)
-        unit = txt(w("salaries, in thousands of dollars", "maoshlar, ming dollarda"), size=22, color=GREY_B)
+        unit = txt(label("salaries_in_thousands_of_dollars"), size=22, color=GREY_B)
         unit.next_to(floor, DOWN, buff=0.15)
-        pc = pause_card([w("We find the median of these nine.", "Shu toʻqqiztasining medianasini topamiz.")])
+        pc = pause_card([label("we_find_the_median_of_these")])
         pc.to_edge(UP, buff=SAFE + 0.3)
         with self.say("5.12"):
             self.play(FadeIn(pc), Create(floor), run_time=0.8)
@@ -332,9 +332,9 @@ class S05HandsOn(LectureScene):
         assert NINE == sorted(NINE)
         ym = -2.6 + NINE_MEAN * k
         mean_l = Line([xs[0] - 0.6, ym, 0], [xs[-1] + 0.6, ym, 0], color=RLRED, stroke_width=4)
-        mean_t = txt(f"{w('mean', 'oʻrtacha')} = {NINE_MEAN:.3f}", size=28, color=RLRED)
+        mean_t = txt(f"{label("mean", 1)} = {NINE_MEAN:.3f}", size=28, color=RLRED)
         order = VGroup(*[txt(str(i), size=22, color=GREY_B).next_to(b, DOWN, buff=0.45) for i, b in enumerate(bars, 1)])
-        ans = txt(f"{w('median', 'mediana')} = {sorted(NINE)[4]}", size=40, weight=BOLD, color=RLGREEN)
+        ans = txt(f"{label("median", 1)} = {sorted(NINE)[4]}", size=40, weight=BOLD, color=RLGREEN)
         ans.to_edge(UP, buff=SAFE + 0.5)
         mean_t.next_to(ans, DOWN, buff=0.25)
         t = line("5.13")
@@ -355,7 +355,7 @@ class S05Teaser(LectureScene):
         def mx(v):
             return x0 + (x1 - x0) * (v - 15) / 30
         rows = VGroup()
-        for yy, vals, name in ((1.1, BUS, w("bus", "avtobus")), (-1.5, CAR, w("car", "mashina"))):
+        for yy, vals, name in ((1.1, BUS, label("bus")), (-1.5, CAR, label("car"))):
             ax = Line([x0, yy, 0], [x1, yy, 0], color=GREY_B, stroke_width=2)
             seen, ds = {}, VGroup()
             for v in vals:
@@ -367,7 +367,7 @@ class S05Teaser(LectureScene):
             for v in range(15, 46, 5):
                 tk = Line(UP * 0.07, DOWN * 0.07, color=GREY_B, stroke_width=2).move_to([mx(v), yy, 0])
                 ax = VGroup(ax, tk, txt(str(v), size=20, color=GREY_B).next_to(tk, DOWN, buff=0.12))
-            mt = txt(f"{w('mean', 'oʻrtacha')} = 30", size=24, color=RLRED).next_to(ml, UP, buff=0.1)
+            mt = txt(f"{label("mean", 1)} = 30", size=24, color=RLRED).next_to(ml, UP, buff=0.1)
             rows.add(VGroup(ax, ds, ml, lab, mt))
         t = line("5.14")
         with self.voiceover(t) as tr:

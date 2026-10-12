@@ -63,7 +63,7 @@ class S04Table(LectureScene):
         lines = [m for m in T["grid"] if isinstance(m, Line)]
         labels = T["collab"] + T["rowlab"] + T["tothead"] + T["totlab"]
         margins = VGroup(*T["rowtot"], *T["coltot"], T["grand"])
-        title = self.heading(w("Contingency table", "Kontingentlik jadvali"), color=LBLUE)
+        title = self.heading(label("contingency_table"), color=LBLUE)
 
         with self.say("4.2") as (tr, t):
             self.play(*[Create(l) for l in lines], FadeIn(VGroup(*labels)), run_time=0.8)
@@ -82,9 +82,9 @@ class S04Table(LectureScene):
         T["off"] = T["off"] + np.array(v)
 
         rows = VGroup(
-            prob_row(w("joint", "birgalikdagi"), HILITE, C["bike_bus"], N["n"], dec(N["joint_bike_bus"])),
-            prob_row(w("marginal", "marginal"), LBLUE, N["bus"], N["n"], dec(N["p_bus"])),
-            prob_row(w("conditional", "shartli"), RLGREEN, C["bike_bus"], N["bike"], dec(N["p_bus_given_bike"])),
+            prob_row(label("joint"), HILITE, C["bike_bus"], N["n"], dec(N["joint_bike_bus"])),
+            prob_row(label("marginal"), LBLUE, N["bus"], N["n"], dec(N["p_bus"])),
+            prob_row(label("conditional"), RLGREEN, C["bike_bus"], N["bike"], dec(N["p_bus_given_bike"])),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.15)
         rows.move_to([0, 1.15 - 1.44 - 0.3 - rows.height / 2, 0])
 
@@ -125,10 +125,10 @@ class S04Confusion(LectureScene):
     """AI: a confusion matrix is the same kind of table (illustrative, no counts)."""
 
     def construct(self):
-        head = self.heading(w("Confusion matrix", "Xatolar matritsasi"), color=LBLUE)
+        head = self.heading(label("confusion_matrix"), color=LBLUE)
         cw, ch = 2.7, 1.2
-        cols = [w("model: spam", "model: spam"), w("model: not spam", "model: spam emas")]
-        rows = [w("true: spam", "haqiqiy: spam"), w("true: not spam", "haqiqiy: spam emas")]
+        cols = [label("model_spam"), label("model_not_spam")]
+        rows = [label("true_spam"), label("true_not_spam")]
         x0, y0 = -0.3, -0.2
         cells = VGroup()
         for r in range(2):
@@ -159,8 +159,8 @@ class S04Confusion(LectureScene):
 class S04HandsOn(LectureScene):
     def construct(self):
         T = placed(small_table(), [0, -1.3, 0])
-        pc = pause_card([w("A student takes the bus.", "Talaba avtobusda qatnaydi."),
-                         w("What is the probability they own a bike?", "Velosipedi boʻlish ehtimoli qancha?")])
+        pc = pause_card([label("a_student_takes_the_bus"),
+                         label("what_is_the_probability_they_own_q")])
         pc.scale(0.85).to_edge(UP, buff=SAFE + 0.2)
         with self.say("4.8") as (tr, t):
             self.play(FadeIn(T["grid"]), run_time=0.6)
@@ -182,7 +182,7 @@ class S04HandsOn(LectureScene):
         # knowing about the bike changed the answer about the bus
         with self.say("4.10") as (tr, t):
             self.clear_all()
-            bus, bike = w("bus", "avtobus"), w("bike", "velosiped")
+            bus, bike = label("bus"), label("bike", 1)
             p1 = VGroup(ptex(rf"P(\text{{{bus}}})", size=44), MathTex("=", font_size=44),
                         MathTex(dec(N["p_bus"]), font_size=44)).arrange(RIGHT, buff=0.25)
             p2 = VGroup(ptex(rf"P(\text{{{bus}}} \mid \text{{{bike}}})", size=44), MathTex("=", font_size=44),

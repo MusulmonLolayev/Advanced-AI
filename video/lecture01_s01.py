@@ -7,15 +7,15 @@ from lecture01_s04 import hist_axis, hist_dots
 EXAMPLE_SALARY = SAL[len(SAL) // 2]     # the person in the middle of the 600
 
 VARS = [  # (label, example value, categorical?)
-    (w("eye colour", "koʻz rangi"), w("brown", "jigarrang"), True),
-    (w("city of birth", "tugʻilgan shahar"), w("Samarkand", "Samarqand"), True),
-    (w("rating", "baho"), w("medium", "oʻrta"), True),
-    (w("number of\nchildren", "farzandlar soni"), "2", False),
-    (w("salary", "maosh"), money(EXAMPLE_SALARY), False),
-    (w("height", "boʻy"), w("172.4 cm", "172.4 sm"), False),
+    (label("eye_colour"), label("brown"), True),
+    (label("city_of_birth"), label("samarkand"), True),
+    (label("rating"), label("medium"), True),
+    (label("number_of_children"), "2", False),
+    (label("salary"), money(EXAMPLE_SALARY), False),
+    (label("height"), label("172_4_cm"), False),
 ]
-CAT, NUM = w("categorical", "kategorial"), w("numerical", "sonli")
-LEAVES = ["nominal", "ordinal", w("discrete", "diskret"), w("continuous", "uzluksiz")]
+CAT, NUM = label("categorical"), label("numerical")
+LEAVES = ["nominal", "ordinal", label("discrete"), label("continuous")]
 
 
 def tree_header():
@@ -50,7 +50,7 @@ class S01DataTypes(LectureScene):
             self.play(cards.animate.scale(0.62).arrange(RIGHT, buff=0.15).to_edge(UP, buff=SAFE + 0.3), run_time=0.9)
             self.play(cards[1][0].animate.set_stroke(HILITE, width=5), run_time=0.4)
             self.cue(tr, t, 1)
-            eq = MathTex(r"\frac{\text{" + w("Tashkent", "Toshkent") + r"} + \text{" + w("Samarkand", "Samarqand") +
+            eq = MathTex(r"\frac{\text{" + label("tashkent") + r"} + \text{" + label("samarkand") +
                          r"}}{2}", "=", "?", font_size=64)
             self.play(Write(eq), run_time=1.4)
             self.cue(tr, t, 2)
@@ -82,10 +82,10 @@ class S01DataTypes(LectureScene):
             self.play(*lit(header, 0), run_time=0.4)
             eyes = VGroup(*[VGroup(Circle(radius=0.42, fill_color=c, fill_opacity=1, stroke_width=0),
                                    txt(n, size=22, color=GREY_B))
-                            for c, n in ((ManimColor("#7B4A2A"), w("brown", "jigarrang")),
-                                         (ManimColor("#3B7DD8"), w("blue", "koʻk")),
-                                         (ManimColor("#4E9A55"), w("green", "yashil")),
-                                         (ManimColor("#8C8C8C"), w("grey", "kulrang")))])
+                            for c, n in ((ManimColor("#7B4A2A"), label("brown")),
+                                         (ManimColor("#3B7DD8"), label("blue")),
+                                         (ManimColor("#4E9A55"), label("green")),
+                                         (ManimColor("#8C8C8C"), label("grey")))])
             for e in eyes:
                 e[1].next_to(e[0], DOWN, buff=0.15)
             eyes.arrange(RIGHT, buff=0.8).move_to(UP * 0.3)
@@ -105,7 +105,7 @@ class S01DataTypes(LectureScene):
             ax = Arrow([-5.6, -0.6, 0], [5.6, -0.6, 0], buff=0, color=GREY_B, stroke_width=3)
             pts = VGroup(*[Dot([x, -0.6, 0], radius=0.14, color=HILITE) for x in xs])
             names = VGroup(*[txt(n, size=32).next_to(d, UP, buff=0.3)
-                             for n, d in zip((w("low", "past"), w("medium", "oʻrta"), w("high", "yuqori")), pts)])
+                             for n, d in zip((label("low"), label("medium"), label("high")), pts)])
             self.play(GrowArrow(ax), run_time=0.6)
             self.play(LaggedStart(*[AnimationGroup(FadeIn(d, scale=0.5), FadeIn(n)) for d, n in zip(pts, names)],
                                   lag_ratio=0.35), run_time=1.4)
@@ -142,7 +142,7 @@ class S01DataTypes(LectureScene):
                                color=GREY_B, decimal_number_config={"num_decimal_places": 0}).move_to(DOWN * 1.2)
             minor = VGroup(*[Line(UP * 0.08, DOWN * 0.08, stroke_width=1.5, color=GREY_C).move_to(ruler.n2p(171 + k / 10))
                              for k in range(31) if k % 10])
-            unit = txt(w("cm", "sm"), size=26, color=GREY_B).next_to(ruler, RIGHT, buff=0.3)
+            unit = txt(label("cm"), size=26, color=GREY_B).next_to(ruler, RIGHT, buff=0.3)
             val = ValueTracker(172.0)
             mark = always_redraw(lambda: Triangle(color=HILITE, fill_opacity=1).scale(0.16).rotate(PI)
                                  .move_to(ruler.n2p(val.get_value()) + UP * 0.35))
@@ -166,11 +166,11 @@ class S01WhyItMatters(LectureScene):
             self.add(header)
             self.play(header.animate.move_to(UP * 1.4), run_time=0.9)
             self.cue(tr, t, 2)
-            num_ops = txt(w("mean, std. deviation", "oʻrtacha, standart chetlanish"), size=28, color=RLGREEN)
+            num_ops = txt(label("mean_std_deviation"), size=28, color=RLGREEN)
             num_ops.next_to(header[1][2:], DOWN, buff=0.7)
             self.play(FadeIn(num_ops, shift=DOWN * 0.2), run_time=0.7)
             self.cue(tr, t, 3)
-            cat_ops = txt(w("count, proportion", "sanash, ulush"), size=28, color=RLBLUE)
+            cat_ops = txt(label("count_proportion"), size=28, color=RLBLUE)
             cat_ops.next_to(header[1][:2], DOWN, buff=0.7)
             self.play(FadeIn(cat_ops, shift=DOWN * 0.2), run_time=0.7)
         self.play(FadeOut(VGroup(header, num_ops, cat_ops)), run_time=0.6)
@@ -195,14 +195,14 @@ class S01WhyItMatters(LectureScene):
         self.clear_all()
 
         # hands-on: three variables to sort
-        qs = (w("Blood type?", "Qon guruhi?"), w("Finishing place in an exam?", "Imtihondagi oʻrin?"),
-              w("Room temperature?", "Xonadagi harorat?"))
+        qs = (label("blood_type_q"), label("finishing_place_in_an_exam_q"),
+              label("room_temperature_q"))
         pc = pause_card(qs).move_to(UP * 0.4)
         with self.say("1.10"):
             self.play(FadeIn(pc), run_time=0.8)
         self.hands_on()
 
-        ans = ("nominal", "ordinal", w("continuous", "uzluksiz"))
+        ans = ("nominal", "ordinal", label("continuous"))
         tags = VGroup(*[txt(a, size=28, weight=BOLD, color=GOOD).next_to(pc[1][i], RIGHT, buff=0.5)
                         for i, a in enumerate(ans)])
         with self.say("1.11") as (tr, t):

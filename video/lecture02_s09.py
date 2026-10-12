@@ -20,7 +20,7 @@ def ptx(a, b, size=44, color=WHITE):
     return MathTex(rf"P(\text{{{a}}} \mid \text{{{b}}})", font_size=size, color=color)
 
 
-POS, ILL = w("positive", "musbat"), w("ill", "kasal")
+POS, ILL = label("positive"), label("ill")
 
 
 def people_image(ill, false_pos, height=5.0, cols=100):
@@ -51,8 +51,8 @@ def positives_bar(ill, false_pos, width=10.0, height=0.9):
     a = Rectangle(width=width * ill / total, height=height, stroke_width=0, fill_color=ILL_C, fill_opacity=1)
     b = Rectangle(width=width * false_pos / total, height=height, stroke_width=0, fill_color=FALSE_C, fill_opacity=1)
     VGroup(a, b).arrange(RIGHT, buff=0)
-    la = txt(f"{num(ill)} {w('ill', 'kasal')}", size=26, weight=BOLD).next_to(a, DOWN, buff=0.2)
-    lb = txt(f"{num(false_pos)} {w('false alarms', 'yolgʻon signal')}", size=26, weight=BOLD).next_to(b, DOWN, buff=0.2)
+    la = txt(f"{num(ill)} {label("ill")}", size=26, weight=BOLD).next_to(a, DOWN, buff=0.2)
+    lb = txt(f"{num(false_pos)} {label("false_alarms")}", size=26, weight=BOLD).next_to(b, DOWN, buff=0.2)
     if la.get_right()[0] > lb.get_left()[0] - 0.2:      # a thin red slice: keep its label clear of the orange one
         la.next_to(a, UP, buff=0.2)
     return VGroup(a, b), VGroup(la, lb)
@@ -63,14 +63,14 @@ class S09Reverse(LectureScene):
         self.section_card(9)
         # the test is checked on people already known to be ill
         sick = VGroup(*[Dot(radius=0.13, color=ILL_C) for _ in range(9)]).arrange_in_grid(3, 3, buff=0.18)
-        sick_l = txt(w("known to be ill", "kasalligi aniq"), size=24, color=GREY_B).next_to(sick, DOWN, buff=0.2)
-        tube = node(w("test", "test"), color=LBLUE, size=28)
+        sick_l = txt(label("known_to_be_ill"), size=24, color=GREY_B).next_to(sick, DOWN, buff=0.2)
+        tube = node(label("test"), color=LBLUE, size=28)
         plus = txt("+", size=60, weight=BOLD, color=HILITE)
         row1 = VGroup(VGroup(sick, sick_l), tube, plus).arrange(RIGHT, buff=1.1).move_to(UP * 1.7)
         arrows1 = VGroup(Arrow(row1[0].get_right(), tube.get_left(), buff=0.2, color=GREY_B),
                          Arrow(tube.get_right(), plus.get_left(), buff=0.2, color=GREY_B))
         have = ptx(POS, ILL, color=LBLUE)
-        have_l = txt(w("a property of the test", "testning xususiyati"), size=26, color=LBLUE)
+        have_l = txt(label("a_property_of_the_test"), size=26, color=LBLUE)
         have_g = VGroup(have, have_l).arrange(DOWN, buff=0.2).move_to(LEFT * 3.3 + DOWN * 1.2)
         with self.say("9.1") as (tr, t):
             self.play(FadeIn(row1[0]), run_time=0.6)
@@ -81,10 +81,10 @@ class S09Reverse(LectureScene):
             self.play(FadeIn(have_l), run_time=0.5)
 
         want = ptx(ILL, POS, color=HILITE)
-        want_l = txt(w("what the patient wants", "bemorga kerak"), size=26, color=HILITE)
+        want_l = txt(label("what_the_patient_wants"), size=26, color=HILITE)
         want_g = VGroup(want, want_l).arrange(DOWN, buff=0.2).move_to(RIGHT * 3.3 + DOWN * 1.2)
         swap = CurvedArrow(have.get_top() + UP * 0.1, want.get_top() + UP * 0.1, angle=-PI / 3, color=GREY_B)
-        base = txt(w("+ how common the illness is", "+ kasallik qanchalik keng tarqalgani"), size=24,
+        base = txt(label("how_common_the_illness_is"), size=24,
                    color=GREY_B).next_to(want_g, DOWN, buff=0.3)
         with self.say("9.2") as (tr, t):
             self.play(Create(swap), run_time=0.8)
@@ -94,11 +94,10 @@ class S09Reverse(LectureScene):
         self.clear_all()
 
         # the prosecutor's fallacy
-        head = self.heading(w("The prosecutor's fallacy", "Prokuror xatosi"), color=RLRED)
-        quote = txt(w("“Only 1 innocent person in a million would match”",
-                      "«Million begunoh odamdan faqat bittasi mos keladi»"), size=30)
+        head = self.heading(label("the_prosecutor_s_fallacy"), color=RLRED)
+        quote = txt(label("only_1_innocent_person_in_a"), size=30)
         quote.next_to(head, DOWN, buff=0.7)
-        match, innocent = w("match", "moslik"), w("innocent", "begunoh")
+        match, innocent = label("match"), label("innocent")
         said = ptx(match, innocent, size=48, color=LBLUE)
         neq = MathTex(r"\neq", font_size=60, color=RLRED)
         meant = ptx(innocent, match, size=48, color=HILITE)
@@ -120,13 +119,13 @@ class S09Count(LectureScene):
         # 10,000 tested: 100 ill, 9,900 healthy
         img = people_image(S1["ill"], 0).move_to(LEFT * 2.6 + DOWN * 0.15)
         side = VGroup(
-            txt(w(f"{num(S1['tested'])} people tested", f"{num(S1['tested'])} kishi tekshirildi"), size=30, weight=BOLD),
+            txt(label("n_people_tested", tested=num(S1['tested'])), size=30, weight=BOLD),
             VGroup(Square(0.3, stroke_width=0, fill_color=ILL_C, fill_opacity=1),
-                   txt(f"{num(S1['ill'])} {w('ill', 'kasal')}", size=28)).arrange(RIGHT, buff=0.2),
+                   txt(f"{num(S1['ill'])} {label("ill")}", size=28)).arrange(RIGHT, buff=0.2),
             VGroup(Square(0.3, stroke_width=0, fill_color=WELL_C, fill_opacity=1),
-                   txt(f"{num(S1['healthy'])} {w('healthy', 'sogʻlom')}", size=28)).arrange(RIGHT, buff=0.2),
+                   txt(f"{num(S1['healthy'])} {label("healthy")}", size=28)).arrange(RIGHT, buff=0.2),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.4).move_to(RIGHT * 3.6 + UP * 1.0)
-        rate = txt(w(f"1 in {S1['tested'] // S1['ill']} is ill", f"{S1['tested'] // S1['ill']} kishidan biri kasal"),
+        rate = txt(label("1_in_n_is_ill", n=S1['tested'] // S1['ill']),
                    size=26, color=GREY_B).next_to(side, UP, buff=0.4, aligned_edge=LEFT)
         with self.say("9.4") as (tr, t):
             self.play(FadeIn(rate), run_time=0.5)
@@ -143,7 +142,7 @@ class S09Count(LectureScene):
         # the test catches every ill person, and flags 5 % of the healthy too
         img2 = people_image(S1["ill"], S1["false_pos"]).move_to(img)
         fa = VGroup(Square(0.3, stroke_width=0, fill_color=FALSE_C, fill_opacity=1),
-                    txt(f"{num(S1['false_pos'])} {w('false alarms', 'yolgʻon signal')}", size=28)).arrange(RIGHT, buff=0.2)
+                    txt(f"{num(S1['false_pos'])} {label("false_alarms")}", size=28)).arrange(RIGHT, buff=0.2)
         fa.next_to(side, DOWN, buff=0.4, aligned_edge=LEFT)
         five = MathTex(rf"{pct(FP_RATE)[:-1]}\% \times {num(S1['healthy'])} = {num(S1['false_pos'])}".replace(",", "{,}"),
                        font_size=38, color=FALSE_C).next_to(fa, DOWN, buff=0.4, aligned_edge=LEFT)
@@ -158,7 +157,7 @@ class S09Count(LectureScene):
         # the positives, magnified
         bar, labs = positives_bar(S1["ill"], S1["false_pos"])
         bgroup = VGroup(bar, labs).move_to(DOWN * 1.2)
-        head = txt(w(f"{num(S1['positives'])} test positive", f"{num(S1['positives'])} kishi musbat"),
+        head = txt(label("n_test_positive", positives=num(S1['positives'])),
                    size=34, weight=BOLD).next_to(bar, UP, buff=0.9)
         ppv = MathTex(rf"\frac{{{S1['ill']}}}{{{S1['positives']}}} \approx {pct(S1['ppv'])[:-1]}\%",
                       font_size=56, color=HILITE).next_to(head, UP, buff=0.5)
@@ -180,17 +179,16 @@ class S09Count(LectureScene):
         small = Rectangle(width=1.6, height=S1["ill"] * k, stroke_width=0, fill_color=ILL_C, fill_opacity=1)
         big.move_to([-2.2, floor + big.height / 2, 0])
         small.move_to([2.2, floor + small.height / 2, 0])
-        lb = txt(w(f"{pct(FP_RATE)} of {num(S1['healthy'])}", f"{num(S1['healthy'])} ning {pct(FP_RATE)} i"),
+        lb = txt(label("n_of_n", fp_rate=pct(FP_RATE), healthy=num(S1['healthy'])),
                  size=28).next_to(big, DOWN, buff=0.25)
-        ls = txt(w(f"100% of {num(S1['ill'])}", f"{num(S1['ill'])} ning 100% i"), size=28).next_to(small, DOWN, buff=0.25)
+        ls = txt(label("100_percent_of_n", ill=num(S1['ill'])), size=28).next_to(small, DOWN, buff=0.25)
         vb = txt(num(S1["false_pos"]), size=34, weight=BOLD).next_to(big, UP, buff=0.15)
         vs = txt(num(S1["ill"]), size=34, weight=BOLD).next_to(small, UP, buff=0.15)
-        ratio = txt(w(f"healthy : ill = {N['healthy_per_ill']:g} : 1", f"sogʻlom : kasal = {N['healthy_per_ill']:g} : 1"),
+        ratio = txt(label("healthy_ill_n_1", healthy_per_ill=N['healthy_per_ill']),
                     size=30, color=GREY_B).to_edge(UP, buff=SAFE + 0.4)
         per = VGroup(*[Dot(radius=0.14, color=FALSE_C) for _ in range(round(N["false_per_real"]))],
                      Dot(radius=0.14, color=ILL_C)).arrange(RIGHT, buff=0.18)
-        per_l = txt(w(f"≈ {round(N['false_per_real'])} false alarms per real case",
-                      f"har bir haqiqiy holatga ≈ {round(N['false_per_real'])} yolgʻon signal"), size=28)
+        per_l = txt(label("n_false_alarms_per_real_case", false_per_real=round(N['false_per_real'])), size=28)
         per_g = VGroup(per, per_l).arrange(RIGHT, buff=0.4).next_to(ratio, DOWN, buff=0.3)
         with self.say("9.7") as (tr, t):
             self.cue(tr, t, {"en": "Five percent", "uz": "Katta guruhning"})
@@ -212,10 +210,10 @@ class S09Fraud(LectureScene):
                          for i in range(n)]).arrange_in_grid(4, 10, buff=(0.3, 0.45)).move_to(DOWN * 0.3)
         bells = VGroup(*[Triangle(color=FALSE_C if i not in fraud else RLRED, fill_opacity=1, stroke_width=0)
                          .scale(0.13).next_to(cards[i], UP, buff=0.06) for i in sorted(flagged)])
-        head = self.heading(w("Fraud detector", "Firibgarlikni aniqlovchi model"), color=LBLUE)
-        tally = txt(w(f"{len(flagged)} alarms, {len(fraud)} real fraud", f"{len(flagged)} ta signal, {len(fraud)} tasi haqiqiy"),
+        head = self.heading(label("fraud_detector"), color=LBLUE)
+        tally = txt(label("n_alarms_n_real_fraud", n_flagged=len(flagged), n_fraud=len(fraud)),
                     size=28, color=FALSE_C).next_to(cards, DOWN, buff=0.5)
-        note = info(w("illustration", "tasvir uchun"))
+        note = info(label("illustration"))
         with self.say("9.8") as (tr, t):
             self.play(FadeIn(head), LaggedStart(*[FadeIn(c) for c in cards], lag_ratio=0.02), FadeIn(note), run_time=1.2)
             self.cue(tr, t, {"en": "because fraud", "uz": "firibgarlik kamdan-kam"})
@@ -226,11 +224,9 @@ class S09Fraud(LectureScene):
 
 class S09HandsOn(LectureScene):
     def construct(self):
-        card = pause_card([w(f"1 person in {S10['tested'] // S10['ill']} has the disease.",
-                             f"{S10['tested'] // S10['ill']} kishidan biri kasal."),
-                           w(f"Same test: never misses, {pct(FP_RATE)} false alarms.",
-                             f"Test oʻsha: kasalni oʻtkazib yubormaydi, {pct(FP_RATE)} yolgʻon signal."),
-                           w("P(ill | positive) = ?", "P(kasal | musbat) = ?")])
+        card = pause_card([label("1_person_in_n_has_the", n=S10['tested'] // S10['ill']),
+                           label("same_test_never_misses_n_false", fp_rate=pct(FP_RATE)),
+                           label("p_ill_positive_q")])
         with self.say("9.9"):
             self.play(FadeIn(card), run_time=0.8)
         self.hands_on()
@@ -238,8 +234,8 @@ class S09HandsOn(LectureScene):
 
         img = people_image(S10["ill"], S10["false_pos"], height=4.2).move_to(LEFT * 3.9 + UP * 0.6)
         rows = VGroup(
-            txt(w(f"{num(S10['ill'])} ill", f"{num(S10['ill'])} kasal"), size=28, color=ILL_C),
-            txt(w(f"{num(S10['healthy'])} healthy", f"{num(S10['healthy'])} sogʻlom"), size=28, color=GREY_B),
+            txt(label("n_ill", ill=num(S10['ill'])), size=28, color=ILL_C),
+            txt(label("n_healthy", healthy=num(S10['healthy'])), size=28, color=GREY_B),
             MathTex(rf"{pct(FP_RATE)[:-1]}\% \times {num(S10['healthy'])} = {num(S10['false_pos'])}".replace(",", "{,}"),
                     font_size=36, color=FALSE_C),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.3).move_to(RIGHT * 2.6 + UP * 1.6)
@@ -257,7 +253,7 @@ class S09HandsOn(LectureScene):
         self.clear_all()
 
         # same test, two base rates
-        cases = [(S1, w("1 in 100", "100 kishidan 1")), (S10, w("1 in 10", "10 kishidan 1"))]
+        cases = [(S1, label("1_in_100")), (S10, label("1_in_10"))]
         floor, hk = -2.0, 3.6
         bars = VGroup()
         for i, (s, lab) in enumerate(cases):
@@ -265,8 +261,8 @@ class S09HandsOn(LectureScene):
             b.move_to([-2.0 + 4.0 * i, floor + b.height / 2, 0])
             bars.add(VGroup(b, txt(pct(s["ppv"]), size=40, weight=BOLD).next_to(b, UP, buff=0.15),
                             txt(lab, size=28, color=GREY_B).next_to(b, DOWN, buff=0.25)))
-        same = txt(w("the same test", "test oʻsha-oʻsha"), size=32, weight=BOLD, color=LBLUE).to_edge(UP, buff=SAFE + 0.5)
-        yl = txt("P(kasal | musbat)" if LANG == "uz" else "P(ill | positive)", size=26, color=GREY_B).next_to(same, DOWN, buff=0.3)
+        same = txt(label("the_same_test"), size=32, weight=BOLD, color=LBLUE).to_edge(UP, buff=SAFE + 0.5)
+        yl = txt(f"P({ILL} | {POS})", size=26, color=GREY_B).next_to(same, DOWN, buff=0.3)
         with self.say("9.11") as (tr, t):
             self.play(FadeIn(same), FadeIn(yl), run_time=0.6)
             self.play(LaggedStart(*[GrowFromEdge(b[0], DOWN) for b in bars], lag_ratio=0.3),

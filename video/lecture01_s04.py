@@ -37,47 +37,11 @@ assert (round(DRINK_MEAN), round(DRINK_MED)) == (50627, 47323)
 assert (round(AFTER_MEAN), round(AFTER_MED)) == (2941226105, 47761)
 assert round(NINE_MEAN, 3) == 50.333
 
-# ─── words ────────────────────────────────────────────────────────────────
-T = {
-    # on screen
-    "employees": {"en": "{n} employees", "uz": "{n} xodim"},
-    "question": {"en": "What do people earn here?", "uz": "Bu yerda odamlar qancha maosh oladi?"},
-    "salary": {"en": "salary", "uz": "maosh"},
-    "one": {"en": "one number?", "uz": "bitta son?"},
-    "mean": {"en": "mean", "uz": "oʻrtacha"},
-    "the_mean": {"en": "the mean", "uz": "oʻrtacha qiymat"},
-    "median": {"en": "median", "uz": "mediana"},
-    "fills": {"en": "{v} above the line  =  {v} missing below it",
-              "uz": "chiziq ustidagi {v}  =  ostida yetishmagan {v}"},
-    "remembers": {"en": "The mean remembers the total", "uz": "Oʻrtacha qiymat umumiy summani eslab qoladi"},
-    "people": {"en": "{n} people", "uz": "{n} kishi"},
-    "each": {"en": "{v} each", "uz": "har biriga {v}"},
-    "missing": {"en": "{v} missing", "uz": "{v} yetishmaydi"},
-    "no_other": {"en": "No other summary does that.",
-                 "uz": "Boshqa hech bir koʻrsatkich buni qilolmaydi."},
-    "billionaire": {"en": "a billionaire", "uz": "milliarder"},
-    "nobody": {"en": "describes nobody here", "uz": "hech kimni tasvirlamaydi"},
-    "log": {"en": "each tick is ten times the one before", "uz": "har bir belgi oldingisidan 10 marta katta"},
-    "not_moved": {"en": "The line that did not move", "uz": "Siljimagan chiziq"},
-    "before": {"en": "before", "uz": "avval"},
-    "after": {"en": "after", "uz": "keyin"},
-    "is_median": {"en": "That line is the median.", "uz": "Bu chiziq — mediana."},
-    "task1": {"en": "We work out the mean of these nine.",
-              "uz": "Oʻrtacha qiymatini hisoblaymiz."},
-    "task2": {"en": "We count how many of the nine earn less than it.",
-              "uz": "Nechtasi undan kam olishini sanaymiz."},
-    "unit": {"en": "salaries, in thousands of dollars", "uz": "maoshlar, ming dollarda"},
-    "total": {"en": "total", "uz": "yigʻindi"},
-    "below": {"en": "{k} of the {n} earn less than that", "uz": "{n} kishidan {k} nafari undan kam oladi"},
-    "loss_cap": {"en": "training = making this number smaller", "uz": "oʻqitish = shu sonni kichraytirish"},
-}
 
 
-def say(key, **kw):
-    """Narration from the approved draft (section 4), or a screen label from T."""
-    if f"4.{key}" in NARRATION:
-        return line(f"4.{key}")
-    return T[key][LANG].format(**kw)
+def say(key):
+    """Narration from the approved draft, section 4."""
+    return line(f"4.{key}")
 
 
 # ─── the 600 salaries as a dot histogram (one dot per person) ─────────────
@@ -106,7 +70,7 @@ def hist_axis():
     for v in range(40_000, 160_000, 20_000):
         t = Line(UP * 0.08, DOWN * 0.08, stroke_width=2, color=GREY_B).move_to([hx(v), HBASE, 0])
         marks.add(t, txt(f"${v // 1000}k", size=20, color=GREY_B).next_to(t, DOWN, buff=0.15))
-    lab = txt(say("salary"), size=22, color=GREY_B).next_to(axis, DOWN, buff=0.6)
+    lab = txt(label("salary"), size=22, color=GREY_B).next_to(axis, DOWN, buff=0.6)
     return VGroup(axis, marks, lab)
 
 
@@ -140,7 +104,7 @@ def mean_line(y):
 class S04Problem(LectureScene):
     def construct(self):
         self.section_card(4)
-        head = txt(say("employees", n=N_EMP), size=34, color=GREY_B).to_edge(UP, buff=SAFE + 0.3)
+        head = txt(label("n_employees", n=N_EMP), size=34, color=GREY_B).to_edge(UP, buff=SAFE + 0.3)
         rng = np.random.default_rng(7)
         order = rng.permutation(N_EMP)
         grid = VGroup(*[Dot(radius=0.045) for _ in range(N_EMP)])
@@ -159,7 +123,7 @@ class S04Problem(LectureScene):
             self.play(LaggedStart(*[d.animate.move_to(p).scale(0.034 / 0.045)
                                     for d, p in zip(dots, target)], lag_ratio=0.002, run_time=3.0))
             self.until(tr, t, 2)
-            q = txt(say("question"), size=40, weight=BOLD, color=HILITE).move_to(head)
+            q = txt(label("what_do_people_earn_here_q"), size=40, weight=BOLD, color=HILITE).move_to(head)
             self.play(FadeOut(head, shift=UP * 0.3), FadeIn(q, shift=UP * 0.3), run_time=1.0)
 
         # a flicker of real salaries: far too many to read out
@@ -177,7 +141,7 @@ class S04Problem(LectureScene):
                 col.become(column(j))
                 self.wait(0.1)
             self.until(tr, t, 1)
-            one = box(say("one"), color=HILITE, width=2.6, height=1.0, size=28).move_to(panel)
+            one = box(label("one_number_q"), color=HILITE, width=2.6, height=1.0, size=28).move_to(panel)
             self.play(FadeOut(col), ReplacementTransform(panel, one[0]), FadeIn(one[1]), run_time=0.8)
             self.until(tr, t, 2)
             probe = DashedLine([0, HBASE, 0], [0, 1.0, 0], color=HILITE, stroke_width=4)
@@ -205,12 +169,12 @@ class S04Mean(LectureScene):
 
         line = mean_line(BBASE + HM)
         value = txt(money(PAYROLL_MEAN), size=60, weight=BOLD, color=WHITE).move_to([0, 0.35, 0])
-        label = txt(say("the_mean"), size=30, color=RLRED).next_to(value, DOWN, buff=0.2)
+        mean_tag = txt(label("the_mean"), size=30, color=RLRED).next_to(value, DOWN, buff=0.2)
         t = say("s2b")
         with self.voiceover(t) as tr:
             self.play(Create(line), FadeIn(value, shift=UP * 0.3), run_time=1.0)
             self.until(tr, t, 1)
-            self.play(FadeIn(label), FadeIn(formula), run_time=0.8)
+            self.play(FadeIn(mean_tag), FadeIn(formula), run_time=0.8)
 
         # The same people again: what sits above the line is exactly what is missing below it.
         base = VGroup(*[bar(i, min(s * BSCALE, HM)) for i, s in enumerate(SAL)])
@@ -219,10 +183,10 @@ class S04Mean(LectureScene):
                         for i, s in enumerate(SAL) if s * BSCALE < HM])
         for g in gaps:
             g.set_stroke(HILITE, width=0.6, opacity=0.8)
-        fills = txt(say("fills", v=money(EXCESS)), size=26, color=HILITE).next_to(line, UP, buff=0.25)
+        fills = txt(label("v_above_the_line_v_missing", v=money(EXCESS)), size=26, color=HILITE).next_to(line, UP, buff=0.25)
         t = say("s2c")
         with self.voiceover(t) as tr:
-            self.play(FadeOut(value), FadeOut(label), run_time=0.5)
+            self.play(FadeOut(value), FadeOut(mean_tag), run_time=0.5)
             self.remove(bars)
             self.add(base)
             self.play(LaggedStart(*[GrowFromEdge(r, DOWN) for r in tops], lag_ratio=0.002, run_time=1.4),
@@ -245,7 +209,7 @@ class S04Totals(LectureScene):
         rect = Rectangle(width=BX1 - BX0, height=HM, stroke_width=0, fill_color=RLBLUE, fill_opacity=1)
         rect.move_to([0, BBASE + HM / 2, 0])
         big = rect.copy().stretch(k, 1).move_to([0, -2.6 + HM * k / 2, 0])
-        head = txt(say("remembers"), size=36, weight=BOLD).to_edge(UP, buff=SAFE + 0.35)
+        head = txt(label("the_mean_remembers_the_total"), size=36, weight=BOLD).to_edge(UP, buff=SAFE + 0.35)
 
         t = say("s3a")
         with self.voiceover(t):
@@ -255,9 +219,9 @@ class S04Totals(LectureScene):
             self.play(FadeOut(line), Transform(rect, big), run_time=1.4)
 
         b_n = Brace(rect, DOWN, buff=0.12, color=GREY_B)
-        l_n = txt(say("people", n=N_EMP), size=26, color=GREY_B).next_to(b_n, DOWN, buff=0.12)
+        l_n = txt(label("n_people", n=N_EMP), size=26, color=GREY_B).next_to(b_n, DOWN, buff=0.12)
         b_m = Brace(rect, LEFT, buff=0.12, color=GREY_B)
-        l_m = txt(say("each", v=money(PAYROLL_MEAN, cents=True)), size=24, color=GREY_B)
+        l_m = txt(label("v_each", v=money(PAYROLL_MEAN, cents=True)), size=24, color=GREY_B)
         l_m.rotate(PI / 2).next_to(b_m, LEFT, buff=0.12)
         eq = MathTex(rf"\${PAYROLL_MEAN:,.2f}".replace(",", "{,}"), r"\times", str(N_EMP), "=",
                      rf"\${PAYROLL_TOTAL:,.0f}".replace(",", "{,}"), font_size=46)
@@ -278,12 +242,12 @@ class S04Totals(LectureScene):
                           fill_color=RLRED, fill_opacity=0.9)
         strip.move_to([0, (rect.get_top()[1] + y_med) / 2, 0])
         med = DashedLine([BX0, y_med, 0], [BX1, y_med, 0], color=RLGREEN, stroke_width=4)
-        med_txt = MathTex(r"\text{" + say("median") + r"}\times" + str(N_EMP) + "=" +
+        med_txt = MathTex(r"\text{" + label("median", 1) + r"}\times" + str(N_EMP) + "=" +
                           rf"\${MEDIAN_TOTAL:,.0f}".replace(",", "{,}"), font_size=40, color=RLGREEN)
         med_txt.move_to(eq)
-        miss = txt(say("missing", v=money(MEDIAN_SHORT)), size=26, color=RLRED)
+        miss = txt(label("v_missing", v=money(MEDIAN_SHORT)), size=26, color=RLRED)
         miss.next_to(strip, UP, buff=0.12).set_x(3.4)
-        no = txt(say("no_other"), size=30, color=GREY_B).move_to(eq)
+        no = txt(label("no_other_summary_does_that"), size=30, color=GREY_B).move_to(eq)
         t = say("s3c")
         with self.voiceover(t) as tr:
             self.play(FadeOut(eq), FadeIn(med_txt), Create(med), FadeIn(strip), FadeIn(miss), run_time=1.2)
@@ -294,13 +258,13 @@ class S04Totals(LectureScene):
 
         # the same average, used by every model we train later in the course
         mean_f = MathTex(r"\bar{x}", "=", r"\frac{1}{n}\sum_{i=1}^{n}", "x_i", font_size=64)
-        loss_f = MathTex("L", "=", r"\frac{1}{n}\sum_{i=1}^{n}", r"\text{" + w("error", "xato") + r"}_i",
+        loss_f = MathTex("L", "=", r"\frac{1}{n}\sum_{i=1}^{n}", r"\text{" + label("error") + r"}_i",
                          font_size=64)
         mean_f.move_to(UP * 0.9)
         loss_f.move_to(UP * 0.9)
         loss_f[0].set_color(RLRED)
         loss_f[3].set_color(RLRED)
-        cap = txt(say("loss_cap"), size=30, color=GREY_B).next_to(loss_f, DOWN, buff=0.7)
+        cap = txt(label("training_making_this_number_smaller"), size=30, color=GREY_B).next_to(loss_f, DOWN, buff=0.7)
         arrow = Arrow(UP * 0.5, DOWN * 0.5, color=RLRED, stroke_width=6).next_to(cap, DOWN, buff=0.3)
         t = say("s3d")
         with self.voiceover(t) as tr:
@@ -334,7 +298,7 @@ class S04Failure(LectureScene):
                          (1e8, "$100M"), (1e9, "$1B"), (1e10, "$10B"), (1e11, "$100B")):
             tk = Line(UP * 0.1, DOWN * 0.1, stroke_width=2, color=GREY_B).move_to([xpos(val), axis.get_y(), 0])
             ticks.add(tk, txt(lab, size=20, color=GREY_B).next_to(tk, DOWN, buff=0.18))
-        log_note = info(say("log"), size=20)
+        log_note = info(label("each_tick_is_ten_times"), size=20)
         rng = np.random.default_rng(1)
         strip = [[xpos(s), axis.get_y() + 0.55 + rng.uniform(-0.3, 0.3), 0] for s in DRINKERS]
 
@@ -352,7 +316,7 @@ class S04Failure(LectureScene):
         mline.move_to([xpos(DRINK_MEAN), axis.get_y() + 1.0, 0])
         dline = DashedLine(DOWN * 0.25, UP * 2.2, color=RLGREEN, stroke_width=5)
         dline.move_to([xpos(DRINK_MED), axis.get_y() + 1.0, 0])
-        names = VGroup(txt(say("mean"), size=26, color=GREY_B), txt(say("median"), size=26, color=GREY_B))
+        names = VGroup(txt(label("mean", 1), size=26, color=GREY_B), txt(label("median", 1), size=26, color=GREY_B))
         names.arrange(DOWN, aligned_edge=LEFT, buff=0.42)
         swatches = VGroup(Line(ORIGIN, RIGHT * 0.45, color=RLRED, stroke_width=5),
                           DashedLine(ORIGIN, RIGHT * 0.45, color=RLGREEN, stroke_width=5))
@@ -372,7 +336,7 @@ class S04Failure(LectureScene):
             self.wait(1.2)
 
         bill = Dot(radius=0.11, color=HILITE).move_to([xpos(BILLIONAIRE), axis.get_y() + 0.55, 0])
-        bill_lab = txt(say("billionaire"), size=24, color=HILITE).next_to(bill, UP, buff=0.25)
+        bill_lab = txt(label("billionaire", 1), size=24, color=HILITE).next_to(bill, UP, buff=0.25)
         with self.voiceover(say("s4c")):
             self.play(FadeIn(bill, shift=LEFT * 0.8, scale=0.3), FadeIn(bill_lab), run_time=1.0)
             self.wait(1.2)
@@ -386,7 +350,7 @@ class S04Failure(LectureScene):
 
         arrow = Arrow(mline.get_top() + UP * 1.0 + LEFT * 1.6, mline.get_top() + UP * 0.1,
                       buff=0.05, color=RLRED, stroke_width=4)
-        nobody = txt(say("nobody"), size=28, color=RLRED).next_to(arrow.get_start(), LEFT, buff=0.15)
+        nobody = txt(label("describes_nobody_here"), size=28, color=RLRED).next_to(arrow.get_start(), LEFT, buff=0.15)
         gap = Line([xpos(DRINKERS.max()) + 0.15, axis.get_y() + 0.55, 0],
                    [xpos(BILLIONAIRE) - 0.2, axis.get_y() + 0.55, 0], color=RLRED, stroke_width=2)
         gap.set_opacity(0.6)
@@ -400,7 +364,7 @@ class S04Failure(LectureScene):
 
 class S04Median(LectureScene):
     def construct(self):
-        head = txt(say("not_moved"), size=36, weight=BOLD, color=RLGREEN).to_edge(UP, buff=SAFE + 0.35)
+        head = txt(label("the_line_that_did_not_move"), size=36, weight=BOLD, color=RLGREEN).to_edge(UP, buff=SAFE + 0.35)
         n1 = N_DRINKERS + 1
         x0, x1, base = -5.5, 5.5, -2.5
         slot = (x1 - x0) / n1
@@ -421,11 +385,11 @@ class S04Median(LectureScene):
         def braces(left, right):
             bl = Brace(VGroup(*left), DOWN, buff=0.12, color=GREY_B)
             br = Brace(VGroup(*right), DOWN, buff=0.12, color=GREY_B)
-            return VGroup(bl, br, txt(say("people", n=len(left)), size=22, color=GREY_B).next_to(bl, DOWN, buff=0.1),
-                          txt(say("people", n=len(right)), size=22, color=GREY_B).next_to(br, DOWN, buff=0.1))
+            return VGroup(bl, br, txt(label("n_people", n=len(left)), size=22, color=GREY_B).next_to(bl, DOWN, buff=0.1),
+                          txt(label("n_people", n=len(right)), size=22, color=GREY_B).next_to(br, DOWN, buff=0.1))
 
         ln, lab = level(DRINK_MED)
-        tag = txt(say("before"), size=24, color=GREY_B).next_to(lab, LEFT, buff=0.25)
+        tag = txt(label("before"), size=24, color=GREY_B).next_to(lab, LEFT, buff=0.25)
         br = braces(bars[:h], bars[h:])
         t = say("s5a")
         with self.voiceover(t):
@@ -444,10 +408,10 @@ class S04Median(LectureScene):
         b_lab = txt(money(BILLIONAIRE), size=24, color=HILITE).next_to(bb, LEFT, buff=0.2).set_y(1.5)
         all_bars = VGroup(*bars, bb)
         ln2, lab2 = level(AFTER_MED)
-        tag2 = txt(say("after"), size=24, color=GREY_B).next_to(lab2, LEFT, buff=0.25)
+        tag2 = txt(label("after"), size=24, color=GREY_B).next_to(lab2, LEFT, buff=0.25)
         br2 = braces(all_bars[:h], all_bars[h + 1:])
         moved = txt(f"+{money(AFTER_MED - DRINK_MED)}", size=28, color=RLGREEN).next_to(lab2, RIGHT, buff=0.35)
-        mean_note = txt(f"{say('mean')}:  {money(DRINK_MEAN)}  →  {money(AFTER_MEAN)}", size=24, color=RLRED)
+        mean_note = txt(f"{label('mean', 1)}:  {money(DRINK_MEAN)}  →  {money(AFTER_MEAN)}", size=24, color=RLRED)
         mean_note.next_to(head, DOWN, buff=0.3)
         with self.voiceover(say("s5b")):
             self.play(GrowFromEdge(bb, DOWN), run_time=1.0)
@@ -456,7 +420,7 @@ class S04Median(LectureScene):
                       Transform(ln, ln2), FadeTransform(lab, lab2), FadeTransform(tag, tag2), run_time=1.2)
             self.play(FadeIn(moved, shift=UP * 0.2), run_time=0.6)
 
-        name = txt(say("is_median"), size=34, weight=BOLD, color=HILITE).move_to(mean_note)
+        name = txt(label("that_line_is_the_median"), size=34, weight=BOLD, color=HILITE).move_to(mean_note)
         with self.voiceover(say("s5c")):
             self.play(FadeOut(mean_note), FadeIn(name), Indicate(ln, color=RLGREEN), run_time=1.2)
             self.wait(1.0)
@@ -471,8 +435,8 @@ class S04HandsOn(LectureScene):
                         .move_to([x, base + v * k / 2, 0]) for x, v in zip(xs, NINE)])
         nums = VGroup(*[txt(str(v), size=30, weight=BOLD).next_to(b, UP, buff=0.12) for v, b in zip(NINE, bars)])
         floor = Line([xs[0] - 0.6, base, 0], [xs[-1] + 0.6, base, 0], color=GREY_B, stroke_width=2)
-        unit = txt(say("unit"), size=22, color=GREY_B).next_to(floor, DOWN, buff=0.2)
-        card = pause_card([say("task1"), say("task2")]).to_edge(UP, buff=SAFE + 0.3)
+        unit = txt(label("salaries_in_thousands_of_dollars"), size=22, color=GREY_B).next_to(floor, DOWN, buff=0.2)
+        card = pause_card([label("we_work_out_the_mean_nine"), label("we_count_how_many_earn_less")]).to_edge(UP, buff=SAFE + 0.3)
 
         with self.voiceover(say("s6a")):
             self.play(FadeIn(card), Create(floor), run_time=0.8)
@@ -483,8 +447,8 @@ class S04HandsOn(LectureScene):
         ym = base + NINE_MEAN * k
         line = Line([xs[0] - 0.6, ym, 0], [xs[-1] + 0.6, ym, 0], color=RLRED, stroke_width=4)
         sums = VGroup(
-            txt(f"{say('total')}  =  {' + '.join(map(str, NINE))}  =  {NINE_SUM}", size=30),
-            txt(f"{say('mean')}  =  {NINE_SUM} ÷ {len(NINE)}  =  {NINE_MEAN:.3f}", size=34, color=RLRED),
+            txt(f"{label('total', 1)}  =  {' + '.join(map(str, NINE))}  =  {NINE_SUM}", size=30),
+            txt(f"{label('mean', 1)}  =  {NINE_SUM} ÷ {len(NINE)}  =  {NINE_MEAN:.3f}", size=34, color=RLRED),
         ).arrange(DOWN, buff=0.3).to_edge(UP, buff=SAFE + 0.4)
         flat = VGroup(*[Rectangle(width=0.72, height=NINE_MEAN * k, stroke_width=0, fill_color=RLBLUE,
                                   fill_opacity=1).move_to([x, base + NINE_MEAN * k / 2, 0]) for x in xs])
@@ -500,7 +464,7 @@ class S04HandsOn(LectureScene):
         assert len(lows) == NINE_BELOW
         counts = VGroup(*[txt(str(j + 1), size=28, weight=BOLD, color=HILITE).next_to(saved[i], UP, buff=0.12)
                           for j, i in enumerate(lows)])
-        sting = txt(say("below", k=NINE_BELOW, n=len(NINE)), size=34, weight=BOLD, color=HILITE)
+        sting = txt(label("k_of_the_n_earn_less", k=NINE_BELOW, n=len(NINE)), size=34, weight=BOLD, color=HILITE)
         sting.move_to([0, 0.95, 0])
         with self.voiceover(say("s6c")):
             self.play(Transform(bars, saved), run_time=1.0)
@@ -514,7 +478,7 @@ class S04HandsOn(LectureScene):
 class S04ToMedian(LectureScene):
     def construct(self):
         ln = DashedLine(LEFT * 3, RIGHT * 3, color=RLGREEN, stroke_width=6)
-        name = txt(say("median"), size=56, weight=BOLD, color=RLGREEN).next_to(ln, UP, buff=0.4)
+        name = txt(label("median", 1), size=56, weight=BOLD, color=RLGREEN).next_to(ln, UP, buff=0.4)
         with self.voiceover(say("s7")):
             self.play(Create(ln), FadeIn(name, shift=UP * 0.3), run_time=1.0)
             self.wait(0.6)

@@ -29,8 +29,8 @@ class S02Tree(LectureScene):
     def construct(self):
         self.section_card(2)
         T = student_tree()
-        s1 = txt(w("stage 1: bike?", "1-bosqich: velosiped"), size=24, color=GREY_B).move_to([-2.2, 3.25, 0])
-        s2 = txt(w("stage 2: bus?", "2-bosqich: avtobus"), size=24, color=GREY_B).move_to([1.4, 3.25, 0])
+        s1 = txt(label("stage_1_bike_q"), size=24, color=GREY_B).move_to([-2.2, 3.25, 0])
+        s2 = txt(label("stage_2_bus_q"), size=24, color=GREY_B).move_to([1.4, 3.25, 0])
         with self.say("2.1") as (tr, t):
             self.play(FadeIn(T["root"], shift=RIGHT * 0.3), run_time=0.6)
             self.cue(tr, t, {"en": "first", "uz": "avval"})
@@ -51,7 +51,7 @@ class S02Tree(LectureScene):
                 self.play(*[Create(T["e2"][i][j]) for j in range(2)], *[FadeIn(T["n2"][i][j]) for j in range(2)],
                           *[FadeIn(T["p2"][i][j]) for j in range(2)], run_time=0.9)
 
-        rule = txt(w("multiply along the path", "yoʻl boʻylab koʻpaytiramiz"), size=30, weight=BOLD, color=HILITE)
+        rule = txt(label("multiply_along_the_path"), size=30, weight=BOLD, color=HILITE)
         rule.move_to([-2.0, -3.25, 0])
         path = [T["e1"][0], T["e2"][0][0]]
         with self.say("2.4") as (tr, t):
@@ -78,8 +78,9 @@ class S02Tree(LectureScene):
 
 class S02LanguageModel(LectureScene):
     def construct(self):
-        words = {"en": ("The", ("cat", ("sat", "ran")), ("dog", ("barked", "slept"))),
-                 "uz": ("Bugun", ("havo", ("issiq", "sovuq")), ("men", ("keldim", "ketdim")))}[LANG]
+        # each language has its own example sentence, not a translation
+        words = (label("lm_w1"), (label("lm_w2a"), (label("lm_w3a"), label("lm_w3b"))),
+                 (label("lm_w2b"), (label("lm_w3c"), label("lm_w3d"))))
         root = node(words[0], size=30).move_to([-4.6, 0.6, 0])
         lvl1, lvl2, e1, e2 = [], [], [], []
         for i, (wd, kids) in enumerate(words[1:]):
@@ -106,8 +107,8 @@ class S02LanguageModel(LectureScene):
 
 class S02HandsOn(LectureScene):
     def construct(self):
-        pc = pause_card([w("Bus first, then bike", "Avval avtobus, keyin velosiped"),
-                         w("What goes on the first two branches?", "Birinchi ikki shoxda qanday sonlar turadi?")])
+        pc = pause_card([label("bus_first_then_bike"),
+                         label("what_goes_on_the_first_two_q")])
         pc.move_to([-2.6, 0.4, 0])
         if pc.width > 7.4:
             pc.scale_to_fit_width(7.4).move_to([-2.6, 0.4, 0])
@@ -141,7 +142,7 @@ class S02HandsOn(LectureScene):
 
         T = student_tree()
         g = tree_group(T)
-        dep = txt(w("stage 2 depends on stage 1", "2-bosqich 1-bosqichga bogʻliq"), size=30, weight=BOLD,
+        dep = txt(label("stage_2_depends_on_stage_1"), size=30, weight=BOLD,
                   color=HILITE).move_to([2.6, 3.2, 0])
         with self.say("2.10") as (tr, t):
             self.play(FadeIn(g), run_time=0.8)

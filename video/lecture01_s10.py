@@ -32,8 +32,8 @@ def small_set(title, items, color=RLBLUE):
 def prob_scale(y=-2.3):
     ln = NumberLine(x_range=[0, 1, 0.5], length=9, include_numbers=False, color=GREY_B).move_to([0, y, 0])
     nums = VGroup(*[txt(s, size=26).next_to(ln.n2p(v), DOWN, buff=0.2) for v, s in ((0, "0"), (0.5, "½"), (1, "1"))])
-    words = VGroup(txt(w("impossible", "imkonsiz"), size=22, color=GREY_B).next_to(nums[0], DOWN, buff=0.12),
-                   txt(w("certain", "aniq"), size=22, color=GREY_B).next_to(nums[2], DOWN, buff=0.12))
+    words = VGroup(txt(label("impossible"), size=22, color=GREY_B).next_to(nums[0], DOWN, buff=0.12),
+                   txt(label("certain"), size=22, color=GREY_B).next_to(nums[2], DOWN, buff=0.12))
     return ln, nums, words
 
 
@@ -54,7 +54,7 @@ def venn_icon(kind):
 class S10Omega(LectureScene):
     def construct(self):
         self.section_card(10)
-        q1 = box(w("Rain tomorrow?", "Ertaga yomgʻir?"), color=RLBLUE, width=4.4, height=1.1, size=30)
+        q1 = box(label("rain_tomorrow_q"), color=RLBLUE, width=4.4, height=1.1, size=30)
         q2 = VGroup(die_face(6, size=0.9), txt("?", size=44, weight=BOLD, color=HILITE)).arrange(RIGHT, buff=0.25)
         q2 = VGroup(RoundedRectangle(corner_radius=0.12, width=4.4, height=1.1, stroke_color=RLBLUE, stroke_width=3),
                     q2)
@@ -78,7 +78,7 @@ class S10Omega(LectureScene):
         self.clear_all(run_time=0.5)
 
         rect, faces, lab = omega_set()
-        name = txt(w("sample space", "namunalar fazosi"), size=30, color=LB).next_to(rect, UP, buff=0.2)
+        name = txt(label("sample_space"), size=30, color=LB).next_to(rect, UP, buff=0.2)
         with self.say("10.2") as (tr, t):
             self.play(Create(rect), run_time=0.8)
             self.cue(tr, t, {"en": "For a die", "uz": "Kubikda"})
@@ -86,8 +86,8 @@ class S10Omega(LectureScene):
             self.cue(tr, t, {"en": "We call", "uz": "Buni"})
             self.play(FadeIn(name), Write(lab), run_time=0.9)
 
-        coin = small_set(w("coin", "tanga"), [w("heads", "gerb"), w("tails", "raqam")]).move_to([-3.4, -1.9, 0])
-        rain = small_set(w("tomorrow", "ertangi kun"), [w("rain", "yomgʻir"), w("no rain", "yomgʻir yoʻq")])
+        coin = small_set(label("coin"), [label("heads"), label("tails")]).move_to([-3.4, -1.9, 0])
+        rain = small_set(label("tomorrow"), [label("rain"), label("no_rain")])
         rain.move_to([3.2, -1.9, 0])
         with self.say("10.3") as (tr, t):
             self.play(FadeIn(coin, shift=UP * 0.2), run_time=0.8)
@@ -100,11 +100,11 @@ class S10Event(LectureScene):
     def construct(self):
         rect, faces, lab = omega_set(y=1.6)
         self.add(rect, faces, lab)
-        q = txt(w("Even number?", "Juft son?"), size=32, weight=BOLD, color=HILITE).to_edge(UP, buff=SAFE + 0.15)
+        q = txt(label("even_number_q"), size=32, weight=BOLD, color=HILITE).to_edge(UP, buff=SAFE + 0.15)
         ring = Ellipse(width=4.4, height=1.6, color=HILITE, stroke_width=4).move_to([0, -0.7, 0])
         evens = VGroup(*[faces[n - 1].copy() for n in EVEN])      # A is a subset: Ω keeps its six
         a_lab = MathTex("A", font_size=52, color=HILITE).next_to(ring, LEFT, buff=0.3)
-        ev_word = txt(w("event", "hodisa"), size=26, color=HILITE).next_to(ring, RIGHT, buff=0.3)
+        ev_word = txt(label("event"), size=26, color=HILITE).next_to(ring, RIGHT, buff=0.3)
         with self.say("10.4") as (tr, t):
             self.cue(tr, t, {"en": "Will the die", "uz": "Kubik juft"})
             self.play(FadeIn(q), run_time=0.6)
@@ -141,8 +141,8 @@ class S10Event(LectureScene):
 class S10Sets(LectureScene):
     def construct(self):
         rows = VGroup()
-        for kind, word, sym in (("or", w("or", "yoki"), r"A \cup B"), ("and", w("and", "va"), r"A \cap B"),
-                                ("not", w("not", "emas"), r"A^{c}")):
+        for kind, word, sym in (("or", label("or"), r"A \cup B"), ("and", label("and"), r"A \cap B"),
+                                ("not", label("not"), r"A^{c}")):
             r = VGroup(txt(f"«{word}»", size=32, weight=BOLD), MathTex(r"\rightarrow", font_size=44),
                        MathTex(sym, font_size=48, color=HILITE), venn_icon(kind))
             r.arrange(RIGHT, buff=0.55)
@@ -153,7 +153,7 @@ class S10Sets(LectureScene):
             x = max(r[col].get_center()[0] for r in rows)
             for r in rows:
                 r[col].set_x(x)
-        q = txt(w("Why sets?", "Nima uchun toʻplamlar?"), size=34, weight=BOLD).to_edge(UP, buff=SAFE + 0.3)
+        q = txt(label("why_sets_q"), size=34, weight=BOLD).to_edge(UP, buff=SAFE + 0.3)
         with self.say("10.7") as (tr, t):
             self.play(FadeIn(q), run_time=0.6)
             self.cue(tr, t, 1)
@@ -162,7 +162,7 @@ class S10Sets(LectureScene):
             self.play(Indicate(VGroup(*[r[2] for r in rows]), color=HILITE), run_time=1.0)
         self.clear_all(run_time=0.5)
 
-        classes = [w("cat", "mushuk"), w("dog", "it"), w("bird", "qush")]
+        classes = [label("cat"), label("dog"), label("bird")]
         probs = [0.7, 0.2, 0.1]                     # an illustration, not a model's real output
         assert abs(sum(probs) - 1) < 1e-12
         base, hk, xs = -2.2, 4.0, [-2.6, 0, 2.6]
@@ -171,8 +171,8 @@ class S10Sets(LectureScene):
         names = VGroup(*[txt(c, size=28).next_to([x, base, 0], DOWN, buff=0.25) for x, c in zip(xs, classes)])
         vals = VGroup(*[txt(f"{p:.1f}", size=30, weight=BOLD).next_to(b, UP, buff=0.12) for b, p in zip(bars, probs)])
         floor = Line([-3.8, base, 0], [3.8, base, 0], color=GREY_B, stroke_width=2)
-        head = txt(w("classifier output", "klassifikator natijasi"), size=32, weight=BOLD).to_edge(UP, buff=SAFE + 0.3)
-        tag = txt(w("illustration", "misol"), size=22, color=GREY_B).next_to(head, DOWN, buff=0.15)
+        head = txt(label("classifier_output"), size=32, weight=BOLD).to_edge(UP, buff=SAFE + 0.3)
+        tag = txt(label("illustration", 1), size=22, color=GREY_B).next_to(head, DOWN, buff=0.15)
         total = MathTex(r"0.7 + 0.2 + 0.1 = 1", font_size=40, color=HILITE).move_to([4.6, 1.4, 0])
         with self.say("10.8") as (tr, t):
             self.play(FadeIn(head), FadeIn(tag), Create(floor), FadeIn(names), run_time=0.8)
@@ -186,8 +186,7 @@ class S10Sets(LectureScene):
 class S10HandsOn(LectureScene):
     def construct(self):
         rect, faces, lab = omega_set(y=0.2)
-        task = pause_card([w("Write the event “more than four”; find its probability.",
-                             "«Toʻrtdan katta son» hodisasini yozamiz, ehtimolini topamiz.")])
+        task = pause_card([label("write_the_event_more_than_four")])
         task.scale(0.85).to_edge(UP, buff=SAFE + 0.15)
         with self.say("10.9") as (tr, t):
             self.play(FadeIn(rect), FadeIn(faces), FadeIn(lab), run_time=0.7)
@@ -213,7 +212,7 @@ class S10HandsOn(LectureScene):
         slots = VGroup(*[RoundedRectangle(corner_radius=0.15, width=3.2, height=1.4, stroke_color=RLBLUE,
                                           stroke_width=3) for _ in range(3)]).arrange(RIGHT, buff=0.5)
         nums = VGroup(*[txt(str(k), size=48, weight=BOLD, color=LB).move_to(s) for k, s in enumerate(slots, 1)])
-        head = txt(w("3 rules", "3 ta qoida"), size=40, weight=BOLD).next_to(slots, UP, buff=0.6)
+        head = txt(label("3_rules"), size=40, weight=BOLD).next_to(slots, UP, buff=0.6)
         with self.say("10.11"):
             self.play(FadeIn(head), LaggedStart(*[Create(s) for s in slots], lag_ratio=0.25), run_time=1.2)
             self.play(LaggedStart(*[FadeIn(n, scale=0.6) for n in nums], lag_ratio=0.25), run_time=0.9)

@@ -104,7 +104,7 @@ class S07Groups(LectureScene):
 
 class S07Formula(LectureScene):
     def construct(self):
-        head = self.heading(w("The law of total probability", "Toʻla ehtimollik formulasi"), color=LBLUE)
+        head = self.heading(label("the_law_of_total_probability"), color=LBLUE)
         f = MathTex(r"P(B)", "=", r"\sum_{i=1}^{k}", r"P(B \mid A_i)", r"\,P(A_i)", font_size=60)
         f.next_to(head, DOWN, buff=0.45)
         # the partition: groups that never overlap and together cover everything
@@ -165,7 +165,7 @@ class S07Formula(LectureScene):
         accs = (0.9, 0.3)                    # illustrative bar heights, drawn without numbers
         ai = VGroup()
         x = gx0
-        for wd, a, lab in zip((big_w, small_w), accs, (w("large group", "katta guruh"), w("small group", "kichik guruh"))):
+        for wd, a, lab in zip((big_w, small_w), accs, (label("large_group"), label("small_group"))):
             W = wd * (gx1 - gx0)
             fr = Rectangle(width=W - 0.08, height=gh, stroke_color=GREY_D, stroke_width=2).move_to([x + W / 2, gb + gh / 2, 0])
             fi = Rectangle(width=W - 0.08, height=a * gh, stroke_width=0, fill_color=RLGREEN if a > 0.5 else RLRED,
@@ -174,9 +174,9 @@ class S07Formula(LectureScene):
             x += W
         overall = big_w * accs[0] + small_w * accs[1]
         ov = DashedLine([gx0, gb + overall * gh, 0], [gx1 + 0.3, gb + overall * gh, 0], color=WHITE, stroke_width=4)
-        ovl = txt(w("overall accuracy", "umumiy aniqlik"), size=26).next_to(ov, RIGHT, buff=0.15)
-        ill = txt(w("illustration", "tasvir uchun"), size=20, color=GREY_B).next_to(ai, DOWN, buff=0.55).set_x(-1.0)
-        ahead = self.heading(w("Model accuracy", "Model aniqligi"), color=LBLUE)
+        ovl = txt(label("overall_accuracy"), size=26).next_to(ov, RIGHT, buff=0.15)
+        ill = txt(label("illustration"), size=20, color=GREY_B).next_to(ai, DOWN, buff=0.55).set_x(-1.0)
+        ahead = self.heading(label("model_accuracy"), color=LBLUE)
         with self.say("7.7") as (tr, t):
             self.play(FadeIn(ahead), *[FadeIn(g[0]) for g in ai], *[FadeIn(g[2]) for g in ai], FadeIn(ill), run_time=0.8)
             self.play(*[GrowFromEdge(g[1], DOWN) for g in ai], run_time=0.9)
@@ -191,7 +191,7 @@ class S07HandsOn(LectureScene):
     def construct(self):
         b = bars((P_BIKE, P_NOBIKE))
         fl = floor()
-        task = pause_card([w("P(no bus) with the same formula = ?", "Shu formula bilan: avtobusda qatnamaslik ehtimoli = ?")])
+        task = pause_card([label("p_no_bus_with_the_same_q")])
         task.scale(0.85)
         if task.width > 12.4:
             task.scale_to_fit_width(12.4)

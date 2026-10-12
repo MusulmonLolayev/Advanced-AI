@@ -46,19 +46,19 @@ class S05Bars(LectureScene):
     def construct(self):
         self.section_card(5)
         rule = VGroup(MathTex(r"P(B \mid A)", "=", "P(B)", font_size=64),
-                      txt(w("independent", "erkli"), size=34, weight=BOLD, color=RLGREEN)).arrange(DOWN, buff=0.4)
+                      txt(label("independent"), size=34, weight=BOLD, color=RLGREEN)).arrange(DOWN, buff=0.4)
         with self.say("5.1") as (tr, t):
             self.play(Write(rule[0]), run_time=1.0)
             self.cue(tr, t, {"en": "In other words", "uz": "Yaʼni"})
             self.play(Indicate(rule[0], color=HILITE, scale_factor=1.1), FadeIn(rule[1]), run_time=0.9)
 
         floor = Line([-5.0, BASE, 0], [5.0, BASE, 0], color=GREY_B, stroke_width=2)
-        mid = pbar(N["p_bus"], 0, BUS_C, w("all students", "hamma talabalar"))
+        mid = pbar(N["p_bus"], 0, BUS_C, label("all_students"))
         left = pbar(N["p_bus_given_bike"], -3.4, BUS_C, BIKE)
         right = pbar(N["p_bus_given_nobike"], 3.4, BUS_C, NOBIKE)
         level = DashedLine([-4.6, BASE + N["p_bus"] * H, 0], [4.6, BASE + N["p_bus"] * H, 0],
                            color=LBLUE, stroke_width=3)
-        head = self.heading(w("Takes the bus", "Avtobusda qatnaydi"), color=BUS_C)
+        head = self.heading(label("takes_the_bus"), color=BUS_C)
         with self.say("5.2") as (tr, t):
             self.play(FadeOut(rule[1]), rule[0].animate.scale(0.6).to_corner(UR, buff=SAFE + 0.3), FadeIn(head),
                       Create(floor), run_time=0.7)
@@ -75,7 +75,7 @@ class S05Bars(LectureScene):
                      color=RLRED, stroke_width=6, max_tip_length_to_length_ratio=0.35)
         up = Arrow([4.35, lvl_y - 0.05, 0], [4.35, BASE + N["p_bus_given_nobike"] * H - 0.05, 0], buff=0,
                    color=RLRED, stroke_width=6, max_tip_length_to_length_ratio=0.25)
-        verdict = txt(w("not independent", "erkli emas"), size=34, weight=BOLD, color=RLRED)
+        verdict = txt(label("not_independent"), size=34, weight=BOLD, color=RLRED)
         verdict.move_to([0, 2.15, 0])
         with self.say("5.3") as (tr, t):
             self.play(GrowArrow(down), GrowArrow(up), run_time=0.9)
@@ -94,7 +94,7 @@ class S05Glasses(LectureScene):
             sq.add(Square(side, stroke_width=0, fill_color=BUS_C if i < N["glasses_bus"] else NOBUS_C,
                           fill_opacity=1).move_to([c * (side + gap), -r * (side + gap), 0]))
         sq.move_to([-3.3, 0.4, 0])
-        cap = txt(w("{n} wear glasses", "{n} talaba koʻzoynak taqadi").format(n=N["glasses"]), size=26)
+        cap = txt(label("n_wear_glasses").format(n=N["glasses"]), size=26)
         cap.next_to(icon, RIGHT, buff=0.35)
         calc = VGroup(frac(N["glasses_bus"], N["glasses"], size=60), MathTex("=", font_size=54),
                       MathTex(dec(N["p_bus_given_glasses"]), font_size=54, color=BUS_C)).arrange(RIGHT, buff=0.3)
@@ -108,11 +108,11 @@ class S05Glasses(LectureScene):
             self.play(Write(calc), run_time=0.9)
 
         floor = Line([1.2, BASE, 0], [6.2, BASE, 0], color=GREY_B, stroke_width=2)
-        all_b = pbar(N["p_bus"], 2.4, BUS_C, w("all", "hamma"), width=1.1)
-        gl_b = pbar(N["p_bus_given_glasses"], 4.9, BUS_C, w("glasses", "koʻzoynakli"), width=1.1)
+        all_b = pbar(N["p_bus"], 2.4, BUS_C, label("all"), width=1.1)
+        gl_b = pbar(N["p_bus_given_glasses"], 4.9, BUS_C, label("glasses"), width=1.1)
         level = DashedLine([1.4, BASE + N["p_bus"] * H, 0], [6.0, BASE + N["p_bus"] * H, 0],
                            color=LBLUE, stroke_width=3)
-        verdict = txt(w("independent", "erkli"), size=34, weight=BOLD, color=RLGREEN).move_to([3.65, 2.4, 0])
+        verdict = txt(label("independent"), size=34, weight=BOLD, color=RLGREEN).move_to([3.65, 2.4, 0])
         with self.say("5.5") as (tr, t):
             self.play(Create(floor), GrowFromEdge(all_b[0], DOWN), FadeIn(all_b[1:]), run_time=0.7)
             self.play(GrowFromEdge(gl_b[0], DOWN), FadeIn(gl_b[1:]), Create(level), run_time=0.7)
@@ -123,13 +123,13 @@ class S05Glasses(LectureScene):
 
 class S05Expected(LectureScene):
     def construct(self):
-        num = txt(w("row total × column total", "qator jami × ustun jami"), size=34)
+        num = txt(label("row_total_column_total"), size=34)
         bar = Line(LEFT, RIGHT, color=WHITE, stroke_width=3).set_width(num.width + 0.3)
-        den = txt(w("grand total", "umumiy son"), size=34)
+        den = txt(label("grand_total"), size=34)
         f = VGroup(num, bar, den).arrange(DOWN, buff=0.18)
-        lhs = txt(w("expected cell =", "kutilgan katak ="), size=34, color=HILITE)
+        lhs = txt(label("expected_cell"), size=34, color=HILITE)
         formula = VGroup(lhs, f).arrange(RIGHT, buff=0.35)
-        head = self.heading(w("If independent", "Erkli boʻlsa"), color=RLGREEN)
+        head = self.heading(label("if_independent"), color=RLGREEN)
         with self.say("5.6") as (tr, t):
             self.play(FadeIn(head), run_time=0.5)
             self.cue(tr, t, {"en": "Under independence", "uz": "Erkli boʻlsa"})
@@ -141,7 +141,7 @@ class S05Expected(LectureScene):
                             font_size=46),
                     MathTex("=", font_size=44), MathTex(f"{N['expected_bike_bus']:g}", font_size=46, color=HILITE)
                     ).arrange(RIGHT, buff=0.25)
-        o1 = VGroup(txt(w("table:", "jadvalda:"), size=28, color=GREY_B),
+        o1 = VGroup(txt(label("table"), size=28, color=GREY_B),
                     MathTex(str(C["bike_bus"]), font_size=46, color=RLRED)).arrange(RIGHT, buff=0.2)
         r1 = VGroup(e1, o1).arrange(RIGHT, buff=0.6)
         gl = glasses_icon().scale(0.6)
@@ -149,7 +149,7 @@ class S05Expected(LectureScene):
                             font_size=46),
                     MathTex("=", font_size=44), MathTex(f"{N['expected_glasses_bus']:g}", font_size=46, color=HILITE)
                     ).arrange(RIGHT, buff=0.25)
-        o2 = VGroup(txt(w("observed:", "kuzatilgan:"), size=28, color=GREY_B),
+        o2 = VGroup(txt(label("observed"), size=28, color=GREY_B),
                     MathTex(str(N["glasses_bus"]), font_size=46, color=RLGREEN)).arrange(RIGHT, buff=0.2)
         r2 = VGroup(gl, e2, o2).arrange(RIGHT, buff=0.4)
         x1 = MathTex(r"\neq", font_size=50, color=RLRED)
@@ -181,14 +181,14 @@ class S05Features(LectureScene):
         bars = VGroup(*[Rectangle(width=1.2, height=2.0, stroke_width=0, fill_color=HILITE, fill_opacity=1)
                         .move_to([x, -0.6, 0]) for x in (-4.4, -2.2)])
         labs = VGroup(*[txt(s, size=24, color=GREY_B).next_to([x, -1.6, 0], DOWN, buff=0.2)
-                        for s, x in ((w("feature = 0", "xususiyat = 0"), -4.4), (w("feature = 1", "xususiyat = 1"), -2.2))])
+                        for s, x in ((label("feature_0"), -4.4), (label("feature_1"), -2.2))])
         eq = MathTex(r"P(y \mid x) = P(y)", font_size=46, color=HILITE).move_to([-3.3, 1.5, 0])
-        ylab = txt(w("share of label y", "y belgilanganlar ulushi"), size=24, color=GREY_B).next_to(eq, DOWN, buff=0.25)
+        ylab = txt(label("share_of_label_y"), size=24, color=GREY_B).next_to(eq, DOWN, buff=0.25)
         model = RoundedRectangle(corner_radius=0.2, width=2.8, height=1.6, stroke_color=LBLUE, stroke_width=3)
         model.move_to([3.6, 0, 0])
-        mlab = txt(w("model", "model"), size=30, weight=BOLD, color=LBLUE).move_to(model)
+        mlab = txt(label("model"), size=30, weight=BOLD, color=LBLUE).move_to(model)
         arr = Arrow([-0.6, 0, 0], model.get_left(), buff=0.1, color=GREY_B, stroke_width=5)
-        nothing = txt(w("learns nothing", "hech narsa oʻrganmaydi"), size=28, color=RLRED).next_to(model, DOWN, buff=0.3)
+        nothing = txt(label("learns_nothing"), size=28, color=RLRED).next_to(model, DOWN, buff=0.3)
         with self.say("5.8") as (tr, t):
             self.play(Create(floor), GrowFromEdge(bars[0], DOWN), GrowFromEdge(bars[1], DOWN), FadeIn(labs), run_time=1.0)
             self.play(Write(eq), FadeIn(ylab), run_time=0.8)
@@ -201,8 +201,8 @@ class S05Features(LectureScene):
 class S05HandsOn(LectureScene):
     def construct(self):
         T = placed(bike_bus_table(size=26, cw=2.1, head_w=2.4), [0, -1.3, 0])
-        pc = pause_card([w("Suppose bike and bus were independent.", "Velosiped va avtobus erkli boʻlsin."),
-                         w("How many students in “no bike, bus”?", "«Velosipedsiz, avtobusda» katagida nechta talaba?")])
+        pc = pause_card([label("suppose_bike_and_bus_were_independent"),
+                         label("how_many_students_in_no_bike_q")])
         pc.scale(0.82).to_edge(UP, buff=SAFE + 0.2)
         q = txt("?", size=40, weight=BOLD, color=HILITE)
         with self.say("5.9") as (tr, t):
@@ -214,7 +214,7 @@ class S05HandsOn(LectureScene):
         calc = VGroup(MathTex(r"\frac{" + f"{N['nobike']}" + r"\times" + f"{N['bus']}" + r"}{" + f"{N['n']}" + r"}",
                               font_size=50),
                       MathTex("=", font_size=48), MathTex(f"{N['expected_nobike_bus']:g}", font_size=50, color=HILITE),
-                      txt(w("table:", "jadvalda:"), size=30, color=GREY_B),
+                      txt(label("table"), size=30, color=GREY_B),
                       MathTex(str(C["nobike_bus"]), font_size=50, color=RLRED)).arrange(RIGHT, buff=0.3)
         calc.move_to([0, 2.0, 0])
         with self.say("5.10") as (tr, t):
@@ -223,7 +223,7 @@ class S05HandsOn(LectureScene):
             self.cue(tr, t, {"en": "The table says", "uz": "Jadvalda esa"})
             self.play(FadeIn(calc[3:]), Indicate(T["cell"][1][0], color=RLRED), run_time=0.7)
             self.cue(tr, t, {"en": "Dependence again", "uz": "Yana bogʻliqlik"})
-            dep = txt(w("dependent", "bogʻliq"), size=34, weight=BOLD, color=RLRED).next_to(calc, DOWN, buff=0.35)
+            dep = txt(label("dependent"), size=34, weight=BOLD, color=RLRED).next_to(calc, DOWN, buff=0.35)
             self.play(FadeIn(dep, scale=1.2), run_time=0.5)
         self.clear_all()
 
@@ -232,10 +232,10 @@ class S05HandsOn(LectureScene):
             g = VGroup(*[Square(0.5, stroke_color=color, stroke_width=3) for _ in range(4)]).arrange_in_grid(2, 2, buff=0)
             return g
         g1, g2 = mini(LBLUE).move_to([-4.0, 0.6, 0]), mini(HILITE).move_to([-1.6, 0.6, 0])
-        l1 = txt(w("group 1", "1-guruh"), size=24, color=LBLUE).next_to(g1, UP, buff=0.2)
-        l2 = txt(w("group 2", "2-guruh"), size=24, color=HILITE).next_to(g2, UP, buff=0.2)
+        l1 = txt(label("group_1"), size=24, color=LBLUE).next_to(g1, UP, buff=0.2)
+        l2 = txt(label("group_2"), size=24, color=HILITE).next_to(g2, UP, buff=0.2)
         pooled = mini(WHITE).scale(1.4).move_to([3.2, 0.6, 0])
-        lp = txt(w("pooled", "birlashtirilgan"), size=24).next_to(pooled, UP, buff=0.2)
+        lp = txt(label("pooled"), size=24).next_to(pooled, UP, buff=0.2)
         arr = Arrow([-0.8, 0.6, 0], pooled.get_left(), buff=0.25, color=GREY_B, stroke_width=5)
         flip = MathTex(r"\circlearrowleft", font_size=90, color=RLRED).next_to(pooled, DOWN, buff=0.35)
         with self.say("5.11") as (tr, t):

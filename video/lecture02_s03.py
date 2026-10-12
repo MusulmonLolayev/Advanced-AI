@@ -45,7 +45,7 @@ class S03Socks(LectureScene):
     def construct(self):
         self.section_card(3)
         d, socks = drawer_with_socks()
-        q = txt(w("P(both black) = ?", "P(ikkalasi qora) = ?"), size=36, weight=BOLD, color=HILITE).move_to([3.6, 3.0, 0])
+        q = txt(label("p_both_black_q"), size=36, weight=BOLD, color=HILITE).move_to([3.6, 3.0, 0])
         with self.say("3.1") as (tr, t):
             self.play(Create(d), run_time=0.6)
             self.play(LaggedStart(*[FadeIn(s, shift=DOWN * 0.3) for s in socks], lag_ratio=0.08), run_time=1.2)
@@ -53,14 +53,14 @@ class S03Socks(LectureScene):
             self.play(FadeIn(q, shift=DOWN * 0.2), run_time=0.6)
 
         first = socks[0]
-        r1 = VGroup(txt(w("1st black", "1-si qora"), size=28, color=GREY_B), fr(B, T)).arrange(RIGHT, buff=0.4)
+        r1 = VGroup(txt(label("1st_black"), size=28, color=GREY_B), fr(B, T)).arrange(RIGHT, buff=0.4)
         r1.move_to([3.6, 1.85, 0])
         with self.say("3.2") as (tr, t):
             self.play(first.animate.move_to([-3.0, 1.9, 0]), run_time=0.8)
             self.play(FadeIn(r1), run_time=0.5)
 
         rest = socks[1:]
-        r2 = VGroup(txt(w("2nd black | 1st black", "2-si qora | 1-si qora"), size=28, color=GREY_B),
+        r2 = VGroup(txt(label("2nd_black_1st_black"), size=28, color=GREY_B),
                     fr(B - 1, T - 1)).arrange(RIGHT, buff=0.4)
         r2.next_to(r1, DOWN, buff=0.3).align_to(r1, RIGHT)
         with self.say("3.3") as (tr, t):
@@ -81,7 +81,7 @@ class S03Socks(LectureScene):
             self.cue(tr, t, {"en": "one third", "uz": "uchdan bir"})
             self.play(Write(prod[3:]), run_time=0.7)
 
-        back = VGroup(txt(w("put back", "qaytarib"), size=28, color=LBLUE),
+        back = VGroup(txt(label("put_back"), size=28, color=LBLUE),
                       MathTex(rf"\frac{{{B}}}{{{T}}} \times \frac{{{B}}}{{{T}}} = {dec(S['with_replacement'])}",
                               font_size=48, color=LBLUE)).arrange(RIGHT, buff=0.4)
         back.next_to(prod, DOWN, buff=0.35).set_x(3.3)
@@ -93,13 +93,13 @@ class S03Socks(LectureScene):
             self.play(FadeIn(back, shift=UP * 0.2), run_time=0.8)
         self.clear_all()
 
-        left = VGroup(txt(w("without replacement", "qaytarmasdan"), size=32, weight=BOLD, color=HILITE),
+        left = VGroup(txt(label("without_replacement"), size=32, weight=BOLD, color=HILITE),
                       MathTex(rf"\frac{{{bb[0]}}}{{{bb[1]}}}", font_size=80, color=HILITE)).arrange(DOWN, buff=0.4)
-        right = VGroup(txt(w("with replacement", "qaytarib"), size=32, weight=BOLD, color=LBLUE),
+        right = VGroup(txt(label("with_replacement"), size=32, weight=BOLD, color=LBLUE),
                        MathTex(dec(S["with_replacement"]), font_size=80, color=LBLUE)).arrange(DOWN, buff=0.4)
         VGroup(left, right).arrange(RIGHT, buff=2.6).move_to(UP * 0.4)
         neq = MathTex(r"\neq", font_size=80).move_to((left[1].get_center() + right[1].get_center()) / 2)
-        dep = txt(w("the 2nd draw depends on the 1st", "2-olish 1-olishga bogʻliq"), size=30, color=GREY_B)
+        dep = txt(label("the_2nd_draw_depends_on_the"), size=30, color=GREY_B)
         dep.move_to(DOWN * 2.2)
         with self.say("3.6") as (tr, t):
             self.play(FadeIn(left, shift=RIGHT * 0.3), run_time=0.7)
@@ -114,11 +114,11 @@ class S03Split(LectureScene):
         rows = VGroup(*[RoundedRectangle(corner_radius=0.06, width=0.5, height=0.5, stroke_width=0,
                                          fill_color=LBLUE, fill_opacity=0.9) for _ in range(12)])
         rows.arrange(RIGHT, buff=0.15).move_to(UP * 1.9)
-        data_lab = txt(w("dataset", "berilganlar toʻplami"), size=28, color=GREY_B).next_to(rows, UP, buff=0.25)
+        data_lab = txt(label("dataset"), size=28, color=GREY_B).next_to(rows, UP, buff=0.25)
         train = RoundedRectangle(corner_radius=0.15, width=5.4, height=1.6, stroke_color=RLGREEN, stroke_width=3).move_to([-3.0, -1.3, 0])
         test = RoundedRectangle(corner_radius=0.15, width=3.2, height=1.6, stroke_color=HILITE, stroke_width=3).move_to([3.4, -1.3, 0])
-        tl = txt(w("training", "oʻqitish"), size=28, weight=BOLD, color=RLGREEN).next_to(train, DOWN, buff=0.2)
-        el = txt(w("test", "test"), size=28, weight=BOLD, color=HILITE).next_to(test, DOWN, buff=0.2)
+        tl = txt(label("training"), size=28, weight=BOLD, color=RLGREEN).next_to(train, DOWN, buff=0.2)
+        el = txt(label("test"), size=28, weight=BOLD, color=HILITE).next_to(test, DOWN, buff=0.2)
         to_test = {2, 6, 9, 11}
         tr_slots = [train.get_left() + RIGHT * (0.5 + 0.6 * k) for k in range(8)]
         te_slots = [test.get_left() + RIGHT * (0.5 + 0.6 * k) + UP * 0 for k in range(4)]
@@ -128,7 +128,7 @@ class S03Split(LectureScene):
                 moves.append(r.animate.move_to(te_slots[b]).set_fill(HILITE)); b += 1
             else:
                 moves.append(r.animate.move_to(tr_slots[a]).set_fill(RLGREEN)); a += 1
-        once = txt(w("each example goes to one part only", "har bir misol faqat bitta qismga tushadi"), size=26,
+        once = txt(label("each_example_goes_to_one_part"), size=26,
                    color=GREY_B).move_to(DOWN * 3.15)
         with self.say("3.7") as (tr, t):
             self.play(FadeIn(data_lab), LaggedStart(*[FadeIn(r) for r in rows], lag_ratio=0.05), run_time=0.9)
@@ -143,8 +143,8 @@ class S03Split(LectureScene):
 class S03HandsOn(LectureScene):
     def construct(self):
         d, socks = drawer_with_socks(center=(3.4, -0.4, 0), scale=0.62)
-        pc = pause_card([w("Both white?", "Ikkalasi ham oq?"),
-                         w("A matching pair: both black or both white?", "Bir xil rangli juft: ikkalasi qora yoki ikkalasi oq?")])
+        pc = pause_card([label("both_white_q"),
+                         label("a_matching_pair_both_black_or_q")])
         pc.move_to([-2.6, 0.4, 0])
         if pc.width > 7.2:
             pc.scale_to_fit_width(7.2).move_to([-2.6, 0.4, 0])
@@ -156,12 +156,12 @@ class S03HandsOn(LectureScene):
         wwu, bbu, pu = S["both_white_unreduced"], S["both_black_unreduced"], S["pair_unreduced"]
         white = MathTex(rf"\frac{{{W}}}{{{T}}} \times \frac{{{W - 1}}}{{{T - 1}}}", "=", rf"\frac{{{wwu[0]}}}{{{wwu[1]}}}",
                         font_size=50).move_to([-2.6, 1.2, 0])
-        lab_w = txt(w("both white", "ikkalasi oq"), size=28, color=GREY_B).next_to(white, LEFT, buff=0.4)
+        lab_w = txt(label("both_white"), size=28, color=GREY_B).next_to(white, LEFT, buff=0.4)
         pair = MathTex(rf"\frac{{{bbu[0]}}}{{{bbu[1]}}} + \frac{{{wwu[0]}}}{{{wwu[1]}}}", "=",
                        rf"\frac{{{pu[0]}}}{{{pu[1]}}}", r"\approx", dec(round(S["pair"], 2)), font_size=50).move_to([-2.0, -0.6, 0])
         pair[4].set_color(HILITE)
-        lab_p = txt(w("pair", "juft"), size=28, color=GREY_B).next_to(pair, LEFT, buff=0.4)
-        half = txt(w("less than half!", "yarimdan ham kam!"), size=32, weight=BOLD, color=HILITE).move_to([-2.0, -2.2, 0])
+        lab_p = txt(label("pair"), size=28, color=GREY_B).next_to(pair, LEFT, buff=0.4)
+        half = txt(label("less_than_half"), size=32, weight=BOLD, color=HILITE).move_to([-2.0, -2.2, 0])
         with self.say("3.9") as (tr, t):
             self.play(FadeOut(pc), run_time=0.4)
             self.play(FadeIn(lab_w), Write(white), run_time=1.1)

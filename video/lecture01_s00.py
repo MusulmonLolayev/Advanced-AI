@@ -4,9 +4,8 @@ from lecture01_kit import *
 
 class S00Opening(LectureScene):
     def construct(self):
-        num = txt(ui("lecture", n=1), size=64, weight=BOLD, color=RLBLUE)
-        sub = txt(w("Data, descriptive statistics and probability",
-                    "Berilganlar, tavsiflovchi statistika va ehtimollik"), size=32, color=GREY_B)
+        num = txt(label("lecture_n", n=1), size=64, weight=BOLD, color=RLBLUE)
+        sub = txt(label("data_descriptive_statistics_and_probability"), size=32, color=GREY_B)
         title = VGroup(num, sub).arrange(DOWN, buff=0.4)
         rows = VGroup(*[txt(PARTS[n], size=32) for n in (0, 1)]).arrange(DOWN, aligned_edge=LEFT, buff=0.5)
         marks = VGroup(*[Line(ORIGIN, RIGHT * 0.5, color=c, stroke_width=8).next_to(r, LEFT, buff=0.3)

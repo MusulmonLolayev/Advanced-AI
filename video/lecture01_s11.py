@@ -55,7 +55,7 @@ assert len(HEART_IDX) == C["hearts"] and len(KING_IDX) == C["kings"] and len(UNI
 class S11Complement(LectureScene):
     def construct(self):
         self.section_card(11)
-        names = [w("complement", "toʻldiruvchi"), w("addition", "qoʻshish"), w("multiplication", "koʻpaytirish")]
+        names = [label("complement"), label("addition"), label("multiplication")]
         slots = VGroup(*[chip(f"{k}. {n}", size=30) for k, n in enumerate(names, 1)])
         slots.arrange(RIGHT, buff=0.35).move_to(UP * 0.3)
         with self.say("11.1") as (tr, t):
@@ -91,8 +91,8 @@ class S11Complement(LectureScene):
             self.play(Write(eq[3:]), run_time=1.2)
 
         # Text, not \text{}: LaTeX here cannot set the Uzbek ʻ
-        rule = VGroup(txt(f"P({w('at least one', 'hech boʻlmaganda bitta')})", size=34), MathTex("=", font_size=42),
-                      txt(f"1 − P({w('none', 'hech biri')})", size=34)).arrange(RIGHT, buff=0.3)
+        rule = VGroup(txt(f"P({label("at_least_one")})", size=34), MathTex("=", font_size=42),
+                      txt(f"1 − P({label("none")})", size=34)).arrange(RIGHT, buff=0.3)
         rule.move_to(DOWN * 2.1)
         rule[2].set_color(HILITE)
         with self.say("11.3") as (tr, t):
@@ -106,7 +106,7 @@ class S11Complement(LectureScene):
 class S11Addition(LectureScene):
     def construct(self):
         cards = deck()
-        head = txt(w("2. addition", "2. qoʻshish"), size=30, weight=BOLD, color=LB).to_corner(UL, buff=SAFE + 0.15)
+        head = txt(label("2_addition"), size=30, weight=BOLD, color=LB).to_corner(UL, buff=SAFE + 0.15)
         p_h = MathTex(r"P(\heartsuit) = \tfrac{13}{52}", font_size=38, color=RLRED).move_to([0.2, 3.2, 0])
         p_k = MathTex(r"P(K) = \tfrac{4}{52}", font_size=38, color=HILITE).move_to([4.2, 3.2, 0])
         with self.say("11.4") as (tr, t):
@@ -141,7 +141,7 @@ class S11Addition(LectureScene):
 class S11Multiply(LectureScene):
     def construct(self):
         cards = deck(y=-0.85)
-        head = txt(w("3. multiplication", "3. koʻpaytirish"), size=30, weight=BOLD, color=LB)
+        head = txt(label("3_multiplication"), size=30, weight=BOLD, color=LB)
         head.to_corner(UL, buff=SAFE + 0.15)
         rule = MathTex(r"P(A \cap B)", "=", "P(A)", r"\cdot", r"P(B \mid A)", font_size=46).move_to([1.2, 3.1, 0])
         with self.say("11.7") as (tr, t):
@@ -166,7 +166,7 @@ class S11Multiply(LectureScene):
             self.cue(tr, t, {"en": "Multiply", "uz": "Koʻpaytirsak"})
             self.play(FadeIn(calc[3:]), koh[0].animate.set_fill(RLGREEN, opacity=0.9), run_time=0.9)
 
-        cond = txt(w("conditional probability → Lecture 2", "shartli ehtimollik → 2-maʼruza"), size=28, color=HILITE)
+        cond = txt(label("conditional_probability_lecture_2"), size=28, color=HILITE)
         cond.move_to([1.2, 1.55, 0])
         hl = SurroundingRectangle(rule[4], color=HILITE, buff=0.1)
         with self.say("11.9") as (tr, t):
@@ -174,9 +174,9 @@ class S11Multiply(LectureScene):
             self.play(FadeIn(cond, shift=UP * 0.15), run_time=0.7)
         self.play(FadeOut(cards), FadeOut(cond), FadeOut(hl), FadeOut(rule), FadeOut(head), run_time=0.6)
 
-        words = [w("The", "Bugun"), w("weather", "havo"), w("is", "juda"), w("hot", "issiq")]
+        words = [label("the"), label("weather"), label("is"), label("hot")]
         terms = [r"P(w_1)", r"P(w_2 \mid w_1)", r"P(w_3 \mid w_1, w_2)", r"P(w_4 \mid w_1, w_2, w_3)"]
-        parts = [r"P(\text{" + w("sentence", "gap") + r"}) =", terms[0], r"\cdot", terms[1], r"\cdot", terms[2],
+        parts = [r"P(\text{" + label("sentence") + r"}) =", terms[0], r"\cdot", terms[1], r"\cdot", terms[2],
                  r"\cdot", terms[3]]
         row = MathTex(*parts, font_size=34).move_to(DOWN * 0.9)
         row[0].set_color(HILITE)
@@ -185,7 +185,7 @@ class S11Multiply(LectureScene):
         chips.arrange(RIGHT, buff=0.6).move_to([fac.get_center()[0], 1.0, 0])
         arrows = VGroup(*[Arrow(c.get_bottom(), f.get_top(), buff=0.12, color=GREY_B, stroke_width=3,
                                 max_tip_length_to_length_ratio=0.25) for c, f in zip(chips, fac)])
-        lm = txt(w("language model", "til modeli"), size=30, weight=BOLD, color=LB).to_edge(UP, buff=SAFE + 0.3)
+        lm = txt(label("language_model"), size=30, weight=BOLD, color=LB).to_edge(UP, buff=SAFE + 0.3)
         dots = VGroup(row[2], row[4], row[6])
         total = row[0]
         with self.say("11.10") as (tr, t):
@@ -202,7 +202,7 @@ class S11HandsOn(LectureScene):
         cards = deck(y=-1.1)
         for i in UNION_IDX:
             cards[i][0].set_fill(HILITE, opacity=0.4).set_stroke(HILITE, width=2.5)
-        task = pause_card([w("P(neither a heart nor a king) = ?", "Yurak ham, qirol ham boʻlmaslik ehtimoli?")])
+        task = pause_card([label("p_neither_a_heart_nor_a_q")])
         task.scale(0.85).to_edge(UP, buff=SAFE + 0.1)
         with self.say("11.11") as (tr, t):
             self.play(LaggedStart(*[FadeIn(c) for c in cards], lag_ratio=0.01), run_time=1.0)
@@ -225,7 +225,7 @@ class S11HandsOn(LectureScene):
         top = Rectangle(width=cal.width, height=0.45, stroke_width=0, fill_color=RLRED, fill_opacity=1)
         top.next_to(cal, UP, buff=0.06)
         hit = [9, 23]
-        name = txt(w("birthdays", "tugʻilgan kun"), size=36, weight=BOLD).next_to(top, UP, buff=0.4)
+        name = txt(label("birthdays"), size=36, weight=BOLD).next_to(top, UP, buff=0.4)
         with self.say("11.13"):
             self.play(FadeIn(top), LaggedStart(*[FadeIn(s) for s in cal], lag_ratio=0.02), FadeIn(name), run_time=1.2)
             self.play(*[cal[i].animate.set_fill(HILITE, opacity=0.9) for i in hit], run_time=0.7)

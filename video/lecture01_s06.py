@@ -79,8 +79,8 @@ def squares(devs, unit, y_bottom):
 class S06Commute(LectureScene):
     def construct(self):
         self.section_card(6)
-        bus = row(BUS, 1.3, w("bus", "avtobus"))
-        car = row(CAR, -1.4, w("car", "mashina"))
+        bus = row(BUS, 1.3, label("bus"))
+        car = row(CAR, -1.4, label("car"))
 
         t = line("6.1")
         with self.voiceover(t) as tr:
@@ -95,7 +95,7 @@ class S06Commute(LectureScene):
             self.play(LaggedStart(*[FadeIn(d, shift=DOWN * 0.4) for d in car["dots"]], lag_ratio=0.3),
                       FadeIn(car["vals"]), run_time=1.6)
 
-        mtx = [txt(f"{w('mean', 'oʻrtacha')} = {MEAN:g}", size=24, color=RLRED).next_to(r["mline"], UP, buff=0.1)
+        mtx = [txt(f"{label("mean", 1)} = {MEAN:g}", size=24, color=RLRED).next_to(r["mline"], UP, buff=0.1)
                for r in (bus, car)]
         t = line("6.3")
         with self.voiceover(t) as tr:
@@ -106,9 +106,9 @@ class S06Commute(LectureScene):
         i42 = CAR.index(max(CAR))
         late = Arrow([car["mx"](MEAN), car["y"] + 0.75, 0], [car["mx"](max(CAR)), car["y"] + 0.75, 0], buff=0,
                      color=HILITE, stroke_width=5, max_tip_length_to_length_ratio=0.12)
-        late_t = txt(f"+{L['car_worst_late']:g} {w('min late', 'daqiqa kech')}", size=24, color=HILITE)
+        late_t = txt(f"+{L['car_worst_late']:g} {label("min_late")}", size=24, color=HILITE)
         late_t.next_to(late, UP, buff=0.1)
-        q = self.heading(w("How spread out?", "Qanchalik tarqoq?"), color=HILITE)
+        q = self.heading(label("how_spread_out_q"), color=HILITE)
         t = line("6.4")
         with self.voiceover(t) as tr:
             self.play(car["dots"][i42].animate.set_color(HILITE).scale(1.4), run_time=0.6)
@@ -145,7 +145,7 @@ class S06Commute(LectureScene):
         add = MathTex(" + ".join(f"{v:g}" for v in L["car_sq"]) + f" = {L['car_ss']:g}", font_size=40)
         div = MathTex(rf"s^2 = \frac{{{L['car_ss']:g}}}{{n-1}} = \frac{{{L['car_ss']:g}}}{{4}} = {L['car_var']:g}",
                       font_size=44, color=HILITE)
-        name = txt(w("variance", "dispersiya"), size=34, weight=BOLD, color=HILITE)
+        name = txt(label("variance"), size=34, weight=BOLD, color=HILITE)
         top = VGroup(add, div).arrange(DOWN, buff=0.25).to_edge(UP, buff=SAFE + 0.1)
         t = line("6.7")
         with self.voiceover(t) as tr:
@@ -161,9 +161,9 @@ class S06Commute(LectureScene):
 
 class S06BusHandsOn(LectureScene):
     def construct(self):
-        bus = row(BUS, -1.2, w("bus", "avtobus"), lo=27, hi=33, step=1, r=0.16)
-        mt = txt(f"{w('mean', 'oʻrtacha')} = {MEAN:g}", size=24, color=RLRED).next_to(bus["mline"], UP, buff=0.1)
-        pc = pause_card([w("We work out the bus's variance.", "Avtobusning dispersiyasini hisoblaymiz.")])
+        bus = row(BUS, -1.2, label("bus"), lo=27, hi=33, step=1, r=0.16)
+        mt = txt(f"{label("mean", 1)} = {MEAN:g}", size=24, color=RLRED).next_to(bus["mline"], UP, buff=0.1)
+        pc = pause_card([label("we_work_out_the_bus_s")])
         pc.to_edge(UP, buff=SAFE + 0.3)
         with self.say("6.8"):
             self.play(FadeIn(pc), run_time=0.7)
@@ -189,8 +189,8 @@ class S06BusHandsOn(LectureScene):
 
 class S06Std(LectureScene):
     def construct(self):
-        bus = row(BUS, 0.3, w("bus", "avtobus"))
-        car = row(CAR, -2.2, w("car", "mashina"))
+        bus = row(BUS, 0.3, label("bus"))
+        car = row(CAR, -2.2, label("car"))
         self.play(FadeIn(everything(bus)), FadeIn(everything(car)), run_time=0.8)
 
         def band(r, s, color):
@@ -199,11 +199,11 @@ class S06Std(LectureScene):
             rect.move_to([(a + b) / 2, r["y"] + 0.48, 0])
             return rect
         bands = [band(bus, L["bus_std"], RLGREEN), band(car, L["car_std"], HILITE)]
-        stds = [txt(f"s ≈ {L['bus_std']:.2f} {w('min', 'daqiqa')}", size=26, color=RLGREEN),
-                txt(f"s ≈ {L['car_std']:.2f} {w('min', 'daqiqa')}", size=26, color=HILITE)]
+        stds = [txt(f"s ≈ {L['bus_std']:.2f} {label("minutes")}", size=26, color=RLGREEN),
+                txt(f"s ≈ {L['car_std']:.2f} {label("minutes")}", size=26, color=HILITE)]
         for st, r in zip(stds, (bus, car)):
             st.move_to([r["mx"](MEAN) + 3.6, r["y"] + 1.3, 0])
-        unit = MathTex(r"s^2:\ \text{" + w("min", "daqiqa") + r"}^2", font_size=44).to_edge(UP, buff=SAFE + 0.3)
+        unit = MathTex(r"s^2:\ \text{" + label("minutes") + r"}^2", font_size=44).to_edge(UP, buff=SAFE + 0.3)
         root = MathTex(r"s = \sqrt{s^2}", font_size=48).to_edge(UP, buff=SAFE + 0.3)
         roots = MathTex(rf"\sqrt{{{L['car_var']:g}}} \approx {L['car_std']:.2f}", r"\qquad",
                         rf"\sqrt{{{L['bus_var']:g}}} \approx {L['bus_std']:.2f}", font_size=40)
@@ -220,7 +220,7 @@ class S06Std(LectureScene):
         formula = MathTex(r"s^2 = \frac{\sum_{i=1}^{n} (x_i - ", r"\bar{x}", r")^2}{", r"n - 1", "}", font_size=48)
         formula.to_edge(UP, buff=SAFE + 0.2).set_x(-1.5)
         formula[3].set_color(HILITE)
-        note = txt(w("x̄ comes from this same sample", "x̄ shu tanlanmaning oʻzidan"), size=24, color=RLGREEN)
+        note = txt(label("x_comes_from_this_same_sample"), size=24, color=RLGREEN)
         note.next_to(formula, RIGHT, buff=0.5).shift(UP * 0.25)
         t = line("6.11")
         with self.voiceover(t) as tr:
@@ -231,10 +231,10 @@ class S06Std(LectureScene):
             self.cue(tr, t, {"en": "Dividing", "uz": "n minus birga boʻlib"})
             self.play(Indicate(formula[3], color=HILITE, scale_factor=1.3), run_time=0.9)
 
-        tags = [txt(w("steady", "barqaror"), size=26, color=RLGREEN), txt(w("jumpy", "beqaror"), size=26, color=HILITE)]
+        tags = [txt(label("steady"), size=26, color=RLGREEN), txt(label("jumpy"), size=26, color=HILITE)]
         for tg, r in zip(tags, (bus, car)):
             tg.next_to(r["vals"], DOWN, buff=0.15)
-        cap = txt(w("same mean, different variance", "bir xil oʻrtacha, har xil dispersiya"), size=32, weight=BOLD)
+        cap = txt(label("same_mean_different_variance"), size=32, weight=BOLD)
         cap.to_edge(UP, buff=SAFE + 0.4)
         t = line("6.12")
         with self.voiceover(t) as tr:
