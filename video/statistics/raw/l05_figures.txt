@@ -1,0 +1,50 @@
+Population: pastries per order
+  mu = 0.4000   var = 0.4400   sigma = 0.663325
+
+Figure 1: sampling distribution of the mean, n = 1, 2, 5, 30 …
+  n= 1  SE=0.6633  P(mean within 1 SE) = 0.9000  support = 3 values
+  n= 2  SE=0.4690  P(mean within 1 SE) = 0.7700  support = 5 values
+  n= 5  SE=0.2966  P(mean within 1 SE) = 0.6737  support = 11 values
+  n=30  SE=0.1211  P(mean within 1 SE) = 0.6640  support = 61 values
+✓ clt_mle_sampling_distribution.pdf
+✓ clt_mle_sampling_distribution.svg
+
+Figure 2: standard error against sample size …
+✓ clt_mle_standard_error.pdf
+✓ clt_mle_standard_error.svg
+  n=  1  SE = 0.6633
+  n= 10  SE = 0.2098
+  n= 40  SE = 0.1049
+  n=160  SE = 0.0524
+
+Figure 3: a heavy tail slows the CLT down …
+  office-order population: mu = 3.3500  var = 71.0275  sigma = 8.4278
+  Pastries per order (no heavy tail): skew(X) = 1.3979,  skew of mean at n=30 = 0.2552
+  clump spacing = 1.286
+  Coffees per order (1 in 20 is an office run): skew(X) = 4.0977,  skew of mean at n=30 = 0.7481
+✓ clt_mle_heavy_tail.pdf
+✓ clt_mle_heavy_tail.svg
+
+Figure 4: Bernoulli likelihood from 200 orders …
+  p_hat = 0.3300
+  max log-likelihood = -126.8357
+  likelihood at p_hat = 10^(-55.08)
+    p=0.25  log-lik = -130.0448   relative likelihood = 0.0404
+    p=0.30  log-lik = -127.2566   relative likelihood = 0.6564
+    p=0.33  log-lik = -126.8357   relative likelihood = 1.0000
+    p=0.40  log-lik = -128.9258   relative likelihood = 0.1237
+✓ clt_mle_bernoulli_likelihood.pdf
+✓ clt_mle_bernoulli_likelihood.svg
+
+Figure 5: Gaussian MLE on espresso shot volumes …
+  n = 40   x-bar = 29.8773
+  sigma-hat (MLE, /n)      = 1.2696
+  s  (Lecture 1, /(n-1))   = 1.2858
+          MLE fit:  mu=29.88  sigma=1.27   log-lik =   -66.307
+   centre too low:  mu=28.60  sigma=1.50   log-lik =   -81.807
+         too wide:  mu=29.88  sigma=3.20   log-lik =   -86.432
+  MLE beats the next best by 15.50 in log-likelihood
+✓ clt_mle_gaussian_fit.pdf
+✓ clt_mle_gaussian_fit.svg
+
+All Lecture 5 figures written to /home/musulmon/teaching/Advanced AI/statistics/figures/clt_mle
