@@ -168,6 +168,33 @@ def compute():
     # section 10: cross-entropy of one example
     V["ce_y"], V["ce_p"] = CE_Y, CE_P
     V["ce_loss"] = -(CE_Y * log(CE_P) + (1 - CE_Y) * log(1 - CE_P))
+
+    # draft 2: the numbers of the lines that explain a concept from a second side
+    D = {}
+    D["e_terms"] = [float(v * p) for v, p in zip(vals, pmf)]                     # 0·0.7, 1·0.2, 2·0.1
+    D["e_x2"], D["mu_sq"] = float((vals ** 2 * pmf).sum()), mu ** 2           # 0.6 - 0.16 = 0.44
+    D["two_half_ways"] = 2 * PASTRY[0] * PASTRY[1]                             # (0,1) or (1,0)
+    D["one_two"], D["two_two"] = PASTRY[2], float(two[-1])                     # extremes: 0.1 -> 0.01
+    D["n_half_se"] = N_CUSTOMERS * 2 ** 2                                       # halve the SE at 30 orders
+    D["n_tenth_se"] = N_CUSTOMERS * 10 ** 2
+    D["all_two_30_log10"] = N_CUSTOMERS * log10(PASTRY[2])                     # every customer takes two
+    D["office_coffees_per20"] = sum(c * k for c, k in OFFICE.items())
+    D["office_share"] = 40 * OFFICE[40] / D["office_coffees_per20"]
+    p_run = OFFICE[40] / total
+    D["p_runs30"] = [comb(N_CUSTOMERS, r) * p_run ** r * (1 - p_run) ** (N_CUSTOMERS - r) for r in range(3)]
+    m30 = np.arange(len(dist30)) / N_CUSTOMERS                                  # the same, read off the exact islands
+    D["island_mass30"] = [float(dist30[np.abs(m30 - V["runs"][r]["mean"]) < V["run_step"] / 2].sum()) for r in range(3)]
+    D["batch_cost_ratio"] = BATCH_BIG / BATCH_SMALL
+    D["per_order_factor"] = float(np.exp(V["loglik_hat"] / N))                 # the product shrinks by this per order
+    D["float_floor"] = float(np.nextafter(0, 1))                               # smallest positive float64
+    D["n_underflow"] = log(D["float_floor"]) / (V["loglik_hat"] / N)
+    D["relative_030_x10"] = float(np.exp(bern_loglik(0.30, 10 * K, 10 * N) - bern_loglik(p_hat, 10 * K, 10 * N)))
+    D["score_terms"] = [K / p_hat, (N - K) / (1 - p_hat)]                       # k/p and (n-k)/(1-p) at p-hat
+    D["mle_var_bias"] = (SHOT_N - 1) / SHOT_N
+    D["fit_margin_ratio"] = float(np.exp(V["fit_margin"]))
+    D["ce_wrong"] = -log(1 - CE_P)                                             # label 1, model says 0.1
+    D["ce_wrong_ratio"] = D["ce_wrong"] / V["ce_loss"]
+    V["depth"] = D
     return V
 
 

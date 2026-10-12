@@ -1,9 +1,24 @@
-# Lecture 5 — video narration (draft 1, for approval)
+# Lecture 5 — video narration (draft 2, for approval)
 
 **One video for the whole lecture**, in two parts like the slides: Part 0 (Markaziy limit teoremasi) = sections 1–5,
 Part 1 (Maksimal haqiqatga oʻxshashlik usuli) = sections 6–10. Each section: problem first → concept as the answer →
 one AI use → a hands-on pause → the question the next section answers. The coffee shop carries on: pastries per
 order, office runs, 66 pastry orders in 200, and 40 espresso shots.
+
+**Draft 2 (only the new lines need approval):** each concept explained from more than one side, and earlier ideas
+recapped before they are used (instructor, after Lecture 4). New lines carry a letter after the number (**2a**, **7a**);
+every approved line is unchanged. The added angles: how the mean and variance of the pastry order are computed
+(recap of Lecture 3); where 0.28 comes from (the two customers either way round); why averaging shrinks the extremes (0.1 →
+0.01); why the square root of n appears; sigma stays, the standard error shrinks; the quadratic cost in orders (30 →
+120 → 3,000); the normal curve is fixed by two numbers; why every shape becomes a bell (all thirty taking two is
+10⁻³⁰); what a broken independence does to the standard error; what "heavy tail" means (one order holds 60 % of the
+coffee); how big each island is (0.21, 0.34, 0.26); the full gradient as mu; a big batch's cost against its noise (×32
+vs ÷5.7); the multiplication rule behind the likelihood (recap of Lecture 1); why the product underflows (about half
+per order, zero near 1,200 orders); more data sharpens the peak (0.66 → 0.015); checking p̂ by the derivative (200 −
+200 = 0); the mean as Lecture 1's balance point; how large the n-versus-n − 1 bias is (39/40, 2.5 %); where the fitted
+mu and sigma come from; a log gap of 15.5 is a likelihood ratio of about five million; where the square in squared
+error comes from; a confident wrong answer costs over twenty times more. New numbers: `capture_l05.py` (the `depth`
+block), tested in `test_l05.py` (`Draft2AddedLines`).
 
 **Rules applied:** berilganlar (data) / belgilanganlar (labels); "we", never "you" (only *Videoni toʻxtating*);
 Latin letters spoken by their English names (eks, en, pi, bi, el); Greek letters keep theirs (mu, sigma, teta);
@@ -40,6 +55,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 2. **Qahvaxonada bitta buyurtmada nol, bir yoki ikki pishiriq boʻladi: nol butun oʻndan yetti, ikki va bir ehtimol bilan. Oʻrtacha nol butun oʻndan toʻrt, dispersiya nol butun yuzdan qirq toʻrt.**
    *In the coffee shop, an order holds zero, one or two pastries, with probabilities zero point seven, two and one. The mean is zero point four, the variance zero point four four.*
    ▸ the pastry bars of Lecture 3: 0.7, 0.2, 0.1
+2a. **Eslaylik, uchinchi maʼruzada kutilmani shunday topgan edik: har bir qiymatni ehtimoliga koʻpaytirib, hammasini qoʻshamiz. Bir karra nol butun oʻndan ikki qoʻshuv ikki karra nol butun oʻndan bir — nol butun oʻndan toʻrt. Dispersiya esa kvadratlar kutilmasi minus kutilmaning kvadrati: nol butun oʻndan olti minus nol butun yuzdan oʻn olti.**
+   *Recall how we found the expectation in Lecture 3: multiply each value by its probability and add them all. One times zero point two plus two times zero point one: zero point four. The variance is the expectation of the squares minus the square of the expectation: zero point six minus zero point one six.*
+   ▸ 0·0.7 + 1·0.2 + 2·0.1 = 0.4;  E[x²] − μ² = 0.6 − 0.16 = 0.44
 3. **Ikki mijozga xizmat qilamiz. Nol va nol chiqishi mumkin — oʻrtacha nol. Bir va ikki chiqishi ham mumkin — oʻrtacha bir butun oʻndan besh. Qahvaxona oʻsha, kun oʻsha, javob boshqa.**
    *We serve two customers. We might see zero and zero: an average of zero. Or one and two: an average of one point five. Same shop, same day, a different answer.*
 4. **Demak, tanlanma oʻrtachasi aniq son emas, balki oʻz taqsimotiga ega tasodifiy miqdor. Tanlashni qayta-qayta takrorlasak, oʻrtachalarning gistogrammasi hosil boʻladi. Buni tanlanma oʻrtachasining taqsimoti deymiz.**
@@ -47,11 +65,17 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 5. **Ikki mijozda oʻrtacha beshta qiymat oladi: nol, nol butun oʻndan besh, bir, bir butun oʻndan besh va ikki. Ehtimollari: nol butun yuzdan qirq toʻqqiz, yigirma sakkiz, oʻn sakkiz, toʻrt va bir.**
    *With two customers the average takes five values: zero, zero point five, one, one point five and two. Their probabilities: zero point four nine, two eight, one eight, zero four and zero one.*
    ▸ the table of five averages and their probabilities; then as bars
+5a. **Bu sonlar qayerdan keldi? Oʻrtacha nol butun oʻndan besh ikki yoʻl bilan chiqadi: birinchi mijoz hech narsa olmaydi, ikkinchisi bitta oladi, yoki aksincha. Shuning uchun nol butun oʻndan yettini nol butun oʻndan ikkiga koʻpaytirib, ikki baravar olamiz: nol butun yuzdan yigirma sakkiz.**
+   *Where do these numbers come from? An average of zero point five happens in two ways: the first customer takes nothing and the second takes one, or the other way round. So we multiply zero point seven by zero point two, and double it: zero point two eight.*
+   ▸ the two orders (0, 1) and (1, 0), each 0.7 × 0.2 = 0.14, adding to 0.28
 6. **Bu taqsimotning kutilmasi nol butun oʻndan toʻrt — xuddi bitta mijozdagidek. Tanlanma oʻrtachasi haqiqatga markazlashgan, yaʼni tarafkash boʻlmagan baho.**
    *The expectation of this distribution is zero point four, the same as for one customer. The sample mean is centred on the truth: it is an unbiased estimate.*
 7. **Dispersiyasi esa nol butun yuzdan yigirma ikki: nol butun yuzdan qirq toʻrtning yarmi. Umumiy qoida: oʻrtachaning dispersiyasi — sigma kvadratni en ga boʻlganimiz.**
    *Its variance is zero point two two: half of zero point four four. The general rule: the variance of the mean is sigma squared divided by n.*
    ▸ E[x̄] = μ,  Var(x̄) = σ²/n;  0.44 / 2 = 0.22
+7a. **Nega kamayadi? Bir mijoz koʻp olsa, ikkinchisi odatda kamroq oladi va oʻrtacha oʻrtaga qaytadi. Chetki holatlar kamdan-kam uchraydi: bitta mijoz ikki pishiriq olishi nol butun oʻndan bir, ikkala mijoz ham ikkitadan olishi esa bor-yoʻgʻi nol butun yuzdan bir.**
+   *Why does it shrink? When one customer takes a lot, the other usually takes less, and the average comes back towards the middle. Extremes become rare: one customer taking two pastries has probability zero point one, both customers taking two each only zero point zero one.*
+   ▸ the bar at 2 shrinking from 0.1 (one customer) to 0.01 (the average of two)
 8. **Sunʼiy intellektda modelning test toʻplamidagi aniqligi ham tanlanma oʻrtachasi: boshqa test toʻplami boshqa aniqlik beradi.**
    *In AI, a model's accuracy on a test set is a sample mean too: a different test set gives a different accuracy.*
 9. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Ikki mijozning ikkalasi ham pishiriq olmasligi ehtimoli qancha?**
@@ -65,8 +89,14 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 1. **Tanlanma oʻrtachasining standart chetlanishini standart xato deymiz: sigmani en ning kvadrat ildiziga boʻlamiz.**
    *The standard deviation of the sample mean is called the standard error: sigma divided by the square root of n.*
    ▸ SE = σ / √n
+1a. **Nega en emas, balki en ning kvadrat ildizi? Oldingi boʻlimda oʻrtachaning dispersiyasi en ga boʻlinishini koʻrdik. Standart chetlanish esa dispersiyaning kvadrat ildizi, shuning uchun en ham ildiz ostiga kiradi.**
+   *Why the square root of n and not n itself? In the previous section the variance of the mean was divided by n. The standard deviation is the square root of the variance, so n goes under the root as well.*
+   ▸ Var(x̄) = σ²/n → SE = √(σ²/n) = σ/√n
 2. **Bu sigma bilan bir xil emas. Sigma bitta mijoz qanchalik oʻzgarishini aytadi, standart xato esa en ta mijoz oʻrtachasi qanchalik oʻzgarishini.**
    *It is not the same as sigma. Sigma says how much one customer varies; the standard error says how much an average of n customers varies.*
+2a. **Boshqacha aytganda: berilganlar koʻpaysa, sigma oʻzgarmaydi — qahvaxona oʻsha qahvaxona, mijozlar oʻsha mijozlar. Standart xato esa kichrayadi, chunki koʻproq buyurtmaga qarab, oʻrtachani aniqroq bilamiz.**
+   *In other words: with more data, sigma stays the same — the shop is the same shop, the customers the same customers. The standard error shrinks, because looking at more orders we know the average more precisely.*
+   ▸ two lines against n: σ flat at 0.663, the SE falling
 3. **Qahvaxonada sigma nol butun mingdan olti yuz oltmish uch. Bitta buyurtmani oldindan aytib boʻlmaydi, lekin oʻttizta buyurtma oʻrtachasining standart xatosi nol butun mingdan bir yuz yigirma bir — besh marta barqarorroq.**
    *In the coffee shop, sigma is zero point six six three. One order is unpredictable, but the average of thirty has a standard error of zero point one two one: five times steadier.*
 4. **Oʻnta buyurtmada standart xato nol butun mingdan ikki yuz oʻn, qirqtada nol butun mingdan bir yuz besh, bir yuz oltmishtada nol butun mingdan ellik ikki.**
@@ -76,6 +106,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Each step quadruples the data and halves the error. There is no sample size at which the curve becomes steep again.*
 6. **Demak, aniqlik kvadratik narxda sotib olinadi: xatoni bir foizdan nol butun oʻndan bir foizga tushirish uchun yuz baravar koʻp berilganlar kerak.**
    *So accuracy is bought at quadratic cost: taking the error from one percent to zero point one percent needs a hundred times the data.*
+6a. **Qahvaxonada buni shunday koʻramiz: oʻttizta buyurtmadagi xatoni yarmiga tushirish uchun bir yuz yigirmata buyurtma kerak, oʻn baravar kamaytirish uchun esa uch mingta.**
+   *In the coffee shop it looks like this: to halve the error at thirty orders we need one hundred and twenty orders, and to cut it tenfold, three thousand.*
+   ▸ 30 → 120 (SE ÷ 2),  30 → 3,000 (SE ÷ 10)
 7. **Sunʼiy intellektda modellarni baholash ham shuning uchun qimmat: eʼlon qilingan aniqlik atrofidagi xatoni ikki baravar kamaytirish uchun test toʻplamini toʻrt baravar oshirish kerak.**
    *In AI, that is why evaluating models is expensive: halving the error around a reported accuracy takes four times the test set.*
 8. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Olti yuz qirqta buyurtmada standart xato qancha?**
@@ -89,8 +122,14 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 1. **Istalgan taqsimotdan, oʻrtachasi mu va dispersiyasi chekli boʻlgan, mustaqil qiymatlar olamiz. En oshgan sari tanlanma oʻrtachasining taqsimoti normal taqsimotga yaqinlashadi: oʻrtachasi mu, dispersiyasi sigma kvadratni en ga boʻlganimiz.**
    *Take independent draws from any distribution with mean mu and finite variance. As n grows, the sampling distribution of the mean approaches a normal one: mean mu, variance sigma squared over n.*
    ▸ x̄ ≈ N(μ, σ²/n)
+1a. **Eslaylik, normal taqsimotni ikki son toʻliq aniqlaydi: oʻrtacha va standart chetlanish. Demak, katta en da oʻrtacha haqida bilishimiz kerak boʻlgan hamma narsa ikki sonda: mu va standart xato.**
+   *Recall that a normal distribution is fixed completely by two numbers: its mean and its standard deviation. So for a large n, everything we need to know about the average is in two numbers: mu and the standard error.*
+   ▸ N(μ, SE²): μ marks the centre, SE the width
 2. **Eng hayratlanarlisi: dastlabki shakl ahamiyatsiz. Tanga, kubik, kutish vaqti va pishiriqlar — hammasining oʻrtachasi qoʻngʻiroqsimon boʻladi.**
    *The striking part: the original shape does not matter. Coins, dice, waiting times and pastries all have bell-shaped averages.*
+2a. **Nega shunday? Oʻrtachada chetki qiymatlar bir-birini yopadi. Oʻttizta mijozning hammasi ikkitadan pishiriq olishi ehtimoli oʻnning minus oʻttizinchi darajasi — deyarli imkonsiz. Kutilma atrofidagi aralashmalar esa juda koʻp usulda chiqadi, shuning uchun oʻrtacha kutilma atrofiga yigʻiladi.**
+   *Why? In an average, extreme values cancel each other. The chance that all thirty customers take two pastries each is ten to the minus thirty: practically impossible. Mixtures near the expectation can happen in a huge number of ways, so the average piles up around the expectation.*
+   ▸ the n = 30 bars; the right end marked 0.1³⁰ = 10⁻³⁰, the bars around 0.4 lit
 3. **Katta sonlar qonuni oʻrtacha qayerga borishini aytgan edi. Markaziy limit teoremasi esa yoʻl-yoʻlakay butun taqsimot qanday koʻrinishini aytadi.**
    *The law of large numbers said where the average lands. The central limit theorem says what its whole distribution looks like on the way.*
 4. **Pishiriqlarda: en bir boʻlsa — uchta ustun, qoʻngʻiroqqa umuman oʻxshamaydi. En ikki — qiyshiq. En besh boʻlganda shakl tanish boʻladi, en oʻttizda esa egri chiziqqa juda yaqin.**
@@ -102,6 +141,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *We check it in numbers: the chance the average lands within one standard error runs zero point nine zero, seven seven, six seven and six six. The normal distribution says six eight.*
 7. **Uchta shart bor: qiymatlar mustaqil, bitta taqsimotdan olingan va dispersiyasi chekli.**
    *There are three conditions: the draws are independent, from the same distribution, with finite variance.*
+7a. **Mustaqillik buzilsa nima boʻladi? Masalan, bitta ofis xodimlari birgalikda buyurtma bersa, ularning buyurtmalari bir-biriga oʻxshaydi va oʻttizta buyurtma oʻttizta mustaqil dalil boʻlmay qoladi. Unda standart xato formulasi xatoni haqiqatdagidan kichik koʻrsatadi.**
+   *What if independence fails? Say the staff of one office order together: their orders resemble each other, and thirty orders are no longer thirty independent pieces of evidence. Then the standard-error formula shows the error smaller than it really is.*
+   ▸ thirty order cards, a cluster of look-alike cards circled
 8. **Sunʼiy intellektda aniqlik atrofidagi ishonch oraligʻi aynan shu teoremaga tayanadi: test toʻplamidagi oʻrtacha normal taqsimotga yaqin.**
    *In AI, the confidence interval around an accuracy rests on exactly this theorem: the average over a test set is close to normal.*
 9. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. En oʻttiz boʻlganda oʻrtacha ikki standart xato ichida boʻlish ehtimolini normal taqsimot qancha deydi?**
@@ -117,6 +159,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    ▸ twenty order cards; one of them a tall stack of 40
 2. **Oddiy buyurtma, yaʼni ofis buyurtmasi boʻlmagani, oʻrtacha bir butun oʻndan toʻrt qahva.**
    *An ordinary order, any order that is not an office run, averages one point four coffees.*
+2a. **Bitta ofis buyurtmasi qanchalik ogʻir? Yigirmata buyurtmada jami oltmish yetti qahva bor, shundan qirqtasi oʻsha bitta buyurtmada — taxminan oltmish foiz. Kamdan-kam uchraydigan bitta qiymat yigʻindining katta qismini bersa, bunday taqsimotni ogʻir dumli deymiz.**
+   *How heavy is a single office run? The twenty orders hold sixty-seven coffees in all, and forty of them are in that one order: about sixty percent. When one rare value carries a large share of the total, we call the distribution heavy-tailed.*
+   ▸ the 20 order cards → 67 coffees, the stack of 40 shaded: 40/67 ≈ 60 %
 3. **Endi oʻttizta buyurtma olamiz va ular orasida nechta ofis buyurtmasi borligini sanaymiz. Birorta ham boʻlmasa, oʻrtacha bir butun oʻndan toʻrt. Bitta boʻlsa — ikki butun oʻndan yetti. Ikkita boʻlsa — toʻrt.**
    *Now take thirty orders and count the office runs among them. With none, the average is one point four. With one, two point seven. With two, four.*
    ▸ the table: runs 0, 1, 2 → totals 43, 81, 120 → averages 1.4, 2.7, 4.0
@@ -125,6 +170,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 5. **Oʻttizta buyurtma oʻrtachasining aniq taqsimoti silliq qoʻngʻiroq emas, balki orolchalar: har biri ichidagi ofis buyurtmalari soni bilan. Pishiriqlarda esa oʻsha en oʻttizda qoʻngʻiroq allaqachon tayyor.**
    *The exact distribution of the average of thirty orders is not a smooth bell but islands, one for each number of office runs inside. For pastries, at the same n of thirty, the bell is already there.*
    ▸ two panels at n = 30: pastries (a bell) and coffees (islands), each against the promised curve
+5a. **Orolchalar qanchalik katta? Oʻttizta buyurtmada birorta ham ofis buyurtmasi boʻlmasligi ehtimoli nol butun yuzdan yigirma bir, bitta boʻlishi — oʻttiz toʻrt, ikkitasi — yigirma olti. Oʻrtacha qaysi orolchaga tushishini aynan shu bitta son hal qiladi.**
+   *How big are the islands? Among thirty orders, the chance of no office run at all is zero point two one, of one, three four, of two, two six. Which island the average lands on is decided by that one count.*
+   ▸ the islands labelled 0.21, 0.34, 0.26
 6. **Demak, «en oʻttizdan katta» — bu teorema emas, tajribadan kelgan qoida. Kam uchraydigan katta qiymat uni buzadi.**
    *So "n at least thirty" is a rule of thumb, not a theorem. A rare huge value is what breaks it.*
 7. **Sunʼiy intellektda ham kamdan-kam juda katta xato yoki gradient oʻrtachani sakratib yuboradi. Gradientni kesish shuning uchun kerak.**
@@ -140,6 +188,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 1. **Neyron tarmoqni oʻqitish gradientni hisoblashni talab qiladi. Haqiqiy gradient barcha oʻqitish misollari boʻyicha oʻrtacha, lekin bu juda sekin. Shuning uchun bir nechta misoldan iborat mini-paket boʻyicha oʻrtacha olinadi.**
    *Training a neural network means computing a gradient. The honest one averages over all training examples, but that is far too slow. So we average over a mini-batch of a few examples instead.*
    ▸ the full data set; a small batch lifted out of it
+1a. **Bogʻlanishni koʻraylik: barcha oʻqitish misollari — bosh toʻplam, mini-paket esa undan olingan tanlanma. Toʻliq gradient mu ning oʻrnida turadi: biz bilmoqchi boʻlgan, lekin hisoblash qimmat boʻlgan son.**
+   *Let's see the link: all the training examples are the population, and a mini-batch is a sample drawn from it. The full gradient plays the role of mu: the number we want, but which is costly to compute.*
+   ▸ bosh toʻplam ↔ all examples,  tanlanma ↔ mini-batch,  μ ↔ full gradient
 2. **Mini-paket gradienti — tanlanma oʻrtachasining oʻzi. Demak, u tarafkash emas: toʻliq gradientga markazlashgan. Uning shovqini esa gradient sigmasini paket hajmining kvadrat ildiziga boʻlganimizga teng.**
    *A mini-batch gradient is a sample mean. So it is unbiased, centred on the full gradient, and its noise is the gradient's sigma divided by the square root of the batch size.*
    ▸ SE = σ_g / √B
@@ -147,6 +198,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *That is why training works at all.*
 4. **Takrorlaymiz: paket hajmini toʻrt baravar oshirish shovqinni ikki baravar kamaytiradi. Shuning uchun ikki ming qirq sakkizlik paket oltmish toʻrtlikdan oʻttiz ikki baravar emas, bor-yoʻgʻi besh butun oʻndan yetti baravar kam shovqinli.**
    *Let's repeat it: quadrupling the batch size halves the gradient noise. That is why a batch of two thousand and forty-eight is not thirty-two times better than sixty-four: it is only five point seven times less noisy.*
+4a. **Narxini ham hisobga olaylik: ikki ming qirq sakkizlik paketda har bir qadam oltmish toʻrtlikdan oʻttiz ikki baravar qimmat, shovqin esa atigi besh butun oʻndan yetti baravar kam. Shuning uchun koʻpincha kichikroq paket bilan koʻproq qadam tashlash foydaliroq.**
+   *Let's count the cost too: with a batch of two thousand and forty-eight, each step costs thirty-two times as much as with sixty-four, while the noise is only five point seven times smaller. That is why many steps with a smaller batch often pay off better.*
+   ▸ two bars: cost × 32, noise ÷ 5.7
 5. **Paketli normallashtirish ham shunga tayanadi: u paketdan baholangan oʻrtacha va dispersiyadan foydalanadi. Paket ikki yoki toʻrtta misoldan iborat boʻlsa, bu baholar shovqinli — qatlam va guruh normallashtirish shuning uchun bor.**
    *Batch normalization rests on it too: it uses a mean and variance estimated from the batch. With two or four examples those estimates are noisy, which is one reason layer and group normalization exist.*
 6. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Paket hajmini oltmish toʻrtdan ikki yuz ellik oltiga oshirsak, gradient shovqini necha marta kamayadi?**
@@ -172,6 +226,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    ▸ L(θ) = ∏ p(xᵢ | θ)
 5. **Har bir buyurtmada pishiriq boʻlsa uning ehtimoli pi, boʻlmasa bir minus pi. Buyurtmalar mustaqil, shuning uchun ikki yuzta ehtimol koʻpaytiriladi, va bir xil asosning darajalari qoʻshiladi.**
    *Each order with a pastry contributes p, each without contributes one minus p. The orders are independent, so the two hundred probabilities multiply, and powers of the same base add their exponents.*
+5a. **Bu birinchi maʼruzadagi koʻpaytirish qoidasi: mustaqil hodisalarning birga roʻy berish ehtimoli ularning ehtimollari koʻpaytmasiga teng. Masalan, ikki buyurtmaning ikkalasida ham pishiriq boʻlishi — pi karra pi.**
+   *This is the multiplication rule from Lecture 1: the chance that independent events all happen is the product of their chances. For example, both of two orders containing a pastry: p times p.*
+   ▸ two lit order cards: p · p
 6. **Natija: pi ning oltmish oltinchi darajasi karra bir minus pi ning bir yuz oʻttiz toʻrtinchi darajasi.**
    *The result: p to the sixty-six, times one minus p to the one hundred and thirty-four.*
    ▸ L(p) = p⁶⁶ (1 − p)¹³⁴
@@ -199,11 +256,17 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    ▸ the likelihood (rescaled) above, the log-likelihood below; both peak at 0.33
 4. **Ikkinchidan, hisobni qutqaradi: bir necha ming misolda koʻpaytma kompyuterda aniq nolga aylanib qoladi va choʻqqi yoʻqoladi. Oʻsha sonning logarifmi esa oddiy son: minus bir yuz yigirma olti butun yuzdan sakson toʻrt.**
    *Second, it rescues the arithmetic: at a few thousand examples the product becomes exactly zero in the computer, and the peak is lost. The log of the same number is perfectly ordinary: minus one hundred twenty-six point eight four.*
+4a. **Nega nolga aylanadi? Har bir buyurtma koʻpaytmani oʻrtacha hisobda taxminan ikki baravar kichraytiradi, kompyuter esa oʻnning minus uch yuz yigirma uchinchi darajasi atrofidagi sondan kichigini saqlay olmaydi. Bizning buyurtmalarda bu chegaraga taxminan bir ming ikki yuzta buyurtmada yetamiz.**
+   *Why does it turn into zero? On average each order makes the product about half as large, and the computer cannot hold a number smaller than about ten to the minus three hundred and twenty-three. With orders like ours, we reach that limit at about one thousand two hundred orders.*
+   ▸ the product halving order by order; at ≈ 1,200 orders it hits 0 (the float floor ≈ 5 × 10⁻³²⁴)
 5. **Uchinchidan, koʻpaytmani yigʻindiga aylantiradi. Yigʻindini har bir had boʻyicha differensiallash oson, va oʻqitish sikli paket boʻyicha aynan yigʻindini jamlaydi.**
    *Third, it turns a product into a sum. A sum differentiates term by term, and a training loop accumulates exactly a sum over a batch.*
 6. **Choʻqqi qanchalik keskin? Pi nol butun yuzdan oʻttiz uchga nisbatan pi nol butun oʻndan uch nol butun yuzdan oltmish olti marta, pi nol butun oʻndan toʻrt esa atigi nol butun yuzdan oʻn ikki marta ehtimolli.**
    *How sharp is the peak? Compared with zero point three three, a p of zero point three is zero point six six times as likely, and zero point four only zero point one two.*
    ▸ the relative likelihood read off at 0.30 and 0.40
+6a. **Choʻqqining keskinligi berilganlarga bogʻliq. Buyurtmalar oʻn baravar koʻp boʻlsa — ikki mingtadan olti yuz oltmishtasida pishiriq — pi nol butun oʻndan uchning nisbiy haqiqatga oʻxshashligi nol butun yuzdan oltmish oltidan nol butun mingdan oʻn beshga tushadi. Ikkinchi boʻlimdagidek: berilganlar koʻpaysa, baho aniqlashadi.**
+   *How sharp the peak is depends on the data. With ten times the orders — six hundred and sixty pastries in two thousand — the relative likelihood of zero point three falls from zero point six six to zero point zero one five. As in section two: more data, a sharper estimate.*
+   ▸ the relative-likelihood curve for 200 orders, then the narrower one for 2,000; the read-off at 0.30
 7. **Berilganlar bitta qiymatni tanlab, qolganini taqiqlamaydi — ularni baholaydi. Oltinchi maʼruzada bu baholash aposterior taqsimotga aylanadi.**
    *The data does not pick one value and forbid the rest: it grades them. In Lecture 6 that grading becomes a posterior distribution.*
 8. **Sunʼiy intellektda shuning uchun har bir freymvork ehtimollarni emas, ularning logarifmini koʻpaytirmasdan qoʻshadi.**
@@ -222,16 +285,25 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 2. **Javob: pi bahosi key ni en ga boʻlganimiz. Bu shunchaki kuzatilgan ulush: ikki yuzdan oltmish olti, nol butun yuzdan oʻttiz uch. Hamma taxmin qiladigan javob, endi farazdan emas, hisobdan kelib chiqdi.**
    *The answer: the estimate of p is k over n. It is simply the observed share: sixty-six of two hundred, zero point three three. The answer everyone would guess, now derived rather than assumed.*
    ▸ p̂ = k / n = 66/200 = 0.33
+2a. **Tekshirib koʻramiz. Oltmish oltini nol butun yuzdan oʻttiz uchga boʻlsak — ikki yuz. Bir yuz oʻttiz toʻrtni nol butun yuzdan oltmish yettiga boʻlsak — yana ikki yuz. Ayirmasi nol: hosila aynan shu nuqtada nolga teng.**
+   *Let's check. Sixty-six divided by zero point three three: two hundred. One hundred and thirty-four divided by zero point six seven: two hundred again. The difference is zero: the derivative vanishes exactly here.*
+   ▸ 66/0.33 − 134/0.67 = 200 − 200 = 0
 3. **Gauss uchun ham xuddi shunday: logarifm koʻpaytmani yigʻindiga aylantiradi va eksponentani yoʻqotadi.**
    *The same works for the Gaussian: the log turns the product into a sum and cancels the exponential.*
    ▸ ℓ(μ, σ²) = −(n/2) log(2πσ²) − Σ(xᵢ − μ)² / (2σ²)
 4. **Mu boʻyicha differensiallasak, chetlanishlar bir-birini yoʻq qilishi kerak, va bu aynan oʻrtachada boʻladi: mu bahosi — tanlanma oʻrtachasi.**
    *Differentiating in mu says the deviations must cancel, and that happens exactly at the average: the estimate of mu is the sample mean.*
+4a. **Bu birinchi maʼruzadagi muvozanat nuqtasining oʻzi: chetlanishlar yigʻindisi nolga teng boʻladigan nuqta. Ikki xil yoʻl bitta javobga olib keldi.**
+   *This is the balance point from Lecture 1: the point where the deviations add up to zero. Two different roads lead to the same answer.*
+   ▸ the beam of Lecture 1, balancing at x̄
 5. **Dispersiya boʻyicha differensiallasak: sigma kvadrat bahosi — chetlanishlar kvadratlarining yigʻindisi, boʻlinsin en.**
    *Differentiating in the variance: the estimate of sigma squared is the sum of squared deviations divided by n.*
    ▸ μ̂ = x̄,  σ̂² = (1/n) Σ(xᵢ − x̄)²
 6. **Eʼtibor bersak, birinchi maʼruzada en minus birga boʻlgan edik. Maksimal haqiqatga oʻxshashlik bahosi biroz kichik chiqadi, chunki tarqoqlik oʻsha berilganlarga moslangan oʻrtacha atrofida oʻlchanadi.**
    *Note that in the first lecture we divided by n minus one. Maximum likelihood runs slightly small, because the spread is measured around an average fitted to the same data.*
+6a. **Tarafkashlik qanchalik katta? En ga boʻlingan baho oʻrtacha hisobda haqiqiy dispersiyaning en minus bir boʻlinsin en qismini beradi. Keyingi boʻlimdagi qirqta espressoda bu oʻttiz toʻqqiz boʻlinsin qirq, yaʼni nol butun mingdan toʻqqiz yuz yetmish besh: farq atigi ikki yarim foiz. Berilganlar koʻpaygan sari bu farq yoʻqoladi.**
+   *How large is the bias? On average, the estimate that divides by n gives n minus one over n of the true variance. For the forty espresso shots of the next section that is thirty-nine over forty, zero point nine seven five: only two and a half percent off. As the data grows, the gap disappears.*
+   ▸ E[σ̂²] = (n − 1)/n · σ²;  39/40 = 0.975
 7. **Sunʼiy intellektda sinflarning boshlangʻich ehtimollari ham shunday baholanadi: har bir sinfning oʻqitish berilganlaridagi ulushi.**
    *In AI, the starting probabilities of the classes are estimated this way too: each class's share of the training data.*
 8. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Bir yuz ellik buyurtmaning qirq beshtasida pishiriq bor. Pi bahosi qancha?**
@@ -248,6 +320,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 2. **Maksimal haqiqatga oʻxshashlik bahosi: mu yigirma toʻqqiz butun yuzdan sakson sakkiz, sigma bir butun yuzdan yigirma yetti. Logarifmik haqiqatga oʻxshashlik minus oltmish olti butun oʻndan uch.**
    *The maximum likelihood fit: mu twenty-nine point eight eight, sigma one point two seven. The log-likelihood is minus sixty-six point three.*
    ▸ the fitted curve over the histogram
+2a. **Bu sonlar oldingi boʻlim formulalaridan: mu — qirqta hajmning oʻrtachasi, sigma esa chetlanishlar kvadratlari yigʻindisini qirqqa boʻlib, kvadrat ildizini olganimiz.**
+   *These numbers come straight from the previous section's formulas: mu is the average of the forty volumes, and sigma is the square root of the sum of squared deviations divided by forty.*
+   ▸ μ̂ = x̄,  σ̂ = √((1/40) Σ(xᵢ − x̄)²)
 3. **Markazni yigirma sakkiz butun oʻndan oltiga surib, sigmani bir butun oʻndan besh qilsak, natija minus sakson bir butun oʻndan sakkizga tushadi.**
    *Move the centre to twenty-eight point six with sigma one point five, and it falls to minus eighty-one point eight.*
 4. **Markazni joyida qoldirib, sigmani uch butun oʻndan ikkiga kengaytirsak — minus sakson olti butun oʻndan toʻrt.**
@@ -255,6 +330,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 5. **Ikkalasi ham yomonroq, va sonlar qanchalik yomonligini aytadi: eng yaxshi egri chiziq keyingisidan oʻn besh butun oʻndan besh ochko oldinda.**
    *Both are worse, and the numbers say by how much: the best curve leads the next one by fifteen point five.*
    ▸ three curves with their scores: −66.3, −81.8, −86.4
+5a. **Logarifmda oʻn besh butun oʻndan besh ochko — oddiy haqiqatga oʻxshashlikda taxminan besh million marta farq. Logarifmdagi ayirma haqiqatga oʻxshashliklar nisbatiga aylanadi.**
+   *Fifteen point five points on the log scale is a factor of about five million in the likelihood itself. A difference of logs becomes a ratio of likelihoods.*
+   ▸ e^15.5 ≈ 5,000,000
 6. **Demak, maksimal haqiqatga oʻxshashlik — egri chiziqlar orasida qidiruv: har bir nomzod baho oladi, va gʻolib — eng yuqori bahoga ega.**
    *So maximum likelihood is literally a search over curves: every candidate gets a score, and the winner has the highest.*
 7. **Sunʼiy intellektda gradient tushishi ham aynan shu qidiruvni qadam-baqadam bajaradi.**
@@ -277,6 +355,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 4. **Regressiya modeli uchun esa qoldiqlar normal deb faraz qilamiz. Minus logarifmik haqiqatga oʻxshashlik — oʻzgarmas son qoʻshuv oʻrtacha kvadratik xatoning musbat karralisi.**
    *For a regression model we assume the residuals are normal. Minus the log-likelihood is a constant plus a positive multiple of the mean squared error.*
    ▸ −ℓ = (n/2) log(2πσ²) + (1/2σ²) Σ (yᵢ − f(xᵢ))²
+4a. **Kvadrat qayerdan keldi? Normal taqsimot zichligida eksponenta ichida chetlanishning kvadrati turadi. Logarifm eksponentani olib tashlaydi va faqat oʻsha kvadrat qoladi.**
+   *Where does the square come from? Inside the exponential of the normal density sits the squared deviation. The log removes the exponential, and only that square remains.*
+   ▸ exp(−(y − f(x))²/2σ²) → log → −(y − f(x))²/2σ²
 5. **Demak, ikki asosiy yoʻqotish funksiyasi — bitta gʻoya: farazimizdagi taqsimotning minus logarifmik haqiqatga oʻxshashligi. Kvadratik xato normal qoldiqlarni faraz qiladi, shuning uchun u chetga chiqqan qiymatlar ortidan quvadi.**
    *So the two default losses are one idea: minus the log-likelihood of the distribution we assumed. Squared error assumes normal residuals, which is why it chases outliers.*
 6. **Neyron tarmoq uchun formula yoʻq, lekin logarifmik haqiqatga oʻxshashlik baribir misollar boʻyicha yigʻindi. Shuning uchun gradient boʻylab qadam tashlaymiz, mini-paketda esa nolinchi qism ishlaydi: maksimal haqiqatga oʻxshashlik nimani optimallashtirishni aytadi, markaziy limit teoremasi esa nega buni bir necha misolda qilish mumkinligini.**
@@ -285,6 +366,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Let's try it ourselves. Pause the video. The label is one and the model says zero point nine. What is this example's cross-entropy?*
 8. **Minus logarifm nol butun oʻndan toʻqqiz: taxminan nol butun mingdan bir yuz besh. Model ishonchli va toʻgʻri, shuning uchun yoʻqotish kichik.**
    *Minus the log of zero point nine: about zero point one zero five. The model is confident and right, so the loss is small.*
+8a. **Model xato qilib, nol butun oʻndan bir desa-chi? Minus logarifm nol butun oʻndan bir — taxminan ikki butun yuzdan oʻttiz, yaʼni yigirma baravardan ham koʻp. Kross-entropiya ishonch bilan xato qilgan modelni qattiq jazolaydi.**
+   *And if the model is wrong and says zero point one? Minus the log of zero point one is about two point three zero: more than twenty times as much. Cross-entropy punishes a model that is confidently wrong.*
+   ▸ −log p against p: 0.9 → 0.105,  0.1 → 2.30
 9. **Keling, maʼruzani yakunlaylik. Tanlanma oʻrtachasi tasodifiy miqdor: u mu ga markazlashgan, standart xatosi sigmani en ning ildiziga boʻlganimiz, shuning uchun toʻrt baravar berilganlar xatoni ikki baravar kamaytiradi. Markaziy limit teoremasi: chekli dispersiyali mustaqil qiymatlarning oʻrtachasi normal taqsimotga keladi, ogʻir dum esa buni sekinlashtiradi.**
    *Let's wrap up the lecture. The sample mean is a random variable: centred on mu, with standard error sigma over the root of n, so four times the data halves the error. The central limit theorem: averages of independent draws with finite variance become normal, and a heavy tail slows that down.*
 10. **Haqiqatga oʻxshashlik — kuzatilgan berilganlarning parametr funksiyasi sifatidagi ehtimoli, va biz uning logarifmini maksimallashtiramiz. Bernulli uchun baho — kuzatilgan ulush, Gauss uchun — oʻrtacha va tarqoqlik. Kross-entropiya va kvadratik xato — minus logarifmik haqiqatga oʻxshashliklar.**

@@ -209,6 +209,86 @@ class Section11Dirichlet(unittest.TestCase):
                 self.assertAlmostEqual(sum(d), 1.0, delta=0.0015)
 
 
+class Draft2AddedLines(unittest.TestCase):
+    """The lines added for depth (narration draft 2); the comment names the line."""
+    def test_one_roll_many_variables(self):                             # §1 3a: seven, four and zero
+        self.assertEqual(V["roll_vars"], {"sum": 7, "max": 4, "six": 0})
+
+    def test_long_run_share(self):                                      # §1 7a
+        self.assertEqual((V["long_run_rolls"], V["long_run_sevens"], V["long_run_twos"]), (36000, 6000.0, 1000.0))
+
+    def test_hundred_customers(self):                                   # §2 3a
+        self.assertEqual(V["crowd"], {"0": 70, "1": 20, "2": 10})
+        self.assertEqual(V["crowd_pastries"], 40)
+        self.assertAlmostEqual(V["crowd_mean"], V["pastry_mean"])
+
+    def test_kept_per_ticket(self):                                     # §2 7a: 600 / 500 = 1.20
+        self.assertAlmostEqual(V["kept_per_ticket"], 1.2)
+        self.assertAlmostEqual(V["kept_per_ticket"], -V["raffle_A"]["mean"])
+
+    def test_variance_by_definition(self):                              # §4 3a
+        self.assertAlmostEqual(V["var_by_definition"], V["pastry_var"])
+        self.assertGreater(V["var_share_two"], 0.5)                     # "more than half"
+        self.assertEqual(max(V["var_parts"], key=V["var_parts"].get), "2")
+
+    def test_winning_ticket_carries_the_variance(self):                 # §4 6a: 99.8 %
+        self.assertEqual(round(100 * V["raffle_A_win_share"], 1), 99.8)
+
+    def test_red_and_the_green_pocket(self):                            # §5 1a
+        self.assertEqual((V["roulette_red"], V["roulette_lose"], V["roulette_pockets"]), (18, 19, 37))
+        self.assertEqual(V["roulette_edge_pockets"], 1)
+
+    def test_casino_side(self):                                         # §5 3a: about 27 thousand
+        self.assertEqual(round(V["casino_keeps"], -3), 27000)
+
+    def test_balance_against_spread(self):                              # §5 4a
+        s = V["spread"]
+        self.assertEqual(round(s["100"]["balance"], 2), -2.70)
+        self.assertEqual(round(s["100"]["sd"]), 10)
+        self.assertEqual(round(s["10000"]["balance"]), -270)
+        self.assertEqual(round(s["10000"]["sd"], -1), 100)
+        self.assertLess(abs(s["100"]["balance"]), s["100"]["sd"])      # luck covers it after 100 bets
+        self.assertGreater(abs(s["10000"]["balance"]), 2 * s["10000"]["sd"])   # not after 10,000
+
+    def test_doubling_quadruples_variance(self):                        # §6 2a
+        self.assertAlmostEqual(V["revenue_var_ratio"], 4.0)
+        self.assertAlmostEqual(V["revenue_var"], 1.76)
+
+    def test_standardized_pastries(self):                               # §6 6a
+        self.assertEqual(round(V["z_pastry"]["2"], 1), 2.4)
+        self.assertEqual(round(V["z_pastry"]["0"], 1), -0.6)
+
+    def test_mean_of_answers(self):                                     # §7 2a
+        self.assertEqual(V["answers_mean"], 0.3)
+
+    def test_orders(self):                                              # §8 3a: three orders; 120 for 3 of 10
+        self.assertEqual(V["small_orders"], 3)
+        self.assertEqual(V["bin_comb3"], 120)
+
+    def test_sum_of_bernoullis(self):                                   # §8 5a
+        self.assertAlmostEqual(V["bin_sum_mean"], V["bin_mean"])
+        self.assertAlmostEqual(V["bin_sum_var"], V["bin_var"])
+        self.assertAlmostEqual(V["bern_var"], 0.21)
+
+    def test_cups_as_bernoulli_and_binomial(self):                      # §9 2a, 4a
+        self.assertEqual(V["medium_or_not"], 0.5)
+        self.assertEqual(V["medium_count_mean"], V["cups_expected"]["medium"])
+
+    def test_rate_scales_with_window(self):                             # §10 2a
+        self.assertEqual(V["window_lam"], [2.0, 24.0])
+
+    def test_most_likely_counts(self):                                  # §10 5a
+        self.assertAlmostEqual(V["pois_p3"], V["pois_p4"])
+        self.assertEqual(round(V["pois_p4"], 1), 0.2)
+        self.assertEqual(V["pois_p4_one_in"], 5)
+        self.assertEqual(max(range(13), key=lambda k: round(V["pois_pmf"][k], 12)), 3)
+
+    def test_dirichlet_means(self):                                     # §11 5a: same mean, different spread
+        for s, m in V["dirichlet_means"].items():
+            self.assertEqual([round(x, 10) for x in m], [0.2, 0.5, 0.3])
+        self.assertEqual(V["dirichlet_totals"], {"4": 4.0, "40": 40.0})
+
+
 class Sources(unittest.TestCase):
     def test_saved_json_is_fresh(self):
         saved = json.loads((C.OUT / "l03_numbers.json").read_text())

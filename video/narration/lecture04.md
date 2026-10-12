@@ -1,9 +1,24 @@
-# Lecture 4 — video narration (draft 1, for approval)
+# Lecture 4 — video narration (draft 2, for approval)
 
 **One video for the whole lecture**, in two parts like the slides: Part 0 (Uzluksiz tasodifiy miqdorlar) = sections
 1–5, Part 1 (Normal taqsimot) = sections 6–10. Each section: problem first → concept as the answer → one AI use → a
 hands-on pause → the question the next section answers. The coffee shop of Lecture 3 carries on: gaps between
 customers, the delivery, the pastry rate, then the bakery's croissants and the hot days.
+
+**Draft 2 (only the new lines need approval):** each concept explained from more than one side, and earlier ideas
+recapped before they are used (instructor, after Lecture 4). New lines carry a letter after the number (**4a**,
+**8a**); every approved line of draft 1 is unchanged. The added angles: a stopwatch reading is itself a range (so it
+has a probability); the density histogram's first bar worked out (share ÷ width); density × length as a quick
+estimate; why the average gap is 1/λ; the CDF as a running total; the 1 % alert point read off the CDF; the uniform's
+straight-line CDF and its mean; the uniform remembers the wait, the exponential does not; why the inverse CDF works;
+the median gap below the mean (a right tail, like Lecture 1's salaries); why Beta(4, 8) starts from Beta(1, 1); ten
+times the data shrinks the spread only about three times; **«bosish ulushi» explained** — the click rate, the share of
+people shown an ad who click it (the instructor asked about it at 8:12); the same share with 15 and with 1000 answers;
+sums of 1, 2 and 10 dice turning into a bell; the 68-95-99.7 rule as "one in 3, 22, 370"; why only the left tail
+breaks the label; raising the mean as the other, costlier lever; the z-score as a ruler; covariance as the average
+product of deviations; correlation 0.77 on Lecture 1's −1…1 scale; the odd day's expected sales; the share of the
+variance on the ellipse's long axis. New numbers: `capture_l04.py` (`depth`), tested in `test_l04.py`
+(`Draft2AddedLines`).
 
 **Rules applied:** berilganlar (data) / belgilanganlar (labels); "we", never "you" (only *Videoni toʻxtating*);
 Latin letters spoken by their English names (eks, ef, en, pi, ey, bi, zed); Greek letters keep theirs (mu, sigma,
@@ -45,9 +60,15 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    ▸ P(X = 2.5) = 0
 4. **Yechim: bitta qiymat emas, oraliq haqida soʻraymiz. Ikki va uch daqiqa orasida boʻlish ehtimoli — oddiy son.**
    *The fix: we stop asking about single values and ask about ranges. The chance of a gap between two and three minutes is a perfectly good number.*
+4a. **Aslida biz har doim shunday qilamiz. Sekundomer «ikki butun oʻndan besh» desa, u yaxlitlaydi: haqiqiy vaqt ikki butun yuzdan qirq besh va ikki butun yuzdan ellik besh orasidagi istalgan son. Mana shu oraliqning ehtimoli nol emas: taxminan bir butun oʻndan besh foiz.**
+    *In fact we always do this. When a stopwatch reads "two point five", it is rounding: the true time is anywhere between two point four five and two point five five. That range has a probability above zero: about one point five percent.*
+    ▸ a stopwatch showing 2.5; the range [2.45, 2.55] under the curve, its thin strip shaded: ≈ 1.5 %
 5. **Yigirma ming tanaffusni simulyatsiya qildik va birinchi maʼruzadagidek gistogramma chizdik. Faqat vertikal oʻqni shunday tanladikki, ustunlarning umumiy yuzi bir boʻlsin.**
    *We simulated twenty thousand gaps and drew the histogram of the first lecture. Only the vertical axis is rescaled so that the total area of the bars is one.*
    ▸ the histogram with bins 2 minutes wide: six bars
+5a. **Birinchi maʼruzada ustunning balandligi — sinfga tushgan berilganlar soni edi. Bu yerda esa ulushni ustunning kengligiga boʻlamiz. Birinchi ikki daqiqalik ustunga yigirma ming tanaffusdan oʻn bir ming bir yuz oʻn toʻqqiztasi tushdi, ulushi nol butun mingdan besh yuz ellik olti. Ikkiga boʻlsak, balandlik nol butun mingdan ikki yuz yetmish sakkiz. Shunda ustunning yuzi aynan uning ulushi boʻladi.**
+    *In the first lecture a bar's height was the count in its class. Here we divide the share by the bar's width. The first two-minute bar holds eleven thousand one hundred and nineteen of the twenty thousand gaps, a share of zero point five five six. Divided by two, the height is zero point two seven eight. Then each bar's area is exactly its share.*
+    ▸ the first bar: 11 119 / 20 000 = 0.556; ÷ 2 min = 0.278; area 0.278 × 2 = 0.556
 6. **Ustunlar ikki daqiqalik boʻlsa, oltita ustun chiqadi. Chorak daqiqalik boʻlsa — qirq sakkizta. Ustunlarni toraytirib borsak, ularning uchlari silliq egri chiziqqa aylanadi. Bu egri chiziqni zichlik deymiz.**
    *With bins two minutes wide there are six bars. A quarter of a minute wide, forty-eight. Keep narrowing them, and the bar tops turn into a smooth curve. That curve is the density.*
    ▸ the bins narrow to 0.25 minutes; the curve f(x) = 0.4 e^(−0.4x) draws over the bar tops
@@ -58,6 +79,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *The integral sign is the sum sign of the third lecture with the bars made infinitely thin: we add up the area.*
 9. **Zichlik ehtimol emas va birdan katta boʻlishi ham mumkin. U bir daqiqaga toʻgʻri keladigan ehtimol, xuddi tezlik bir soatga toʻgʻri keladigan masofa boʻlgani kabi.**
    *A density is not a probability, and it can be larger than one. It is probability per minute, the way speed is distance per hour.*
+9a. **Zichlikdan ehtimolni tez chamalash ham mumkin: qisqa oraliqning ehtimoli taxminan zichlik karra oraliqning uzunligi. Nol nuqtada zichlik nol butun oʻndan toʻrt. Demak, birinchi olti soniyada, yaʼni oʻndan bir daqiqada, mijoz kelish ehtimoli taxminan nol butun yuzdan toʻrt.**
+    *A density also gives a quick estimate: the chance of a short range is about the density times its length. At zero the density is zero point four. So the chance a customer arrives in the first six seconds, a tenth of a minute, is about zero point zero four.*
+    ▸ a thin rectangle 0.1 min wide and 0.4 tall at x = 0: 0.4 × 0.1 = 0.04 (the exact area: 0.039)
 10. **Sunʼiy intellektda rasm yoki matn yaratadigan modellar aynan zichlikni oʻrganadi: qanday berilganlar koʻp uchrashini, qandayi kam uchrashini.**
     *In AI, models that generate images or text learn exactly this: a density, saying which data is common and which is rare.*
 11. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Yetkazib berish oʻttiz soniyalik oynaning istalgan paytida bir xil ehtimol bilan keladi. Bir daqiqaga toʻgʻri keladigan zichlik qancha?**
@@ -71,6 +95,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 1. **Uchinchi maʼruzada oʻn daqiqada oʻrtacha toʻrtta mijoz kelardi. Demak, mijozlar orasidagi oʻrtacha tanaffus ikki butun oʻndan besh daqiqa, uning zichligi esa nol butun oʻndan toʻrt karra e ning minus nol butun oʻndan toʻrt eks darajasi.**
    *In the third lecture, four customers arrived per ten minutes on average. So the average gap is two point five minutes, and its density is zero point four times e to the minus zero point four x.*
    ▸ f(x) = 0.4 e^(−0.4x)
+1a. **Nega ikki butun oʻndan besh? Oʻn daqiqada toʻrtta mijoz kelsa, bir daqiqaga nol butun oʻndan toʻrt mijoz toʻgʻri keladi — bu uchinchi maʼruzadagi oʻrtacha tezlik lambda. Mijozlar orasidagi oʻrtacha vaqt esa uning teskarisi: birni nol butun oʻndan toʻrtga boʻlamiz. Mijozlar qancha tez kelsa, tanaffus shuncha qisqa.**
+    *Why two point five? Four customers in ten minutes is zero point four per minute: the rate lambda of the third lecture. The average time between customers is its reciprocal: one divided by zero point four. The faster customers come, the shorter the gaps.*
+    ▸ 4 / 10 min = 0.4 per minute → 1 / 0.4 = 2.5 min
 2. **Keyingi mijoz ikki daqiqa ichida keladimi? Noldan ikkigacha boʻlgan yuzni boʻyaymiz: nol butun yuzdan ellik besh.**
    *Will the next customer arrive within two minutes? We shade the area from zero to two: zero point five five.*
    ▸ the area from 0 to 2 fills; P(X < 2) = 1 − e^(−0.8) = 0.55
@@ -79,6 +106,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    ▸ the lower panel: F(x) rises from 0 to 1; at x = 2 it reads 0.55
 4. **Taqsimot funksiyasi noldan boshlanadi, birda tugaydi va hech qachon kamaymaydi. Tanaffuslarning ellik besh foizi ikki daqiqadan qisqa.**
    *The CDF starts at zero, ends at one, and never decreases. Fifty-five percent of gaps are shorter than two minutes.*
+4a. **Taqsimot funksiyasini yigʻilib boradigan hisob deb tushunamiz: eks gacha jami qancha ehtimol toʻplandi. Ikki daqiqagacha — ellik besh foiz, besh daqiqagacha — sakson olti foiz, oʻn daqiqagacha — toʻqson sakkiz foiz. Har bir keyingi daqiqa esa oldingisidan kamroq qoʻshadi.**
+    *Think of the CDF as a running total: how much probability has piled up by x. By two minutes, fifty-five percent; by five, eighty-six percent; by ten, ninety-eight percent. And each extra minute adds less than the one before.*
+    ▸ F(2) = 0.55, F(5) = 0.86, F(10) = 0.98 marked on the rising curve
 5. **Besh daqiqa yoki undan uzun tinch tanaffus ham oʻn uch butun oʻndan besh foiz hollarda boʻladi. Demak, sokinlik tirbandlik tugaganini bildirmaydi.**
    *A quiet stretch of five minutes or more still happens thirteen point five percent of the time. So a lull is no sign the rush is over.*
 6. **Har qanday oraliq savoli — ikki qiymatni oʻqish va ayirish: ey va bi orasida boʻlish ehtimoli bi dagi qiymat minus ey dagi qiymat.**
@@ -88,6 +118,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *That is why tables and software report the CDF, not the density: it is the CDF that answers questions.*
 8. **Sunʼiy intellektda chegaralar ham shunday tanlanadi: masalan, eng sekin bir foiz soʻrovlar uchun ogohlantirish — taqsimot funksiyasi nol butun yuzdan toʻqson toʻqqizga yetgan nuqta.**
    *In AI, thresholds are chosen the same way: for example, an alert for the slowest one percent of requests sits where the CDF reaches zero point nine nine.*
+8a. **Tanaffuslarimiz uchun bu nuqta oʻn bir butun oʻndan besh daqiqa: tanaffuslarning atigi bir foizi bundan uzun. Uni taqsimot funksiyasini teskari oʻqib topdik. Bu gʻoyaga toʻrtinchi boʻlimda qaytamiz.**
+    *For our gaps that point is eleven point five minutes: only one percent of gaps are longer. We found it by reading the CDF backwards. Section four comes back to that idea.*
+    ▸ F(x) = 0.99 at x = 11.5 min, read from the vertical axis across and down
 9. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Tanaffus ikki va besh daqiqa orasida boʻlish ehtimoli qancha?**
    *Let's try it ourselves. Pause the video. What is the chance that a gap lasts between two and five minutes?*
 10. **Beshdagi qiymat nol butun mingdan sakkiz yuz oltmish besh, ikkidagi qiymat nol butun mingdan besh yuz ellik bir. Ayirmasi nol butun mingdan uch yuz oʻn toʻrt — uchdan birdan sal kam.**
@@ -101,6 +134,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 2. **Yetkazib berish «oʻn daqiqa ichida» deb vaʼda qilingan. Zichlik — oʻndan bir. Birinchi uch daqiqada kelish ehtimoli — oʻndan uch.**
    *A delivery is promised "within ten minutes". The density is one tenth. The chance it lands in the first three minutes is three in ten.*
    ▸ a flat line at 0.1 over 0 to 10; the first 3 minutes shaded: 0.3
+2a. **Tekis taqsimotning taqsimot funksiyasi — toʻgʻri chiziq: har bir daqiqa oʻndan bir qoʻshadi. Oʻrtacha kutish esa oraliqning oʻrtasi, yaʼni besh daqiqa.**
+    *The uniform's CDF is a straight line: every minute adds one tenth. And the average wait is the middle of the window: five minutes.*
+    ▸ F(x) = x / 10, a straight ramp from 0 to 1; the mean 5 marked
 3. **Ikkinchi shakl — eksponensial taqsimot: hodisalar lambda tezlikda kelganda keyingisigacha kutish vaqti. Oʻrtacha kutish — birni lambdaga boʻlganimiz.**
    *The second shape is the exponential distribution: the wait until the next event, when events arrive at rate lambda. The average wait is one over lambda.*
    ▸ f(x) = λ e^(−λx), mean 1/λ
@@ -114,6 +150,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    ▸ P(X > 5 | X > 3) = e^(−2)/e^(−1.2) = e^(−0.8) = 0.449 = P(X > 2)
 7. **Buni xotirasizlik xossasi deymiz: navbat sokin oʻtgan vaqtni eslamaydi. Uchinchi maʼruzadagi Puasson ham aynan shunday mustaqillikni faraz qilgan edi.**
    *We call this the memoryless property: the queue does not remember the quiet stretch. The Poisson of the third lecture assumed exactly this independence.*
+7a. **Farqni tekis taqsimot bilan solishtirsak yaxshi koʻramiz. «Oʻn daqiqa ichida» vaʼda qilingan yetkazib berishni sakkiz daqiqa kutdik. Endi u qolgan ikki daqiqada albatta keladi: bu yerda kutilgan vaqt hisobga olinadi. Eksponensial navbatda esa uch daqiqa kutish hech narsani oʻzgartirmadi.**
+    *The contrast with the uniform makes it clear. We have waited eight minutes for a delivery promised "within ten minutes". Now it must come in the remaining two: here the time already waited counts. In the exponential queue, three minutes of waiting changed nothing.*
+    ▸ two panels: uniform, after 8 min it lands by 10 with probability 1 │ exponential, after 3 min P(more than 2 more) = 0.449, as at the start
 8. **Lekin bu dunyo haqida kuchli daʼvo. Haqiqatda tushlik paytida mijozlar toʻda boʻlib keladi, va unda ikkala model ham toʻgʻri kelmaydi.**
    *But that is a strong claim about the world. Real customers cluster at lunchtime, and then neither model fits.*
 9. **Sunʼiy intellektda bu farazni tekshirish muhim: model serveriga soʻrovlar toʻlqin-toʻlqin kelsa, eksponensial faraz bilan rejalashtirilgan quvvat yetmaydi.**
@@ -132,11 +171,17 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 2. **Usul shunday: taqsimot funksiyasini teskari yuritamiz. Tekis son yu ni olamiz va taqsimot funksiyasi aynan yu ga teng boʻladigan eks ni topamiz.**
    *The method: we run the CDF backwards. We take a uniform number u and find the x at which the CDF equals u.*
    ▸ u on the vertical axis of F(x); a line across to the curve, then down to x
+2a. **Nega bu ishlaydi? Taqsimot funksiyasi har bir tanaffusni ulushga aylantiradi: tanaffuslarning qancha qismi bundan qisqa. Biz esa teskari yuramiz: tasodifiy ulush tanlaymiz va unga mos tanaffusni topamiz. Ulush tekis tanlangani uchun tanaffuslar aynan kerakli taqsimotga ega boʻladi.**
+    *Why does this work? The CDF turns every gap into a share: what fraction of gaps are shorter than this. We go the other way: we pick a random share and find the gap that matches it. Because the share is picked uniformly, the gaps come out with exactly the distribution we want.*
+    ▸ two arrows between the axes: gap → share (F), share → gap (F⁻¹)
 3. **Eksponensial uchun javob: eks teng minus logarifm bir minus yu, boʻlinsin lambda.**
    *For the exponential, the answer is: x equals minus the logarithm of one minus u, divided by lambda.*
    ▸ x = −ln(1 − u) / λ
 4. **Yu nol butun oʻndan besh, lambda nol butun oʻndan toʻrt boʻlsa, eks bir butun yuzdan yetmish uch daqiqa. Haqiqatan ham, simulyatsiyadagi tanaffuslarning yarmi bundan qisqa.**
    *With u equal to zero point five and lambda zero point four, x is one point seven three minutes. And indeed, half of the simulated gaps are shorter than that.*
+4a. **Bu son — tanaffuslarning medianasi. Oʻrtacha qiymat esa ikki butun oʻndan besh. Birinchi maʼruzadagi maoshlar kabi, oʻrtacha medianadan katta: eksponensial taqsimotning dumi oʻngga choʻzilgan.**
+    *This number is the median gap. The mean is two point five. Just like the salaries of the first lecture, the mean is above the median: the exponential's tail stretches to the right.*
+    ▸ the exponential curve with the median 1.73 (green) and the mean 2.5 (red)
 5. **Koʻp tekis sonni shu formuladan oʻtkazsak, ularning gistogrammasi eksponensial egri chiziqqa aylanadi.**
    *Pass many uniform numbers through this formula, and their histogram becomes the exponential curve.*
    ▸ a stream of u values maps to x values; their histogram grows into the curve
@@ -159,14 +204,26 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 4. **Dirixle kabi, alfa va beta muvaffaqiyat va muvaffaqiyatsizliklarni sanaydi. Oʻntadan uchta — Beta toʻrt, sakkiz: oʻrtacha nol butun yuzdan oʻttiz uch, tarqoqligi nol butun yuzdan oʻn uch.**
    *Like the Dirichlet, alpha and beta count successes and failures. Three of ten gives Beta four, eight: mean zero point three three, spread zero point one three.*
    ▸ the Beta(4, 8) curve, wide
+4a. **Nega uch emas, toʻrt? Hech narsa koʻrmasdan oldin Beta bir, bir dan boshlaymiz. Bu tekis taqsimot: noldan birgacha hamma ulush teng ehtimolli. Keyin pishiriqli uchta buyurtmani alfaga, pishiriqsiz yettitasini betaga qoʻshamiz.**
+    *Why four and not three? Before seeing anything we start from Beta one, one. That is the uniform: every share from zero to one equally likely. Then we add the three orders with a pastry to alpha, and the seven without to beta.*
+    ▸ Beta(1, 1) flat → + 3 to α, + 7 to β → Beta(4, 8)
 5. **Yuztadan oʻttizta — Beta oʻttiz bir, yetmish bir: oʻrtacha nol butun yuzdan oʻttiz, tarqoqligi bor-yoʻgʻi nol butun yuzdan besh. Berilganlar koʻpaygan sari egri chiziq toraydi.**
    *Thirty of a hundred gives Beta thirty-one, seventy-one: mean zero point three zero, spread only zero point zero five. The more data, the narrower the curve.*
    ▸ the Beta(31, 71) curve, narrow, over the same axis
+5a. **Eʼtibor beraylik: berilganlar oʻn baravar koʻpaydi, tarqoqlik esa atigi taxminan uch baravar kichraydi. Nega aynan shunday ekanini beshinchi maʼruzada koʻramiz.**
+    *Note: the data grew ten times, but the spread shrank only about three times. Lecture 5 shows why it is exactly so.*
+    ▸ 10 orders → 100 orders: spread 0.13 → 0.05
 6. **Yangilash — bu sanash: yana bitta pishiriq olinsa, alfaga bir qoʻshamiz.**
    *Updating is counting: one more pastry, and we add one to alpha.*
+6a. **Bunday ulushlar sunʼiy intellektda juda koʻp. Masalan, reklamani bosganlar ulushi: reklamani koʻrgan har yuz kishidan nechtasi uni bosdi. Uni qisqacha bosish ulushi deymiz. U pishiriq olgan mijozlar ulushi kabi hisoblanadi: bosganlar alfaga, bosmaganlar betaga qoʻshiladi.**
+    *Shares like this are everywhere in AI. Take the click rate: of every hundred people shown an ad, how many clicked it. In Uzbek we call it «bosish ulushi» for short. It is counted just like the share of customers who buy a pastry: clicks go to alpha, the rest to beta.*
+    ▸ an ad shown to 100 people, the ones who click lit; bosish ulushi = bosganlar / koʻrganlar
 7. **Sunʼiy intellektda bosish ulushi yoki model aniqligi dalil kelgan sari shunday kuzatiladi: oʻn beshtadan oʻn ikkita toʻgʻri javob mingtadan sakkiz yuztasi bilan bir xil dalil emas. Oltinchi maʼruzada Beta Bernulli uchun aprior taqsimot boʻladi.**
    *In AI, a click rate or a model's accuracy is tracked this way as evidence arrives: twelve correct of fifteen is not the evidence that eight hundred of a thousand is. In Lecture 6, the Beta becomes the prior for a Bernoulli.*
    ▸ two Beta curves: 12 of 15 wide, 800 of 1000 a spike
+7a. **Ikkalasida ham ulush nol butun oʻndan sakkiz. Lekin oʻn beshtadan oʻn ikkitada tarqoqlik nol butun oʻndan bir, mingtadan sakkiz yuztada esa nol butun yuzdan bir atrofida — taxminan sakkiz baravar kichik.**
+    *Both are a share of zero point eight. But the spread with twelve of fifteen is zero point one, and with eight hundred of a thousand about zero point zero one: roughly eight times smaller.*
+    ▸ 12/15 = 800/1000 = 0.8; spread 0.10 vs 0.013
 8. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Beta toʻrt, sakkizdan keyin navbatdagi buyurtmada pishiriq bor. Yangi taqsimot qanday va uning oʻrtachasi qancha?**
    *Let's try it ourselves. Pause the video. After Beta four, eight, the next order has a pastry. What is the new distribution, and what is its mean?*
 9. **Beta besh, sakkiz. Oʻrtacha — beshni oʻn uchga boʻlamiz: taxminan nol butun yuzdan oʻttiz sakkiz.**
@@ -182,6 +239,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Weigh croissants, measure people's heights, read a thermometer twice: the same bell shape appears every time.*
 2. **Sababi bitta: koʻp kichik mustaqil tebranishlarning yigʻindisi normal taqsimotga keladi. Kruassanning vazni — xamir boʻlagi, unning namligi, pechdagi joyi, koʻpchish vaqti va yana oʻnlab omillar yigʻindisi.**
    *The reason fits in one line: anything built by adding up many small independent wobbles ends up normal. A croissant's weight is the dough portion, plus the flour's moisture, plus its place in the oven, plus the rise time, plus a dozen others.*
+2a. **Buni oddiy misolda koʻrish mumkin. Bitta kubikning natijalari tekis: har bir son oltidan bir. Ikki kubik yigʻindisi allaqachon uchburchak, oʻrtadagi yetti eng koʻp chiqadi. Oʻnta kubik yigʻindisi esa qoʻngʻiroqqa juda oʻxshab qoladi.**
+    *A simple example shows it. One die is flat: each face one sixth. The sum of two dice is already a triangle, with seven in the middle the commonest. The sum of ten dice looks very much like a bell.*
+    ▸ three bar charts side by side: 1 die, 2 dice, 10 dice; a normal curve drawn over the last
 3. **Bu markaziy limit teoremasi, uni beshinchi maʼruzada isbotlaymiz. Hozircha natijasini olamiz: yigʻindi va oʻrtachalar shu shaklga intiladi.**
    *That is the Central Limit Theorem, and we prove it in Lecture 5. For now we take its consequence: sums and averages drift toward this shape.*
 4. **Normal taqsimotning ikki parametri bor: mu egri chiziqni yonga suradi, sigma uni choʻzadi. Novvoyxonadagi kruassanlar uchun mu oltmish gramm, sigma ikki gramm.**
@@ -192,6 +252,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 6. **Oltmish sakkiz, toʻqson besh, toʻqson toʻqqiz butun oʻndan yetti qoidasi: kruassanlarning taxminan oltmish sakkiz foizi oʻrtachadan bir sigma ichida, toʻqson besh foizi ikki sigma ichida, toʻqson toʻqqiz butun oʻndan yetti foizi uch sigma ichida.**
    *The sixty-eight, ninety-five, ninety-nine point seven rule: about sixty-eight percent of croissants lie within one sigma of the mean, ninety-five percent within two, and ninety-nine point seven percent within three.*
    ▸ the bands fill in turn: 68.27 %, 95.45 %, 99.73 %
+6a. **Teskari tomondan ham aytish mumkin: taxminan har uchta kruassandan bittasi bir sigmadan tashqarida, yigirma ikkitadan bittasi ikki sigmadan tashqarida, uch yuz yetmishtadan bittasi esa uch sigmadan tashqarida.**
+    *Said the other way round: about one croissant in three lies outside one sigma, one in twenty-two outside two, and one in three hundred and seventy outside three.*
+    ▸ 1 in 3 · 1 in 22 · 1 in 370, the tails beyond each band lit
 7. **Grammlarda: oltmish sakkiz foizi ellik sakkiz va oltmish ikki gramm orasida, toʻqson besh foizi ellik olti va oltmish toʻrt orasida, deyarli hammasi ellik toʻrt va oltmish olti orasida.**
    *In grams: sixty-eight percent weigh between fifty-eight and sixty-two, ninety-five percent between fifty-six and sixty-four, and nearly all between fifty-four and sixty-six.*
 8. **Demak, ikki son — markaz va tarqoqlik — butun partiya haqidagi deyarli har qanday savolga javob beradi.**
@@ -212,6 +275,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 2. **Uning chap tomonidagi yuz nol butun yuzdan oltmish ikki foiz: har ming kruassandan taxminan oltitasi vaʼdadan yengil chiqadi.**
    *The area to its left is zero point six two percent: about six croissants in every thousand come out lighter than promised.*
    ▸ the left tail shaded; 1000 croissants, 6 of them lit
+2a. **Faqat chap tomonni olamiz, chunki ogʻir kruassan vaʼdani buzmaydi: «kamida ellik besh gramm» degan vaʼdani faqat yengil kruassan buzadi.**
+    *We take only the left side, because a heavy croissant breaks no promise: "at least fifty-five grams" is broken only by a light one.*
+    ▸ the right tail greyed out, the left tail red
 3. **Endi oʻrtachani oʻzgartirmaymiz, faqat jarayonni aniqroq qilamiz: sigma bir butun oʻndan besh gramm boʻlsin.**
    *Now we leave the mean alone and only make the process more precise: sigma becomes one point five grams.*
 4. **Unda ellik besh gramm uch butun oʻndan uch sigma uzoqda boʻladi, va kamchilik keskin kamayadi.**
@@ -225,6 +291,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Let's try it ourselves. Pause the video. With sigma one point five grams, how many of ten thousand croissants come out lighter than fifty-five grams?*
 8. **Uch butun oʻndan uch sigma chap tomondagi yuz: oʻn ming kruassandan taxminan toʻrttasi. Ilgari oltmish ikkita edi.**
    *The area beyond three point three sigma: about four in ten thousand. Before, it was sixty-two.*
+8a. **Yana bir yoʻl bor: oʻrtachani oshirish. Sigma ikki gramm qolib, mu oltmish bir grammga koʻtarilsa, ellik besh gramm uch sigma uzoqda boʻladi va kamchilik oʻn ming kruassandan taxminan oʻn uchtaga tushadi. Lekin buning uchun har bir kruassanga bir gramm ortiqcha xamir ketadi, natija esa baribir aniqroq jarayondagi toʻrttadan yomon.**
+    *There is one more lever: raise the mean. Keep sigma at two grams and lift mu to sixty-one, and fifty-five grams sits three sigma away: the shortfall drops to about thirteen in ten thousand. But that costs an extra gram of dough in every croissant, and it is still worse than the four of the more precise process.*
+    ▸ two curves: μ = 61, σ = 2 (13 in 10 000) │ μ = 60, σ = 1.5 (4 in 10 000)
 9. **Kruassan va nonni qanday solishtiramiz? Ularning grammlari turlicha. Keyingi boʻlimda.**
    *How do we compare a croissant with a loaf, when their grams are so different? The next section.*
 
@@ -232,6 +301,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 1. **Oʻlchovning zed-qiymati — u oʻrtachadan nechta standart chetlanish uzoqda ekani: oʻrtachani ayiramiz va sigmaga boʻlamiz. Uning birligi yoʻq, shuning uchun gramm ham, daqiqa ham solishtiriladigan boʻladi.**
    *The z-score of a measurement is how many standard deviations it sits from the mean: subtract the mean and divide by sigma. It has no units, so grams and minutes become comparable.*
    ▸ z = (x − μ) / σ
+1a. **Zed-qiymatni yangi chizgʻich deb tasavvur qilamiz: nol belgisi — oʻrtacha, har bir boʻlinma — bitta sigma. Kruassanlar chizgʻichida bitta boʻlinma ikki gramm, nonlarnikida esa oʻn besh gramm.**
+    *Picture the z-score as a new ruler: the zero mark is the mean, and each step is one sigma. On the croissants' ruler a step is two grams; on the loaves' ruler, fifteen grams.*
+    ▸ two rulers aligned at z = 0: croissant 56 · 58 · 60 · 62 · 64 g, loaf 470 · 485 · 500 · 515 · 530 g
 2. **Ellik yetti grammli kruassan: minus uchni ikkiga boʻlamiz, minus bir butun oʻndan besh. Bir yarim standart chetlanish yengil.**
    *A fifty-seven-gram croissant: minus three divided by two, minus one point five. One and a half standard deviations light.*
 3. **Bir kuni ertalab kruassan ellik yetti gramm, non esa toʻrt yuz sakson gramm chiqdi. Nonlar oʻrtacha besh yuz gramm, sigmasi oʻn besh gramm.**
@@ -258,6 +330,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    ▸ a scatter of the 300 simulated days: temperature against cups
 2. **Ularni alohida tasvirlasak, eng muhimini yoʻqotamiz. Bizga birga oʻzgarishni oʻlchaydigan son kerak. Bu kovariatsiya.**
    *Describing them separately throws away the very thing worth knowing. We need a number for moving together. That number is the covariance.*
+2a. **Kovariatsiyani shunday hisoblaymiz: har bir kun uchun haroratning oʻrtachadan farqini savdoning oʻrtachadan farqiga koʻpaytiramiz. Issiq va savdosi koʻp kun ham, salqin va savdosi kam kun ham musbat koʻpaytma beradi. Uch yuz kunimizdan ikki yuz qirqtasida koʻpaytma musbat, shuning uchun ularning oʻrtachasi ham musbat.**
+    *Here is how the covariance is computed: for each day, we multiply how far the temperature is from its mean by how far sales are from theirs. A hot, busy day and a cool, quiet day both give a positive product. On two hundred and forty of our three hundred days the product is positive, so their average is positive too.*
+    ▸ the scatter split into four quadrants at the two means; the two positive quadrants lit: 240 of 300
 3. **Koʻp oʻlchovli normal taqsimotda mu oʻrniga oʻrtachalar vektori, sigma kvadrat oʻrniga kovariatsiya matritsasi turadi. Diagonalda har bir miqdorning dispersiyasi, diagonaldan tashqarida esa ularning kovariatsiyasi.**
    *A multivariate Gaussian replaces mu with a mean vector and sigma squared with a covariance matrix. On the diagonal sits each quantity's variance; off the diagonal, their covariance.*
    ▸ μ = (21.8, 39.5), Σ = [[31.9, 49.6], [49.6, 128.4]]
@@ -265,6 +340,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Over the three hundred simulated days, the mean temperature is twenty-one point eight degrees and mean sales thirty-nine point five cups.*
 5. **Harorat besh butun yuzdan oltmish besh daraja, savdo oʻn bir butun yuzdan oʻttiz uch stakan tarqoqlikka ega. Kovariatsiya qirq toʻqqiz butun oʻndan olti — musbat: issiq kunlarda koʻproq sotiladi. Ikki tarqoqlikka boʻlsak, korrelyatsiya chiqadi: nol butun yuzdan yetmish yetti.**
    *Temperature spreads by five point six five degrees, sales by eleven point three three cups. The covariance, forty-nine point six, is positive: warm days sell more. Dividing out both spreads gives the correlation: zero point seven seven.*
+5a. **Birinchi maʼruzada korrelyatsiya minus birdan birgacha boʻlishini aytgan edik. Nol butun yuzdan yetmish yetti — kuchli bogʻlanish, lekin bir emas: harorat savdoni toʻliq aytib bermaydi, boshqa sabablar ham bor.**
+    *In the first lecture we said a correlation runs from minus one to one. Zero point seven seven is a strong link, but not one: temperature does not tell the whole story of sales; other causes are at work too.*
+    ▸ the −1 … 1 scale of Lecture 1 with 0.77 marked
 6. **Ellipslar — bir va ikki sigma konturlari. Ularning ogʻishi — kovariatsiya: nol boʻlsa oʻqlarga parallel, musbat boʻlsa yuqoriga qiyshaygan, korrelyatsiya kuchli boʻlsa ingichka.**
    *The ellipses are the one- and two-sigma contours. Their tilt is the covariance: zero lines them up with the axes, positive tips them upward, and a stronger correlation makes them thinner.*
    ▸ the 1σ and 2σ ellipses draw over the scatter
@@ -273,6 +351,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    ▸ the starred day, outside the 2σ ellipse
 8. **Lekin juftlik sifatida u uch butun oʻndan besh standart chetlanish uzoqda — ellipsdan ancha tashqarida. Har bir ustunni alohida tekshirsak, buni koʻrmay qolardik.**
    *But as a pair it sits three point five standard deviations out, well outside the ellipse. Checking each column alone, we would have missed it.*
+8a. **Sababi shunda: issiq kunda savdo yuqori boʻlishi kutiladi. Ellipsga koʻra, yigirma sakkiz darajali kunda odatdagi savdo taxminan qirq toʻqqiz stakan. Bu kun esa yigirma besh — kutilganidan yigirma toʻrtta kam.**
+    *The reason: a hot day is expected to sell more. By the ellipse, a typical twenty-eight-degree day sells about forty-nine cups. This day sold twenty-five: twenty-four fewer than expected.*
+    ▸ the line of expected sales through the cloud; at 28 °C it reads 49; the starred day 24 cups below it
 9. **Sunʼiy intellektda gʻayrioddiy holatni aniqlash tizimlari aynan shu ellipsga qaraydi, alohida ustunlarga emas.**
    *In AI, anomaly detectors look at exactly this ellipse, not at the columns one at a time.*
 10. ⏸ **Keling, oʻzimiz sinab koʻraylik. Videoni toʻxtating. Yigirma sakkiz daraja oʻrtachadan nechta standart chetlanish issiq?**
@@ -286,6 +367,9 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 1. **Birinchidan, ellipsning uzun oʻqi — bosh komponentalar tahlili topadigan yoʻnalishning oʻzi. U kovariatsiya matritsasini diagonallashtiradi, va ellipsning oʻqlari uning bosh yoʻnalishlari.**
    *First, the long axis of that ellipse is what PCA finds. PCA diagonalizes the covariance matrix, and the ellipse's axes are its principal directions.*
    ▸ the ellipse's two axes drawn from the covariance matrix
+1a. **Uzun oʻq — berilganlar eng koʻp choʻzilgan yoʻnalish. Bizning kunlarda u dispersiyaning toʻqson uch foizini oladi: bir uchida issiq va gavjum kunlar, boshqa uchida salqin va sokin kunlar. Ikki ustun oʻrniga bitta son deyarli butun manzarani beradi.**
+    *The long axis is the direction in which the data stretches most. For our days it carries ninety-three percent of the variance: hot, busy days at one end, cool, quiet days at the other. One number instead of two columns gives almost the whole picture.*
+    ▸ the days projected onto the long axis: 93 % of the variance
 2. **Ikkinchidan, klasterlash: Gauss aralashmasi modeli berilganlarni bir nechta shunday ellipslar bilan tasvirlaydi, har bir klasterga bittadan.**
    *Second, clustering: a Gaussian mixture model describes data as several such ellipses, one per cluster.*
 3. **Uchinchidan, tarmoqni boshlash: vaznlar nol oʻrtachali normal taqsimotdan olinadi, sigmasi qatlam kengligiga qarab tanlanadi, shunda signallar yoʻqolib ham, portlab ham ketmaydi.**

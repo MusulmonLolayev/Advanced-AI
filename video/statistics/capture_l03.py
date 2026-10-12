@@ -55,6 +55,13 @@ FIRST_ORDERS = {"small": 1, "medium": 2, "large": 1}
 DIRICHLET_SEEN = (4, 40)                               # orders "already seen" by the two priors
 MORE_MEDIUM = 3
 TEST_N, TEST_ACC = 100, F(9, 10)                       # section 8's AI use: 100 test examples, 90 % accuracy
+# draft 2 (depth): the added lines' inputs
+LONG_RUN_ROLLS = 36000                                 # §1 7a: two dice rolled this many times
+CASINO_STAKES = 1_000_000                              # §5 3a: dollars bet at the table in all
+SPREAD_BETS = (100, 10000)                             # §5 4a: expected balance against its spread
+SMALL_N, SMALL_K = 3, 2                                # §8 3a: three customers, two buy
+ANSWERS_N, ANSWERS_YES = 10, 3                         # §7 2a: ten answers, three yeses
+WINDOW_MINUTES = (5, 60)                               # §10 2a: other windows than ten minutes
 
 
 def frac(x):
@@ -235,7 +242,78 @@ def compute():
     rng = np.random.default_rng(5)
     base = np.array([float(p) for p in CUPS.values()])
     V["dirichlet_draws"] = {str(s): np.round(rng.dirichlet(base * s, size=6), 3).tolist() for s in DIRICHLET_SEEN}
+    V.update(draft2(V))
     return V
+
+
+def draft2(V):
+    """Numbers of the lines added for depth (narration draft 2)."""
+    D = {}
+    e, _, var = moments(PASTRY)
+    sd = sqrt(var)
+    # §1 3a: one roll, several random variables (sum, the larger die, "a six?" as 1/0)
+    a, b = EXAMPLE_ROLL
+    D["roll_vars"] = {"sum": a + b, "max": max(a, b), "six": int(DIE in (a, b))}
+    # §1 7a: a probability read as a long-run share
+    D["long_run_rolls"] = LONG_RUN_ROLLS
+    D["long_run_sevens"] = float(LONG_RUN_ROLLS * F(V["dice_ways"][7], DIE * DIE))
+    D["long_run_twos"] = float(LONG_RUN_ROLLS * F(V["dice_ways"][2], DIE * DIE))
+    # §2 3a: one hundred imagined customers in the shares of the PMF
+    crowd = {k: int(CUSTOMERS * p) for k, p in PASTRY.items()}
+    D["crowd"] = {str(k): n for k, n in crowd.items()}
+    D["crowd_pastries"] = sum(k * n for k, n in crowd.items())
+    D["crowd_mean"] = D["crowd_pastries"] / CUSTOMERS
+    # §2 7a: what the school keeps per ticket
+    D["kept_per_ticket"] = V["raffle_kept"] / RAFFLE_TICKETS
+    # §4 3a: the variance by its definition, and the two-pastry order's share of it
+    parts = {k: float((k - e) ** 2 * p) for k, p in PASTRY.items()}
+    D["var_parts"] = {str(k): v for k, v in parts.items()}
+    D["var_by_definition"] = sum(parts.values())
+    D["var_share_two"] = parts[2] / float(var)
+    # §4 6a: how much of the first raffle's variance the one winning ticket carries
+    ra = raffle(RAFFLE_A)
+    m, _, v = moments(ra)
+    win = RAFFLE_A[0][0] - RAFFLE_PRICE
+    D["raffle_A_win_share"] = float((win - m) ** 2 * ra[win] / v)
+    # §5 1a: red wins 18 of 37, loses 19 of 37
+    D["roulette_lose"] = ROULETTE_POCKETS - ROULETTE_RED
+    D["roulette_edge_pockets"] = D["roulette_lose"] - ROULETTE_RED
+    # §5 3a: the casino's side of a million dollars bet
+    D["casino_stakes"] = CASINO_STAKES
+    D["casino_keeps"] = CASINO_STAKES / ROULETTE_POCKETS
+    # §5 4a: the expected balance grows like n, its spread like the square root of n
+    p_win = F(ROULETTE_RED, ROULETTE_POCKETS)
+    bet_var = 1 - float(p_win - (1 - p_win)) ** 2                    # E[X^2] = 1 for a +-1 bet
+    D["bet_var"] = bet_var
+    D["spread"] = {str(n): {"balance": n * V["roulette_mean"], "sd": sqrt(n * bet_var)} for n in SPREAD_BETS}
+    # §6 2a: doubling every value quadruples the variance
+    D["revenue_var_ratio"] = V["revenue_var"] / float(var)
+    # §6 6a: standardized values of the pastry counts
+    D["z_pastry"] = {str(k): (k - float(e)) / sd for k in PASTRY}
+    # §7 2a: the mean of 0/1 answers is the share of yeses
+    answers = [1] * ANSWERS_YES + [0] * (ANSWERS_N - ANSWERS_YES)
+    D["answers"] = answers
+    D["answers_mean"] = sum(answers) / len(answers)
+    # §8 3a: orders of the yeses
+    D["small_orders"] = comb(SMALL_N, SMALL_K)
+    D["small_n"], D["small_k"] = SMALL_N, SMALL_K
+    # §8 5a: the binomial as a sum of ten Bernoullis
+    D["bin_sum_mean"] = BIN_N * V["bern_p"]
+    D["bin_sum_var"] = BIN_N * V["bern_var"]
+    # §9 2a: two answers, medium or not, is a Bernoulli
+    D["medium_or_not"] = float(CUPS["medium"])
+    # §9 4a: the medium count alone is binomial
+    D["medium_count_mean"] = float(CUP_CUSTOMERS * CUPS["medium"])
+    # §10 2a: the rate scales with the window
+    D["window_minutes"] = list(WINDOW_MINUTES)
+    D["window_lam"] = [LAM * w / 10 for w in WINDOW_MINUTES]
+    # §10 5a: three and four are the most likely counts, neither common
+    D["pois_p3"], D["pois_p4"] = poisson_pmf(3, LAM), poisson_pmf(4, LAM)
+    D["pois_p4_one_in"] = round(1 / D["pois_p4"])
+    # §11 5a: the Dirichlet's mean is alpha over its total
+    D["dirichlet_means"] = {s: [x / sum(al) for x in al] for s, al in V["alphas"].items()}
+    D["dirichlet_totals"] = {s: sum(al) for s, al in V["alphas"].items()}
+    return D
 
 
 def figure_output():

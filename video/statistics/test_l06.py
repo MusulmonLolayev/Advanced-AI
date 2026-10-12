@@ -155,6 +155,88 @@ class Section10Penalty(unittest.TestCase):
         self.assertEqual(V["lambda_task"]["lambda"], 4)
 
 
+class Draft2AddedLines(unittest.TestCase):
+    """The numbers draft 2's lettered lines speak."""
+    D = V["depth"]
+
+    def test_s1_same_mean_different_certainty(self):                 # 1.7a
+        self.assertEqual(round(self.D["sd_prior"], 2), 0.12)
+        self.assertEqual(round(self.D["sd_stubborn"], 2), 0.04)
+        self.assertAlmostEqual(V["three"]["stubborn"]["prior_mean"], V["prior_mean"])
+
+    def test_s2_likelihood_ratio(self):                                # 2.3a
+        self.assertAlmostEqual(self.D["late_if_08"], 0.2)
+        self.assertAlmostEqual(self.D["late_if_05"], 0.5)
+        self.assertAlmostEqual(self.D["late_ratio"], 2.5)
+
+    def test_s2_weighted_average(self):                                # 2.6a
+        self.assertAlmostEqual(self.D["blend_day1"], V["one_late"]["mean"])
+        self.assertEqual(round(self.D["blend_day1"], 3), 0.727)
+
+    def test_s3_early_swings(self):                                    # 3.4a
+        self.assertEqual([round(x, 3) for x in self.D["first10_mle"]], [0.0, 0.625])
+        self.assertEqual([round(x, 3) for x in self.D["first10_post"]], [0.684, 0.75])
+
+    def test_s3_hundred_as_weighted_average(self):                     # 3.5a
+        self.assertAlmostEqual(self.D["blend_100"], V["bus"]["100"]["mean"])
+        self.assertEqual(round(self.D["blend_100"], 3), 0.691)
+        self.assertAlmostEqual(self.D["data_weight_100"], 10 / 11)
+
+    def test_s4_two_sigma(self):                                       # 4.2a
+        self.assertEqual(round(self.D["sd_100"], 3), 0.044)
+        self.assertEqual([round(x, 3) for x in self.D["two_sd_100"]], [0.603, 0.779])
+
+    def test_s4_square_root_narrowing(self):                           # 4.8a
+        self.assertEqual(self.D["count_ratio"], 5.5)
+        self.assertEqual(round(self.D["sqrt_count_ratio"], 1), 2.3)
+        self.assertEqual(round(V["ci_shrink"], 1), 2.3)
+
+    def test_s5_flat_is_two_mornings(self):                            # 5.3a
+        f = V["three"]["flat"]["post"]
+        self.assertEqual((f["a"], f["b"]), (69, 33))
+        self.assertEqual(round(f["mean"], 3), 0.676)
+
+    def test_s5_mornings_to_overrule(self):                            # 5.7a
+        self.assertEqual(self.D["mornings_to_close"], {"flat": 34, "ours": 110, "stubborn": 1100})
+        self.assertGreater(self.D["mornings_to_close"]["stubborn"] / 365, 3)          # "more than three years"
+        self.assertEqual(self.D["mornings_to_close"]["stubborn"] / self.D["mornings_to_close"]["ours"], 10)
+
+    def test_s5_coverage(self):                                        # 5.10a
+        self.assertEqual(round(100 * self.D["coverage"], 1), 95.3)
+
+    def test_s6_flat_map_is_mle(self):                                 # 6.4a
+        self.assertAlmostEqual(self.D["flat_map_100"], V["bus"]["100"]["mle"])
+
+    def test_s6_flat_after_monday(self):                               # 6.7a
+        self.assertEqual(self.D["flat_day1"]["map"], 0.0)
+        self.assertAlmostEqual(self.D["flat_day1"]["mean"], 1 / 3)
+
+    def test_s7_one_at_a_time(self):                                   # 7.5a
+        self.assertEqual(self.D["seq30"], [30, 10])
+
+    def test_s7_predictive_after_monday(self):                         # 7.8a
+        self.assertEqual(V["mle_day1"], 0.0)
+        self.assertEqual(round(V["one_late"]["mean"], 3), 0.727)
+
+    def test_s8_shares(self):                                          # 8.5a, 8.5b
+        self.assertEqual([round(x, 3) for x in self.D["dir_raw_shares"]], [0.175, 0.525, 0.3])
+        self.assertEqual(round(self.D["dir_unseen"], 2), 0.02)
+
+    def test_s9_recaps(self):                                          # 9.1a, 9.3a, 9.4a
+        self.assertEqual(self.D["walk_band"], [9.0, 15.0])
+        self.assertEqual(round(100 * self.D["one_sd_share"]), 68)
+        self.assertEqual((self.D["walk_se_var"], self.D["walk_se"]), (2.25, 1.5))
+        w = V["walk"]
+        self.assertLess(w["post_sd"], self.D["walk_se"])
+        self.assertAlmostEqual(w["weight_data"], 0.8)
+
+    def test_s10_lambda_is_worth(self):                                # 10.4a, 10.8a
+        self.assertEqual(self.D["lambda_as_worth"], V["walk"]["prior_worth"])
+        self.assertAlmostEqual(self.D["l2_small"], 0.01)
+        self.assertAlmostEqual(self.D["l1_small"], 0.1)
+        self.assertEqual(round(self.D["l1_over_l2_small"]), 10)
+
+
 class Sources(unittest.TestCase):
     def test_saved_json_is_fresh(self):
         saved = json.loads((C.OUT / "l06_numbers.json").read_text())

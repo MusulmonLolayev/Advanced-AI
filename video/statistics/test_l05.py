@@ -9,7 +9,7 @@ same numbers.
 import json
 import sys
 import unittest
-from math import log, sqrt
+from math import log, log10, sqrt
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -134,6 +134,59 @@ class Section10Losses(unittest.TestCase):
     def test_cross_entropy(self):
         self.assertAlmostEqual(V["ce_loss"], -log(0.9))
         self.assertEqual(round(V["ce_loss"], 3), 0.105)              # hands-on
+
+
+class Draft2AddedLines(unittest.TestCase):
+    """The lettered lines of draft 2 (narration/lecture05.md): each concept from a second side."""
+    D = V["depth"]
+
+    def test_s1_recap_and_why(self):
+        D = self.D
+        self.assertEqual([round(t, 2) for t in D["e_terms"]], [0.0, 0.2, 0.2])           # 2a
+        self.assertEqual((round(D["e_x2"], 2), round(D["mu_sq"], 2)), (0.6, 0.16))
+        self.assertAlmostEqual(D["e_x2"] - D["mu_sq"], V["var"])
+        self.assertEqual(round(D["two_half_ways"], 2), 0.28)                              # 5a
+        self.assertAlmostEqual(D["two_half_ways"], V["two"]["probs"][1])
+        self.assertEqual((D["one_two"], round(D["two_two"], 2)), (0.1, 0.01))           # 7a
+
+    def test_s2_cost(self):
+        self.assertEqual((self.D["n_half_se"], self.D["n_tenth_se"]), (120, 3000))        # 6a
+        self.assertAlmostEqual(C.compute()["sigma"] / sqrt(120), V["se"]["30"] / 2)
+
+    def test_s3_extremes(self):
+        self.assertEqual(round(self.D["all_two_30_log10"]), -30)                          # 2a
+
+    def test_s4_heavy_tail(self):
+        D = self.D
+        self.assertEqual(D["office_coffees_per20"], 67)                                   # 2a
+        self.assertEqual(round(100 * D["office_share"]), 60)
+        self.assertEqual([round(p, 2) for p in D["p_runs30"]], [0.21, 0.34, 0.26])       # 5a
+        for a, b in zip(D["p_runs30"], D["island_mass30"]):
+            self.assertAlmostEqual(a, b, places=2)
+
+    def test_s5_cost(self):
+        self.assertEqual(self.D["batch_cost_ratio"], 32)                                  # 4a
+        self.assertEqual(round(V["batch_noise_ratio"], 1), 5.7)
+
+    def test_s7_underflow_and_sharpness(self):
+        D = self.D
+        self.assertEqual(round(1 / D["per_order_factor"]), 2)                              # 4a: about half
+        self.assertEqual(round(log10(D["float_floor"])), -323)
+        self.assertEqual(round(D["n_underflow"], -2), 1200)
+        self.assertEqual(round(D["relative_030_x10"], 3), 0.015)                           # 6a
+        self.assertAlmostEqual(D["relative_030_x10"], V["relative"]["0.30"] ** 10)
+
+    def test_s8_check_and_bias(self):
+        D = self.D
+        self.assertEqual([round(t, 6) for t in D["score_terms"]], [200, 200])           # 2a: derivative zero
+        self.assertEqual(D["mle_var_bias"], 0.975)                                         # 6a
+        self.assertAlmostEqual(100 * (1 - D["mle_var_bias"]), 2.5)   # "ikki yarim foiz"
+
+    def test_s9_s10(self):
+        D = self.D
+        self.assertEqual(round(D["fit_margin_ratio"] / 1e6), 5)                            # 9.5a: five million
+        self.assertEqual(round(D["ce_wrong"], 2), 2.30)                                    # 10.8a
+        self.assertGreater(D["ce_wrong_ratio"], 20)
 
 
 class Sources(unittest.TestCase):

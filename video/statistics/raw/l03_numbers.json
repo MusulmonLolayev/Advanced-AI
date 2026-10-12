@@ -6490,5 +6490,97 @@
     0.297
    ]
   ]
+ },
+ "roll_vars": {
+  "sum": 7,
+  "max": 4,
+  "six": 0
+ },
+ "long_run_rolls": 36000,
+ "long_run_sevens": 6000.0,
+ "long_run_twos": 1000.0,
+ "crowd": {
+  "0": 70,
+  "1": 20,
+  "2": 10
+ },
+ "crowd_pastries": 40,
+ "crowd_mean": 0.4,
+ "kept_per_ticket": 1.2,
+ "var_parts": {
+  "0": 0.112,
+  "1": 0.072,
+  "2": 0.256
+ },
+ "var_by_definition": 0.44,
+ "var_share_two": 0.5818181818181818,
+ "raffle_A_win_share": 0.998,
+ "roulette_lose": 19,
+ "roulette_edge_pockets": 1,
+ "casino_stakes": 1000000,
+ "casino_keeps": 27027.027027027027,
+ "bet_var": 0.9992695398100804,
+ "spread": {
+  "100": {
+   "balance": -2.7027027027027026,
+   "sd": 9.996347031841584
+  },
+  "10000": {
+   "balance": -270.27027027027026,
+   "sd": 99.96347031841584
+  }
+ },
+ "revenue_var_ratio": 4.0,
+ "z_pastry": {
+  "0": -0.6030226891555273,
+  "1": 0.9045340337332909,
+  "2": 2.412090756622109
+ },
+ "answers": [
+  1,
+  1,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0
+ ],
+ "answers_mean": 0.3,
+ "small_orders": 3,
+ "small_n": 3,
+ "small_k": 2,
+ "bin_sum_mean": 3.0,
+ "bin_sum_var": 2.1,
+ "medium_or_not": 0.5,
+ "medium_count_mean": 5.0,
+ "window_minutes": [
+  5,
+  60
+ ],
+ "window_lam": [
+  2.0,
+  24.0
+ ],
+ "pois_p3": 0.19536681481316445,
+ "pois_p4": 0.1953668148131647,
+ "pois_p4_one_in": 5,
+ "dirichlet_means": {
+  "4": [
+   0.2,
+   0.5,
+   0.3
+  ],
+  "40": [
+   0.2,
+   0.5,
+   0.3
+  ]
+ },
+ "dirichlet_totals": {
+  "4": 4.0,
+  "40": 40.0
  }
 }

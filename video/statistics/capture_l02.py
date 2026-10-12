@@ -13,6 +13,7 @@ Running this file writes raw/l02_numbers.json, which the video reads; the video 
     uv run python statistics/capture_l02.py && uv run python -m unittest statistics/test_l02.py
 """
 import json
+import math
 import os
 import subprocess
 from fractions import Fraction as F
@@ -137,6 +138,30 @@ def compute():
     V["base_marks"] = {"0.001": ppv(0.001), "0.01": ppv(0.01), "0.1": ppv(0.1)}
     V["acc_always_healthy"] = {"0.01": 1 - 0.01, "0.001": 1 - 0.001}         # hands-on: 1 in 1000
     V["base_curve"] = [[p / 1000, ppv(p / 1000)] for p in range(1, 201)]
+
+    # narration draft 2: the lines added for depth
+    V["die_p_even_given6"] = frac(F(1, DIE) / F(1, DIE))                     # §1 5a: six is always even
+    V["p_bus_given_bike_frac"] = frac(F(CELLS["bike", "bus"], bike))         # §1 8a: one in four
+    V["p_nobus_given_bike"] = CELLS["bike", "nobus"] / bike                  # §1 9a
+    V["bike_quarter"] = int(bike * pbb)                                      # §2 5a: a quarter of sixty
+    V["socks_pairs"] = {"all": math.comb(s, 2), "black": math.comb(b, 2),    # §3 4a
+                        "share": frac(F(math.comb(b, 2), math.comb(s, 2)))}
+    V["socks_big_drawer"] = {"black": 100 * b, "total": 100 * s,             # §3 6a
+                             "p": F(100 * b, 100 * s) * F(100 * b - 1, 100 * s - 1)}
+    V["socks_big_drawer"]["p"] = float(V["socks_big_drawer"]["p"])
+    V["indep_product"] = bike * bus / n ** 2                                 # §5 6a: 0.6 × 0.45
+    V["p_glasses"] = GLASSES / n                                             # §5 5a
+    V["p_glasses_given_bus"] = GLASSES_BUS / bus
+    V["berkeley_weighted"] = {                                               # §7 6a
+        "men": sum(v["men_rate"] * v["men_applied"] for v in dept.values()) / men_app,
+        "women": sum(v["women_rate"] * v["women_applied"] for v in dept.values()) / wom_app}
+    sc = V["screen"]                                                         # §9 6a, 6b
+    V["screen_bayes"] = {"joint": sc["ill"] / sc["tested"], "p_pos": sc["positives"] / sc["tested"],
+                         "p_pos_total": 1 * 0.01 + FALSE_POS * (1 - 0.01), "sensitivity": 1.0}
+    V["screen_bayes"]["ppv"] = V["screen_bayes"]["joint"] / V["screen_bayes"]["p_pos"]
+    V["second_test_ppv"] = ppv(sc["ppv"])                                    # §10 4a: the posterior as prior
+    V["screen_table"] = {"ill_pos": sc["ill"], "ill_neg": 0, "healthy_pos": sc["false_pos"],   # §10 5a
+                         "healthy_neg": sc["healthy"] - sc["false_pos"]}
     return V
 
 

@@ -167,6 +167,67 @@ class Section10BaseRates(unittest.TestCase):
         self.assertEqual(ys, sorted(ys))                                     # rises with the base rate
 
 
+class Draft2AddedLines(unittest.TestCase):
+    """The lines added for depth (narration draft 2)."""
+    def test_condition_side(self):                                      # §1 5a
+        self.assertEqual(V["die_p_even_given6"], [1, 1])
+        self.assertEqual(V["die_p6_given_even"], [1, 3])
+
+    def test_percent_and_rescale(self):                                 # §1 8a, 9a
+        self.assertEqual(V["p_bus_given_bike_frac"], [1, 4])
+        self.assertEqual((round(100 * V["p_bus"]), round(100 * V["p_bus_given_bike"])), (45, 25))
+        self.assertEqual(V["p_nobus_given_bike"], 0.75)
+        self.assertEqual(V["p_bus_given_bike"] + V["p_nobus_given_bike"], 1)
+
+    def test_tree_in_counts(self):                                      # §2 5a, §4 2a, 6b, §7 4a
+        self.assertEqual((V["bike"], V["bike_quarter"]), (60, 15))
+        self.assertEqual([V["cells"][k] for k in ("bike_bus", "bike_nobus", "nobike_bus", "nobike_nobus")],
+                         [15, 45, 30, 10])
+        self.assertAlmostEqual(V["p_bike"] * V["p_bus_given_bike"], V["joint_bike_bus"])
+        self.assertEqual(V["tree_counts"]["bike_bus"] + V["tree_counts"]["nobike_bus"], 45)
+
+    def test_socks_by_counting(self):                                   # §3 4a, 6a
+        self.assertEqual(V["socks_pairs"], {"all": 45, "black": 15, "share": [1, 3]})
+        d = V["socks_big_drawer"]
+        self.assertEqual((d["black"], d["total"]), (600, 1000))
+        self.assertEqual(round(d["p"], 2), 0.36)                         # "about zero point three six"
+        self.assertEqual(round(d["p"], 2), round(V["socks"]["with_replacement"], 2))
+
+    def test_independence_forms(self):                                  # §5 5a, 6a
+        self.assertEqual((V["glasses_bus"], V["bus"]), (18, 45))
+        self.assertEqual(V["p_glasses_given_bus"], 0.4)
+        self.assertEqual(V["p_glasses"], 0.4)
+        self.assertEqual(V["indep_product"], 0.27)
+        self.assertEqual(V["indep_product"] * V["n"], V["expected_bike_bus"])
+
+    def test_department_a(self):                                        # §6 4a
+        a = V["berkeley"]["dept"]["A"]
+        self.assertEqual((a["men_applied"], a["women_applied"]), (825, 108))
+
+    def test_weighted_averages(self):                                   # §7 6a
+        w, B = V["berkeley_weighted"], V["berkeley"]
+        self.assertAlmostEqual(w["men"], B["men_rate"])
+        self.assertAlmostEqual(w["women"], B["women_rate"])
+
+    def test_bayes_counts(self):                                        # §8 5a
+        self.assertEqual(V["cells"]["bike_bus"], 15)
+        self.assertEqual((V["bike"], V["bus"]), (60, 45))
+
+    def test_screen_by_formula(self):                                   # §9 6a, 6b
+        s = V["screen_bayes"]
+        self.assertEqual((V["screen"]["ill"], V["screen"]["positives"], V["screen"]["tested"]), (100, 595, 10_000))
+        self.assertAlmostEqual(s["p_pos"], s["p_pos_total"])             # total probability gives 595 / 10 000
+        self.assertAlmostEqual(s["ppv"], V["screen"]["ppv"])
+        self.assertEqual((round(100 * s["sensitivity"]), round(100 * s["ppv"])), (100, 17))
+
+    def test_second_test(self):                                         # §10 4a
+        self.assertEqual(round(100 * V["second_test_ppv"]), 80)
+        self.assertAlmostEqual(V["second_test_ppv"], 100 / (100 + 0.05 * 495))
+
+    def test_screen_table(self):                                        # §10 5a
+        self.assertEqual(V["screen_table"], {"ill_pos": 100, "ill_neg": 0, "healthy_pos": 495, "healthy_neg": 9405})
+
+
 class Sources(unittest.TestCase):
     def test_saved_json_is_fresh(self):
         saved = json.loads((C.OUT / "l02_numbers.json").read_text())

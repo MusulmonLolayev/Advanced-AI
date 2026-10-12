@@ -19,7 +19,7 @@ from math import sqrt
 from pathlib import Path
 
 import numpy as np
-from scipy.stats import beta as beta_dist
+from scipy.stats import beta as beta_dist, norm
 
 HERE = Path(__file__).parent
 OUT = HERE / "raw"
@@ -39,6 +39,9 @@ WALK = (13.0, 14.0, 16.0, 17.0)
 TAUS = (2.0, 1.0, 0.5)                          # prior widths on one weight
 LAMBDA_TASK = (2.0, 1.0)                        # section 10's pause: sigma, tau
 WALK_TAU_TASK = 1.5                             # section 9's pause: a prior worth four timings
+COVER_SEED, COVER_REPEATS = 6, 10_000           # draft 2: repeat the hundred mornings, flat-prior intervals
+CLOSE = 0.01                                    # draft 2: "within one percentage point of the data"
+SMALL_W = 0.1                                   # draft 2: a small weight, L1 vs L2
 GRID = np.linspace(0, 1, 601)
 
 
@@ -120,7 +123,68 @@ def compute():
     V["penalty_ratio"] = V["penalty"]["0.5"] / V["penalty"]["2.0"]
     s, t = LAMBDA_TASK
     V["lambda_task"] = {"sigma": s, "tau": t, "lambda": s ** 2 / t ** 2}
+    V["depth"] = depth(V, on_time)
     return V
+
+
+def beta_sd(a, b):
+    return sqrt(a * b / ((a + b) ** 2 * (a + b + 1)))
+
+
+def depth(V, on_time):
+    """Numbers of draft 2's added lines (several angles per idea, recaps of Lectures 1-5)."""
+    D = {}
+    a0, b0 = PRIOR
+    n0 = a0 + b0
+    # s1: same mean, different certainty
+    D["sd_prior"], D["sd_stubborn"] = beta_sd(a0, b0), beta_sd(*PRIORS["stubborn"])
+    # s2: one late bus as a likelihood ratio between two thetas; the mean as a weighted average
+    D["late_if_08"], D["late_if_05"] = 1 - 0.8, 1 - 0.5
+    D["late_ratio"] = D["late_if_05"] / D["late_if_08"]
+    D["blend_day1"] = (n0 * V["prior_mean"] + 1 * V["mle_day1"]) / (n0 + 1)
+    # s3: the MLE swings early, the posterior mean does not; the hundred mornings as a weighted average
+    m, p = np.array(V["mle_path"][:10]), np.array(V["post_path"][:10])
+    D["first10_mle"], D["first10_post"] = [float(m.min()), float(m.max())], [float(p.min()), float(p.max())]
+    r = V["bus"]["100"]
+    D["blend_100"] = (n0 * V["prior_mean"] + r["n"] * r["mle"]) / (n0 + r["n"])
+    D["data_weight_100"] = r["n"] / (n0 + r["n"])
+    # s4: the normal approximation (Lecture 4's two-sigma rule); the 1/sqrt(n) narrowing (Lecture 5)
+    sd = beta_sd(r["a"], r["b"])
+    D["sd_100"], D["two_sd_100"] = sd, [r["mean"] - 2 * sd, r["mean"] + 2 * sd]
+    D["count_ratio"] = (r["a"] + r["b"]) / (V["bus"]["10"]["a"] + V["bus"]["10"]["b"])
+    D["sqrt_count_ratio"] = sqrt(D["count_ratio"])
+    # s5: how many mornings (at the data's rate) until each prior's mean is within CLOSE of it
+    rate = r["mle"]
+    D["mornings_to_close"] = {name: next(n for n in range(1, 100_000)
+                                         if abs((a + rate * n) / (a + b + n) - rate) <= CLOSE + 1e-12)
+                              for name, (a, b) in PRIORS.items()}
+    # s5: a flat-prior 95 % interval, rebuilt on many repeats of the hundred mornings
+    rng = np.random.default_rng(COVER_SEED)
+    k = rng.binomial(BUS_DAYS, TRUE_RATE, COVER_REPEATS)
+    lo, hi = beta_dist.ppf((1 - CI) / 2, 1 + k, 1 + BUS_DAYS - k), beta_dist.ppf((1 + CI) / 2, 1 + k, 1 + BUS_DAYS - k)
+    D["coverage"] = float(((lo <= TRUE_RATE) & (TRUE_RATE <= hi)).mean())
+    # s6: flat prior's MAP is the MLE; after Monday it is the absurd zero again, the mean is a third
+    k100 = r["on_time"]
+    D["flat_map_100"] = ((1 + k100) - 1) / ((1 + k100) + (1 + BUS_DAYS - k100) - 2)
+    D["flat_day1"] = beta_summary(1, 2)
+    # s7: one morning at a time ends where thirty at once does
+    a, b = a0, b0
+    for x in on_time[:30]:
+        a, b = a + int(x), b + int(not x)
+    D["seq30"] = [a, b]
+    # s8: shares from the counts alone; a cup never seen
+    D["dir_raw_shares"] = [c / sum(DIR_COUNTS) for c in DIR_COUNTS]
+    D["dir_unseen"] = DIR_PRIOR[0] / (sum(DIR_PRIOR) + sum(DIR_COUNTS))
+    # s9: the prior as 12 +- 3 (Lecture 4's 68 %); four timings' standard error (Lecture 5)
+    D["walk_band"] = [WALK_MU0 - WALK_TAU0, WALK_MU0 + WALK_TAU0]
+    D["one_sd_share"] = float(2 * norm.cdf(1) - 1)
+    D["walk_se_var"] = WALK_SIGMA ** 2 / len(WALK)
+    D["walk_se"] = sqrt(D["walk_se_var"])
+    # s10: lambda is the walk's "worth" formula; a small weight under L2 and L1
+    D["lambda_as_worth"] = WALK_SIGMA ** 2 / WALK_TAU0 ** 2
+    D["l2_small"], D["l1_small"] = SMALL_W ** 2, abs(SMALL_W)
+    D["l1_over_l2_small"] = D["l1_small"] / D["l2_small"]
+    return D
 
 
 def figure_output():

@@ -55,6 +55,14 @@ DAYS, DAY_SEED = 300, 11                    # the figure's simulated trading day
 DAY_MU, DAY_SD, DAY_RHO = (22.0, 40.0), (6.0, 12.0), 0.8
 ODD_DAY = (28.0, 25.0)                      # 28 °C and only 25 cups
 INIT_SD, INIT_BAND = 0.1, 0.2               # section 10's pause: weights N(0, 0.1²), within ±0.2
+# draft 2 (depth): the inputs of the added lines
+ROUNDED = (2.45, 2.55)                      # a stopwatch reading 2.5 means this range
+SHORT = 0.1                                 # the first six seconds, minutes (density × length)
+FAR = 10                                    # F(10) on the running total
+WAITED_DELIVERY = 8                         # waited 8 of the promised 10 minutes
+PRIOR = (1, 1)                              # Beta(1, 1) before any order
+DICE = (1, 2, 10)                           # sums of 1, 2 and 10 dice drift toward the bell
+MU_UP = 61.0                                # the other lever: raise the mean, sigma stays 2
 
 
 def Phi(z):
@@ -174,6 +182,42 @@ def compute():
     # section 10: weights drawn from N(0, sd²)
     V["init_sd"], V["init_band"] = INIT_SD, INIT_BAND
     V["init_within"] = 2 * Phi(INIT_BAND / INIT_SD) - 1
+
+    # draft 2: the added angles
+    D = V["depth"] = {}
+    D["rounded"], D["p_rounded"] = list(ROUNDED), expo_cdf(ROUNDED[1]) - expo_cdf(ROUNDED[0])
+    first = V["hist"]["2.0"]
+    D["first_bar_count"], D["first_bar_share"] = first["counts"][0], first["counts"][0] / N_GAPS
+    D["first_bar_height"] = D["first_bar_share"] / first["width"]
+    D["short"], D["short_estimate"], D["short_exact"] = SHORT, RATE * SHORT, expo_cdf(SHORT)
+    D["far"], D["F_far"] = FAR, expo_cdf(FAR)
+    D["uniform_mean"] = DELIVERY / 2
+    D["waited_delivery"] = WAITED_DELIVERY
+    D["p_rest_given_waited"] = (DELIVERY - WAITED_DELIVERY) / (DELIVERY - WAITED_DELIVERY)
+    D["median_gap"], D["mean_gap"] = V["x_half"], 1 / RATE
+    D["prior"] = list(PRIOR)
+    D["beta_sd_ratio"] = V["beta"]["first"]["sd"] / V["beta"]["more"]["sd"]
+    D["data_ratio"] = PASTRY_MORE[1] / PASTRY_FIRST[1]
+    D["clicks_share"] = [c / n for c, n in CLICKS]
+    D["clicks_sd_ratio"] = V["clicks"][0]["sd"] / V["clicks"][1]["sd"]
+    D["dice"] = {}
+    for k in DICE:
+        pmf = np.array([1.0])
+        for _ in range(k):
+            pmf = np.convolve(pmf, np.full(6, 1 / 6))
+        D["dice"][str(k)] = {"sums": list(range(k, 6 * k + 1)), "pmf": pmf.tolist(),
+                             "mode": k + int(pmf.argmax()), "p_mode": float(pmf.max())}
+    D["one_in_outside"] = {str(k): 1 / (1 - V["rule"][str(k)]) for k in (1, 2, 3)}
+    D["mu_up"], D["mu_up_z"] = MU_UP, (LABEL_MIN - MU_UP) / SIGMA
+    D["mu_up_per_10000"] = 10_000 * Phi(D["mu_up_z"])
+    D["ruler"] = {"croissant": [MU + k * SIGMA for k in range(-2, 3)],
+                  "loaf": [LOAF_MU + k * LOAF_SIGMA for k in range(-2, 3)]}
+    prod = (days[:, 0] - mu_hat[0]) * (days[:, 1] - mu_hat[1])
+    D["cov_positive_days"] = int((prod > 0).sum())
+    D["cov_from_products"] = float(prod.sum() / (DAYS - 1))
+    D["expected_cups_at_28"] = float(mu_hat[1] + cov_hat[0, 1] / cov_hat[0, 0] * (ODD_DAY[0] - mu_hat[0]))
+    D["cups_short"] = D["expected_cups_at_28"] - ODD_DAY[1]
+    D["pca_share"] = float(V["day_axes"]["vals"][0] / sum(V["day_axes"]["vals"]))
     return V
 
 
