@@ -27,7 +27,7 @@ def parse(md):
             sec = int(m[1])
             heads[sec] = {"uz": f"{sec}-boʻlim · {m[2]}", "en": f"Section {sec} · {m[3]}"}
             continue
-        m = re.match(r"\s*(\d+)\.\s+(?:⏸\s*)?\*\*(.+)\*\*\s*$", row)
+        m = re.match(r"\s*(\d+[a-z]?)\.\s+(?:⏸\s*)?\*\*(.+)\*\*\s*$", row)   # "3a": a line added after 3
         if m and sec is not None:
             en = rows[i + 1].strip()
             assert en.startswith("*") and en.endswith("*"), (sec, m[1], en)

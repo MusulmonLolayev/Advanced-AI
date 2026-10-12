@@ -111,5 +111,37 @@ class Section14Spam(unittest.TestCase):
         self.assertEqual(round(100 * s["spam"] / s["emails"]), 90)   # the slide's 90 %
 
 
+class Draft4AddedLines(unittest.TestCase):
+    """The lines added for depth (narration draft 4)."""
+    def test_mean_above_median(self):                                   # §5 7a
+        self.assertEqual((L["sal_mean_k"], L["sal_median_k"]), (51.6, 47.7))
+        self.assertGreater(L["sal_mean"], L["sal_median"])
+
+    def test_squares_weigh_more(self):                                  # §6 6a
+        self.assertTrue(2 < L["sq_ratio"]["dist"] < 2.5)                # "just over twice"
+        self.assertGreater(L["sq_ratio"]["square"], 5)                  # "more than five times"
+        self.assertEqual((L["car_sq"][0], L["car_sq"][2]), (144.0, 25.0))
+
+    def test_limits_in_sds(self):                                       # §7 3a, 4a
+        self.assertEqual(L["bottle_tol"] / L["bottle_sd"]["A"], 2.5)
+        self.assertEqual(L["bottle_tol"] / L["bottle_sd"]["B"], 1.25)
+
+    def test_q3_by_position(self):                                      # §8 6a
+        self.assertEqual(L["q3_huge"], L["q3"])
+
+    def test_dice(self):                                                # §10 6a, §11 9a
+        self.assertEqual(L["p_three_evens"], "1/8")
+        self.assertEqual(round(L["no_six_4"], 2), 0.48)
+        self.assertEqual(round(L["at_least_one_six_4"], 2), 0.52)
+
+    def test_birthday_product(self):                                    # §12 5a
+        self.assertEqual(L["bday_last_factor_23"], 343)
+        p = np.prod([(365 - k) / 365 for k in range(23)])
+        self.assertAlmostEqual(1 - p, L["bday"]["23"])
+
+    def test_positions(self):                                           # §5 2a
+        self.assertEqual(((5 + 1) // 2, (9 + 1) // 2), (3, 5))
+
+
 if __name__ == "__main__":
     unittest.main()

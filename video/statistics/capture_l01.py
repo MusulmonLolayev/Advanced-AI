@@ -218,6 +218,14 @@ V["sal_mean"] = float(sal.mean())
 # section 7's closing question: how much one extreme value moves the variance
 V["nine_var"] = float(np.var(nine, ddof=1))
 V["eight_var"] = float(np.var(nine[:-1], ddof=1))
+# draft 4's added lines (several sides of each idea)
+V["sq_ratio"] = {"dist": 12 / 5, "square": 144 / 25}           # §6: 12 vs 5 minutes, and their squares
+V["q3_huge"] = float(np.median(sorted(nine[:-1] + [88_000_000])[5:]))   # §8: 88 -> 88 million, Q3 by position
+V["p_three_evens"] = "1/8"                                      # §10: three evens in a row, (1/2)^3
+V["no_six_4"] = (5 / 6) ** 4                                    # §11: no six in four rolls
+V["at_least_one_six_4"] = 1 - (5 / 6) ** 4
+V["bday_last_factor_23"] = 365 - 22                             # §12: the product ends at 343/365
+V["sal_mean_k"], V["sal_median_k"] = round(V["sal_mean"] / 1000, 1), round(V["sal_median"] / 1000, 1)
 (OUT / "l01_arrays.json").write_text(json.dumps(A) + "\n")
 
 (OUT / "l01_numbers.json").write_text(json.dumps(V, indent=2) + "\n")

@@ -452,5 +452,16 @@
   "bday_class": 30,
   "sal_mean": 51613.3837,
   "nine_var": 271.5,
-  "eight_var": 82.26785714285714
+  "eight_var": 82.26785714285714,
+  "sq_ratio": {
+    "dist": 2.4,
+    "square": 5.76
+  },
+  "q3_huge": 56.5,
+  "p_three_evens": "1/8",
+  "no_six_4": 0.4822530864197532,
+  "at_least_one_six_4": 0.5177469135802468,
+  "bday_last_factor_23": 343,
+  "sal_mean_k": 51.6,
+  "sal_median_k": 47.7
 }

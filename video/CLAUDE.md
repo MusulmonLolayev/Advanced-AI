@@ -93,6 +93,15 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 - **The cloned voice can also pause too long inside a line** (2.3 s between two sentences of Lecture 5's 10.9).
   `NavoiyService` now runs `common.cap_pauses` on every clip: silences over 0.8 s shrink to under a second, normal
   breaths (~0.4 s) stay. Clips cached before the fix keep their audio; cap one by hand with `cap_pauses(path)`.
+- **The cloned voice can garble or cut off a line while the clip keeps a normal length.** Lecture 3's first line lost a
+  phrase to 1.6 s of hiss; Lecture 4's stopped inside its last word. About a fifth of the clips in Lectures 1-5 failed.
+  After voicing, run `voice_check.py <build>` (two Uzbek recognisers per clip; fails on a run of 3 missed words, CER
+  over 0.15, a lost last word, or a clip still loud in its last 50 ms), then `revoice.py <build>`: it re-voices each
+  failure sentence by sentence, tries other seeds where a sentence still fails (the server takes an optional `seed`),
+  and replaces the cached clip only if the new take scores better; originals stay in `<build>/revoiced/`. Then
+  re-render the scenes it lists and concatenate. Both run in the Navoiy env
+  (`~/navoiy-stack/CosyVoice/.venv/bin/python`); `audio_fx.py` holds the clip clean-up they share with `common.py`.
+  Recognisers stumble on spoken letters and numbers ("ey karra eks"), so a failure is a lead, not a verdict.
 - **Labels next to a curve get a black backing** (`add_background_rectangle`), or the curve runs through the text.
 - **`Indicate` grows a mobject by 20 %**, which pushed a full-width bell curve onto the frame edge; use
   `scale_factor=1.04` on anything near full width.
@@ -101,6 +110,10 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 ## Rules carried over from the decks
 Uzbek narration follows **Uzbek translation rules** in the repo-root `CLAUDE.md` (berilganlar, tavsiflovchi, native "we" phrasing, approval before voicing).
 Numbers on screen come from a saved raw output, never retyped. Narration spells numbers for the ear while the screen shows digits. One concept per section; problem first, concept as the answer; each section ends with the question the next one answers.
+**Explain from several sides, and recap** (instructor, after watching Lecture 4: "explanations are so short, mostly
+from one side"). Each core concept gets more than one angle: the intuition in words, the picture, the formula read
+aloud, a worked number, and where it helps a contrast or a common mistake. Before a section leans on an earlier idea
+(Beta, likelihood, standard error), recap it in a sentence or two. Longer sections are fine.
 A pause task may reuse a number the section already showed, the way a teacher repeats a point in class; it does not
 have to be new.
 
