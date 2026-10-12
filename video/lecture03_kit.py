@@ -21,7 +21,9 @@ LBLUE = "#8C88F0"                  # course blue is dim on black; use this for b
 
 def dec(x, places=2):
     """0.4, 0.44, 0.267 — a value as the screen shows it, trailing zeros dropped."""
-    s = f"{x:.{places}f}".rstrip("0").rstrip(".")
+    s = f"{x:.{places}f}"
+    if "." in s:                   # only zeros after a decimal point go: dec(-20, 0) stays "-20"
+        s = s.rstrip("0").rstrip(".")
     return s if s not in ("-0", "") else "0"
 
 

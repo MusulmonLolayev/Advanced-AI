@@ -56,7 +56,7 @@ discrete:
   en: "discrete"
   uz: "diskret"
 
-# L1 §1
+# L1 §1; L4 §1
 continuous:
   en: "continuous"
   uz: "uzluksiz"
@@ -101,7 +101,7 @@ salary:
   en: "salary"
   uz: "maosh"
 
-# L1 §1
+# L1 §1; L4 §6
 height:
   en: "height"
   uz: "boʻy"
@@ -531,7 +531,7 @@ how_spread_out_q:
   en: "How spread out?"
   uz: "Qanchalik tarqoq?"
 
-# L1 §6
+# L1 §6; L4 §9
 variance:
   en: "variance"
   uz: "dispersiya"
@@ -566,7 +566,7 @@ min_late:
   en: "min late"
   uz: "daqiqa kech"
 
-# L1 §6, §8
+# L1 §6, §8; L4 §1, §3
 minutes:
   en: ["min", "minutes"]
   uz: "daqiqa"
@@ -626,7 +626,7 @@ where_do_we_set_its_mean_q:
   en: "Where do we set its mean?"
   uz: "Oʻrtachasini qayerga qoʻyamiz?"
 
-# L1 §7
+# L1 §7; L4 §6, §7
 bottle_label:
   en: "label"
   uz: "yorliq"
@@ -896,7 +896,7 @@ classifier_output:
   en: "classifier output"
   uz: "klassifikator natijasi"
 
-# L1 §10, §14; L2 §6, §7, §9; L3 §1, §3, §4, §5, §9, §10
+# L1 §10, §14; L2 §6, §7, §9; L3 §1, §3, §4, §5, §9, §10; L4 §1, §2, §3, §4, §6, §7, §8, §10
 illustration:
   en: "illustration"
   uz: ["tasvir uchun", "misol", "illustratsiya"]
@@ -1331,7 +1331,7 @@ training_data:
   en: "Training data"
   uz: "Oʻqitish berilganlari"
 
-# L1 §14; L2 §10; L3 §11
+# L1 §14; L2 §10; L3 §11; L4 §10
 next:
   en: "Next"
   uz: "Keyingi"
@@ -1346,7 +1346,7 @@ tomorrow_rain:
   en: "Tomorrow: rain"
   uz: "Ertaga: yomgʻir"
 
-# L1 §14; L2 §10; L3 §11
+# L1 §14; L2 §10; L3 §11; L4 §10
 the_end:
   en: "the end"
   uz: "tugadi"
@@ -2143,7 +2143,7 @@ accuracy_q:
   en: "Accuracy = ?"
   uz: "Aniqlik = ?"
 
-# L2 §10
+# L2 §10; L4 §5, §10
 lecture_6:
   en: "Lecture 6"
   uz: "6-maʼruza"
@@ -2240,7 +2240,7 @@ large:
   en: "large"
   uz: "katta"
 
-# L3 opening, §11
+# L3 opening, §11; L4 §3
 lecture_3:
   en: "Lecture 3"
   uz: "3-maʼruza"
@@ -2380,7 +2380,7 @@ customers:
   en: "customers"
   uz: "mijoz"
 
-# L3 §2
+# L3 §2; L4 §4, §5
 pastries_short:
   en: "pastries"
   uz: "pishiriq"
@@ -2655,7 +2655,7 @@ q_how_many_walk_in:
   en: "How many customers walk in during a window?"
   uz: "Bir oraliqda nechta mijoz kiradi?"
 
-# L3 §7, §10
+# L3 §7, §10; L4 §3
 dist_poisson:
   en: "Poisson"
   uz: "Puasson"
@@ -2695,7 +2695,7 @@ lecture_2_socks:
   en: "Lecture 2: socks"
   uz: "2-maʼruza: paypoqlar"
 
-# L3 §8
+# L3 §8; L4 §5
 correct_answers:
   en: "correct answers"
   uz: "toʻgʻri javoblar"
@@ -2750,7 +2750,7 @@ how_many_empty_windows_in_a_day_q:
   en: "How many empty windows in a day?"
   uz: "Bir kunda nechta boʻsh oraliq boʻladi?"
 
-# L3 §10
+# L3 §10; L4 §3
 ten_minute_window:
   en: "a ten-minute window"
   uz: "oʻn daqiqalik oraliq"
@@ -2775,17 +2775,17 @@ poisson_formula:
   en: "Poisson formula"
   uz: "Puasson formulasi"
 
-# L3 §10
+# L3 §10; L4 §1
 seconds:
   en: "seconds"
   uz: "soniya"
 
-# L3 §10
+# L3 §10; L4 §3
 model_server:
   en: "model server"
   uz: "model serveri"
 
-# L3 §10
+# L3 §10; L4 §3
 requests_per_second:
   en: "requests per second"
   uz: "bir soniyadagi soʻrovlar"
@@ -2820,7 +2820,7 @@ largest_difference:
   en: "largest difference"
   uz: "eng katta farq"
 
-# L3 §10
+# L3 §10; L4 §9
 unusual:
   en: "unusual"
   uz: "gʻayrioddiy"
@@ -2850,7 +2850,7 @@ which_sets_of_shares_are_plausible_q:
   en: "Which sets of shares are plausible?"
   uz: "Qaysi ulushlar toʻplami ishonchli?"
 
-# L3 §11
+# L3 §11; L4 §5
 dist_dirichlet:
   en: "Dirichlet"
   uz: "Dirixle"
@@ -2860,7 +2860,7 @@ each_draw_a_whole_set_of_shares:
   en: "each draw: a whole set of shares, adding up to one"
   uz: "har bir tanlov — yigʻindisi bir boʻlgan butun ulushlar toʻplami"
 
-# L3 §11
+# L3 §11; L4 §5
 updating_is_counting:
   en: "updating is counting"
   uz: "yangilash — bu sanash"
@@ -2939,3 +2939,750 @@ topic_models:
 alphazero_move_priors:
   en: "AlphaZero move priors"
   uz: "AlphaZero yurish ehtimollari"
+
+# ══ Lecture 4 ═════════════════════════════════════════════════════════════
+
+# L4 (all)
+part_0_continuous_random_variables:
+  en: "Part 0 · Continuous random variables"
+  uz: "0-qism · Uzluksiz tasodifiy miqdorlar"
+
+# L4 (all)
+part_1_the_normal_distribution:
+  en: "Part 1 · The normal distribution"
+  uz: "1-qism · Normal taqsimot"
+
+# L4 opening, §10
+lecture_4:
+  en: "Lecture 4"
+  uz: "4-maʼruza"
+
+# L4 opening
+continuous_random_variables_and_the_gaussian:
+  en: "Continuous random variables and the Gaussian"
+  uz: "Uzluksiz tasodifiy miqdorlar va normal taqsimot"
+
+# L4 §1, §4
+simulated_gaps:
+  en: "simulated gaps"
+  uz: "simulyatsiya qilingan tanaffus"
+
+# L4 §1
+a_density_is_not_a_probability:
+  en: "a density is not a probability"
+  uz: "zichlik — ehtimol emas"
+
+# L4 §1
+density_per_minute_q:
+  en: "Density per minute?"
+  uz: "Bir daqiqaga toʻgʻri keladigan zichlik?"
+
+# L4 §1
+gap_between_customers:
+  en: "the time between two customers"
+  uz: "ikki mijoz orasidagi vaqt"
+
+# L4 §1
+infinitely_many_answers:
+  en: "infinitely many answers"
+  uz: "cheksiz koʻp javob"
+
+# L4 §1
+ask_about_a_range:
+  en: "ask about a range, not a single value"
+  uz: "bitta qiymat emas, oraliq haqida soʻraymiz"
+
+# L4 §1, §2
+gap_axis:
+  en: "gap between customers, min"
+  uz: "mijozlar orasidagi tanaffus, daqiqa"
+
+# L4 §1, §2
+density:
+  en: "density"
+  uz: "zichlik"
+
+# L4 §1
+probability_density_function:
+  en: "probability density function"
+  uz: "ehtimollik zichligi funksiyasi"
+
+# L4 §1
+generative_model:
+  en: "generative model"
+  uz: "generativ model"
+
+# L4 §1
+data_axis:
+  en: "data"
+  uz: "berilganlar"
+
+# L4 §1
+common_data:
+  en: "common"
+  uz: "koʻp uchraydi"
+
+# L4 §1
+rare_data:
+  en: "rare"
+  uz: "kam uchraydi"
+
+# L4 §1
+add_it_up_once_q:
+  en: "add it up once?"
+  uz: "bir marta yigʻib qoʻysak-chi?"
+
+# L4 §1
+add_up_the_area:
+  en: "add up the area"
+  uz: "yuzlarni qoʻshamiz"
+
+# L4 §1
+probability_per_minute:
+  en: "probability per minute"
+  uz: "bir daqiqaga toʻgʻri keladigan ehtimol"
+
+# L4 §1
+speed_distance_per_hour:
+  en: "speed: distance per hour"
+  uz: "tezlik: bir soatga toʻgʻri keladigan masofa"
+
+# L4 §1
+delivery_window:
+  en: "delivery window"
+  uz: "yetkazib berish oynasi"
+
+# L4 §1
+total_area:
+  en: "total area"
+  uz: "umumiy yuz"
+
+# L4 §1
+bars_word:
+  en: "bars"
+  uz: "ustun"
+
+# L4 §1
+bin_width:
+  en: "bin width"
+  uz: "ustun kengligi"
+
+# L4 §2
+next_customer:
+  en: "the next customer"
+  uz: "keyingi mijoz"
+
+# L4 §2
+gap_in_this_range_q:
+  en: "The chance of a gap in this range?"
+  uz: "Tanaffus shu oraliqda boʻlish ehtimoli?"
+
+# L4 §2
+never_decreases:
+  en: "never decreases"
+  uz: "hech qachon kamaymaydi"
+
+# L4 §2
+a_lull_is_not_the_end:
+  en: "a lull is no sign the rush is over"
+  uz: "sokinlik — tirbandlik tugadi degani emas"
+
+# L4 §2
+two_lookups_and_a_subtraction:
+  en: "two lookups and a subtraction"
+  uz: "ikki qiymat va bitta ayirish"
+
+# L4 §2
+tables_report_the_cdf:
+  en: "tables and software report F, not f"
+  uz: "jadval va dasturlar f ni emas, F ni beradi"
+
+# L4 §2
+request_time:
+  en: "request time"
+  uz: "soʻrov vaqti"
+
+# L4 §2, §7
+alert:
+  en: "alert"
+  uz: "ogohlantirish"
+
+# L4 §2
+just_under_a_third:
+  en: "just under a third"
+  uz: "uchdan birdan sal kam"
+
+# L4 §2
+other_shapes_q:
+  en: "other shapes?"
+  uz: "boshqa shakllar?"
+
+# L4 §2
+per_minute:
+  en: "per minute"
+  uz: "bir daqiqada"
+
+# L4 §2
+average_gap:
+  en: "average gap"
+  uz: "oʻrtacha tanaffus"
+
+# L4 §2
+cumulative_distribution_function:
+  en: "cumulative distribution function"
+  uz: "taqsimot funksiyasi"
+
+# L4 §2
+a_quiet_stretch:
+  en: "a quiet stretch"
+  uz: "sokin tanaffus"
+
+# L4 §3
+delivery_minute:
+  en: "minute the delivery lands"
+  uz: "yetkazib berish kelgan daqiqa"
+
+# L4 §3, §4
+minutes_to_next_customer:
+  en: "minutes until the next customer"
+  uz: "keyingi mijozgacha daqiqa"
+
+# L4 §3
+how_does_a_computer_make_random_numbers_q:
+  en: "How does a computer make random numbers?"
+  uz: "Kompyuter tasodifiy sonni qanday yaratadi?"
+
+# L4 §3
+dist_uniform:
+  en: "Uniform distribution"
+  uz: "Tekis taqsimot"
+
+# L4 §3
+within_ten_minutes:
+  en: "“within ten minutes”"
+  uz: "«oʻn daqiqa ichida»"
+
+# L4 §3
+dist_exponential:
+  en: "Exponential distribution"
+  uz: "Eksponensial taqsimot"
+
+# L4 §3
+no_moment_is_special:
+  en: "no moment is special"
+  uz: "hech bir lahza alohida emas"
+
+# L4 §3
+short_waits_are_commonest:
+  en: "short waits are commonest"
+  uz: "qisqa kutish eng koʻp uchraydi"
+
+# L4 §3
+poisson_how_many:
+  en: "Poisson: how many in a window?"
+  uz: "Puasson: oraliqda nechta?"
+
+# L4 §3
+exponential_how_long:
+  en: "exponential: how long between?"
+  uz: "eksponensial: orasida qancha vaqt?"
+
+# L4 §3
+one_process_two_views:
+  en: "One process, two views"
+  uz: "Bitta jarayon, ikki koʻrinish"
+
+# L4 §3
+already_waited:
+  en: "already waited"
+  uz: "kutib boʻldik"
+
+# L4 §3
+memoryless_property:
+  en: "the memoryless property"
+  uz: "xotirasizlik xossasi"
+
+# L4 §3
+lunchtime:
+  en: "lunchtime"
+  uz: "tushlik"
+
+# L4 §3
+a_strong_claim_about_the_world:
+  en: "A strong claim about the world"
+  uz: "Dunyo haqida kuchli daʼvo"
+
+# L4 §3
+falls_short:
+  en: "falls short"
+  uz: "yetmaydi"
+
+# L4 §3
+only_the_length_matters:
+  en: "only the length of the range matters"
+  uz: "faqat oraliqning uzunligi muhim"
+
+# L4 §3
+capacity_planned:
+  en: "capacity planned\non the exponential"
+  uz: "eksponensial faraz bilan\nrejalashtirilgan quvvat"
+
+# L4 §4
+a_uniform_number:
+  en: "A uniform number"
+  uz: "Tekis taqsimlangan son"
+
+# L4 §4
+everything_else_is_built_from_it:
+  en: "everything else is built from it"
+  uz: "qolgan hammasi shundan quriladi"
+
+# L4 §4
+run_the_cdf_backwards:
+  en: "Run the CDF backwards"
+  uz: "Taqsimot funksiyasini teskari yuritamiz"
+
+# L4 §4
+sampling:
+  en: "Sampling in AI"
+  uz: "Sunʼiy intellektda tanlab olish"
+
+# L4 §4
+a_large_u_a_long_gap:
+  en: "a large u gives a long gap"
+  uz: "katta u — uzun tanaffus"
+
+# L4 §4
+dropout_masks:
+  en: "dropout masks"
+  uz: "dropout niqoblari"
+
+# L4 §4
+shuffled_mini_batches:
+  en: "shuffled mini-batches"
+  uz: "mini-paketlarni aralashtirish"
+
+# L4 §4
+data_augmentation:
+  en: "data augmentation"
+  uz: "berilganlarni koʻpaytirish"
+
+# L4 §4
+diffusion_noise:
+  en: "diffusion noise"
+  uz: "diffuziya shovqini"
+
+# L4 §5
+successes:
+  en: "successes"
+  uz: "muvaffaqiyatlar"
+
+# L4 §5
+failures:
+  en: "failures"
+  uz: "muvaffaqiyatsizliklar"
+
+# L4 §5
+the_next_order_has_a_pastry:
+  en: "The next order has a pastry."
+  uz: "Navbatdagi buyurtmada pishiriq bor."
+
+# L4 §5
+new_distribution_and_its_mean_q:
+  en: "The new distribution, and its mean?"
+  uz: "Yangi taqsimot va uning oʻrtachasi?"
+
+# L4 §5
+the_share_p_unknown:
+  en: "the share p: an unknown number"
+  uz: "ulush p — nomaʼlum son"
+
+# L4 §5
+dist_beta:
+  en: "Beta"
+  uz: "Beta"
+
+# L4 §5
+the_share_p:
+  en: "the share p"
+  uz: "ulush p"
+
+# L4 §5
+click_rate_or_accuracy:
+  en: "A click rate, or a model's accuracy"
+  uz: "Bosish ulushi yoki model aniqligi"
+
+# L4 §5
+beta_prior_for_a_bernoulli:
+  en: "the Beta as the prior for a Bernoulli"
+  uz: "Beta — Bernulli uchun aprior taqsimot"
+
+# L4 §5
+the_bell_curve:
+  en: "the bell curve"
+  uz: "qoʻngʻiroqsimon egri chiziq"
+
+# L4 §5
+many_shares:
+  en: "many shares"
+  uz: "koʻp ulushlar"
+
+# L4 §5
+one_share:
+  en: "one share"
+  uz: "bitta ulush"
+
+# L4 §5
+one_more_pastry:
+  en: "one more pastry:"
+  uz: "yana bitta pishiriq:"
+
+# L4 §6
+croissant_weight:
+  en: "croissant weight"
+  uz: "kruassan vazni"
+
+# L4 §6
+thermometer_reading:
+  en: "thermometer reading"
+  uz: "termometr koʻrsatkichi"
+
+# L4 §6
+dough_portion:
+  en: "dough portion"
+  uz: "xamir boʻlagi"
+
+# L4 §6
+flour_moisture:
+  en: "flour moisture"
+  uz: "unning namligi"
+
+# L4 §6
+place_in_the_oven:
+  en: "place in the oven"
+  uz: "pechdagi joyi"
+
+# L4 §6
+rise_time:
+  en: "rise time"
+  uz: "koʻpchish vaqti"
+
+# L4 §6
+a_dozen_others:
+  en: "a dozen others"
+  uz: "yana oʻnlab omillar"
+
+# L4 §6
+mu_moves_it_sideways:
+  en: "μ moves it sideways"
+  uz: "μ — yonga suradi"
+
+# L4 §6
+sigma_stretches_it:
+  en: "σ stretches it"
+  uz: "σ — choʻzadi"
+
+# L4 §6
+a_centre_and_a_spread:
+  en: "a centre and a spread"
+  uz: "markaz va tarqoqlik"
+
+# L4 §6
+the_whole_batch:
+  en: "→ the whole batch"
+  uz: "→ butun partiya"
+
+# L4 §6
+central_limit_theorem_lecture_5:
+  en: "Central Limit Theorem → Lecture 5"
+  uz: "Markaziy limit teoremasi → 5-maʼruza"
+
+# L4 §6
+no_simple_integral:
+  en: "no simple integral"
+  uz: "oddiy integrali yoʻq"
+
+# L4 §6
+model_errors:
+  en: "model errors"
+  uz: "model xatolari"
+
+# L4 §6
+squared_error_lecture_5:
+  en: "squared error → Lecture 5"
+  uz: "kvadrat xato → 5-maʼruza"
+
+# L4 §7
+a_more_precise_process:
+  en: "a more precise process"
+  uz: "aniqroq jarayon"
+
+# L4 §7
+mean_unchanged:
+  en: "the mean unchanged"
+  uz: "oʻrtacha oʻzgarmaydi"
+
+# L4 §7
+spread_not_the_average_decides_the_failure_rate:
+  en: "Spread, not the average, decides the failure rate"
+  uz: "Xatolar ulushini oʻrtacha emas, tarqoqlik hal qiladi"
+
+# L4 §7
+lecture_1_the_bottling_line:
+  en: "Lecture 1: the bottling line"
+  uz: "1-maʼruza: shisha toʻldirish liniyasi"
+
+# L4 §7
+croissants:
+  en: "croissants"
+  uz: "kruassan"
+
+# L4 §7
+readings:
+  en: "readings"
+  uz: "koʻrsatkichlar"
+
+# L4 §7
+lighter_than_promised:
+  en: "lighter than promised"
+  uz: "vaʼdadan yengil"
+
+# L4 §7
+normal_readings_beyond_three_sigma:
+  en: "normal readings beyond 3σ"
+  uz: "3σ dan uzoq normal koʻrsatkichlar"
+
+# L4 §7, §8
+croissant:
+  en: "croissant"
+  uz: "kruassan"
+
+# L4 §7, §8
+loaf:
+  en: "loaf"
+  uz: "non"
+
+# L4 §8
+z_score:
+  en: "z-score"
+  uz: "z-qiymat"
+
+# L4 §8
+no_units:
+  en: "no units"
+  uz: "birligi yoʻq"
+
+# L4 §8
+record_temperature:
+  en: "temperature, °C"
+  uz: "harorat, °C"
+
+# L4 §8
+record_iced_coffees:
+  en: "iced coffees"
+  uz: "muzli qahva"
+
+# L4 §8
+standardizing:
+  en: "standardizing"
+  uz: "standartlashtirish"
+
+# L4 §8
+k_nearest_neighbours:
+  en: "k nearest neighbours"
+  uz: "eng yaqin qoʻshnilar"
+
+# L4 §8
+heavy:
+  en: "heavy"
+  uz: "ogʻir"
+
+# L4 §8
+raw_difference:
+  en: "raw difference"
+  uz: "xom farq"
+
+# L4 §8
+how_unusual:
+  en: "how unusual"
+  uz: "qanchalik gʻayrioddiy"
+
+# L4 §8
+kilograms:
+  en: "kilograms"
+  uz: "kilogramm"
+
+# L4 §8
+batch_normalization:
+  en: "batch normalization"
+  uz: "paketli normallashtirish"
+
+# L4 §8
+grams:
+  en: "grams"
+  uz: "gramm"
+
+# L4 §9
+covariance:
+  en: "covariance"
+  uz: "kovariatsiya"
+
+# L4 §9
+moving_together:
+  en: "moving together"
+  uz: "birga oʻzgarish"
+
+# L4 §9
+temperature_c:
+  en: "temperature, °C"
+  uz: "harorat, °C"
+
+# L4 §9
+cups_unit:
+  en: "cups"
+  uz: "stakan"
+
+# L4 §9
+simulated_days:
+  en: "simulated days"
+  uz: "simulyatsiya qilingan kun"
+
+# L4 §9
+mean_vector:
+  en: "mean vector"
+  uz: "oʻrtachalar vektori"
+
+# L4 §9
+covariance_matrix:
+  en: "covariance matrix"
+  uz: "kovariatsiya matritsasi"
+
+# L4 §9
+iced_coffees_sold:
+  en: "iced coffees sold"
+  uz: "sotilgan muzli qahva"
+
+# L4 §9
+temperature:
+  en: "temperature"
+  uz: "harorat"
+
+# L4 §9
+sales:
+  en: "sales"
+  uz: "savdo"
+
+# L4 §9
+correlation:
+  en: "correlation"
+  uz: "korrelyatsiya"
+
+# L4 §9
+as_a_pair:
+  en: "as a pair"
+  uz: "juftlik sifatida"
+
+# L4 §10
+variational_autoencoder:
+  en: "variational autoencoder"
+  uz: "variatsion avtokodlovchi"
+
+# L4 §10
+latent_variable:
+  en: "latent variable"
+  uz: "yashirin oʻzgaruvchi"
+
+# L4 §10
+diffusion_model:
+  en: "diffusion model"
+  uz: "diffuziya modeli"
+
+# L4 §10
+lecture_4_summary:
+  en: "Lecture 4 — summary"
+  uz: "4-maʼruza — xulosa"
+
+# L4 §10
+lecture_5_the_clt_and_maximum_likelihood:
+  en: "Lecture 5 · The Central Limit Theorem and maximum likelihood"
+  uz: "5-maʼruza · Markaziy limit teoremasi va maksimal haqiqatga oʻxshashlik usuli"
+
+# L4 §10
+starting_a_network:
+  en: "starting a network"
+  uz: "tarmoqni boshlash"
+
+# L4 §10
+weights:
+  en: "weights"
+  uz: "vaznlar"
+
+# L4 §10
+regularization:
+  en: "regularization"
+  uz: "regulyarizatsiya"
+
+# L4 §10
+l2_penalty:
+  en: "L2 penalty"
+  uz: "L2 jarimasi"
+
+# L4 §10
+generative_models:
+  en: "generative models"
+  uz: "generativ modellar"
+
+# L4 §10
+summary_density:
+  en: "Density: probability is the area under the curve; the whole area is one"
+  uz: "Zichlik: ehtimol — egri chiziq ostidagi yuz; butun yuz bir"
+
+# L4 §10
+summary_cdf:
+  en: "CDF: every range question is a difference of two values"
+  uz: "Taqsimot funksiyasi: har bir oraliq — ikki qiymatning ayirmasi"
+
+# L4 §10
+summary_uniform_exponential:
+  en: "Uniform: no value is special · exponential: the wait, memoryless"
+  uz: "Tekis — hech bir qiymat alohida emas · eksponensial — kutish, xotirasiz"
+
+# L4 §10
+summary_beta:
+  en: "Beta: a belief about one share"
+  uz: "Beta — bitta ulush haqidagi ishonch"
+
+# L4 §10
+summary_normal_z:
+  en: "Normal: a centre and a spread · z-score: different scales compared"
+  uz: "Normal — markaz va tarqoqlik · z-qiymat: turli oʻlchovlar solishtiriladi"
+
+# L4 §10
+summary_multivariate:
+  en: "Several dimensions: a mean vector and a covariance matrix draw the ellipses"
+  uz: "Koʻp oʻlchov: oʻrtachalar vektori va kovariatsiya matritsasi ellipslarni chizadi"
+
+# L4 §10
+pca:
+  en: "PCA"
+  uz: "bosh komponentalar tahlili"
+
+# L4 §10
+principal_directions:
+  en: "principal directions"
+  uz: "bosh yoʻnalishlar"
+
+# L4 §10
+clustering:
+  en: "clustering"
+  uz: "klasterlash"
+
+# L4 §10
+gaussian_mixture_model:
+  en: "Gaussian mixture model"
+  uz: "Gauss aralashmasi modeli"
+
+# L4 §10
+layer_width:
+  en: "layer width"
+  uz: "qatlam kengligi"

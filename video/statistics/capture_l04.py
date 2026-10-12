@@ -31,6 +31,8 @@ N_GAPS, GAP_SEED = 20_000, 4                # the figure's simulated gaps
 BINS = (2.0, 0.25)                          # histogram bin widths, minutes
 HIST_MAX = 12                               # minutes shown
 EXACT = 2.5                                 # "no stopwatch reads exactly 2.5"
+BETWEEN = (2, 3)                            # "between 2 and 3 minutes there are infinitely many answers"
+ALERT_Q = 0.99                              # an alert for the slowest one percent of requests
 WITHIN = 2                                  # will the next customer arrive within 2 minutes?
 LULL = 5                                    # a quiet stretch of 5 minutes or more
 WAITED = 3                                  # memoryless: already waited 3 minutes
@@ -41,6 +43,7 @@ LAST = 2                                    # section 3's pause: lands in the la
 U_HALF, U_TASK = 0.5, 0.9                   # inverse-CDF draws (slide; section 4's pause)
 PASTRY_FIRST = (3, 10)                      # 3 of the first 10 orders had a pastry
 PASTRY_MORE = (30, 100)                     # 30 of 100
+PLAUSIBLE = (0.2, 0.45)                     # shares that "would hardly surprise us" on ten orders
 CLICKS = ((12, 15), (800, 1000))            # 12 correct of 15 is not 800 of 1000
 MU, SIGMA = 60.0, 2.0                       # croissants, grams
 SIGMA_TIGHT = 1.5                           # the tightened process
@@ -85,7 +88,7 @@ def compute():
         dens, _ = np.histogram(gaps, bins=edges, density=False)
         V["hist"][str(w)] = {"width": w, "edges": edges.tolist(), "counts": dens.tolist(),
                              "heights": (dens / (N_GAPS * w)).tolist(), "bars": len(edges) - 1}
-    V["exact"] = EXACT
+    V["exact"], V["between"] = EXACT, list(BETWEEN)
     V["window_30s"], V["window_density"] = WINDOW_30S, 1 / WINDOW_30S
     V["pdf_curve"] = [[x, RATE * exp(-RATE * x)] for x in np.linspace(0, HIST_MAX, 241).tolist()]
 
@@ -94,6 +97,7 @@ def compute():
     V["lull"], V["p_lull"] = LULL, 1 - expo_cdf(LULL)
     V["F_lull"], V["F_within"] = expo_cdf(LULL), expo_cdf(WITHIN)
     V["p_between"] = expo_cdf(LULL) - expo_cdf(WITHIN)
+    V["alert_q"], V["alert_x"] = ALERT_Q, -log(1 - ALERT_Q) / RATE
 
     # section 3: uniform and exponential, memorylessness
     V["delivery"], V["delivery_density"] = DELIVERY, 1 / DELIVERY
@@ -115,10 +119,12 @@ def compute():
         m, sd = beta_mean_sd(a, b)
         V["beta"][k] = {"successes": s, "n": n, "a": a, "b": b, "mean": m, "sd": sd,
                         "curve": [[x, beta_pdf(x, a, b)] for x in np.linspace(0, 1, 201).tolist()]}
+    V["beta_plausible"] = list(PLAUSIBLE)
+    grid = np.linspace(0, 1, 401).tolist()
     a, b = V["beta"]["first"]["a"] + 1, V["beta"]["first"]["b"]
-    V["beta_next"] = {"a": a, "b": b, "mean": a / (a + b)}
-    V["clicks"] = [{"correct": c, "n": n, "a": c + 1, "b": n - c + 1,
-                    "sd": beta_mean_sd(c + 1, n - c + 1)[1]} for c, n in CLICKS]
+    V["beta_next"] = {"a": a, "b": b, "mean": a / (a + b), "curve": [[x, beta_pdf(x, a, b)] for x in grid]}
+    V["clicks"] = [{"correct": c, "n": n, "a": c + 1, "b": n - c + 1, "sd": beta_mean_sd(c + 1, n - c + 1)[1],
+                    "curve": [[x, beta_pdf(x, c + 1, n - c + 1)] for x in grid]} for c, n in CLICKS]
 
     # section 6: the normal distribution, 68-95-99.7
     V["mu"], V["sigma"] = MU, SIGMA

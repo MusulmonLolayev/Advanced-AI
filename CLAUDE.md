@@ -95,6 +95,20 @@ own voice, so it must sound like them, not like a translation. Apply these whene
     haqiqatga oʻxshashlik / aposterior ehtimollik**; evidence → **dalil**; prosecutor's fallacy → **prokuror
     xatosi**; false alarm → **yolgʻon signal**; base rate → **asosiy ulush**; accuracy → **aniqlik**; a university
     department → **fakultet** ("boʻlim" is taken by video sections); Bayesian inference → **Bayes xulosasi**.
+  - Lecture 3 terms (approved): random variable → **tasodifiy miqdor**; probability mass function → **ehtimollik
+    taqsimoti**; expectation → **matematik kutilma** (short: kutilma); variance → **dispersiya**; standard deviation →
+    **standart chetlanish**; shifting and scaling → **siljitish va masshtablash**; standardizing →
+    **standartlashtirish**; raffle → **lotereya**; bet → **tikish**; Bernulli, binomial, kategorial / multinomial,
+    **Puasson**, **Dirixle** taqsimoti; rate λ → **oʻrtacha tezlik**; time window → **oraliq**; softmax →
+    **softmaks**; reinforcement learning → **kuchaytirib oʻrganish**; topic model → **mavzular modeli**; feature →
+    **belgi**.
+  - Lecture 4 terms (approved): continuous random variable → **uzluksiz tasodifiy miqdor**; density / pdf →
+    **zichlik / ehtimollik zichligi funksiyasi**; CDF → **taqsimot funksiyasi**; uniform → **tekis taqsimot**;
+    exponential → **eksponensial taqsimot**; memoryless property → **xotirasizlik xossasi**; inverse CDF → **teskari
+    taqsimot funksiyasi**; normal / Gaussian → **normal taqsimot / Gauss taqsimoti**; z-score → **z-qiymat** (spoken
+    «zed-qiymat»); mean vector → **oʻrtachalar vektori**; covariance (matrix) → **kovariatsiya (matritsasi)**;
+    correlation → **korrelyatsiya**; PCA → **bosh komponentalar tahlili**; GMM → **Gauss aralashmasi modeli**; batch
+    normalization → **paketli normallashtirish**; diffusion model → **diffuziya modeli**. Euler's e is read «e».
 - **Latin letters are spoken by their English names**, written in Uzbek spelling in the narration so the voice reads
   them right: x → eks, f → ef, n → en, s → es, i → ay, y → uay, A → ey, B → bi, C → si, Q → kyu, IQR → ay kyu ar
   (capitalized at a sentence start: "Eks ikki — …"). Greek letters keep their names (sigma, mu, omega). The screen

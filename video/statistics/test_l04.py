@@ -29,6 +29,10 @@ class Section1Density(unittest.TestCase):
         self.assertEqual((wide["counts"][0], narrow["counts"][0]), (11119, 1894))
         self.assertEqual((round(wide["heights"][0], 3), round(narrow["heights"][0], 3)), (0.278, 0.379))
 
+    def test_range(self):
+        self.assertEqual(V["between"], [2, 3])
+        self.assertTrue(V["between"][0] < V["exact"] < V["between"][1])
+
     def test_density_can_exceed_one(self):
         self.assertEqual(V["window_density"], 2.0)                    # hands-on: 1 / 0.5
 
@@ -50,6 +54,9 @@ class Section2Cdf(unittest.TestCase):
     def test_between(self):                                           # hands-on
         self.assertEqual((round(V["F_lull"], 3), round(V["F_within"], 3)), (0.865, 0.551))
         self.assertEqual(round(V["p_between"], 3), 0.314)
+
+    def test_alert(self):
+        self.assertAlmostEqual(1 - exp(-V["rate"] * V["alert_x"]), V["alert_q"])
 
 
 class Section3UniformExponential(unittest.TestCase):
@@ -80,6 +87,17 @@ class Section5Beta(unittest.TestCase):
     def test_update(self):                                             # hands-on
         self.assertEqual((V["beta_next"]["a"], V["beta_next"]["b"]), (5, 8))
         self.assertEqual(round(V["beta_next"]["mean"], 2), 0.38)
+
+    def test_plausible(self):
+        lo, hi = V["beta_plausible"]
+        f = V["beta"]["first"]
+        self.assertTrue(abs(lo - f["mean"]) < 1.5 * f["sd"] and abs(hi - f["mean"]) < 1.5 * f["sd"])
+
+    def test_curves_are_densities(self):
+        for c in [V["beta_next"]] + V["clicks"]:
+            xs, ys = zip(*c["curve"])
+            area = sum((xs[i + 1] - xs[i]) * (ys[i] + ys[i + 1]) / 2 for i in range(len(xs) - 1))
+            self.assertAlmostEqual(area, 1.0, places=2)
 
     def test_clicks(self):
         a, b = V["clicks"]
