@@ -102,6 +102,13 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
   re-render the scenes it lists and concatenate. Both run in the Navoiy env
   (`~/navoiy-stack/CosyVoice/.venv/bin/python`); `audio_fx.py` holds the clip clean-up they share with `common.py`.
   Recognisers stumble on spoken letters and numbers ("ey karra eks"), so a failure is a lead, not a verdict.
+  Two more listeners back them up: **forced alignment** (Meta's MMS aligner in torchaudio) scores every approved
+  word against the audio and names the lost ones (the 0:18 garble: 8 words at 0.00), and **DNSMOS** (Microsoft's
+  P.835 model, `~/navoiy-stack/models/dnsmos/sig_bak_ovr.onnx`) scores background noise per 2 s window (the 6:17
+  hiss: 1.15 of 5; clean speech ~3-4). The aligner also stumbles on dense spelled numbers, so its lost-word run
+  fails a clip only when the recognisers lose words too. Softer signals put a clip on the **listen list**:
+  `uv run python listen_list.py <build>` writes `<build>/listen_list.md`, each flagged line with its time in the
+  final video, for the instructor to hear first. Every check is calibrated on the defects the instructor reported.
 - **Labels next to a curve get a black backing** (`add_background_rectangle`), or the curve runs through the text.
 - **`Indicate` grows a mobject by 20 %**, which pushed a full-width bell curve onto the frame edge; use
   `scale_factor=1.04` on anything near full width.

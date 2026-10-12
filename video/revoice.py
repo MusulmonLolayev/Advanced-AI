@@ -17,7 +17,7 @@ import urllib.request
 from pathlib import Path
 
 from audio_fx import cap_pauses, trim_silence
-from voice_check import MAX_CER, MAX_MISSING_RUN, MAX_NOISE_S, MAX_TAIL_DB, MODELS, cer, missing_run, missing_tail, noise_run, tail_db, words
+from voice_check import MODELS, judge
 
 URL = "http://127.0.0.1:8765/tts"
 SEEDS = (1986, 7, 42, 123, 2024, 31337)
@@ -34,13 +34,9 @@ def synth(text, out, seed):
 
 
 def score(asrs, path, text):
-    """(cut off or noisy?, longest run of missed words, CER), lower is better: a take that ends mid-word or
-    carries a stretch of hiss never wins."""
-    ref = words(re.sub(r"<[^>]+>", "", text))
-    heard = [a(str(path))["text"] for a in asrs]
-    cut = int(tail_db(path) > MAX_TAIL_DB or noise_run(path) >= MAX_NOISE_S
-              or min(missing_tail(ref, words(h)) for h in heard) > 0)
-    return (cut, *min((missing_run(ref, words(h)), round(cer(ref, words(h)), 3)) for h in heard)), heard
+    """(number of failed checks, aligner's lost-word run, recognisers' missed-word run, CER), lower is better."""
+    r = judge(path, text, asrs)
+    return (len(r["fails"]), r["align_run"], r["missing_run"], r["cer"]), r["heard"]
 
 
 def join(pieces, target):
@@ -64,8 +60,7 @@ def main(build):
     replaced = []
     for r in [r for r in report if not r["ok"]]:
         f, text = Path(r["file"]), r["text"]
-        old = (int(r["tail_db"] > MAX_TAIL_DB or r.get("noise_s", 0) >= MAX_NOISE_S or r["missing_tail"] > 0),
-               r["missing_run"], r["cer"])
+        old = (len(r["fails"]), r["align_run"], r["missing_run"], r["cer"])
         pieces = []
         for k, sent in enumerate(p for p in re.split(r"(?<=[.?!:;])\s+", text.strip()) if p):
             best = None
@@ -75,7 +70,7 @@ def main(build):
                 s, _ = score(asrs, out, sent)
                 if best is None or s < best[0]:
                     best = (s, out)
-                if s[0] == 0 and s[1] == 0 and s[2] <= 0.10:
+                if s[0] == 0 and s[1] == 0 and s[2] == 0 and s[3] <= 0.10:
                     break
             pieces.append(best[1])
             print(f"   {f.stem[:40]} s{k} {best[0]} {best[1].name.split('.')[-2]}", flush=True)
@@ -90,7 +85,7 @@ def main(build):
                 shutil.copy2(f, orig)
             shutil.copy2(cand, f)
             replaced.append({"file": str(f), "scene": f.parent.name, "old": old, "new": new,
-                             "ok": new[0] == 0 and new[1] < MAX_MISSING_RUN and new[2] <= MAX_CER})
+                             "ok": new[0] == 0})
     log = Path(build, "revoiced.json")
     earlier = json.loads(log.read_text()) if log.exists() else []
     log.write_text(json.dumps(earlier + replaced, indent=1))
