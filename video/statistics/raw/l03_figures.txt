@@ -1,0 +1,89 @@
+Figure 1: PMF of the sum of two dice …
+ sum  ways        P
+   2     1 0.027778
+   3     2 0.055556
+   4     3 0.083333
+   5     4 0.111111
+   6     5 0.138889
+   7     6 0.166667
+   8     5 0.138889
+   9     4 0.111111
+  10     3 0.083333
+  11     2 0.055556
+  12     1 0.027778
+  total outcomes=36  E[X]=7.000  Var(X)=5.8333
+✓ discrete_rv_two_dice_pmf.pdf
+✓ discrete_rv_two_dice_pmf.svg
+
+Figure 2: running sample mean of die rolls vs E[X] = 3.5 …
+  Run 1: mean after 10 = 4.100, after 100 = 3.690, after 2000 = 3.539
+  Run 2: mean after 10 = 3.600, after 100 = 3.490, after 2000 = 3.513
+  Run 3: mean after 10 = 3.900, after 100 = 3.400, after 2000 = 3.490
+✓ discrete_rv_running_mean.pdf
+✓ discrete_rv_running_mean.svg
+
+Figure 3: Binomial(n=10, p=0.3) …
+ k      P
+ 0 0.0282
+ 1 0.1211
+ 2 0.2335
+ 3 0.2668
+ 4 0.2001
+ 5 0.1029
+ 6 0.0368
+ 7 0.0090
+ 8 0.0014
+ 9 0.0001
+10 0.0000
+  sum=1.000000  E=n*p=3.0  Var=n*p*(1-p)=2.10
+✓ discrete_rv_binomial.pdf
+✓ discrete_rv_binomial.svg
+
+Figure 4: arrivals per 10-minute window …
+  simulated 11892 arrivals across 3000 windows
+  observed mean = 3.964  observed variance = 3.837  (Poisson: both = 4.0)
+ k  observed  Poisson
+ 0    0.0173   0.0183
+ 1    0.0757   0.0733
+ 2    0.1393   0.1465
+ 3    0.2020   0.1954
+ 4    0.2047   0.1954
+ 5    0.1613   0.1563
+ 6    0.1013   0.1042
+ 7    0.0473   0.0595
+ 8    0.0310   0.0298
+ 9    0.0127   0.0132
+10    0.0047   0.0053
+11    0.0020   0.0019
+12    0.0003   0.0006
+✓ discrete_rv_poisson.pdf
+✓ discrete_rv_poisson.svg
+
+Figure 5: Dirichlet draws over the three cup sizes …
+  alpha = 4.0 * [0.2 0.5 0.3]  (weak belief — like 4 orders seen)
+    [0.274 0.262 0.463]
+    [0.136 0.771 0.093]
+    [0.523 0.379 0.098]
+    [0.173 0.453 0.373]
+    [0.16  0.703 0.137]
+    [0.376 0.479 0.145]
+  alpha = 40.0 * [0.2 0.5 0.3]  (strong belief — like 40 orders seen)
+    [0.209 0.638 0.153]
+    [0.14  0.556 0.305]
+    [0.24  0.521 0.238]
+    [0.208 0.545 0.248]
+    [0.137 0.588 0.276]
+    [0.234 0.469 0.297]
+✓ discrete_rv_dirichlet.pdf
+✓ discrete_rv_dirichlet.svg
+
+All Lecture 3 figures written to /home/musulmon/teaching/Advanced AI/statistics/figures/discrete_rv
+
+Figure 6: roulette — expected balance and P(ahead) …
+  n=    10  E[balance]=$    -0.27  P(ahead)=0.34418
+  n=   100  E[balance]=$    -2.70  P(ahead)=0.35535
+  n=  1000  E[balance]=$   -27.03  P(ahead)=0.18763
+  n= 10000  E[balance]=$  -270.27  P(ahead)=0.00333
+  n=100000  E[balance]=$ -2702.70  P(ahead)=0.00000
+✓ discrete_rv_gambler.pdf
+✓ discrete_rv_gambler.svg

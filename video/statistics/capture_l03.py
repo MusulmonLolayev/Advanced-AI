@@ -1,0 +1,239 @@
+"""Capture every number the Lecture 3 video speaks or shows.
+
+Two sources, both computed rather than typed:
+  * the figure script's own stdout (statistics/scripts/generate_discrete_rv_graphics.py),
+    saved verbatim to raw/l03_figures.txt;
+  * the slides' worked examples (two dice, pastries per order, the raffles, roulette, cup sizes,
+    arrivals), computed here from their raw inputs.
+
+`compute()` is pure, so test_l03.py can check every value against what the slides print.
+Running this file writes raw/l03_numbers.json, which the video reads; the video types no number.
+    uv run python statistics/capture_l03.py
+    uv run python -m unittest discover -s statistics -p 'test_l03.py'
+"""
+import json
+import os
+import subprocess
+from fractions import Fraction as F
+from math import comb, exp, lgamma, log, sqrt
+from pathlib import Path
+
+import numpy as np
+
+HERE = Path(__file__).parent
+OUT = HERE / "raw"
+REPO = HERE.parents[1]
+FIGURE_SCRIPT = REPO / "statistics/scripts/generate_discrete_rv_graphics.py"
+
+# ─── raw inputs: the only typed numbers (all from the slides) ─────────────
+DIE = 6
+PASTRY = {0: F(7, 10), 1: F(2, 10), 2: F(1, 10)}      # pastries in one order
+PASTRY_PRICE, COFFEE_PRICE = 2, 3                      # dollars
+HANDS_ON_PRICE = 3                                     # section 6's pause: a $3 pastry
+CUSTOMERS = 100
+RAFFLE_TICKETS, RAFFLE_PRICE = 500, 2
+RAFFLE_A = [(400, 1)]                                  # (prize, how many): one $400 bicycle
+RAFFLE_B = [(8, 50)]                                   # fifty $8 prizes
+ROULETTE_POCKETS, ROULETTE_RED = 37, 18
+ROULETTE_N = (10, 100, 1000, 10000)
+BANKROLL = 1000                                        # the doubling system's purse
+BERNOULLI_GIRL = 0.49                                  # a newborn being a girl
+BIN_N, BIN_P = 10, F(3, 10)                            # next ten customers, any pastry
+CUPS = {"small": F(2, 10), "medium": F(5, 10), "large": F(3, 10)}
+CUP_CUSTOMERS, CUP_HANDS_ON = 10, 20
+LAM = 4                                                # arrivals per ten minutes
+DAY_WINDOWS = 60                                       # a ten-hour day
+SIM_WINDOWS = 3000                                     # the figure's simulated windows
+SECONDS = 600                                          # ten minutes split into seconds
+RUSH = 8                                               # a window with 8 or more arrivals
+FIRST_ORDERS = {"small": 1, "medium": 2, "large": 1}
+DIRICHLET_SEEN = (4, 40)                               # orders "already seen" by the two priors
+MORE_MEDIUM = 3
+TEST_N, TEST_ACC = 100, F(9, 10)                       # section 8's AI use: 100 test examples, 90 % accuracy
+
+
+def frac(x):
+    return [x.numerator, x.denominator]
+
+
+def moments(pmf):
+    """E, E[X^2], Var for {value: probability}, exactly."""
+    e = sum(x * p for x, p in pmf.items())
+    e2 = sum(x * x * p for x, p in pmf.items())
+    return e, e2, e2 - e * e
+
+
+def raffle(prizes):
+    """The buyer's net gain as a PMF: win a prize having paid the ticket, or lose the ticket."""
+    pmf, won = {}, 0
+    for prize, k in prizes:
+        pmf[prize - RAFFLE_PRICE] = pmf.get(prize - RAFFLE_PRICE, 0) + F(k, RAFFLE_TICKETS)
+        won += k
+    pmf[-RAFFLE_PRICE] = F(RAFFLE_TICKETS - won, RAFFLE_TICKETS)
+    return pmf
+
+
+def binom_pmf(k, n, p):
+    return comb(n, k) * p ** k * (1 - p) ** (n - k)
+
+
+def binom_tail_above(n, p, k0):
+    """P(X > k0) for X ~ Binomial(n, p), summed in logs (n up to 10,000)."""
+    lp, lq = log(p), log(1 - p)
+    return sum(exp(lgamma(n + 1) - lgamma(k + 1) - lgamma(n - k + 1) + k * lp + (n - k) * lq)
+               for k in range(k0 + 1, n + 1))
+
+
+def poisson_pmf(k, lam):
+    return exp(-lam + k * log(lam) - lgamma(k + 1))
+
+
+def compute():
+    V = {}
+    # section 1: two dice, and pastries per order
+    ways = {s: sum(1 for a in range(1, DIE + 1) for b in range(1, DIE + 1) if a + b == s) for s in range(2, 13)}
+    V["dice_ways"] = ways
+    V["dice_outcomes"] = DIE * DIE
+    V["dice_p7"] = frac(F(ways[7], DIE * DIE))
+    V["dice_p2"] = frac(F(ways[2], DIE * DIE))
+    V["dice_7_vs_2"] = ways[7] // ways[2]
+    V["dice_p11"] = frac(F(ways[11], DIE * DIE))                      # hands-on
+    V["dice_mean"], _, dvar = [float(v) for v in moments({s: F(w, DIE * DIE) for s, w in ways.items()})]
+    V["dice_var"] = float(F(sum(s * s * w for s, w in ways.items()), DIE * DIE) - 49)
+    V["pastry_pmf"] = {str(k): float(p) for k, p in PASTRY.items()}
+    V["pastry_sum"] = float(sum(PASTRY.values()))
+
+    # section 2: expectation
+    e, e2, var = moments(PASTRY)
+    V["pastry_mean"], V["pastry_e2"], V["pastry_var"] = float(e), float(e2), float(var)
+    V["pastry_sd"] = sqrt(var)
+    V["customers"] = CUSTOMERS
+    V["pastries_per_100"] = float(CUSTOMERS * e)
+    V["die_sum"] = sum(range(1, DIE + 1))
+    V["die_mean"] = float(F(sum(range(1, DIE + 1)), DIE))             # hands-on: 3.5
+    for name, prizes in (("A", RAFFLE_A), ("B", RAFFLE_B)):
+        pmf = raffle(prizes)
+        m, m2, v = moments(pmf)
+        V[f"raffle_{name}"] = {"pmf": {str(k): frac(p) for k, p in pmf.items()}, "mean": float(m),
+                               "e2": float(m2), "var": float(v), "sd": sqrt(v)}
+    V["raffle_tickets"], V["raffle_price"] = RAFFLE_TICKETS, RAFFLE_PRICE
+    V["raffle_raised"] = RAFFLE_TICKETS * RAFFLE_PRICE
+    V["raffle_kept"] = V["raffle_raised"] - sum(p * k for p, k in RAFFLE_A)
+    V["raffle_A_prize"], V["raffle_B_prize"], V["raffle_B_count"] = RAFFLE_A[0][0], RAFFLE_B[0][0], RAFFLE_B[0][1]
+
+    # section 3: the running sample mean (same generator and seed as the figure script)
+    rng = np.random.default_rng(7)
+    runs = []
+    for _ in range(3):
+        rolls = rng.integers(1, 7, size=2000)
+        m = np.cumsum(rolls) / np.arange(1, 2001)
+        runs.append({"after_10": round(float(m[9]), 3), "after_100": round(float(m[99]), 3),
+                     "after_2000": round(float(m[-1]), 3), "curve": [round(float(x), 4) for x in m]})
+    V["runs"] = runs
+    V["run1_gap"] = {"after_10": runs[0]["after_10"] - V["die_mean"], "after_2000": runs[0]["after_2000"] - V["die_mean"]}
+
+    # section 5: roulette, and the doubling system
+    p_win = F(ROULETTE_RED, ROULETTE_POCKETS)
+    V["roulette_red"], V["roulette_pockets"] = ROULETTE_RED, ROULETTE_POCKETS
+    V["roulette_mean"] = float(p_win - (1 - p_win))                   # -1/37 per $1
+    V["roulette_mean_frac"] = frac(p_win - (1 - p_win))
+    V["roulette"] = {str(n): {"balance": n * V["roulette_mean"],
+                              "p_ahead": binom_tail_above(n, float(p_win), n // 2)} for n in ROULETTE_N}
+    stake, lost, k = 1, 0, 0
+    while lost + stake <= BANKROLL:                                   # losses the purse can cover
+        lost, stake, k = lost + stake, stake * 2, k + 1
+    q = 1 - p_win
+    ruin = q ** k
+    V["martingale"] = {"bankroll": BANKROLL, "losses_covered": k, "lost_after": lost, "next_stake": stake,
+                       "p_ruin": float(ruin), "one_in": round(1 / float(ruin)),
+                       "mean": float((1 - ruin) * 1 - ruin * lost)}
+
+    # section 6: shifting and scaling
+    sd = sqrt(var)
+    V["price"], V["coffee"] = PASTRY_PRICE, COFFEE_PRICE
+    V["revenue_mean"], V["revenue_sd"] = float(PASTRY_PRICE * e), PASTRY_PRICE * sd
+    V["revenue_var"] = float(PASTRY_PRICE ** 2 * var)
+    V["bill_mean"], V["bill_var"] = float(PASTRY_PRICE * e + COFFEE_PRICE), float(PASTRY_PRICE ** 2 * var)
+    V["hands_on_price"] = HANDS_ON_PRICE
+    V["hands_on_mean"] = float(HANDS_ON_PRICE * e)
+    V["hands_on_var"] = float(HANDS_ON_PRICE ** 2 * var)
+    V["hands_on_sd"] = HANDS_ON_PRICE * sd
+    V["z_mean"], V["z_var"] = 0.0, 1.0                                # (X - mu) / sigma, checked in the test
+
+    # section 7: Bernoulli
+    p_any = PASTRY[1] + PASTRY[2]
+    V["bern_p"], V["bern_var"] = float(p_any), float(p_any * (1 - p_any))
+    V["bern_max_var"] = 0.25
+    V["bern_girl"], V["bern_girl_var"] = BERNOULLI_GIRL, BERNOULLI_GIRL * (1 - BERNOULLI_GIRL)
+
+    # section 8: Binomial
+    pmf = [binom_pmf(k, BIN_N, BIN_P) for k in range(BIN_N + 1)]
+    V["bin_n"], V["bin_p"] = BIN_N, float(BIN_P)
+    V["bin_pmf"] = [float(x) for x in pmf]
+    V["bin_mode"] = max(range(BIN_N + 1), key=lambda k: pmf[k])
+    V["bin_comb3"] = comb(BIN_N, 3)
+    V["bin_p3_parts"] = [float(BIN_P ** 3), float((1 - BIN_P) ** 7)]
+    V["bin_mean"], V["bin_var"] = float(BIN_N * BIN_P), float(BIN_N * BIN_P * (1 - BIN_P))
+    V["bin_sd"] = sqrt(V["bin_var"])
+    V["bin_ge6"] = float(sum(pmf[6:]))
+    V["bin_p0"] = float(pmf[0])                                       # hands-on: nobody buys
+    V["test_n"], V["test_acc"] = TEST_N, float(TEST_ACC)
+    V["test_mean"], V["test_sd"] = float(TEST_N * TEST_ACC), sqrt(TEST_N * TEST_ACC * (1 - TEST_ACC))
+    V["test_band"] = [V["test_mean"] - V["test_sd"], V["test_mean"] + V["test_sd"]]
+
+    # section 9: Categorical and Multinomial
+    V["cups"] = {k: float(p) for k, p in CUPS.items()}
+    V["cup_customers"], V["cup_hands_on"] = CUP_CUSTOMERS, CUP_HANDS_ON
+    V["cups_expected"] = {k: float(CUP_CUSTOMERS * p) for k, p in CUPS.items()}
+    V["cups_expected_hands_on"] = {k: float(CUP_HANDS_ON * p) for k, p in CUPS.items()}
+
+    # section 10: Poisson
+    V["lam"] = LAM
+    V["pois_pmf"] = [poisson_pmf(k, LAM) for k in range(13)]
+    V["pois_p0"] = poisson_pmf(0, LAM)
+    V["pois_empty_one_in"] = round(1 / V["pois_p0"])
+    V["rush"] = RUSH
+    V["pois_rush"] = 1 - sum(poisson_pmf(k, LAM) for k in range(RUSH))
+    V["day_windows"] = DAY_WINDOWS
+    V["day_rushes"] = DAY_WINDOWS * V["pois_rush"]
+    V["day_empty"] = DAY_WINDOWS * V["pois_p0"]                      # hands-on
+    # the figure's 3000 simulated windows (same generator and seed as the figure script)
+    rng = np.random.default_rng(21)
+    gaps = rng.exponential(scale=1.0 / LAM, size=int(LAM * SIM_WINDOWS * 1.6))
+    times = np.cumsum(gaps)
+    times = times[times < SIM_WINDOWS]
+    counts = np.bincount(times.astype(int), minlength=SIM_WINDOWS)[:SIM_WINDOWS]
+    V["pois_sim"] = {"windows": SIM_WINDOWS, "arrivals": int(len(times)), "mean": float(counts.mean()),
+                     "var": float(counts.var(ddof=1)), "freq": [float((counts == k).mean()) for k in range(13)]}
+    p_sec = F(LAM, SECONDS)
+    V["seconds"], V["p_second"] = SECONDS, frac(p_sec)
+    V["bin_vs_pois"] = max(abs(binom_pmf(k, SECONDS, float(p_sec)) - poisson_pmf(k, LAM)) for k in range(SECONDS + 1))
+
+    # section 11: Dirichlet
+    total = sum(FIRST_ORDERS.values())
+    V["first_orders"] = FIRST_ORDERS
+    V["first_shares"] = {k: v / total for k, v in FIRST_ORDERS.items()}
+    V["alphas"] = {str(s): [float(s * p) for p in CUPS.values()] for s in DIRICHLET_SEEN}
+    a = [float(DIRICHLET_SEEN[0] * p) for p in CUPS.values()]
+    a[1] += MORE_MEDIUM
+    V["more_medium"] = MORE_MEDIUM
+    V["alpha_updated"] = a
+    V["alpha_updated_mean"] = [x / sum(a) for x in a]
+    rng = np.random.default_rng(5)
+    base = np.array([float(p) for p in CUPS.values()])
+    V["dirichlet_draws"] = {str(s): np.round(rng.dirichlet(base * s, size=6), 3).tolist() for s in DIRICHLET_SEEN}
+    return V
+
+
+def figure_output():
+    adv_ai = os.environ.get("ADV_AI_PYTHON", str(Path.home() / ".conda/envs/adv_ai/bin/python3"))
+    r = subprocess.run([adv_ai, str(FIGURE_SCRIPT)], capture_output=True, text=True, cwd=REPO / "statistics")
+    assert r.returncode == 0, r.stderr[-2000:]
+    return r.stdout
+
+
+if __name__ == "__main__":
+    OUT.mkdir(exist_ok=True)
+    (OUT / "l03_figures.txt").write_text(figure_output())
+    (OUT / "l03_numbers.json").write_text(json.dumps(compute(), indent=1, ensure_ascii=False))
+    print("wrote raw/l03_figures.txt and raw/l03_numbers.json")
