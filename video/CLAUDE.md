@@ -75,6 +75,16 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
   sentences split on `. ? ! :`, and the Uzbek and English lines often split differently.
 - **Silent cards and transitions stay short** (section card 1.0 s, `clear_all` 0.5 s, 0.15 s after each line): voice clips carry their own
   lead-in and tail, and anything over 2 s of silence that is not a hands-on pause is a defect.
+- **Sound in a pause is muted, not re-voiced.** The cloned voice can fill the pause between two sentences with a
+  steady buzz (Lecture 1, 19:06: 0.9 s at -20 dB between «…topamiz.» and «Kyu…»). `patch_audio.py at <build> <m:ss>`
+  aligns the clip's words, mutes only sound lying between two words near that time, in the cached clip and in the
+  built video's audio track (picture copied, length unchanged), and keeps both originals. Noise inside a word is
+  refused. `patch_audio.py scan` only lists candidates: a held vowel the aligner squeezed looks the same, so nothing
+  is muted unheard.
+- **The voice's «yuz» can end in «zh».** Word-final z after «yu» sometimes has its hiss centred at 3-4 kHz («sh»
+  band) instead of ~6 kHz («biz» is always clean). It varies with the take, not the flow checkpoint, prompt or
+  spelling (tested 2026-10-13). Latin letter names («kyu», «ay kyu ar») are blurred too: four respellings failed both
+  recognisers; the spoken term («birinchi kvartil», «kvartillararo oraliq») passed.
 - **The cloned voice pads its clips** with up to ~1.2 s of quiet at each end (edge-tts barely does). `NavoiyService`
   trims both ends to 0.12 s (`common.trim_silence`); without it every section boundary in the Uzbek lecture was a
   2.4-3.4 s gap.
