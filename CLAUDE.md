@@ -118,6 +118,21 @@ own voice, so it must sound like them, not like a translation. Apply these whene
     ogʻir dum; mini-batch → mini-paket; gradient descent → gradient tushishi; log-likelihood → logarifmik haqiqatga
     oʻxshashlik; maximum likelihood estimation → maksimal haqiqatga oʻxshashlik usuli; estimate → baho;
     cross-entropy → kross-entropiya; mean squared error → oʻrtacha kvadratik xato.
+  - Depth drafts (approved as written, 2026-10-13): sex (men/women) → **jins** (Lecture 2); click rate →
+    **reklamani bosganlar ulushi** (Lecture 4).
+  - Lecture 6 terms (approved as written): prior / posterior distribution → **aprior / aposterior taqsimot**; credible
+    interval → **aposterior oraliq**, kept apart from confidence interval → **ishonch oraligʻi**; frequentist /
+    Bayesian → **chastotali yondashuv / Bayes yondashuvi**; point estimate → **nuqtaviy baho**; MAP estimate →
+    **maksimal aposterior baho**; posterior mean → **aposterior oʻrtacha**; conjugate prior → **qoʻshma aprior
+    taqsimot**; predictive distribution → **bashorat taqsimoti**; precision (1/variance) → **dispersiyaning teskarisi**
+    (not «aniqlik», which is accuracy).
+  - Lecture 7 terms (approved as written): entropy → **entropiya**; bit / nat; binary entropy → **ikkilik entropiya**;
+    surprise → **ajablanish** (not «kutilmaganlik», too close to «kutilma»); question tree → **savollar daraxti**; log
+    base 2 → **ikki asosli logarifm**; KL divergence → **KL divergensiya / Kulbak–Leybler divergensiyasi** (not
+    «masofa»: it is not a distance); mutual information → **oʻzaro axborot**; conditional entropy → **shartli
+    entropiya**; information gain → **axborot ortishi**; forecaster → **sinoptik**; decision tree → **qaror daraxti**;
+    feature selection → **belgilarni tanlash**; knowledge distillation → **bilim distillyatsiyasi**; VAE →
+    **variatsion avtokodlovchi**; RLHF → **inson fikri bilan kuchaytirib oʻrganish**; perplexity → **perpleksiya**.
 - **Latin letters are spoken by their English names**, written in Uzbek spelling in the narration so the voice reads
   them right: x → eks, f → ef, n → en, s → es, i → ay, y → uay, A → ey, B → bi, C → si, Q → kyu, IQR → ay kyu ar
   (capitalized at a sentence start: "Eks ikki — …"). Greek letters keep their names (sigma, mu, omega). The screen
