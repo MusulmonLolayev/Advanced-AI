@@ -1,0 +1,73 @@
+Shared sample: 300 trading days (identical to Lecture 4)
+  mean temp = 21.81 °C   mean iced = 39.49 cups
+  sd temp   = 5.65        sd iced   = 11.33
+  sample covariance matrix:
+    [   31.9     49.6 ]
+    [   49.6    128.4 ]
+  covariance = 49.6 °C·cups
+  correlation r = 0.7747   (slide: 0.77)
+  check r = cov/(s_t*s_c) = 0.7747
+  check with the SLIDE's rounded numbers: 49.6/(5.65*11.33) = 0.7748
+
+Ordinary least squares: iced cups on temperature
+  slope     b = Sxy/Sxx = 49.6/31.9 = 1.5548 cups per °C
+  intercept a = ybar - b*xbar = 39.49 - 1.5548*21.81 = 5.5715
+  slide line: y = 5.6 + 1.55 x
+  line passes through the mean point (21.8, 39.5): 39.49 cups
+  prediction at 25 °C: exact 44.44, from slide's rounded line 5.6 + 1.55*25 = 44.35
+  SS_tot = 38385.5   SS_res = 15347.9
+  R^2 = 1 - SS_res/SS_tot = 0.6002      r^2 = 0.6002  (identical: True)
+  residual sd = 7.18 cups
+  residual mean = 9.95e-16 (least squares forces this to 0)
+  example day: 25.0 °C, 32 cups sold, line predicts 44.4, residual -12.5
+
+Figure 1: hot days and iced coffee, with the correlation …
+✓ regression_scatter_corr.pdf
+✓ regression_scatter_corr.svg
+
+Figure 2: the fitted line and the residual plot …
+✓ regression_fit_residuals.pdf
+✓ regression_fit_residuals.svg
+
+Figure 3: R² as a comparison of two sets of gaps …
+✓ regression_r_squared.pdf
+✓ regression_r_squared.svg
+
+Figure 4: a strong relationship the correlation cannot see …
+  Pearson r(temp, total drinks) = -0.0628  (slide: -0.06)
+  straight-line R² = 0.0039   curve R² = 0.5459
+  total drinks: min=40 max=104 mean=60.3
+✓ regression_nonlinear.pdf
+✓ regression_nonlinear.svg
+
+Three quantities per day: temperature, iced coffees, hot drinks …
+  covariance matrix (units differ, so the entries are not comparable):
+    [    31.9      49.6     -69.5 ]
+    [    49.6     128.4    -107.4 ]
+    [   -69.5    -107.4     206.0 ]
+  correlation matrix (unit-free):
+    [  1.00    0.77   -0.86 ]
+    [  0.77    1.00   -0.66 ]
+    [ -0.86   -0.66    1.00 ]
+  mean hot drinks = 31.0  sd = 14.4
+
+Figure 5: the correlation matrix …
+✓ regression_corr_matrix.pdf
+✓ regression_corr_matrix.svg
+
+Eigendecomposition of the sample covariance matrix
+  eigenvalues: 149.29 and 10.96
+  sum = 160.25   trace of Sigma = 160.25 (equal)
+  variance shares: 93.2% and 6.8%
+  PC1 = (+0.389, +0.921)   PC2 = (-0.921, +0.389)
+  PC1 angle = 67.1° from the temperature axis
+  sd along PC1 = 12.22, along PC2 = 3.31
+  orthogonal? PC1·PC2 = 0.00e+00
+  on the CORRELATION matrix instead: eigenvalues 1.7747 and 0.2253 (= 1+r and 1-r)
+  shares: 88.7% and 11.3%
+
+Figure 6: the two principal directions …
+✓ regression_pca_axes.pdf
+✓ regression_pca_axes.svg
+
+All Lecture 9 figures written to /home/musulmon/teaching/Advanced AI/statistics/figures/regression

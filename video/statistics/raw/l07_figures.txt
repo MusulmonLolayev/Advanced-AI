@@ -1,0 +1,55 @@
+The running example: a year of weather
+outcome     p  days_of_360  surprise_bits  questions
+  sunny 0.500          180            1.0          1
+ cloudy 0.250           90            2.0          2
+   rain 0.125           45            3.0          3
+  storm 0.125           45            3.0          3
+  H(p) = 1.7500 bits   H(uniform over 4) = 2.0000 bits
+
+Figure 1: weather distribution with surprise per outcome …
+✓ info_entropy_weather.pdf
+✓ info_entropy_weather.svg
+
+Figure 2: the binary entropy curve …
+  H(0.5) = 1.0000 bits
+  H(0.25) = 0.8113 bits
+  H(0.11) = 0.4999 bits
+  H(0.7) = 0.8813 bits
+✓ info_binary_entropy.pdf
+✓ info_binary_entropy.svg
+
+Figure 3: cross-entropy of three forecasters …
+            forecaster   H(p,q)  KL(p||q)
+     knows the climate 1.750000  0.000000
+assumes all four equal 2.000000  0.250000
+     always says sunny 2.567448  0.817448
+✓ info_cross_entropy_forecasters.pdf
+✓ info_cross_entropy_forecasters.svg
+
+Figure 4: KL(posterior ‖ prior) for the 7:40 bus …
+  n=  0  on time=  0  posterior Beta(8,2)  KL=0.000 bits
+  n=  1  on time=  0  posterior Beta(8,3)  KL=0.260 bits
+  n= 10  on time=  6  posterior Beta(14,6)  KL=0.664 bits
+  n= 30  on time= 22  posterior Beta(30,10)  KL=0.690 bits
+  n=100  on time= 68  posterior Beta(76,34)  KL=1.760 bits
+✓ info_kl_learning.pdf
+✓ info_kl_learning.svg
+
+Figure 5: mutual information of three morning questions …
+  P(wet) = 0.250   H(wet) = 0.8113 bits
+              question  P(yes)  P(wet|yes)  P(wet|no)  H(wet|answer)  I(wet;answer)
+    sky is grey at 7am    0.35    0.571429   0.076923       0.599138       0.212140
+    wind from the west    0.45    0.333333   0.181818       0.789454       0.021824
+date is an even number    0.50    0.250000   0.250000       0.811278       0.000000
+✓ info_information_gain.pdf
+✓ info_information_gain.svg
+
+Extra values quoted in the slide text:
+  KL(p ‖ uniform)   = 0.2500 bits
+  KL(uniform ‖ p)   = 0.2500 bits  (asymmetric)
+  KL(p ‖ sunny-ish) = 0.8174 bits
+  KL(sunny-ish ‖ p) = 0.5449 bits
+  waste vs uniform over 360 days: 90 bits
+  H(p) in nats = 1.2130
+
+All Lecture 7 figures written to /home/musulmon/teaching/Advanced AI/statistics/figures/information_theory

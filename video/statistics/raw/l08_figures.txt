@@ -1,0 +1,41 @@
+Figure 1: the logit map between p and eta …
+  p = 0.3  ->  eta = log(p/(1-p)) = -0.8473
+  eta = -0.8473  ->  sigmoid(eta) = 0.300000
+✓ expfamily_logit_map.pdf
+✓ expfamily_logit_map.svg
+
+Figure 2: the log-partition function and its slope …
+  A(eta) = log(1+e^eta) at eta=-0.8473 is 0.356675
+  -log(1-p) with p=0.3 is 0.356675
+  A'(eta) = 0.300000   E[X] = p = 0.3
+  A''(eta) numerically = 0.210000   p(1-p) = 0.210000
+✓ expfamily_log_partition.pdf
+✓ expfamily_log_partition.svg
+
+Figure 3: three different records with the same sufficient statistic …
+     steady  one big day  building up
+m1        7           20            1
+m2        6            3            2
+m3        7            4            4
+m4        6            5            5
+m5        7            3            6
+m6        6            6            8
+m7        7            4            9
+m8        7            7           10
+m9        7            9           10
+m10       6            5           11
+  steady       total = 66 of 200
+  one big day  total = 66 of 200
+  building up  total = 66 of 200
+  p_hat = 66/200 = 0.3300
+  max log-likelihood = -126.8359 at p = 0.3305
+✓ expfamily_sufficiency.pdf
+✓ expfamily_sufficiency.svg
+
+Figure 4: MLE as moment matching …
+  Bernoulli: observed mean 0.3300 -> eta_hat = -0.7082  and sigma(eta_hat) = 0.3300
+  Poisson:   observed mean 3.9600 -> eta_hat = 1.3762  and exp(eta_hat) = 3.9600
+✓ expfamily_moment_matching.pdf
+✓ expfamily_moment_matching.svg
+
+All Lecture 8 figures written to /home/musulmon/teaching/Advanced AI/statistics/figures/expfamily

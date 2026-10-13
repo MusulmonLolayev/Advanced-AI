@@ -1,0 +1,76 @@
+Training days: n=20  temp 18.4-33.2  sales 1.7-34.5
+Test days:     n=40  temp 17.2-33.8  sales 2.5-32.3
+
+Figure 1: three polynomial fits …
+  degree 1: train RMSE=2.84  test RMSE=3.33
+  degree 3: train RMSE=2.03  test RMSE=2.65
+  degree 9: train RMSE=1.48  test RMSE=27.74
+✓ evaluation_polynomial_fits.pdf
+✓ evaluation_polynomial_fits.svg
+
+Figure 2: train vs test error against capacity …
+        train   test
+degree              
+1        2.84   3.33
+2        2.64   2.96
+3        2.03   2.65
+4        2.02   2.82
+5        2.01   3.03
+6        1.95   2.85
+7        1.89   4.81
+8        1.50  21.69
+9        1.48  27.74
+10       1.47  33.87
+  best test RMSE at degree 3: 2.65
+  degree 1: train 2.84  test 3.33
+  degree 10: train 1.47  test 33.87
+  off the chart: {8: 21.7, 9: 27.7, 10: 33.9}
+✓ evaluation_bias_variance.pdf
+✓ evaluation_bias_variance.svg
+
+Figure 3: bootstrapping the test error …
+  point estimate RMSE = 2.65 cups
+  95% bootstrap interval = [2.03, 3.24]  width 1.20
+  bootstrap mean 2.63  sd 0.31
+✓ evaluation_bootstrap.pdf
+✓ evaluation_bootstrap.svg
+
+Figure 4: permutation test on two menu layouts …
+  menu A: 21/60 = 0.350
+  menu B: 30/60 = 0.500
+  observed difference = 0.150
+  permutation p-value (two-sided) = 0.1378
+  pooled rate 0.4250  SE 0.0903  z 1.662  normal p 0.0965
+  a gap of 0.15 needs about 90 customers per menu
+✓ evaluation_permutation.pdf
+✓ evaluation_permutation.svg
+
+Figure 5: reliability diagram for two forecasters …
+ stated  honest  overconfident
+   0.05   0.050          0.218
+   0.15   0.135          0.330
+   0.25   0.255          0.380
+   0.35   0.335          0.410
+   0.45   0.438          0.510
+   0.55   0.530          0.512
+   0.65   0.620          0.590
+   0.75   0.748          0.642
+   0.85   0.852          0.635
+   0.95   0.958          0.762
+  mean gap  honest 0.011   overconfident 0.121
+  at a stated 0.95: honest 0.958, overconfident 0.762
+✓ evaluation_reliability.pdf
+✓ evaluation_reliability.svg
+
+Slide numbers (no figure):
+  5-fold RMSE per fold: [2.6, 1.57, 2.19, 2.58, 3.66]
+  5-fold mean 2.52  sd 0.76
+  accuracy 0.900 on n=1000: SE = 0.0095  (95% half-width 0.0186)
+  accuracy 0.903 on n=1000: SE = 0.0094  (95% half-width 0.0183)
+  accuracy 0.900 on n=10000: SE = 0.0030  (95% half-width 0.0059)
+  1 independent tests at 0.05: P(at least one false alarm) = 0.050
+  10 independent tests at 0.05: P(at least one false alarm) = 0.401
+  20 independent tests at 0.05: P(at least one false alarm) = 0.642
+  50 independent tests at 0.05: P(at least one false alarm) = 0.923
+
+All Lecture 10 figures written to /home/musulmon/teaching/Advanced AI/statistics/figures/evaluation
