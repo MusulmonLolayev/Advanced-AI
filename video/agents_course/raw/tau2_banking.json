@@ -1,0 +1,43 @@
+{
+ "run": "banking5_bm25",
+ "tau2_commit": "fc0055dc4e0a316c3f83133267fbd6faaa770992",
+ "tau2_tag": "v1.0.1",
+ "agent_llm": "deepseek/deepseek-v4-flash",
+ "user_llm": "deepseek/deepseek-v4-flash",
+ "served_model": "deepseek-flash",
+ "retrieval_config": "bm25",
+ "n_tasks": 5,
+ "n_trials": 1,
+ "n_simulations": 5,
+ "rewards_by_task": {
+  "task_004": [
+   1
+  ],
+  "task_001": [
+   1
+  ],
+  "task_003": [
+   0
+  ],
+  "task_002": [
+   1
+  ],
+  "task_005": [
+   0
+  ]
+ },
+ "pass_1": 0.6,
+ "pass_hat_k": {
+  "1": 0.6
+ },
+ "cost_usd": 0.1547,
+ "cost_per_conversation_usd": 0.0309,
+ "prompt_tokens": 1499096,
+ "completion_tokens": 34879,
+ "terminations": {
+  "user_stop": 5
+ },
+ "note": "banking ran without run_tau2.py; it needed no gpt-4.1 judge",
+ "kb_documents": 698,
+ "kb_searches": 72
+}

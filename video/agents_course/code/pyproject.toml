@@ -1,0 +1,9 @@
+[project]
+name = "agents-course-code"
+version = "0.2.0"
+description = "Short examples for the agent-development course: two run against DeepSeek, the rest show an idea"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "openai>=1.40",
+    "jsonschema>=4.20",
+]

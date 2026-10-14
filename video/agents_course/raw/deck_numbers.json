@@ -1,0 +1,153 @@
+{
+ "cited": {
+  "dpr_gain_points": "9$--$19"
+ },
+ "bill": {
+  "3": {
+   "billed": 5100,
+   "new_only": 2700
+  },
+  "10": {
+   "billed": 34500,
+   "new_only": 6200
+  },
+  "20": {
+   "billed": 119000,
+   "new_only": 11200
+  }
+ },
+ "bill_ratio_20_10": 3.4,
+ "cache10": {
+  "full": 5700,
+  "hit": 28800,
+  "cost_cached": 0.00094,
+  "cost_uncached": 0.00517,
+  "ratio": 5.5,
+  "eval_cached": 0.47,
+  "eval_uncached": 2.59
+ },
+ "p_step": 0.95,
+ "p10": 0.599,
+ "p_low_10": 0.35,
+ "p_low_5": 0.59,
+ "q_format": 0.98,
+ "q10": 0.82,
+ "schema_billed_10": 4000,
+ "turns_uncapped": 11,
+ "turns_capped": 62,
+ "turns_ratio": 5.6,
+ "orch": {
+  "single_tokens": 47400,
+  "multi_tokens": 33000,
+  "fewer_pct": 30,
+  "single_full": 6700,
+  "single_hit": 40700,
+  "multi_full": 11700,
+  "multi_hit": 21300,
+  "single_cost": 0.00113,
+  "multi_cost": 0.00182,
+  "single_eval": 0.56,
+  "multi_eval": 0.91,
+  "bill_ratio": 1.6,
+  "steps_single": 12,
+  "steps_multi": 16,
+  "p_single": 0.54,
+  "p_multi": 0.44
+ },
+ "verifier": {
+  "draft": 0.8,
+  "catch": 0.9,
+  "with": 0.94
+ },
+ "rrf": {
+  "doc_a": 0.0164,
+  "doc_b": 0.032,
+  "doc_c": 0.0323,
+  "doc_d": 0.0318
+ },
+ "rrf_order": [
+  "doc_c",
+  "doc_b",
+  "doc_d",
+  "doc_a"
+ ],
+ "first_stage": 50,
+ "batch": {
+  "pairs": 64,
+  "passes": 128,
+  "negatives_each": 63
+ },
+ "ivf": {
+  "ops": 9000,
+  "saving": 111
+ },
+ "pq": {
+  "bytes_before": 4096,
+  "bytes_after": 64,
+  "reduction": 64,
+  "gb_before": 4096,
+  "gb_after": 64,
+  "codebook_bytes": 1048576
+ },
+ "hnsw": {
+  "layers": 4.98,
+  "layer1_nodes": 62500,
+  "graph_gb": 0.13,
+  "vectors_gb": 4.1,
+  "overhead_pct": 3
+ },
+ "filter": {
+  "post_survive": 0.5,
+  "pre_large": 50000000,
+  "pre_banking": 35
+ },
+ "ci": {
+  "20": 17.5,
+  "200": 5.5
+ },
+ "ci20_interval": [
+  2.5,
+  37.5
+ ],
+ "pass_k_example": {
+  "1": 0.75,
+  "2": 0.5,
+  "3": 0.25,
+  "4": 0.0
+ },
+ "tau2": {
+  "retail_tasks_base": 114,
+  "retail_tools": 16,
+  "retail_write_tools": 7,
+  "retail_read_tools": 7,
+  "retail_products": 50,
+  "retail_users": 500,
+  "retail_orders": 1000,
+  "cancel_reasons": [
+   "no longer needed",
+   "ordered by mistake"
+  ],
+  "banking_documents": 698,
+  "banking_words": 136783,
+  "docs_with": {
+   "overdraft": 34,
+   "account": 502
+  },
+  "banking_tasks": 97,
+  "retrieval_configs": [
+   "no_knowledge",
+   "full_kb",
+   "golden_retrieval",
+   "grep_only",
+   "bm25",
+   "openai_embeddings",
+   "qwen_embeddings",
+   "terminal_use",
+   "terminal_use_write",
+   "alltools",
+   "alltools-qwen"
+  ]
+ },
+ "banking_mb": 2.9,
+ "banking_under_limit": true
+}
