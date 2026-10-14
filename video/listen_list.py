@@ -57,7 +57,8 @@ def main(build):
         t = next((s0 + ts for ts, ws in srt_starts(mp4.with_suffix(".srt")) if ws[:len(head)] == head), s0)
         why = ", ".join(r.get("fails", [])) or "listen: " + ", ".join(
             k for k, on in (("noisy?", r["bak"] < 1.8), ("aligner unsure", r["align_run"] >= 2),
-                            ("last word unsure", r["align_last"] < 0.1))
+                            ("last word unsure", r["align_last"] < 0.1),
+                            ("«z» low", (r.get("z_min") or 9) < 4.6))
             if on)
         rows.append((t, scene, why, r["text"][:70]))
     rows.sort()

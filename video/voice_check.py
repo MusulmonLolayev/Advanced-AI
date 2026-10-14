@@ -9,6 +9,8 @@ from the approved text. Two more listeners back them up:
     cannot find, or a last word it cannot find, is a garble or a cut-off, located to the word;
   * DNSMOS (Microsoft's P.835 model, ~/navoiy-stack/models/dnsmos/sig_bak_ovr.onnx) scores background noise
     1-5 on 2 s windows; the worst window flags hiss.
+  * every word-final «z» is measured: its hiss centred below Z_BAD kHz is heard as «zh» («yuz» -> «yuzsh»);
+    revoice.py re-voices that sentence, zfix.py reshapes what stays low.
 Calibrated on the defects the instructor reported: every one fails, their fixed takes pass. Lines dense with
 spelled numbers trip the aligner on single words, so only runs count. Softer signals put a clip on the
 listen list (`listen`) instead of failing it.
@@ -33,6 +35,8 @@ ALIGN_LOW = 0.1          # a word the aligner finds with less confidence than th
 MAX_ALIGN_RUN = 3        # this many such words in a row is a garble (the 0:18 phrase: 8; normal clips: <= 2)
 MIN_BAK = 1.3            # DNSMOS background score below this in any 2 s window is noise (the 6:17 line: 1.15)
 LISTEN_BAK = 1.8         # below this, put the clip on the listen list
+Z_BAD = 4.0              # a word-final «z» whose hiss is centred below this (kHz) is heard as «zh» (yuz -> yuzsh)
+Z_LISTEN = 4.6           # below this, put the clip on the listen list
 DNSMOS = Path.home() / "navoiy-stack/models/dnsmos/sig_bak_ovr.onnx"
 _M = {}
 
@@ -116,8 +120,8 @@ def _load16(path):
     return np.frombuffer(raw, np.float32).copy()
 
 
-def align_scores(path, text):
-    """[(word, confidence 0-1)] for every approved word, by forced alignment with MMS."""
+def align(path, text):
+    """[(word, start s, end s, confidence 0-1)] for every approved word, by forced alignment with MMS."""
     import torch
     import torchaudio
     import torchaudio.functional as F
@@ -127,14 +131,69 @@ def align_scores(path, text):
     model, d = _M["mms"]
     t = re.sub(r"[ʻʼ'`’‘]", "'", unicodedata.normalize("NFKC", re.sub(r"<[^>]+>", "", text).lower()))
     ws = [w for w in (re.sub(r"[^a-z']", "", w) for w in re.sub(r"[^\w']+", " ", t).split()) if w.strip("'")]
+    x = torch.from_numpy(_load16(path))[None].to("cuda")
     with torch.inference_mode():
-        em = torch.log_softmax(model(torch.from_numpy(_load16(path))[None].to("cuda"))[0], dim=-1)
+        em = torch.log_softmax(model(x)[0], dim=-1)
     toks = torch.tensor([[d[c] for w in ws for c in w]], dtype=torch.int32, device="cuda")
     ali, sc = F.forced_align(em, toks, blank=0)
     spans, out, i = F.merge_tokens(ali[0], sc[0].exp()), [], 0
+    sec = x.shape[1] / em.shape[1] / 16000                 # seconds per emission frame
     for w in ws:
         sp = spans[i:i + len(w)]; i += len(w)
-        out.append((w, float(sum(x.score * (x.end - x.start) for x in sp) / sum(x.end - x.start for x in sp))))
+        conf = float(sum(z.score * (z.end - z.start) for z in sp) / sum(z.end - z.start for z in sp))
+        out.append((w, sp[0].start * sec, sp[-1].end * sec, conf))
+    return out
+
+
+def align_scores(path, text):
+    """[(word, confidence 0-1)] for every approved word."""
+    return [(w, c) for w, _, _, c in align(path, text)]
+
+
+def _load24(path):
+    import subprocess
+    import numpy as np
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-ac", "1", "-ar", "24000", "-f", "f32le", "-"],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.float32).copy()
+
+
+def z_segment(x, a, b, sr=24000):
+    """(start, end) samples of a word-final «z»'s hiss: 10 ms frames in the word's second half and 80 ms after it,
+    louder than -45 dB with a spectral centroid above 2.5 kHz; None if there is none."""
+    import numpy as np
+    hop = sr // 100
+    i0, i1 = int((a + (b - a) * 0.5) * sr), min(len(x), int((b + 0.08) * sr))
+    fr = [i for i in range(i0, i1 - hop, hop)
+          if 20 * np.log10(np.sqrt((x[i:i + hop] ** 2).mean()) + 1e-9) > -45 and centroid(x[i:i + hop], sr) > 2500]
+    return (fr[0], fr[-1] + hop) if fr else None
+
+
+def centroid(seg, sr=24000):
+    import numpy as np
+    s = np.abs(np.fft.rfft(seg * np.hanning(len(seg))))
+    f = np.fft.rfftfreq(len(seg), 1 / sr)
+    return float((s * f).sum() / (s.sum() + 1e-12))
+
+
+def z_centre(x, seg, sr=24000):
+    """Mean centroid (kHz) of the hiss frames: ~6 for a clean «z» («biz»), 3.3-4.5 for «yuz» heard as «yuzsh»."""
+    import numpy as np
+    hop = sr // 100
+    cs = [centroid(x[i:i + hop], sr) for i in range(seg[0], seg[1] - hop + 1, hop)]
+    cs = [c for c in cs if c > 2500]
+    return round(float(np.mean(cs)) / 1000, 2) if cs else None
+
+
+def z_words(path, text, spans=None):
+    """[(word, index, centre kHz, (start, end) samples at 24 kHz)] for every aligned word ending in «z»."""
+    x, out = _load24(path), []
+    for k, (w, a, b, _) in enumerate(spans or align(path, text)):
+        if w.endswith("z"):
+            seg = z_segment(x, a, b)
+            c = z_centre(x, seg) if seg else None
+            if c is not None:
+                out.append((w, k, c, seg))
     return out
 
 
@@ -161,7 +220,8 @@ def judge(f, text, asrs):
     heard = [a(str(f))["text"] for a in asrs]
     scores = [(missing_run(ref, words(h)), cer(ref, words(h)), missing_tail(ref, words(h))) for h in heard]
     run, c, tail = (min(s[i] for s in scores) for i in range(3))
-    al = align_scores(f, text)
+    spans = align(f, text)
+    al = [(w, c) for w, _, _, c in spans]
     low = [sc < ALIGN_LOW for _, sc in al]
     arun = max((len(r) for r in "".join("x" if b else " " for b in low).split()), default=0)
     bak, bak_at = dnsmos_bak(f)
@@ -169,16 +229,21 @@ def judge(f, text, asrs):
          "tail_db": round(tail_db(f), 1), "noise_s": noise_run(f), "align_run": arun,
          "align_last": round(al[-1][1], 2) if al else 1.0,
          "align_low": [w for (w, _), b in zip(al, low) if b], "bak": bak, "bak_at": bak_at}
+    zs = z_words(f, text, spans)
+    r["z"] = [(w, c) for w, _, c, _ in zs]
+    r["z_min"] = min((c for _, _, c, _ in zs), default=None)
     # The aligner stumbles on dense spelled numbers that both recognisers hear perfectly (Lecture 4's
     # «oltmish sakkiz, toʻqson besh»), so its lost-word run fails a clip only when the recognisers also lose
     # words; on its own it, and an unsure last word, only put the clip on the listen list.
     garble = arun >= MAX_ALIGN_RUN and (run >= 2 or c > 0.10)
     r["fails"] = [k for k, bad in (("words", run >= MAX_MISSING_RUN), ("cer", c > MAX_CER), ("last word", tail > 0),
                                    ("cut off", r["tail_db"] > MAX_TAIL_DB), ("hiss", r["noise_s"] >= MAX_NOISE_S),
-                                   ("garble", garble), ("noise", bak < MIN_BAK)) if bad]
+                                   ("garble", garble), ("noise", bak < MIN_BAK),
+                                   ("z", r["z_min"] is not None and r["z_min"] < Z_BAD)) if bad]
     r["ok"] = not r["fails"]
     # two words missed by the recognisers alone is common on good clips, so it counts only with the aligner
-    r["listen"] = r["ok"] and (bak < LISTEN_BAK or arun >= MAX_ALIGN_RUN - 1 or r["align_last"] < ALIGN_LOW)
+    r["listen"] = r["ok"] and (bak < LISTEN_BAK or arun >= MAX_ALIGN_RUN - 1 or r["align_last"] < ALIGN_LOW
+                               or (r["z_min"] is not None and r["z_min"] < Z_LISTEN))
     return r
 
 
