@@ -35,6 +35,11 @@ PAUSE_AFTER_VOICEOVER = 0.3
 # ─── on-screen labels ──────────────────────────────────────────────────────
 # Every word a video shows lives in narration/labels.yaml, by key, with its interchangeable forms.
 LABELS = yaml.safe_load((Path(__file__).parent / "narration" / "labels.yaml").read_text())
+# The agent course keeps its own labels (its languages differ); a key may live in only one of the two files.
+_AC = Path(__file__).parent / "narration" / "labels_agents_course.yaml"
+for _k, _v in (yaml.safe_load(_AC.read_text()) or {}).items() if _AC.exists() else ():
+    assert _k not in LABELS, f"label {_k!r} is in both labels.yaml and labels_agents_course.yaml"
+    LABELS[_k] = _v
 # While sections are written in parallel, each keeps its new labels in its own file in
 # $LABEL_DRAFTS; they are merged into labels.yaml before the lecture is built.
 for _f in sorted(Path(os.environ["LABEL_DRAFTS"]).glob("*.yaml")) if os.environ.get("LABEL_DRAFTS") else []:

@@ -1,4 +1,5 @@
-"""Shared by the two runnable examples: the DeepSeek client, the τ²-bench retail database, and --capture."""
+"""Shared by the two runnable examples: the DeepSeek client, the
+τ²-bench retail database, and --capture."""
 import json
 import os
 import sys
@@ -6,10 +7,12 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 RAW = HERE.parent / "raw"
-RETAIL_DB = HERE.parent / "tau2-bench/data/tau2/domains/retail/db.json"   # τ²-bench v1.0.1, MIT
+# τ²-bench v1.0.1, MIT
+RETAIL_DB = HERE.parent / "tau2-bench/data/tau2/domains/retail/db.json"
 
-for line in (HERE / ".env").read_text().splitlines() if (HERE / ".env").exists() else []:
-    k, sep, v = line.partition("=")                    # real environment variables win over .env
+for line in ((HERE / ".env").read_text().splitlines()
+             if (HERE / ".env").exists() else []):
+    k, sep, v = line.partition("=")  # real env variables win over .env
     if sep and not k.startswith("#") and v.strip():
         os.environ.setdefault(k.strip(), v.strip())
 
@@ -20,7 +23,8 @@ def client():
     from openai import OpenAI
     if not os.environ.get("DEEPSEEK_API_KEY"):
         sys.exit("Set DEEPSEEK_API_KEY (environment or code/.env).")
-    return OpenAI(base_url="https://api.deepseek.com", api_key=os.environ["DEEPSEEK_API_KEY"])
+    return OpenAI(base_url="https://api.deepseek.com",
+                  api_key=os.environ["DEEPSEEK_API_KEY"])
 
 
 def retail_db():
@@ -28,8 +32,10 @@ def retail_db():
 
 
 def capture(name, result):
-    """--capture: save the real run so the video shows what actually happened."""
+    """--capture: save the real run so the video shows what actually
+    happened."""
     if "--capture" in sys.argv:
         RAW.mkdir(exist_ok=True)
-        (RAW / f"{name}.json").write_text(json.dumps(result, indent=1, ensure_ascii=False))
+        (RAW / f"{name}.json").write_text(
+            json.dumps(result, indent=1, ensure_ascii=False))
         print(f"saved raw/{name}.json")

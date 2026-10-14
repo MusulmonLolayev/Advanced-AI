@@ -15,8 +15,14 @@ RAW = HERE / "statistics" / "raw"
 
 
 # ─── the approved narration ───────────────────────────────────────────────
-def parse(md):
-    """{'N.k': {'uz', 'en'}} for every narrated line, and {N: {'uz', 'en'}} section headings."""
+def parse(md, single=None):
+    """{'N.k': {'uz', 'en'}} for every narrated line, and {N: {'uz', 'en'}} section headings.
+
+    single="en": a narration written in one language only (the agent course): headings
+    "### Section N — Title", and each bold line is that language's text, with a "▸" visual under it
+    instead of a second-language line. Other languages are added beside it later."""
+    if single:
+        return _parse_single(md, single)
     lines, heads, sec = {}, {}, None
     rows = md.splitlines()
     for i, row in enumerate(rows):
@@ -36,6 +42,25 @@ def parse(md):
         m = re.match(r"- (?:\*\*)?(s\d\w*)[^*]*(?:\*\*)?\s*\*\*([^*]+)\*\* · \*([^*]+)\*", row)
         if m and sec is not None:
             lines[f"{sec}.{m[1]}"] = {"uz": m[2], "en": m[3]}
+    return lines, heads
+
+
+def _parse_single(md, lang):
+    lines, heads, sec = {}, {}, None
+    for row in md.splitlines():
+        if row.startswith("## Lecture opening"):
+            sec = 0
+            continue
+        m = re.match(r"### Section (\d+) — (.+?)\s*$", row)
+        if m:
+            sec = int(m[1])
+            heads[sec] = {lang: f"Section {sec} · {m[2]}"}
+            continue
+        m = re.match(r"\s*(\d+[a-z]?)\.\s+(?:⏸\s*)?\*\*(.+)\*\*\s*$", row)
+        if m and sec is not None:
+            key = f"{sec}.{m[1]}"
+            assert key not in lines, f"line {key} twice"
+            lines[key] = {lang: m[2]}
     return lines, heads
 
 
