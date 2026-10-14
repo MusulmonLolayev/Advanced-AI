@@ -75,6 +75,14 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
   sentences split on `. ? ! :`, and the Uzbek and English lines often split differently.
 - **Silent cards and transitions stay short** (section card 1.0 s, `clear_all` 0.5 s, 0.15 s after each line): voice clips carry their own
   lead-in and tail, and anything over 2 s of silence that is not a hands-on pause is a defect.
+- **Scenes are joined with `join_parts.sh`, never a bare `concat -c copy`.** A scene's audio stops with its last clip
+  ~0.6 s before the picture ends; a copy-join left a hole in the audio timestamps at every join, and players clipped
+  the syllable before it (agent course, 3:21). Decoding such a file to raw samples silently closes the holes: that is
+  how `patch_audio.py` once slid Lecture 1's audio 46 s early. Check a build with
+  `ffprobe -select_streams a:0 -show_entries packet=pts_time` (no step > 50 ms), not by decoding.
+- **The agent course** (`agents_course*.py`, `narration/agents_course{,_ko}.md`, `labels_agents_course.yaml`) is English
+  and Korean, edge-tts (Andrew; InJoon at +20 % with clip edges trimmed, since it reads ~40 % slower and pads 1.2 s),
+  no corner mark (`LectureScene.BRAND = False`). Its testbed and runs live in `agents_course/` (see BUILDING.md).
 - **Sound in a pause is muted, not re-voiced.** The cloned voice can fill the pause between two sentences with a
   steady buzz (Lecture 1, 19:06: 0.9 s at -20 dB between «…topamiz.» and «Kyu…»). `patch_audio.py at <build> <m:ss>`
   aligns the clip's words, mutes only sound lying between two words near that time, in the cached clip and in the
