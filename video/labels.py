@@ -33,7 +33,11 @@ FILE = re.compile(r"lecture(\d\d)_(kit|s(\d\d))\.py$")
 LANGS = ("en", "uz")
 AC_YAML = HERE / "narration" / "labels_agents_course.yaml"
 AC_FILE = re.compile(r"agents_course_(kit|s(\d\d))\.py$")
-AC_LANGS = ("en",)                                # add "ko" when the Korean track is written
+# The course's languages: Korean joins as soon as its forms are merged (then every course label needs one, and so
+# does every shared labels.yaml key the course shows, e.g. the pause card).
+_ac = yaml.safe_load(AC_YAML.read_text()) if AC_YAML.exists() else {}
+AC_LANGS = ("en", "ko") if any("ko" in v for v in (_ac or {}).values()) else ("en",)
+EXTRA = ("ko",)                                   # a labels.yaml key may also carry these (shared cards the course uses)
 
 HEADER = """\
 # On-screen labels for every lecture video. Each label has a key, which the scenes use, and its
@@ -96,7 +100,7 @@ def as_list(f):
     return [f] if isinstance(f, str) else list(f)
 
 
-def check(labels, used, langs=LANGS, others=None, unused=True):
+def check(labels, used, langs=LANGS, others=None, unused=True, extra=()):
     """others: keys of the other book, which these scenes may also use."""
     errs, others = [], others or {}
     for key, i, kw, _, at in used:
@@ -115,7 +119,7 @@ def check(labels, used, langs=LANGS, others=None, unused=True):
     for key in (labels.keys() - {u[0] for u in used}) if unused else ():
         errs.append(f"{key}: not shown anywhere (remove it, or use it)")
     for key, v in labels.items():
-        if set(v) != set(langs):
+        if not set(langs) <= set(v) <= set(langs) | set(extra):
             errs.append(f"{key}: needs exactly {' and '.join(langs)}, has {sorted(v)}")
         for s in as_list(v.get("en", [])) + as_list(v.get("uz", [])):
             if re.search(r"\{[^}]*\}", s):
@@ -156,7 +160,8 @@ def write(labels, used):
         note = re.sub(r", (L\d)", r"; \1", ", ".join(places)) or "not shown"
         # quote a key YAML would read as something else ("no" is false, "1_in_10" could be a number)
         k = key if re.fullmatch(r"[a-z][a-z0-9_]*", key) and yaml.safe_load(f"{key}: 0") == {key: 0} else json.dumps(key)
-        out.append(f"\n# {note}\n{k}:\n  en: {scalar(labels[key]['en'])}\n  uz: {scalar(labels[key]['uz'])}\n")
+        out.append(f"\n# {note}\n{k}:\n" + "".join(f"  {l}: {scalar(labels[key][l])}\n"
+                                                for l in LANGS + EXTRA if l in labels[key]))
     YAML.write_text("".join(out))
 
 
@@ -184,7 +189,10 @@ def main():
     clash = labels.keys() & ac.keys()
     errs = [f"{k}: defined in both label files" for k in sorted(clash)]
     # a shared key the agent course uses counts as used
-    errs += check(labels, used + [u for u in ac_used if u[0] in labels])
+    errs += check(labels, used + [u for u in ac_used if u[0] in labels], extra=EXTRA)
+    for lang in set(AC_LANGS) - set(LANGS):       # shared keys the course shows need its languages too
+        errs += [f"{k}: the agent course shows it, so it needs a {lang} form"
+                 for k in sorted({u[0] for u in ac_used if u[0] in labels}) if lang not in labels[k]]
     # the course's scenes also pick keys in loops (label(k) for k in ("ac_a", "ac_b")): a key written as a string
     # anywhere in its files counts as used, and such label() calls are allowed there
     lits = {n.value for f in ac_files() for n in ast.walk(ast.parse(f.read_text()))

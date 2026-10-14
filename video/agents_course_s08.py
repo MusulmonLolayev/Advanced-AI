@@ -293,8 +293,12 @@ class S08Injection(LectureScene):
         title = txt(label("ac_s8_kb_page"), size=24, color=GREY_B).next_to(page_box.get_top(), DOWN, buff=0.25)
         filler = VGroup(*[Rectangle(width=w, height=0.13, stroke_width=0, fill_color=GREY_D, fill_opacity=1)
                           for w in (5.2, 4.6, 5.0)]).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
-        planted = VGroup(*[txt(r, size=22, color=BAD) for r in textwrap.wrap(label("ac_s8_planted"), 40)]) \
-            .arrange(DOWN, aligned_edge=LEFT, buff=0.08)
+        # wrap by the card's width, not a character count: a Hangul line is ~1.8x as wide as a Latin one
+        for chars in range(40, 9, -2):
+            planted = VGroup(*[txt(r, size=22, color=BAD) for r in textwrap.wrap(label("ac_s8_planted"), chars)]) \
+                .arrange(DOWN, aligned_edge=LEFT, buff=0.08)
+            if planted.width <= page_box.width - 0.8:
+                break
         more = Rectangle(width=4.0, height=0.13, stroke_width=0, fill_color=GREY_D, fill_opacity=1)
         body = VGroup(filler, planted, more).arrange(DOWN, aligned_edge=LEFT, buff=0.3).next_to(title, DOWN, buff=0.3)
         page = VGroup(page_box, title, body).move_to(LEFT * 3.2)

@@ -45,16 +45,20 @@ def parse(md, single=None):
     return lines, heads
 
 
+SECTION_WORD = {"en": "Section", "ko": "섹션"}       # the section card's "Section N" in each single-language track
+
+
 def _parse_single(md, lang):
     lines, heads, sec = {}, {}, None
     for row in md.splitlines():
-        if row.startswith("## Lecture opening"):
+        if row.startswith("## Lecture opening") or row.startswith("## 강의 시작"):
             sec = 0
             continue
-        m = re.match(r"### Section (\d+) — (.+?)\s*$", row)
+        # "### Section N — Title" (a translation may keep the English word or write 섹션 N)
+        m = re.match(r"### (?:Section|섹션)\s*(\d+)\s*[—–-]\s*(.+?)\s*$", row)
         if m:
             sec = int(m[1])
-            heads[sec] = {lang: f"Section {sec} · {m[2]}"}
+            heads[sec] = {lang: f"{SECTION_WORD[lang]} {sec} · {m[2]}"}
             continue
         m = re.match(r"\s*(\d+[a-z]?)\.\s+(?:⏸\s*)?\*\*(.+)\*\*\s*$", row)
         if m and sec is not None:
@@ -77,6 +81,7 @@ class LectureScene(CourseScene):
     with NARRATION, HEADS, PARTS ({part: 'name · title'}) and PART_AT ({first section: part})."""
     NARRATION, HEADS, PARTS, PART_AT = {}, {}, {}, {}
     BRAND = True                       # the corner mark; a video presented elsewhere sets it False
+    CARD_HOLD, CLEAR_TIME = 0.35, 0.5  # section card's still time; the fade between scenes (seconds)
 
     def setup(self):
         super().setup()
@@ -99,12 +104,12 @@ class LectureScene(CourseScene):
         if had:
             self.wait(0.15)
 
-    def clear_all(self, run_time=0.5):
+    def clear_all(self, run_time=None):
         # short: the voice clips already carry their own lead-in and tail silence,
         # and a transition must stay under the 2 s silence limit
         rest = [m for m in self.mobjects if m is not self.brand]
         if rest:
-            self.play(*[FadeOut(m) for m in rest], run_time=run_time)
+            self.play(*[FadeOut(m) for m in rest], run_time=run_time or self.CLEAR_TIME)
 
     def cue(self, tr, t, k):
         self.until(tr, t, k)
@@ -129,7 +134,7 @@ class LectureScene(CourseScene):
         if g.width > 12:
             g.scale_to_fit_width(12)
         self.play(FadeIn(g, shift=UP * 0.3), run_time=0.4)
-        self.wait(0.35 if part is None else 0.5)
+        self.wait(self.CARD_HOLD if part is None else self.CARD_HOLD + 0.15)
         self.play(FadeOut(g), run_time=0.25)
 
     def heading(self, text, color=WHITE, size=34):

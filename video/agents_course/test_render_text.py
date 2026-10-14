@@ -88,6 +88,52 @@ class Placeholders(unittest.TestCase):
         self.assertNotIn("dollars", s)
 
 
+KO_MD = HERE.parent / "narration" / "agents_course_ko.md"
+
+
+class KoreanNumbers(unittest.TestCase):
+    def test_sino_korean(self):
+        for n, w in [(0, "영"), (1, "일"), (10, "십"), (11, "십일"), (26, "이십육"), (77, "칠십칠"), (100, "백"),
+                     (698, "육백구십팔"), (1000, "천"), (10000, "만"), (34500, "삼만사천오백"), (50_000_000, "오천만")]:
+            self.assertEqual(K.ko_words(n), w)
+
+    def test_rates_and_money(self):
+        self.assertEqual(K.ko_point(0.7667), "영 점 칠칠")
+        self.assertEqual(K.ko_point(0.6), "영 점 육")
+        self.assertEqual(K.ko_percent(0.6), "육십 퍼센트")
+        self.assertEqual(K.ko_cents(0.2643), "이십육 센트")
+        self.assertEqual(K._ko_pass_hat_k({"1": 0.7667, "2": 0.6, "3": 0.5}), "두 번 시도하면 영 점 육, 세 번이면 영 점 오")
+
+    def test_same_rules_both_languages(self):
+        self.assertEqual(set(K.SPOKEN), set(K.SPOKEN_KO))
+
+
+@unittest.skipUnless(KO_MD.exists(), "the Korean narration is not written yet")
+class KoreanTrack(unittest.TestCase):
+    def test_same_keys_and_every_placeholder_fills(self):
+        ko = KO_MD.read_text()
+        holes = {f"{f}: {x.strip()}" for f, x in re.findall(r"\{\{agents_course/raw/([^:}]+):\s*([^}]+)\}\}", ko)}
+        self.assertEqual(holes - set(K.SPOKEN_KO), set())
+        self.assertEqual(holes, {f"{f}: {x.strip()}" for f, x in
+                                 re.findall(r"\{\{agents_course/raw/([^:}]+):\s*([^}]+)\}\}", MD)})
+        for key, v in K.NARRATION.items():
+            self.assertIn("ko", v, key)
+            self.assertNotIn("{{", v["ko"], key)
+            self.assertRegex(v["ko"], r"[가-힣]", key)
+        self.assertEqual(sorted(K.HEADS), list(range(1, 10)))
+        self.assertTrue(K.HEADS[1]["ko"].startswith("섹션 1 · "))
+
+    def test_live_numbers_in_korean(self):
+        n = K.NARRATION
+        self.assertIn("영 점 칠칠", n["8.9"]["ko"])
+        self.assertIn("두 번 시도하면 영 점 육, 세 번이면 영 점 오", n["8.9"]["ko"])
+        self.assertIn("이십육 센트", n["8.9"]["ko"])
+        self.assertNotIn("센트 달러", n["8.9"]["ko"])
+        self.assertIn("육십 퍼센트", n["5.10"]["ko"])
+        self.assertIn("72", n["5.10"]["ko"])
+        self.assertIn("11", n["8.4"]["ko"])
+
+
 class Parse(unittest.TestCase):
     def test_sections_and_lines(self):
         self.assertEqual(sorted(K.HEADS), list(range(1, 10)))

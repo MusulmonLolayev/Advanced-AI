@@ -22,9 +22,14 @@ import yaml
 VOICES = {
     "en": "en-US-AndrewNeural",
     "uz": "uz-UZ-SardorNeural",     # male; uz-UZ-MadinaNeural is the female option
+    "ko": "ko-KR-InJoonNeural",     # male, like Andrew (the agent course's Korean track)
 }
 LANG = os.environ.get("LANG_CODE", "en")
 VOICE = VOICES[LANG]
+# Korean: InJoon reads ~40% slower than Andrew and pads each clip with ~1.2 s of silence at the end
+# (agent course: 38 min against 27). Spoken faster, and its clips trimmed to English-like edges.
+VOICE_RATES = {"ko": "+20%"}
+EDGE_TRIM = {"ko": (0.15, 0.35)}               # seconds of silence kept before / after the voice
 # VOICE_ENGINE=navoiy narrates in the instructor's own fine-tuned voice (Uzbek only),
 # served by ~/navoiy-stack/work/tts_server.py. Default stays edge-tts.
 ENGINE = os.environ.get("VOICE_ENGINE", "edge")
@@ -92,6 +97,9 @@ class EdgeTTSService(SpeechService):
         cache_dir = cache_dir or self.cache_dir
         input_text = remove_bookmarks(text)
         input_data = {"input_text": input_text, "service": "edge_tts", "voice": self.voice}
+        rate = VOICE_RATES.get(LANG)
+        if rate:                                   # only then, so other languages keep their cache keys
+            input_data["rate"] = rate
         cached = self.get_cached_result(input_data, cache_dir)
         if cached is not None:
             return cached
@@ -100,11 +108,18 @@ class EdgeTTSService(SpeechService):
         # edge-tts occasionally returns a truncated clip; check against word count.
         min_seconds = len(input_text.split()) / 4.5
         for _ in range(3):
-            asyncio.run(edge_tts.Communicate(input_text, self.voice).save(target))
+            asyncio.run(edge_tts.Communicate(input_text, self.voice, **({"rate": rate} if rate else {})).save(target))
             if MP3(target).info.length >= min_seconds:
                 break
         else:
             raise RuntimeError(f"edge-tts returned truncated audio for: {input_text[:60]!r}")
+        if LANG in EDGE_TRIM:
+            lead, tail = EDGE_TRIM[LANG]
+            trim_silence(target, keep=lead)
+            tmp = Path(target).with_suffix(".pad.mp3")
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", target, "-af", f"apad=pad_dur={tail - lead}",
+                            "-ar", "24000", "-ac", "1", "-b:a", "128k", str(tmp)], check=True)
+            tmp.replace(target)
         return {"input_text": text, "input_data": input_data, "original_audio": audio_path}
 
 
@@ -215,10 +230,16 @@ class CourseScene(VoiceoverScene):
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────
+# A language whose script the default font lacks gets its own family (Hangul via Noto Serif KR, SIL OFL, installed
+# in ~/.local/share/fonts/noto-kr; its Latin letters match the default serif). Other languages keep the default.
+TEXT_FONT = {"ko": "Noto Serif KR"}.get(LANG)
+_FONT = {"font": TEXT_FONT} if TEXT_FONT else {}
+
+
 def txt(text, size=32, color=WHITE, weight=NORMAL):
     # a label template shown before its {placeholder} was filled in
     assert not re.search(r"\{[A-Za-z_]\w*(?::[^}]*)?\}", text), f"unfilled label: {text!r}"
-    return Text(text, font_size=size, color=color, weight=weight)
+    return Text(text, font_size=size, color=color, weight=weight, **_FONT)
 
 
 def tagged(value, words, after=True, size=32, color=WHITE, weight=NORMAL, value_color=None, value_weight=None):
@@ -232,7 +253,7 @@ def tagged(value, words, after=True, size=32, color=WHITE, weight=NORMAL, value_
     s = f"{value} {words}" if after else f"{words} {value}"
     assert not re.search(r"\{[A-Za-z_]\w*(?::[^}]*)?\}", s), f"unfilled label: {s!r}"
     # no ligatures: "fi" set as one glyph would shift the split between number and words
-    t = Text(s, font_size=size, color=color, weight=weight, disable_ligatures=True,
+    t = Text(s, font_size=size, color=color, weight=weight, disable_ligatures=True, **_FONT,
              t2c={value: value_color} if value_color else {}, t2w={value: value_weight} if value_weight else {})
     assert len(t) == len(s), (s, len(t))           # without ligatures: one submobject per character
     nv, nw = len(value), len(words)

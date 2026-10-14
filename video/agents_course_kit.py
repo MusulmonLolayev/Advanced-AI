@@ -85,6 +85,55 @@ def _pass_hat_k_spoken(d):
     return ", and ".join(parts) if len(parts) == 2 else ", ".join(parts)
 
 
+# Korean (the Korean track): Sino-Korean numerals for rates, shares and money. Counts stay digits ("11번"): the
+# Korean voice reads a digit with its counter the native or Sino way the counter needs (열한 번, 4번 작업 = 사 번).
+_KO_DIGIT = "영 일 이 삼 사 오 육 칠 팔 구".split()
+
+
+def ko_words(n):
+    """An integer as Sino-Korean: 77 → '칠십칠', 698 → '육백구십팔', 10000 → '만'."""
+    n = int(n)
+    if n == 0:
+        return "영"
+    out = ""
+    for unit, name in ((10000, "만"), (1000, "천"), (100, "백"), (10, "십")):
+        q, n = divmod(n, unit)
+        if q:
+            out += ("" if q == 1 else (ko_words(q) if unit == 10000 else _KO_DIGIT[q])) + name
+    return out + (_KO_DIGIT[n] if n else "")
+
+
+def ko_point(x, places=2):
+    """0.7667 → '영 점 칠칠' (digits after the point one by one, as Korean reads a decimal)."""
+    s = f"{x:.{places}f}".rstrip("0").rstrip(".")
+    whole, _, frac = s.partition(".")
+    return ko_words(int(whole)) + ("" if not frac else " 점 " + "".join(_KO_DIGIT[int(c)] for c in frac))
+
+
+def ko_percent(x):
+    """0.6 → '육십 퍼센트'."""
+    return ko_words(round(100 * x)) + " 퍼센트"
+
+
+def ko_cents(usd):
+    """0.2643 → '이십육 센트'."""
+    assert usd < 1, usd
+    return ko_words(round(100 * usd)) + " 센트"
+
+
+def ko_count(n):
+    """A count, as digits: the voice reads it with the counter that follows (11번 → 열한 번)."""
+    return str(int(n))
+
+
+def _ko_pass_hat_k(d):
+    """{'1': .77, '2': .6, '3': .5} → '두 번 시도하면 영 점 육, 세 번이면 영 점 오'."""
+    native = {2: "두", 3: "세", 4: "네", 5: "다섯"}
+    ks = sorted((int(k), v) for k, v in d.items() if int(k) > 1)
+    return ", ".join(f"{native[k]} 번 시도하면 {ko_point(v)}" if i == 0 else f"{native[k]} 번이면 {ko_point(v)}"
+                     for i, (k, v) in enumerate(ks))
+
+
 # One rule per placeholder: (how the value is spoken, words after the placeholder that the rule replaces).
 SPOKEN = {
     "s1_agent_loop.json: steps": (words, ""),                  # "finished in two tool calls"
@@ -105,31 +154,102 @@ SPOKEN = {
     "tau2_retail.json: pass_hat_k": (_pass_hat_k_spoken, ""),
     "tau2_retail.json: cost_usd": (cents, " dollars"),         # "{{…cost_usd}} dollars" → "twenty-six cents"
 }
+SPOKEN_KO = {
+    "s1_agent_loop.json: steps": (ko_count, ""),
+    "s1_agent_loop_vague.json: steps": (ko_count, ""),
+    "s2_structured.json: tries": (lambda v: ko_count(len(v)), ""),
+    "s2_structured_unhelpful.json: tries": (lambda v: ko_count(len(v)), ""),
+    "tau2_banking.json: n_tasks": (ko_count, ""),
+    "tau2_banking.json: kb_searches": (ko_count, ""),
+    "tau2_banking.json: pass_1": (ko_percent, ""),
+    "tau2_retail_trajectory.json: task_id": (ko_count, ""),
+    "tau2_retail_trajectory.json: turns": (ko_count, ""),
+    "tau2_retail_trajectory.json: tool_calls": (ko_count, ""),
+    "tau2_retail_trajectory.json: reward": (ko_count, ""),
+    "tau2_retail_failure.json: task_id": (ko_count, ""),
+    "tau2_retail.json: n_tasks": (ko_count, ""),
+    "tau2_retail.json: n_trials": (ko_count, ""),
+    "tau2_retail.json: pass_1": (ko_point, ""),
+    "tau2_retail.json: pass_hat_k": (_ko_pass_hat_k, ""),
+    "tau2_retail.json: cost_usd": (ko_cents, " 달러"),   # "{{…cost_usd}} 달러" → "이십육 센트"
+}
+SPOKEN_BY_LANG = {"en": SPOKEN, "ko": SPOKEN_KO}
 _HOLE = re.compile(r"\{\{agents_course/raw/([^:}]+):\s*([^}]+)\}\}")
 
 
-def resolve(text):
-    """Fill every {{agents_course/raw/<file>: <field>}} from its raw file by its SPOKEN rule."""
+def resolve(text, lang="en"):
+    """Fill every {{agents_course/raw/<file>: <field>}} from its raw file by its SPOKEN rule for that language."""
+    rules = SPOKEN_BY_LANG[lang]
+
     def fill(m):
         key = f"{m[1]}: {m[2].strip()}"
-        fmt, _ = SPOKEN[key]
+        fmt, _ = rules[key]
         return fmt(raw(m[1])[m[2].strip()])
-    for key, (_, tail) in SPOKEN.items():
+    for key, (_, tail) in rules.items():
         if tail:
             f, field = key.split(": ")
             text = re.sub(r"(\{\{agents_course/raw/" + re.escape(f) + r":\s*" + re.escape(field) + r"\}\})"
-                          + re.escape(tail), r"\1", text)
+                          + r"\s*" + re.escape(tail.strip()), r"\1", text)
     out = _HOLE.sub(fill, text)
     assert "{{" not in out, out
     return out
 
 
 _LINES, HEADS = parse((HERE / "narration" / "agents_course.md").read_text(), single="en")
-NARRATION = {k: {lang: resolve(t) for lang, t in v.items()} for k, v in _LINES.items()}
+NARRATION = {k: {lang: resolve(t, lang) for lang, t in v.items()} for k, v in _LINES.items()}
 assert len(HEADS) == 9 and "0.1" in NARRATION and "8.15" in NARRATION and "9.6" in NARRATION
 
-LectureScene, line = bind(_BaseScene, (NARRATION, HEADS), {}, {})
-LectureScene.BRAND = False             # presented to other audiences: no tqqt.uz corner mark
+# The Korean track: narration/agents_course_ko.md, the same keys, translated from the approved English.
+KO_MD = HERE / "narration" / "agents_course_ko.md"
+if KO_MD.exists():
+    _ko, _ko_heads = parse(KO_MD.read_text(), single="ko")
+    assert set(_ko) == set(NARRATION), f"Korean keys differ: {sorted(set(_ko) ^ set(NARRATION))[:10]}"
+    assert set(_ko_heads) == set(HEADS), sorted(_ko_heads)
+    for k, v in _ko.items():
+        NARRATION[k]["ko"] = resolve(v["ko"], "ko")
+    for n, v in _ko_heads.items():
+        HEADS[n]["ko"] = v["ko"]
+elif LANG == "ko":
+    raise FileNotFoundError(KO_MD)
+
+_Bound, line = bind(_BaseScene, (NARRATION, HEADS), {}, {})
+
+
+class LectureScene(_Bound):
+    """The course's scene. In a translated track a cue written as {"en": phrase} (no phrase for this language)
+    is timed at the same character share of the line as the English phrase sits in the English line, so the
+    nine section files keep their English cues; an explicit {"ko": phrase} still wins."""
+    BRAND = False                      # presented to other audiences: no tqqt.uz corner mark
+    CARD_HOLD, CLEAR_TIME = 0.2, 0.35       # joins keep their real silence (join_parts.sh): keeps a section start < 2 s
+
+    @contextmanager
+    def say(self, key):
+        self._key = key
+        with super().say(key) as pair:
+            yield pair
+
+    def cue(self, tr, t, k):
+        if LANG == "en" or (isinstance(k, dict) and LANG in k) or (isinstance(k, str) and k in t):
+            return self.until(tr, t, k)
+        en = self.NARRATION[self._key]["en"]
+        share = _share(en, k["en"] if isinstance(k, dict) else k)
+        target = tr.duration * share - self.voice_t(tr)
+        if target > 0.05:
+            self.wait(target)
+
+
+def _share(text, k):
+    """Where cue k (a phrase or a sentence index) starts in text, as a share of its characters (as common.at)."""
+    if isinstance(k, str):
+        i = text.find(k)
+        if i < 0:
+            raise ValueError(f"cue {k!r} not in narration: {text[:60]!r}")
+        return i / max(len(text), 1)
+    parts = [x for x in re.split(r"(?<=[.?!:])\s+", text.strip()) if x]
+    return sum(len(x) + 1 for x in parts[:k]) / max(len(text), 1)
+
+
+LectureScene.__name__ = LectureScene.__qualname__ = "LectureScene"
 
 
 # ─── shared visuals ───────────────────────────────────────────────────────
