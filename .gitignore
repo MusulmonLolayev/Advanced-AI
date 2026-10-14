@@ -46,3 +46,6 @@ video/out/
 video/media/
 video/.venv/
 video/__pycache__/
+
+# Local secrets (API keys)
+.env
