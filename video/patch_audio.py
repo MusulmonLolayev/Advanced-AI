@@ -8,10 +8,14 @@ built video's audio track (the picture is copied as is), at the clip's place fou
     PY=~/navoiy-stack/CosyVoice/.venv/bin/python
     $PY patch_audio.py at   out/lecture01_uz_navoiy 19:07 [more times]   # mute the noisy pause at a reported time
     $PY patch_audio.py scan out/lecture01_uz_navoiy            # candidates to listen to (writes gaps.json)
+    $PY patch_audio.py auto out/lecture01_uz_navoiy --dry-run  # verified buzz only (see verify()); drop --dry-run to mute
 
 `at` touches only a pause between two aligned words, in the clip and in the video; noise inside a word is reported,
 not muted (that needs a new take of the sentence). `scan` is only a listening list: a held vowel the aligner squeezed
-looks like sound in a pause too (Lecture 1 had 22 such candidates beside the real one), so nothing is muted unheard.
+looks like sound in a pause too (Lecture 1 had 22 such candidates beside the real one). `auto` mutes a candidate only
+when verify() passes it: muting costs no aligned word, the sound is a loud tonal drone (not a breath), DNSMOS rates it
+as background noise, and neither recogniser hears a word of the line in it. Calibrated on Lectures 1-5 (30
+candidates): the 19:06 buzz passes, every other candidate fails at least two of the tests.
 
 Originals are kept: clips as <build>/patched/<Scene>__<file>, the video as <build>/<name>.before_patch.mp4.
 """
@@ -30,6 +34,13 @@ EDGE = 0.06         # leave this much of the pause next to each word untouched
 LOUD_DB = -40       # a 50 ms frame louder than this inside a pause is sound, not quiet
 LOUD_MIN = 0.20     # this much loud sound inside one pause is muted
 FADE = 0.02
+# verify(): calibrated on the 19:06 buzz (0.72 s loud, flatness 0.06, DNSMOS 1.72, heard «vo.» / «avval») against
+# Lectures 1-5's 29 other candidates (held vowels: DNSMOS >= 2.96 or < 0.4 s loud; breaths: flatness >= 0.26)
+BUZZ_LOUD_S = 0.4   # at least this much of the pause is loud
+BUZZ_PEAK_DB = -25  # and its peak at least this loud
+BUZZ_FLAT = 0.15    # tonal: a drone has a peaky spectrum (speech vowels too, hence the other tests); breath/hiss ~0.3-0.6
+BUZZ_BAK = 2.3      # DNSMOS background score of the segment below this: noise, not voice
+WORD_DROP = 0.2     # an aligned word losing this much confidence when the segment is muted held part of that word
 
 
 def load(path, sr=16000, ss=None, t=None):
@@ -74,6 +85,44 @@ def noisy_gaps(path, text, spans=None):
         if len(loud) / 20 >= LOUD_MIN:
             out.append((round(lo, 2), round(hi, 2), round(float(db[loud].max()), 1), w0, w1))
     return out
+
+
+def _write(x, sr, path):
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "f32le", "-ar", str(sr), "-ac", "1", "-i", "-", str(path)],
+                   input=x.astype(np.float32).tobytes(), check=True)
+
+
+def _norm(w):
+    return re.sub(r"[^a-z]", "", unicodedata.normalize("NFKC", w.lower()).replace("ʻ", "").replace("'", ""))
+
+
+def verify(path, text, gap, asrs, work):
+    """Is this sound in a pause a buzz to mute? (ok, measurements, reasons it is not)."""
+    import difflib
+    import voice_check as V
+    a, b, peak, w0, w1 = gap
+    x = load(path)
+    seg = x[int(a * 16000):int(b * 16000)]
+    hop = 400                                               # 25 ms
+    fr = [seg[i:i + hop] for i in range(0, len(seg) - hop, hop)
+          if 20 * np.log10(np.sqrt((seg[i:i + hop] ** 2).mean()) + 1e-9) > LOUD_DB]
+    spec = [np.abs(np.fft.rfft(z * np.hanning(hop))) + 1e-9 for z in fr]
+    flat = float(np.mean([np.exp(np.log(s).mean()) / s.mean() for s in spec])) if spec else 1.0
+    loud_s = len(fr) * hop / 16000
+    sp, mp = work / "_seg.wav", work / "_muted.wav"
+    _write(seg, 16000, sp)
+    bak = V.dnsmos_bak(sp)[0] if len(seg) >= 1600 else 5.0
+    heard = [r(str(sp))["text"].strip() for r in asrs]
+    _write(x * envelope(len(x), 16000, [(a, b)]), 16000, mp)
+    drops = [w for (w, c0), (_, c1) in zip(V.align_scores(path, text), V.align_scores(mp, text)) if c0 - c1 > WORD_DROP]
+    line = [_norm(w) for w in text.split()]
+    said = [w for h in heard for w in (_norm(t) for t in h.split()) if len(w) >= 2
+            and any(difflib.SequenceMatcher(None, w, l).ratio() >= 0.8 for l in line)]
+    m = dict(loud_s=round(loud_s, 2), peak=peak, flat=round(flat, 2), bak=bak, heard=heard, drops=drops, said=said)
+    why = [k for k, bad in (("a word loses its audio", drops), ("short", loud_s < BUZZ_LOUD_S),
+                            ("quiet", peak < BUZZ_PEAK_DB), ("not tonal (breath/hiss)", flat > BUZZ_FLAT),
+                            ("DNSMOS hears voice", bak >= BUZZ_BAK), ("a word of the line is heard", said)) if bad]
+    return not why, m, why
 
 
 def envelope(n, sr, segs):
@@ -157,7 +206,16 @@ def patch_video(build, windows):
     out.replace(video); tmp.unlink()
 
 
+def holes_in(video):
+    """Steps over 50 ms between audio packets (join_parts.sh leaves none; a patch must not add any)."""
+    pts = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "packet=pts_time",
+                          "-of", "csv=p=0", str(video)], capture_output=True, text=True).stdout.split()
+    t = [float(x) for x in pts if x not in ("", "N/A")]
+    return sum(1 for p, q in zip(t, t[1:]) if q - p > 0.05)
+
+
 def stamp(t):
+    t = round(t, 1)                     # round first, or 59.97 s prints as "0:60.0"
     return f"{int(t // 60)}:{t % 60:04.1f}"
 
 
@@ -179,6 +237,35 @@ def main(cmd, build, *times):
             print(f"{Path(f).parent.name:16s} " + ", ".join(
                 f"{stamp(offs[f] + a)}-{stamp(offs[f] + b)} ({db} dB, «{w0} … {w1}»)" for a, b, db, w0, w1 in g))
         print(f"{sum(map(len, found.values()))} candidates in {len(found)} clips — listen before muting any")
+        return
+    if cmd == "auto":
+        import torch
+        from transformers import pipeline
+        from voice_check import MODELS
+        asrs = [pipeline("automatic-speech-recognition", model=m, device=0, torch_dtype=torch.float16) for m in MODELS]
+        work = build / "patched"; work.mkdir(exist_ok=True)
+        found = {f: g for f, t in texts.items() if (g := noisy_gaps(f, t))}
+        offs = clip_offsets(build, list(found))
+        windows, n = [], 0
+        for f, gaps in sorted(((f, g) for f, g in found.items() if f in offs), key=lambda kv: offs[kv[0]]):
+            mute = []
+            for g in gaps:
+                ok, m, why = verify(f, texts[f], g, asrs, work)
+                n += 1
+                print(f"{'MUTE' if ok else 'keep'} {stamp(offs[f] + g[0])}-{stamp(offs[f] + g[1])} {Path(f).parent.name:16s} "
+                      f"«{g[3]} … {g[4]}» loud {m['loud_s']}s peak {m['peak']} dB flat {m['flat']} DNSMOS {m['bak']} "
+                      f"heard {m['heard']}" + ("" if ok else f"  — {', '.join(why)}"), flush=True)
+                if ok:
+                    mute.append(g[:2]); windows.append((offs[f] + g[0], offs[f] + g[1]))
+            if mute and "--dry-run" not in times:
+                mute_clip(Path(f), mute, work / f"{Path(f).parent.name}__{Path(f).name}")
+        for tmp in ("_seg.wav", "_muted.wav"):
+            (work / tmp).unlink(missing_ok=True)
+        print(f"{len(windows)} of {n} candidates are buzz" + (" (dry run, nothing changed)" if "--dry-run" in times else ""))
+        if windows and "--dry-run" not in times:
+            patch_video(build, windows)
+            holes = holes_in(build / f"{build.name}.mp4")
+            print(f"patched {build.name}.mp4; audio timestamp holes: {holes}")
         return
     parts = [Path(r.split("'")[1]) for r in (build / "parts.txt").read_text().splitlines() if r.startswith("file")]
     windows, work = [], build / "patched"
