@@ -34,7 +34,7 @@ FADE = 0.02
 
 def load(path, sr=16000, ss=None, t=None):
     cmd = ["ffmpeg", "-v", "error"] + (["-ss", str(ss), "-t", str(t)] if ss is not None else []) + \
-          ["-i", str(path), "-ac", "1", "-ar", str(sr), "-f", "f32le", "-"]
+          ["-i", str(path), "-af", "aresample=async=1:first_pts=0", "-ac", "1", "-ar", str(sr), "-f", "f32le", "-"]
     return np.frombuffer(subprocess.run(cmd, capture_output=True, check=True).stdout, np.float32).copy()
 
 
@@ -141,7 +141,10 @@ def patch_video(build, windows):
         shutil.copy2(video, before)
     sr = int(subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=sample_rate",
                              "-of", "csv=p=0", str(video)], capture_output=True, text=True).stdout.strip())
-    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(video), "-vn", "-f", "f32le", "-ac", "2", "-ar", str(sr), "-"],
+    # aresample async fills holes in the audio timestamps with silence; without it the decoded track is shorter
+    # than the picture and everything after a hole slides earlier (Lecture 1 drifted 46 s this way)
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(video), "-vn", "-af", "aresample=async=1:first_pts=0",
+                          "-f", "f32le", "-ac", "2", "-ar", str(sr), "-"],
                          capture_output=True, check=True).stdout
     x = np.frombuffer(raw, np.float32).reshape(-1, 2).copy()
     x *= envelope(len(x), sr, windows)[:, None]

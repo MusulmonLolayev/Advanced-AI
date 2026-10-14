@@ -46,7 +46,7 @@ N=$(grep -c "TERMINAL SCROLLED" "$LOG" || true)
 PARTS=()
 for S in "${SCENES[@]}"; do PARTS+=("$OUT/media/videos/$VIDEO/$RES/$S.mp4"); done
 printf "file '%s'\n" "${PARTS[@]/#/$PWD/}" > "$OUT/parts.txt"
-ffmpeg -v error -y -f concat -safe 0 -i "$OUT/parts.txt" -c copy "$OUT/$VIDEO$SUFFIX.mp4" || { echo "FAILED: concat"; exit 1; }
+./join_parts.sh "$OUT" "$OUT/$VIDEO$SUFFIX.mp4" || { echo "FAILED: concat"; exit 1; }   # pads each scene's audio first
 
 uv run --frozen python check_edges.py "$OUT/$VIDEO$SUFFIX.mp4"
 echo "OK  $OUT/$VIDEO$SUFFIX.mp4  ($(ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUT/$VIDEO$SUFFIX.mp4" | cut -d. -f1)s)"
