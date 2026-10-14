@@ -4,6 +4,7 @@ presenter.html (key R) saves <name>.webm (the microphone) and <name>.json (each 
 as [seconds since recording began, "play"|"hold"|"stop", video position]). Between a "play" at position p and the
 next event at position q the picture plays p..q; while it holds, the frame at that position stays on screen until the
 next event. If the video stalled while playing, the last frame holds for the difference, so the voice never drifts.
+The voice is levelled to the narration's loudness (-19 LUFS) with an 80 Hz low cut against mic rumble.
 
     uv run python compose_recording.py out/lecture01_uz_navoiy 2026-10-14T13-40-00
     # -> out/lecture01_uz_navoiy/presenter/recordings/2026-10-14T13-40-00.mp4
@@ -63,7 +64,7 @@ def main(build, name):
         ff("-f", "concat", "-safe", "0", "-i", tmp / "list.txt", "-c", "copy", tmp / "picture.mp4")
         out = rec / f"{name}.mp4"
         ff("-i", tmp / "picture.mp4", "-i", rec / f"{name}.webm", "-map", "0:v", "-map", "1:a", "-c:v", "copy",
-           "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-af", "aresample=async=1:first_pts=0", "-shortest", out)
+           "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-af", "aresample=async=1:first_pts=0,highpass=f=80,loudnorm=I=-19:TP=-2:LRA=11", "-shortest", out)
     total = sum(s[3] for s in segs)
     print(f"{len(segs)} segments, {total / 60:.1f} min -> {out}")
 
