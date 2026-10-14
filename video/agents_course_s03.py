@@ -103,12 +103,18 @@ class S03Window(LectureScene):
 
 class S03Rewrite(LectureScene):
     def construct(self):
-        moves, arrows = flow_row([label("ac_compress"), label("ac_truncate"), label("ac_summarise")], size=28,
-                                 buff=0.8, height=1.0)
+        notes = VGroup(*[txt(label(k), size=20, color=GREY_B)
+                         for k in ("ac_compress_note", "ac_truncate_note", "ac_summarise_note")])
+        names = [label("ac_compress"), label("ac_truncate"), label("ac_summarise")]
+        moves, _ = flow_row(names, size=28, buff=0.8, height=1.0)
+        # the gap between boxes leaves room for the wider notes under them, so neighbouring notes never touch
+        gap = max(0.8, max((notes[i].width + notes[i + 1].width - moves[i].width - moves[i + 1].width) / 2 + 0.4
+                           for i in range(2)))
+        moves, arrows = flow_row(names, size=28, buff=gap, height=1.0)
         for b, c in zip(moves, (GOOD, HILITE, BAD)):
             b[0].set_stroke(c)
-        notes = VGroup(*[txt(label(k), size=20, color=GREY_B).next_to(b, DOWN, buff=0.3)
-                         for k, b in zip(("ac_compress_note", "ac_truncate_note", "ac_summarise_note"), moves)])
+        for n, b in zip(notes, moves):
+            n.next_to(b, DOWN, buff=0.3)
         row = VGroup(moves, arrows, notes).move_to(UP * 0.3)
         if row.width > 12.6:
             row.scale_to_fit_width(12.6)
