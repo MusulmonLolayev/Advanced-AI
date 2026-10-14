@@ -137,6 +137,10 @@ own voice, so it must sound like them, not like a translation. Apply these whene
   them right: x → eks, f → ef, n → en, s → es, i → ay, y → uay, A → ey, B → bi, C → si, Q → kyu, IQR → ay kyu ar
   (capitalized at a sentence start: "Eks ikki — …"). Greek letters keep their names (sigma, mu, omega). The screen
   shows the symbol itself.
+  **In the cloned voice, say the term instead of the letter** (instructor, 2026-10-14): the Navoiy voice blurs letter
+  names («kyu», «ay kyu ar», sometimes «eks»; four respellings failed both recognisers), so the narration says
+  «birinchi kvartil», «kvartillararo oraliq», «ikkinchi kuzatuv» while the screen keeps Q₁, IQR, x₂. A line that
+  introduces the notation itself may still name the letter once. Each changed line is approved before voicing.
 - **English counterparts name the quantity, not the thing**: "farzandlar soni" → "number of children", never
   "children".
   Add new term decisions here as the instructor makes them.
