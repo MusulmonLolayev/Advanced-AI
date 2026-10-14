@@ -96,7 +96,7 @@ async function toggleRec(){
     recEl.textContent = 'saving…';
     try { await upload(name, 'webm', new Blob(chunks, {type: 'audio/webm'}));
           await upload(name, 'json', JSON.stringify(ev));
-          recEl.textContent = 'saved: ' + name; }
+          recEl.innerHTML = 'saved: ' + name + ' — <a href="/" style="color:#8fb8de">build it in the studio</a>'; }
     catch (e){ recEl.textContent = 'NOT saved: ' + e; }
     rec = null; t0 = 0; };
   rec.start(1000); }
