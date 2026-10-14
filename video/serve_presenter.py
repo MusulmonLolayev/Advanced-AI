@@ -1,12 +1,15 @@
 """Serve the built videos' presenter pages to another computer on the LAN (the server has no screen of its own).
 
 The player seeks to every line, and Python's plain http.server ignores Range requests, so a seek re-downloads the
-video from its start; this handler answers them. It serves only video/out/, read-only.
+video from its start; this handler answers them. It serves video/out/ read-only, and takes one kind of upload: a presenter recording (POST /upload?build=…&name=…&kind=webm|json), saved to
+<build>/presenter/recordings/. The microphone works only on a secure origin, so open the page through an ssh tunnel:
+    ssh -L 8080:localhost:8080 musulmon@10.0.0.5     # then http://localhost:8080/<build>/presenter/presenter.html
 
-    uv run python serve_presenter.py 8800      # then open http://<this machine>:8800/lecture01_uz_navoiy/presenter/presenter.html
+    uv run python serve_presenter.py 8080      # then http://<this machine>:8080/lecture01_uz_navoiy/presenter/presenter.html
 """
 import os
 import re
+from urllib.parse import parse_qs, urlparse
 import sys
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -45,6 +48,29 @@ class RangeHandler(SimpleHTTPRequestHandler):
                 break
             dst.write(chunk)
             left -= len(chunk)
+
+    def do_POST(self):
+        u = urlparse(self.path)
+        q = {k: v[0] for k, v in parse_qs(u.query).items()}
+        ok = (u.path == "/upload" and re.fullmatch(r"[a-z0-9_]+", q.get("build", ""))
+              and re.fullmatch(r"[0-9T-]+", q.get("name", "")) and q.get("kind") in ("webm", "json")
+              and (ROOT / q["build"] / "presenter").is_dir())
+        n = int(self.headers.get("Content-Length", 0))
+        if not ok or n > 2_000_000_000:
+            self.send_error(400, "bad upload")
+            return
+        out = ROOT / q["build"] / "presenter" / "recordings"
+        out.mkdir(exist_ok=True)
+        with open(out / f"{q['name']}.{q['kind']}", "wb") as f:
+            while n > 0:
+                chunk = self.rfile.read(min(1 << 16, n))
+                if not chunk:
+                    break
+                f.write(chunk)
+                n -= len(chunk)
+        self.send_response(200)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
 
     def end_headers(self):
         self.send_header("Accept-Ranges", "bytes")

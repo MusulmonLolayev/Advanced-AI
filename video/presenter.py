@@ -3,7 +3,8 @@
 Writes <build>/presenter/: the video without its audio (picture copied) and presenter.html, a local page that plays it
 and pauses just before each narration line starts, so every line's animation has finished and you talk over it for as
 long as you like. Space or → plays the next line, ← goes back one line, N shows or hides the notes (the line's text,
-and the next one), F is full screen. Lines are found in each scene's subtitles: chunks of one line follow each other
+and the next one), F is full screen, R records your voice
+(press R again to stop; it is saved on the server, and compose_recording.py turns it into a video). Lines are found in each scene's subtitles: chunks of one line follow each other
 0.1 s apart, a new line starts after a longer gap (>= 0.23 s).
 
     uv run python presenter.py out/agents_course_en        # then open out/agents_course_en/presenter/presenter.html
@@ -61,13 +62,42 @@ video{flex:1;min-width:0;height:100%;background:#000;object-fit:contain}
 .lab{color:var(--dim);font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-top:14px}
 #cur{font-size:22px}#next{color:var(--dim)}
 #bar{position:fixed;left:0;bottom:0;right:0;padding:6px 12px;font-size:13px;color:var(--dim);background:#000c}
+#rec{position:fixed;top:10px;left:12px;font-size:15px;color:#e5484d;display:none}
 </style></head><body>
 <div id="wrap"><video id="v" src="VIDEO" preload="auto"></video>
 <div id="notes"><div class="lab">now · <span id="num"></span></div><div id="cur"></div>
 <div class="lab">next</div><div id="next"></div></div></div>
-<div id="bar">Space / → next line · ← previous line · N notes · F full screen</div>
+<div id="rec"></div><div id="bar">Space / → next line · ← previous line · N notes · F full screen · R record</div>
 <script>
-const L = LINES, v = document.getElementById('v');
+const L = LINES, BUILD = "BUILD", v = document.getElementById('v'), recEl = document.getElementById('rec');
+// recording: the microphone, and every moment the picture starts or stops, so the video can be rebuilt around the voice
+let rec = null, t0 = 0, ev = [], chunks = [];
+function log(kind){ if (rec && t0) ev.push([(performance.now() - t0) / 1000, kind, v.currentTime]); }
+v.addEventListener('playing', () => log('play'));
+v.addEventListener('pause', () => log('hold'));
+v.addEventListener('waiting', () => log('hold'));
+async function upload(name, kind, body){
+  const r = await fetch(`/upload?build=${BUILD}&name=${name}&kind=${kind}`, {method: 'POST', body});
+  if (!r.ok) throw new Error(await r.text()); }
+async function toggleRec(){
+  if (rec){ log('stop'); rec.stop(); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, autoGainControl: true}}); }
+  catch (e){ alert('No microphone: open this page through http://localhost (see the ssh -L tunnel). ' + e); return; }
+  chunks = []; ev = [];
+  rec = new MediaRecorder(stream, {mimeType: 'audio/webm;codecs=opus'});
+  rec.ondataavailable = e => chunks.push(e.data);
+  rec.onstart = () => { t0 = performance.now(); ev.push([0, v.paused ? 'hold' : 'play', v.currentTime]);
+    recEl.style.display = 'block'; recEl.textContent = '● REC'; };
+  rec.onstop = async () => { stream.getTracks().forEach(t => t.stop());
+    const name = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    recEl.textContent = 'saving…';
+    try { await upload(name, 'webm', new Blob(chunks, {type: 'audio/webm'}));
+          await upload(name, 'json', JSON.stringify(ev));
+          recEl.textContent = 'saved: ' + name; }
+    catch (e){ recEl.textContent = 'NOT saved: ' + e; }
+    rec = null; t0 = 0; };
+  rec.start(1000); }
 let i = 0, stopAt = null;                       // i: the line on screen; stopAt: where playing stops
 function show(){ document.getElementById('num').textContent = (i+1)+' / '+L.length;
   document.getElementById('cur').textContent = L[i] ? L[i][1] : '';
@@ -82,6 +112,7 @@ document.addEventListener('keydown', e => {
     play(v.currentTime < 0.05 && i === 0 ? 0 : i + (stopAt === null ? 1 : 0)); }
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); v.pause(); stopAt = null;
     i = Math.max(0, i-1); v.currentTime = L[i][0]; show(); }
+  else if (e.key === 'r' || e.key === 'R') toggleRec();
   else if (e.key === 'n' || e.key === 'N') document.getElementById('notes').classList.toggle('hidden');
   else if (e.key === 'f' || e.key === 'F'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
 });
@@ -101,7 +132,7 @@ def main(build):
     if abs(total - duration(final)) > 0.5:
         sys.exit(f"scene lengths add up to {total:.1f} s but the video is {duration(final):.1f} s: rejoin first")
     (out / "presenter.html").write_text(PAGE.replace("VIDEO", silent.name)
-                                        .replace("LINES", json.dumps(ls, ensure_ascii=False)))
+                                        .replace("LINES", json.dumps(ls, ensure_ascii=False)).replace("BUILD", build.name))
     (out / "lines.json").write_text(json.dumps(ls, ensure_ascii=False, indent=1))
     print(f"{len(ls)} lines; open {out / 'presenter.html'}")
 
