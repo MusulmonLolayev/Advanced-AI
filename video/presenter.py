@@ -2,7 +2,8 @@
 
 Writes <build>/presenter/: the video without its audio (picture copied) and presenter.html, a local page that plays it
 and pauses just before each narration line starts, so every line's animation has finished and you talk over it for as
-long as you like. Space or → plays the next line, ← goes back one line, N shows or hides the notes (the line's text,
+long as you like. Space or → plays the next line (pressed while a line plays, it jumps to that line's end), P pauses mid-line, ← shows the
+start of the current line (again: the line before), N shows or hides the notes (the line's text,
 and the next one), F is full screen, R records your voice
 (press R again to stop; it is saved on the server, and compose_recording.py turns it into a video). Lines are found in each scene's subtitles: chunks of one line follow each other
 0.1 s apart, a new line starts after a longer gap (>= 0.23 s).
@@ -67,7 +68,7 @@ video{flex:1;min-width:0;height:100%;background:#000;object-fit:contain}
 <div id="wrap"><video id="v" src="VIDEO" preload="auto"></video>
 <div id="notes"><div class="lab">now · <span id="num"></span></div><div id="cur"></div>
 <div class="lab">next</div><div id="next"></div></div></div>
-<div id="rec"></div><div id="bar">Space / → next line · ← previous line · N notes · F full screen · R record</div>
+<div id="rec"></div><div id="bar">Space / → next line (while playing: jump to its end) · ← back · P pause · N notes · F full screen · R record</div>
 <script>
 const L = LINES, BUILD = "BUILD", v = document.getElementById('v'), recEl = document.getElementById('rec');
 // recording: the microphone, and every moment the picture starts or stops, so the video can be rebuilt around the voice
@@ -76,6 +77,7 @@ function log(kind){ if (rec && t0) ev.push([(performance.now() - t0) / 1000, kin
 v.addEventListener('playing', () => log('play'));
 v.addEventListener('pause', () => log('hold'));
 v.addEventListener('waiting', () => log('hold'));
+v.addEventListener('seeked', () => { if (v.paused) log('hold'); });   // a jump while held: hold the new frame
 async function upload(name, kind, body){
   const r = await fetch(`/upload?build=${BUILD}&name=${name}&kind=${kind}`, {method: 'POST', body});
   if (!r.ok) throw new Error(await r.text()); }
@@ -102,16 +104,23 @@ let i = 0, stopAt = null;                       // i: the line on screen; stopAt
 function show(){ document.getElementById('num').textContent = (i+1)+' / '+L.length;
   document.getElementById('cur').textContent = L[i] ? L[i][1] : '';
   document.getElementById('next').textContent = L[i+1] ? L[i+1][1] : '— end —'; }
-function play(k){ i = Math.max(0, Math.min(k, L.length-1)); v.currentTime = L[i][0];
+function play(k){ i = Math.max(0, Math.min(k, L.length-1)); nxt = i + 1; v.currentTime = L[i][0];
   stopAt = L[i+1] ? L[i+1][0] - 0.04 : null; show(); v.play(); }
+let nxt = 0;                                    // the line the next press plays
+function next(){
+  if (!v.paused){ v.pause(); if (stopAt !== null) v.currentTime = stopAt; stopAt = null; return; }  // finish this line now
+  if (stopAt !== null){ v.play(); return; }      // a line paused with P: carry on
+  if (nxt < L.length) play(nxt); }
+function back(){                                // the current line's first frame; pressed again, the line before
+  v.pause(); stopAt = null;
+  if (Math.abs(v.currentTime - L[i][0]) < 0.05) i = Math.max(0, i - 1);
+  v.currentTime = L[i][0]; nxt = i; show(); }
 function tick(){ if (stopAt !== null && !v.paused && v.currentTime >= stopAt){ v.pause(); v.currentTime = stopAt; stopAt = null; }
   requestAnimationFrame(tick); }
 document.addEventListener('keydown', e => {
-  if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault();
-    if (!v.paused){ v.pause(); return; }
-    play(v.currentTime < 0.05 && i === 0 ? 0 : i + (stopAt === null ? 1 : 0)); }
-  else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); v.pause(); stopAt = null;
-    i = Math.max(0, i-1); v.currentTime = L[i][0]; show(); }
+  if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); next(); }
+  else if (e.key === 'p' || e.key === 'P'){ e.preventDefault(); if (!v.paused) v.pause(); else if (stopAt !== null) v.play(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); back(); }
   else if (e.key === 'r' || e.key === 'R') toggleRec();
   else if (e.key === 'n' || e.key === 'N') document.getElementById('notes').classList.toggle('hidden');
   else if (e.key === 'f' || e.key === 'F'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
