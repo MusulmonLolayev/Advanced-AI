@@ -76,10 +76,11 @@ class LectureScene(CourseScene):
     """CourseScene plus the lecture's narration keys and cards. A lecture's kit subclasses it
     with NARRATION, HEADS, PARTS ({part: 'name · title'}) and PART_AT ({first section: part})."""
     NARRATION, HEADS, PARTS, PART_AT = {}, {}, {}, {}
+    BRAND = True                       # the corner mark; a video presented elsewhere sets it False
 
     def setup(self):
         super().setup()
-        self.brand = brand_mark()
+        self.brand = brand_mark() if self.BRAND else VGroup()
         self.add(self.brand)
 
     def line(self, key):

@@ -129,6 +129,7 @@ NARRATION = {k: {lang: resolve(t) for lang, t in v.items()} for k, v in _LINES.i
 assert len(HEADS) == 9 and "0.1" in NARRATION and "8.15" in NARRATION and "9.6" in NARRATION
 
 LectureScene, line = bind(_BaseScene, (NARRATION, HEADS), {}, {})
+LectureScene.BRAND = False             # presented to other audiences: no tqqt.uz corner mark
 
 
 # ─── shared visuals ───────────────────────────────────────────────────────
