@@ -158,10 +158,26 @@ Answer each in three or four sentences.
 \end{enumerate}
 
 \subsection*{Optional challenge}
+Parts (a)--(b) are about the descriptive statistics; parts (c)--(i) are proofs about probability. For the proofs use
+only these facts: $0 \le P(A) \le 1$, $P(\Omega) = 1$, and $P(A \cup B) = P(A) + P(B)$ whenever $A \cap B = \emptyset$.
 \begin{enumerate}[label=(\alph*)]
   \item Show that for any sample $\sum_{i=1}^{n}(x_i - \bar{x}) = 0$.
   \item Show that $\sum_{i=1}^{n}(x_i - \bar{x})^2 = \sum_{i=1}^{n} x_i^2 - n\bar{x}^2$, and use it to check your $s^2$ for
         service B in Task 3.
+  \item Prove the complement rule $P(A^c) = 1 - P(A)$. Then prove $P(\emptyset) = 0$.
+  \item Prove the addition rule $P(A \cup B) = P(A) + P(B) - P(A \cap B)$. \emph{Hint:} write $A \cup B$ as three
+        disjoint pieces: $A$ only, $B$ only, and both. Draw the Venn diagram first.
+  \item Prove that if $A \subseteq B$ then $P(A) \le P(B)$. Deduce that $P(A \cap B) \le \min\{P(A), P(B)\}$.
+  \item Prove that two mutually exclusive events with $P(A) > 0$ and $P(B) > 0$ can never be independent.
+  \item Prove that if $A$ and $B$ are independent, then $A$ and $B^c$ are independent too.
+  \item Prove the \emph{union bound} $P(A \cup B) \le P(A) + P(B)$, and extend it by induction to
+        $P(A_1 \cup \dots \cup A_n) \le P(A_1) + \dots + P(A_n)$. Explain why this shows that the answer
+        ``$n \cdot \frac16$'' in Task 7(e) can only ever overestimate. Then find the smallest number of rolls $n$ for which
+        $P(\text{at least one six}) > \frac12$.
+  \item Birthday bound. Using $1 - x \le e^{-x}$ (true for all real $x$), show that for $n$ people
+        \[ P(\text{all birthdays different}) = \prod_{k=1}^{n-1}\Bigl(1 - \frac{k}{365}\Bigr) \le e^{-n(n-1)/730}. \]
+        Evaluate the bound for $n = \hwBdayBoundN$ and conclude that in a group of \hwBdayBoundN{} people a shared
+        birthday is more likely than not.
 \end{enumerate}
 
 \medskip

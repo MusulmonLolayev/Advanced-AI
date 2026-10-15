@@ -37,6 +37,7 @@ GROUPS = [(10, 80), (30, 60)]                                    # task 7f: (stu
 WAIT_MEAN, WAIT_MEDIAN = 25, 12                                  # task 8b: hospital waiting minutes
 CLASS_MEAN, CLASS_SD = 70, (3, 15)                               # task 8c
 STREAK = 6                                                       # task 8e
+BDAY_BOUND_N = 23                                                # challenge (i)
 
 
 def mean(x):
@@ -157,6 +158,16 @@ def compute():
     a["z_fifty_a"], a["z_fifty_b"] = (Fraction(CLASS_MEAN - 50, sd) for sd in CLASS_SD)
     # task 8e: a fair die has no memory
     a["p_six_after_streak"] = Fraction(1, 6)
+    # challenge (h): the smallest number of rolls with P(at least one six) > 1/2
+    a["min_rolls_half"] = next(n for n in itertools.count(1) if 1 - Fraction(5, 6) ** n > Fraction(1, 2))
+    a["p_six_at_min"] = 1 - Fraction(5, 6) ** a["min_rolls_half"]
+    a["min_rolls_before"] = a["min_rolls_half"] - 1
+    a["p_six_before_min"] = 1 - Fraction(5, 6) ** a["min_rolls_before"]
+    # challenge (i): the birthday bound P(all different) <= exp(-n(n-1)/730)
+    n = BDAY_BOUND_N
+    a["bday_exponent"] = n * (n - 1) / 730
+    a["bday_bound"] = math.exp(-a["bday_exponent"])                         # bound on P(all different)
+    a["bday_exact_share"] = p_share(n)
     # task 8: the salary story
     pay = [STAFF_PAY] * STAFF + [OWNER_PAY]
     a["pay_mean"], a["pay_median"] = mean(pay), median(pay)
@@ -218,7 +229,7 @@ def data_tex():
         macro("hwGroupWrong", num(mean([m for _, m in GROUPS]))),
         macro("hwWaitMean", WAIT_MEAN), macro("hwWaitMedian", WAIT_MEDIAN),
         macro("hwClassMean", CLASS_MEAN), macro("hwClassSdA", CLASS_SD[0]), macro("hwClassSdB", CLASS_SD[1]),
-        macro("hwStreak", STREAK),
+        macro("hwStreak", STREAK), macro("hwBdayBoundN", BDAY_BOUND_N),
     ])
 
 
@@ -238,7 +249,9 @@ def answers_tex(a):
             m.append(macro(name, listing(v)))
         elif k in ("p_atleast_one_head", "p_python_or_r", "p_neither", "p_only_python", "p_two_heads"):
             m.append(macro(name, f"{frac(v)} = {num(v, 3)}"))
-        elif k.startswith("p_share") or k == "err_six_ok":                  # long fractions: decimals only
+        elif k in ("bday_exponent", "bday_bound"):
+            m.append(macro(name, num(v, 6)))                                # 0.499962: just under one half
+        elif k.startswith(("p_share", "bday_exact", "p_six_at", "p_six_before")) or k == "err_six_ok":                  # long fractions: decimals only
             m.append(macro(name, num(v, 4)))
         elif isinstance(v, Fraction) and v.denominator != 1 and k.startswith(("p_", "pp_", "err_p")):
             m.append(macro(name, f"{frac(v)} \\approx {num(v, 3)}"))

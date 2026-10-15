@@ -151,6 +151,29 @@ class Extra(unittest.TestCase):
             self.assertAlmostEqual(float(A[f"z_fifty_{k}"]), (H.CLASS_MEAN - 50) / sd)
 
 
+class Challenge(unittest.TestCase):
+    def test_smallest_n_for_a_six(self):
+        n = A["min_rolls_half"]
+        rolls = lambda k: list(itertools.product(range(1, 7), repeat=k))
+        share = lambda k: Fraction(sum(6 in r for r in rolls(k)), 6 ** k)
+        self.assertGreater(share(n), Fraction(1, 2))
+        self.assertLessEqual(share(n - 1), Fraction(1, 2))
+        self.assertEqual(A["p_six_at_min"], share(n))
+
+    def test_union_bound_overestimates(self):
+        for k in range(1, 7):                                               # k * 1/6 >= the true probability
+            self.assertGreaterEqual(Fraction(k, 6), 1 - Fraction(5, 6) ** k)
+
+    def test_birthday_bound(self):
+        n = H.BDAY_BOUND_N
+        p_diff = math.prod((365 - k) / 365 for k in range(n))
+        bound = math.exp(-sum(range(n)) / 365)                              # sum of k/365 = n(n-1)/730
+        self.assertAlmostEqual(A["bday_bound"], bound)
+        self.assertLessEqual(p_diff, bound)                                 # the claim being proved
+        self.assertLess(A["bday_bound"], 0.5)                               # so P(share) > 1/2 at n = 23
+        self.assertAlmostEqual(float(A["bday_exact_share"]), 1 - p_diff)
+
+
 class Files(unittest.TestCase):
     def test_sheet_data_matches_the_script(self):
         self.assertEqual((H.HERE / "hw01_data.tex").read_text(), H.data_tex(), "rerun hw01_numbers.py")
