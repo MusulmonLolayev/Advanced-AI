@@ -10,6 +10,7 @@ out when n is odd; outliers lie beyond Q1 - 1.5 IQR or Q3 + 1.5 IQR.
 
     python3 statistics/homework/hw01/hw01_numbers.py
 """
+import itertools
 import json
 import math
 from fractions import Fraction
@@ -26,6 +27,16 @@ SCORES = [63, 41, 75, 58, 98, 52, 70, 61, 55, 72, 66]            # exam scores o
 ERROR_DATA = [2, 4, 6, 8]                                        # the worked solution's data (task 7)
 STAFF, STAFF_PAY, OWNER_PAY = 49, 1200, 380000                   # task 8: 49 employees and the owner, $ a month
 BIRTHDAY_N = (5, 30)                                             # task 6e
+DIE_ROLLS = 60                                                   # task 5
+COINS = 3                                                        # task 6f
+CLASS, PYTHON, R_LANG, BOTH = 40, 25, 18, 10                     # task 6g: students, Python, R, both
+PIN_DIGITS = 4                                                   # task 6h
+ERR_MEDIAN_DATA = [3, 9, 1, 7, 4]                                # task 7d
+ERR_SIX_ROLLS = 6                                                # task 7e
+GROUPS = [(10, 80), (30, 60)]                                    # task 7f: (students, mean score) per group
+WAIT_MEAN, WAIT_MEDIAN = 25, 12                                  # task 8b: hospital waiting minutes
+CLASS_MEAN, CLASS_SD = 70, (3, 15)                               # task 8c
+STREAK = 6                                                       # task 8e
 
 
 def mean(x):
@@ -114,11 +125,38 @@ def compute():
     assert set(die) == ev["A"] | ev["D"]
     for n in BIRTHDAY_N:
         a[f"p_share_{n}"] = p_share(n)
+    # task 5 (extra): the fair die
+    faces = range(1, 7)
+    a["die_expected"] = Fraction(DIE_ROLLS, 6)
+    a["die_mean"] = mean(list(faces))
+    a["die_var"] = sum((f - a["die_mean"]) ** 2 for f in faces) / 6          # the fair die's own variance
+    # task 6 (extra)
+    outcomes = list(itertools.product("HT", repeat=COINS))
+    a["coin_outcomes"] = len(outcomes)
+    a["p_two_heads"] = Fraction(sum(o.count("H") == 2 for o in outcomes), len(outcomes))
+    a["p_atleast_one_head"] = 1 - Fraction(1, 2) ** COINS
+    a["p_python_or_r"] = Fraction(PYTHON + R_LANG - BOTH, CLASS)
+    a["p_neither"] = 1 - a["p_python_or_r"]
+    a["p_only_python"] = Fraction(PYTHON - BOTH, CLASS)
+    a["p_pin_distinct"] = Fraction(math.perm(10, PIN_DIGITS), 10 ** PIN_DIGITS)
+    a["p_two_hearts"] = Fraction(13, 52) ** 2
     # task 7: the worked solution's mistakes
     a["err_ss"] = sum((v - mean(ERROR_DATA)) ** 2 for v in ERROR_DATA)
     a["err_var_by_n"] = var(ERROR_DATA, ddof=0)
     a["err_var_ok"] = var(ERROR_DATA)
     a["err_p_wrong"], a["err_p_ok"] = Fraction(13 + 4, 52), Fraction(13 + 4 - 1, 52)
+    a["err_median_wrong"] = ERR_MEDIAN_DATA[len(ERR_MEDIAN_DATA) // 2]
+    a["err_median_ok"] = median(ERR_MEDIAN_DATA)
+    a["err_median_sorted"] = sorted(ERR_MEDIAN_DATA)
+    a["err_six_wrong"] = ERR_SIX_ROLLS * Fraction(1, 6)
+    a["err_six_ok"] = 1 - Fraction(5, 6) ** ERR_SIX_ROLLS
+    a["err_group_wrong"] = mean([m for _, m in GROUPS])
+    a["err_group_ok"] = Fraction(sum(n * m for n, m in GROUPS), sum(n for n, _ in GROUPS))
+    a["err_group_n"] = sum(n for n, _ in GROUPS)
+    # task 8c: how far below the mean a score of 50 lies, in standard deviations
+    a["z_fifty_a"], a["z_fifty_b"] = (Fraction(CLASS_MEAN - 50, sd) for sd in CLASS_SD)
+    # task 8e: a fair die has no memory
+    a["p_six_after_streak"] = Fraction(1, 6)
     # task 8: the salary story
     pay = [STAFF_PAY] * STAFF + [OWNER_PAY]
     a["pay_mean"], a["pay_median"] = mean(pay), median(pay)
@@ -171,6 +209,16 @@ def data_tex():
         macro("hwStaff", STAFF), macro("hwStaffPay", num(STAFF_PAY)), macro("hwOwnerPay", num(OWNER_PAY)),
         macro("hwBdayA", BIRTHDAY_N[0]), macro("hwBdayB", BIRTHDAY_N[1]),
         macro("hwNewsClaim", num(news_claim())), macro("hwWrongVar", wrong_variance_tex()),
+        macro("hwRolls", DIE_ROLLS), macro("hwBlock", DIE_ROLLS // 6), macro("hwBlocks", 6), macro("hwCoins", COINS),
+        macro("hwClass", CLASS), macro("hwPython", PYTHON), macro("hwR", R_LANG), macro("hwBoth", BOTH),
+        macro("hwPin", PIN_DIGITS), macro("hwErrMedData", listing(ERR_MEDIAN_DATA)),
+        macro("hwErrMedWrong", ERR_MEDIAN_DATA[len(ERR_MEDIAN_DATA) // 2]), macro("hwErrSixRolls", ERR_SIX_ROLLS),
+        macro("hwGroupAn", GROUPS[0][0]), macro("hwGroupAm", GROUPS[0][1]),
+        macro("hwGroupBn", GROUPS[1][0]), macro("hwGroupBm", GROUPS[1][1]),
+        macro("hwGroupWrong", num(mean([m for _, m in GROUPS]))),
+        macro("hwWaitMean", WAIT_MEAN), macro("hwWaitMedian", WAIT_MEDIAN),
+        macro("hwClassMean", CLASS_MEAN), macro("hwClassSdA", CLASS_SD[0]), macro("hwClassSdB", CLASS_SD[1]),
+        macro("hwStreak", STREAK),
     ])
 
 
@@ -188,7 +236,9 @@ def answers_tex(a):
             m.append(macro(name, "yes" if v else "no"))
         elif isinstance(v, list):
             m.append(macro(name, listing(v)))
-        elif k.startswith("p_share"):                                       # 70-digit fractions: decimals only
+        elif k in ("p_atleast_one_head", "p_python_or_r", "p_neither", "p_only_python", "p_two_heads"):
+            m.append(macro(name, f"{frac(v)} = {num(v, 3)}"))
+        elif k.startswith("p_share") or k == "err_six_ok":                  # long fractions: decimals only
             m.append(macro(name, num(v, 4)))
         elif isinstance(v, Fraction) and v.denominator != 1 and k.startswith(("p_", "pp_", "err_p")):
             m.append(macro(name, f"{frac(v)} \\approx {num(v, 3)}"))

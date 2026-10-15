@@ -116,6 +116,41 @@ class Probability(unittest.TestCase):
         self.assertGreater(A["err_p_wrong"], A["err_p_ok"])               # the mistake double-counts
 
 
+class Extra(unittest.TestCase):
+    def test_die_moments(self):
+        faces = list(range(1, 7))
+        self.assertEqual(A["die_mean"], st.mean(faces))
+        self.assertAlmostEqual(float(A["die_var"]), st.pvariance(faces))
+        self.assertEqual(A["die_expected"] * 6, H.DIE_ROLLS)
+
+    def test_coins_venn_pin_hearts(self):
+        o = list(itertools.product("HT", repeat=H.COINS))
+        self.assertEqual(A["coin_outcomes"], 2 ** H.COINS)
+        self.assertEqual(A["p_two_heads"], Fraction(sum(x.count("H") == 2 for x in o), len(o)))
+        self.assertEqual(A["p_atleast_one_head"], Fraction(sum("H" in x for x in o), len(o)))
+        people = (["PR"] * H.BOTH + ["P"] * (H.PYTHON - H.BOTH) + ["R"] * (H.R_LANG - H.BOTH))
+        people += [""] * (H.CLASS - len(people))
+        self.assertEqual(A["p_python_or_r"], Fraction(sum(bool(x) for x in people), H.CLASS))
+        self.assertEqual(A["p_only_python"], Fraction(people.count("P"), H.CLASS))
+        pins = list(itertools.product(range(10), repeat=H.PIN_DIGITS))
+        self.assertEqual(A["p_pin_distinct"], Fraction(sum(len(set(x)) == H.PIN_DIGITS for x in pins), len(pins)))
+        draws = list(itertools.product(range(52), repeat=2))                       # cards 0-12 are hearts
+        self.assertEqual(A["p_two_hearts"], Fraction(sum(a < 13 and b < 13 for a, b in draws), len(draws)))
+
+    def test_new_errors(self):
+        self.assertEqual(A["err_median_ok"], st.median(H.ERR_MEDIAN_DATA))
+        self.assertNotEqual(A["err_median_wrong"], A["err_median_ok"])        # the unsorted middle differs
+        rolls = list(itertools.product(range(1, 7), repeat=H.ERR_SIX_ROLLS))
+        self.assertEqual(A["err_six_ok"], Fraction(sum(6 in r for r in rolls), len(rolls)))
+        self.assertEqual(A["err_six_wrong"], 1)                                  # the claim being refuted
+        scores = [m for n, m in H.GROUPS for _ in range(n)]
+        self.assertEqual(A["err_group_ok"], st.mean(scores))
+        self.assertNotEqual(A["err_group_wrong"], A["err_group_ok"])
+        self.assertGreater(H.WAIT_MEAN, H.WAIT_MEDIAN)                          # 8b's premise: a right tail
+        for sd, k in zip(H.CLASS_SD, ("a", "b")):
+            self.assertAlmostEqual(float(A[f"z_fifty_{k}"]), (H.CLASS_MEAN - 50) / sd)
+
+
 class Files(unittest.TestCase):
     def test_sheet_data_matches_the_script(self):
         self.assertEqual((H.HERE / "hw01_data.tex").read_text(), H.data_tex(), "rerun hw01_numbers.py")

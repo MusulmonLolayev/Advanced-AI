@@ -4,11 +4,11 @@
 
 \section*{Homework 1: Data, Descriptive Statistics and Probability}
 \noindent\textbf{Lecture 1.} Work on paper, by hand: a pen, a ruler and a basic calculator only. Show every step,
-because the exam is on paper too and a correct method earns most of the marks. Use the lecture's conventions: the
+because the exam is on paper too and the method matters as much as the final number. Use the lecture's conventions: the
 sample variance divides by $n-1$; quartiles are the medians of the lower and upper halves (leave the median out when
 $n$ is odd); an outlier lies beyond $Q_1 - 1.5\,\mathrm{IQR}$ or $Q_3 + 1.5\,\mathrm{IQR}$.
 
-\subsection*{Task 1. What kind of data? \hfill (6 points)}
+\subsection*{Task 1. What kind of data?}
 For each variable say whether it is \emph{nominal}, \emph{ordinal}, \emph{discrete} or \emph{continuous}, and whether
 its mean would mean anything.
 \begin{enumerate}[label=(\alph*), itemsep=0pt]
@@ -23,7 +23,7 @@ its mean would mean anything.
 \end{enumerate}
 Then explain in one sentence why a variable written with digits (like (a)) can still be categorical.
 
-\subsection*{Task 2. Where is the centre? \hfill (8 points)}
+\subsection*{Task 2. Where is the centre?}
 The monthly rents (\$) of nine flats in one street are
 \[ \hwRents. \]
 \begin{enumerate}[label=(\alph*)]
@@ -35,7 +35,7 @@ The monthly rents (\$) of nine flats in one street are
   \item The mean is above the median. What does that tell you about the shape of the data?
 \end{enumerate}
 
-\subsection*{Task 3. Same mean, different spread \hfill (8 points)}
+\subsection*{Task 3. Same mean, different spread}
 Two delivery services brought five orders each. Delivery times in minutes:
 \[ \text{Service A: } \hwDelA \qquad\qquad \text{Service B: } \hwDelB \]
 \begin{enumerate}[label=(\alph*)]
@@ -47,7 +47,7 @@ Two delivery services brought five orders each. Delivery times in minutes:
         from (b) supports your choice?
 \end{enumerate}
 
-\subsection*{Task 4. Five numbers and a box plot \hfill (10 points)}
+\subsection*{Task 4. Five numbers and a box plot}
 The exam scores of eleven students are
 \[ \hwScores. \]
 \begin{enumerate}[label=(\alph*)]
@@ -70,8 +70,9 @@ The exam scores of eleven students are
 \end{tikzpicture}
 \end{center}
 
-\subsection*{Task 5. Your own data: sixty rolls of a die \hfill (8 points)}
-Roll an ordinary die 60 times and record each result in the table with tally marks.
+\subsection*{Task 5. Your own data: sixty rolls of a die}
+Roll an ordinary die \hwRolls{} times and record each result in the table with tally marks. Keep the results in the
+order you rolled them as well: parts (d) and (f) need the order.
 \begin{center}
 \renewcommand{\arraystretch}{1.6}
 \begin{tabular}{|c|p{5.5cm}|c|c|}
@@ -79,18 +80,27 @@ Roll an ordinary die 60 times and record each result in the table with tally mar
 Face & Tally & Frequency & Relative frequency \\ \hline
 1 & & & \\ \hline 2 & & & \\ \hline 3 & & & \\ \hline
 4 & & & \\ \hline 5 & & & \\ \hline 6 & & & \\ \hline
-Total & & 60 & 1 \\ \hline
+Total & & \hwRolls & 1 \\ \hline
 \end{tabular}
 \end{center}
 \begin{enumerate}[label=(\alph*)]
   \item Draw a bar chart of the frequencies. Should the bars touch, as in a histogram? Explain.
   \item Write down the sample space $\Omega$ and the event $A=$ ``an even number''. Give the classical $P(A)$ and the
         empirical $P(A)$ from your rolls.
-  \item How many times would you \emph{expect} each face in 60 fair rolls? Which face is furthest from that, and do
-        you think your die is unfair? (You will learn to test this properly in Lecture 10; here, just argue.)
+  \item How many times would you \emph{expect} each face in \hwRolls{} fair rolls? Which face is furthest from that, and
+        do you think your die is unfair? (You will learn to test this properly in Lecture 10; here, just argue.)
+  \item Split your rolls, in order, into \hwBlocks{} blocks of \hwBlock{}. For each block compute the share of even
+        rolls, then the share in all \hwRolls. Which numbers lie further from $\tfrac12$: the blocks or the total? What
+        does that tell you about empirical probability and the amount of data?
+  \item From the frequency table, compute the mean and the sample variance of your \hwRolls{} rolls
+        ($\bar x = \frac{1}{n}\sum_{f} f \cdot \text{frequency}_f$). Compare them with the mean and variance of a fair die,
+        computed from its six equally likely faces.
+  \item Ask someone to write down \hwRolls{} ``random'' die results from imagination, without rolling. Find the longest
+        run of the same face in their list and in yours. Which is longer, and why do people who invent random numbers
+        avoid runs?
 \end{enumerate}
 
-\subsection*{Task 6. Probability rules \hfill (12 points)}
+\subsection*{Task 6. Probability rules}
 \begin{enumerate}[label=(\alph*)]
   \item One card is drawn from a standard deck of 52. Find $P(\text{red} \cup \text{queen})$ with the addition rule.
         Which cards would you count twice without the correction?
@@ -103,24 +113,51 @@ Total & & 60 & 1 \\ \hline
   \item Use the complement rule to find the probability that at least two people share a birthday in a group of
         \hwBdayA{} and in a class of \hwBdayB{} (365 equally likely days, no leap years). Write the product out for the
         group of \hwBdayA.
+  \item \hwCoins{} fair coins are tossed. List the whole sample space. Find $P(\text{exactly two heads})$, and
+        $P(\text{at least one head})$ with the complement rule.
+  \item In a class of \hwClass{} students, \hwPython{} study Python, \hwR{} study R, and \hwBoth{} study both. Draw a
+        Venn diagram with the count in each region. A student is picked at random: find $P(\text{Python} \cup
+        \text{R})$, $P(\text{neither})$ and $P(\text{Python only})$.
+  \item A phone PIN has \hwPin{} digits, each 0--9, chosen at random. Find the probability that all \hwPin{} digits are
+        different. Which problem from this homework uses the same idea?
+  \item A card is drawn, put back, the deck is shuffled and a second card is drawn. Find $P(\text{both hearts})$ with
+        the multiplication rule. Why may you multiply here?
 \end{enumerate}
 
-\subsection*{Task 7. Find the errors \hfill (6 points)}
+\subsection*{Task 7. Find the errors}
 A classmate handed in the solution below. Each part contains one error. Find it, explain it, and correct the answer.
 \begin{enumerate}[label=(\alph*)]
   \item ``The sample $\hwErrData$ has \hwWrongVar.''
   \item ``One card from 52: $P(\heartsuit \cup \mathrm{K}) = P(\heartsuit) + P(\mathrm{K}) =
         \frac{13}{52} + \frac{4}{52} = \frac{17}{52}$.''
   \item ``On one die, `even' and `odd' can never happen together, so they are independent.''
+  \item ``The median of $\hwErrMedData$ is the middle value, $\hwErrMedWrong$.''
+  \item ``Each roll has a $\frac16$ chance of a six, so in \hwErrSixRolls{} rolls the chance of at least one six is
+        $\hwErrSixRolls \cdot \frac16 = 1$: it is certain.''
+  \item ``Group 1 (\hwGroupAn{} students) averaged \hwGroupAm{} points and group 2 (\hwGroupBn{} students) averaged
+        \hwGroupBm. So the whole class averaged $\frac{\hwGroupAm + \hwGroupBm}{2} = \hwGroupWrong$.''
 \end{enumerate}
 
-\subsection*{Task 8. Explain it in words \hfill (4 points)}
-A small company has \hwStaff{} employees who each earn \$\hwStaffPay{} a month, and an owner who pays herself
-\$\hwOwnerPay{} a month. A newspaper writes: ``The average monthly pay at this company is almost \$\hwNewsClaim.''
-Compute the mean and the median monthly pay of all \hwStaff{} + 1 people. Is the newspaper wrong? Which number would
-you report to someone who wants to work there, and why? (Three or four sentences.)
+\subsection*{Task 8. Explain it in words}
+Answer each in three or four sentences.
+\begin{enumerate}[label=(\alph*)]
+  \item A small company has \hwStaff{} employees who each earn \$\hwStaffPay{} a month, and an owner who pays herself
+        \$\hwOwnerPay{} a month. A newspaper writes: ``The average monthly pay at this company is almost
+        \$\hwNewsClaim.'' Compute the mean and the median monthly pay of all \hwStaff{} + 1 people. Is the newspaper
+        wrong? Which number would you report to someone who wants to work there, and why?
+  \item A hospital reports a mean waiting time of \hwWaitMean{} minutes and a median of \hwWaitMedian{} minutes. What do
+        the two numbers together tell you about the waiting times? Which number better describes what a typical
+        patient experiences?
+  \item Two classes both have a mean exam score of \hwClassMean. In class A the standard deviation is \hwClassSdA{}, in
+        class B it is \hwClassSdB. Describe what each class's scores probably look like. In which class would you
+        expect more students below 50?
+  \item A weather app says ``70\,\% chance of rain tomorrow''. Is that a classical or an empirical probability? Explain
+        where such a number could come from.
+  \item A fair die has just shown \hwStreak{} sixes in a row. Your friend says the next roll ``must'' be something else.
+        Another says sixes are ``hot'' and will keep coming. Who is right?
+\end{enumerate}
 
-\subsection*{Optional challenge \hfill (+4 points)}
+\subsection*{Optional challenge}
 \begin{enumerate}[label=(\alph*)]
   \item Show that for any sample $\sum_{i=1}^{n}(x_i - \bar{x}) = 0$.
   \item Show that $\sum_{i=1}^{n}(x_i - \bar{x})^2 = \sum_{i=1}^{n} x_i^2 - n\bar{x}^2$, and use it to check your $s^2$ for
@@ -128,4 +165,4 @@ you report to someone who wants to work there, and why? (Three or four sentences
 \end{enumerate}
 
 \medskip
-\noindent\textbf{Total: 62 points} (+4 optional). Hand in your handwritten pages, with your name on each page.
+\noindent Hand in your handwritten pages, with your name on each page.
