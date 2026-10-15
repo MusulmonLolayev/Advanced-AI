@@ -1,0 +1,169 @@
+% Homework 2 -- Lecture 2: conditional probability, independence and Bayes' theorem. Paper only.
+% The data come from hw02_data.tex, written by hw02_numbers.py (every number computed and unit-tested).
+\par
+\input{hw02/hw02_data}
+
+\clearpage
+\section*{Homework 2: Conditional Probability, Independence and Bayes}
+\noindent\textbf{Lecture 2.} Work on paper, by hand: a pen, a ruler and a basic calculator only. Show every step.
+Keep fractions exact until the last line. Draw the tree or the table whenever a problem has stages or two
+attributes; most mistakes in conditional probability are a wrong denominator, and a picture shows the right one.
+
+\subsection*{Task 1. Knowing something shrinks the sample space}
+\begin{enumerate}[label=(\alph*)]
+  \item A fair die is rolled. Find $P(\text{at least } 5)$. A friend peeks and says the result is odd; find
+        $P(\text{at least } 5 \mid \text{odd})$ by listing the outcomes that are still possible.
+  \item One card is drawn from a deck of 52. Find $P(\text{king} \mid \text{face card})$ and
+        $P(\text{face card} \mid \text{king})$ (the face cards are J, Q, K). Why are the two numbers different?
+  \item Two dice are rolled. Using the $6 \times 6$ grid, find $P(\text{sum} = 8 \mid \text{first die} = 3)$ and
+        $P(\text{first die} = 3 \mid \text{sum} = 8)$. Circle the cells of the new sample space each time.
+  \item With the same two dice, find $P(\text{a double} \mid \text{sum} = 8)$.
+\end{enumerate}
+
+\subsection*{Task 2. A tree diagram}
+A factory has two machines. Machine 1 makes \hwMOneShare\,\% of all items, and \hwMOneDef\,\% of its items are
+defective. Machine 2 makes \hwMTwoShare\,\% of all items, and \hwMTwoDef\,\% of its items are defective.
+\begin{enumerate}[label=(\alph*)]
+  \item Draw the tree: first the machine, then defective or not. Write the probability on every branch.
+  \item Multiply along each path. Check that the four path probabilities add up to 1, and explain why they must.
+  \item Turn the paths into counts for \hwItems{} items: how many come from each machine, and how many of those are
+        defective?
+\end{enumerate}
+
+\subsection*{Task 3. Drawing without replacement}
+A bag holds \hwRed{} red and \hwBlue{} blue balls. Two balls are drawn one after the other, without putting the first
+one back.
+\begin{enumerate}[label=(\alph*)]
+  \item Draw the tree and find $P(\text{both red})$ and $P(\text{both the same colour})$.
+  \item Find $P(\text{the second ball is red})$, using both branches of the first draw. Compare it with
+        $P(\text{the first ball is red})$. Surprised? Explain why the answer makes sense without any calculation.
+  \item Find $P(\text{both red})$ again, but now the first ball is put back before the second draw. Which answer is
+        larger, and why?
+\end{enumerate}
+
+\subsection*{Task 4. Contingency tables and independence}
+Two hundred students took the same exam. The first table records whether they attended the lectures regularly; the
+second, whether they sat the exam in the morning or the afternoon session.
+\begin{center}
+\begin{tabular}{l|rr|r}
+ & Passed & Failed & Total \\ \hline
+Attended regularly & \hwAttOnePass & \hwAttOneFail & \\
+Did not attend & \hwAttTwoPass & \hwAttTwoFail & \\ \hline
+Total & & & 200
+\end{tabular}
+
+\medskip
+\begin{tabular}{l|rr|r}
+ & Passed & Failed & Total \\ \hline
+Morning session & \hwSesOnePass & \hwSesOneFail & \\
+Afternoon session & \hwSesTwoPass & \hwSesTwoFail & \\ \hline
+Total & & & 200
+\end{tabular}
+\end{center}
+\begin{enumerate}[label=(\alph*)]
+  \item Fill in the margins of both tables.
+  \item From the first table find the joint probability $P(\text{attended} \cap \text{passed})$, the marginal
+        $P(\text{passed})$, and the conditionals $P(\text{passed} \mid \text{attended})$ and
+        $P(\text{passed} \mid \text{did not attend})$. Say which denominator you used for each.
+  \item Is passing independent of attending? Check it two ways: by comparing a conditional with the marginal, and by
+        comparing each cell with the count $\frac{\text{row total} \times \text{column total}}{n}$ that independence
+        predicts.
+  \item Do the same check for the session table. What do you conclude?
+  \item Find $P(\text{attended} \mid \text{passed})$ and explain in words how it differs from
+        $P(\text{passed} \mid \text{attended})$.
+\end{enumerate}
+
+\subsection*{Task 5. Simpson's paradox: two hospitals}
+Two hospitals report their operations of two kinds, easy and hard:
+\begin{center}
+\begin{tabular}{l|rr|rr}
+ & \multicolumn{2}{c|}{Hospital A} & \multicolumn{2}{c}{Hospital B} \\
+ & operations & survived & operations & survived \\ \hline
+Easy & \hwHAEasyN & \hwHAEasyS & \hwHBEasyN & \hwHBEasyS \\
+Hard & \hwHAHardN & \hwHAHardS & \hwHBHardN & \hwHBHardS
+\end{tabular}
+\end{center}
+\begin{enumerate}[label=(\alph*)]
+  \item Compute each hospital's survival rate for easy operations, for hard operations, and overall.
+  \item Which hospital is better at easy operations? At hard ones? Overall? Describe the paradox in one sentence.
+  \item Explain where the reversal comes from. What share of each hospital's operations are hard?
+  \item You need a hard operation. Which hospital do you choose, and which numbers would you show a friend who only
+        read the overall rates?
+\end{enumerate}
+
+\subsection*{Task 6. Total probability and Bayes' theorem}
+\begin{enumerate}[label=(\alph*)]
+  \item \emph{The factory again (Task 2).} Use the law of total probability to find $P(\text{defective})$. An item is
+        found to be defective: use Bayes' theorem to find the probability that machine 2 made it. Machine 2 makes
+        fewer items -- why is it still the more likely culprit?
+  \item \emph{Screening.} A disease affects \hwBaseN{} people in 1{,}000. A test detects it in \hwSens\,\% of ill
+        people, and wrongly gives a positive result for \hwFalsePos\,\% of healthy people.
+        \begin{enumerate}[label=(\roman*)]
+          \item Imagine \hwPeople{} people. Fill in a table of counts: ill or healthy, positive or negative.
+          \item A person tests positive. Find $P(\text{ill} \mid \text{positive})$ from your counts, then check it with
+                Bayes' formula. Which group produces most of the positive results?
+          \item The person takes a second, independent test of the same kind, and it is positive too. Use your answer
+                to (ii) as the new prior and find the new posterior.
+        \end{enumerate}
+  \item \emph{A spam filter.} \hwSpam\,\% of incoming emails are spam. The word ``free'' appears in \hwFreeSpam\,\% of
+        spam emails and in \hwFreeHam\,\% of the others. Name the prior and the likelihoods, and find
+        $P(\text{spam} \mid \text{``free''})$.
+\end{enumerate}
+
+\subsection*{Task 7. Find the errors}
+Each statement contains one error. Find it, explain it, and correct it where a number is involved.
+\begin{enumerate}[label=(\alph*)]
+  \item A prosecutor: ``Only one innocent person in \hwMatch{} would match this DNA sample. So the chance that the
+        accused is innocent is one in \hwMatch.''
+  \item ``From the attendance table (Task 4): $P(\text{passed} \mid \text{attended}) = \frac{\hwAttOnePass}{\text{number
+        who passed}}$.''
+  \item ``A drawer has \hwSockB{} black and \hwSockW{} white socks. I take two in the dark, so
+        $P(\text{both black}) = \frac{\hwSockB}{\hwSockT} \cdot \frac{\hwSockB}{\hwSockT}$.''
+  \item ``This test is \hwAccuracy\,\% accurate. My result is positive, so I am ill with probability
+        \hwAccuracy\,\%.''
+  \item ``In the attendance table, the pass rate is $\hwAttOneRate$ among those who attended and $\hwAttTwoRate$ among the others, so the
+        overall pass rate is $\frac{\hwAttOneRate + \hwAttTwoRate}{2} = \hwErrTotalWrong$.''
+  \item ``$P(B \mid A) = P(B)$, so $A$ and $B$ can never happen together: they are mutually exclusive.''
+\end{enumerate}
+
+\subsection*{Task 8. Explain it in words}
+Answer each in three or four sentences.
+\begin{enumerate}[label=(\alph*)]
+  \item $P(\text{wet grass} \mid \text{it rained})$ is close to 1. Is $P(\text{it rained} \mid \text{wet grass})$ close
+        to 1 too? What else could make the grass wet, and how does that enter Bayes' theorem?
+  \item Why is screening a mostly healthy population for a rare disease hard, even with a good test? Use your counts
+        from Task 6(b).
+  \item Give an everyday example where pooling two groups could reverse a comparison, as in Task 5.
+  \item \emph{Monty Hall.} A prize is behind one of three doors. You pick door 1. The host, who knows where the prize
+        is and always opens an empty door you did not pick, opens door 3. Should you switch to door 2? Explain with
+        conditional probability (a tree helps).
+  \item A spam filter assumes that, \emph{given} the class (spam or not), the words of an email are independent.
+        Explain what that assumption means, and give a pair of words for which it is clearly false.
+\end{enumerate}
+
+\subsection*{Optional challenge}
+Prove each statement using only the definition $P(B \mid A) = \frac{P(A \cap B)}{P(A)}$ for $P(A) > 0$ and the rules
+of Lecture 1.
+\begin{enumerate}[label=(\alph*)]
+  \item For a fixed event $A$ with $P(A) > 0$, $P(\,\cdot \mid A)$ is itself a probability: $P(B \mid A) \ge 0$,
+        $P(A \mid A) = 1$, and $P(B \cup C \mid A) = P(B \mid A) + P(C \mid A)$ when $B \cap C = \emptyset$.
+  \item Bayes' theorem $P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}$.
+  \item The law of total probability: if $A_1, \dots, A_k$ form a partition of $\Omega$, then
+        $P(B) = \sum_{i=1}^{k} P(B \mid A_i)\,P(A_i)$.
+  \item If $P(B \mid A) = P(B)$ (with $P(A), P(B) > 0$), then $P(A \cap B) = P(A)P(B)$ and $P(A \mid B) = P(A)$:
+        independence is symmetric.
+  \item The chain rule $P(A \cap B \cap C) = P(A)\,P(B \mid A)\,P(C \mid A \cap B)$. Use it to find the probability
+        that three socks drawn from the drawer of Task 7(c) are all black.
+  \item $P(A \mid B) > P(A)$ holds exactly when $P(B \mid A) > P(B)$: evidence that makes $A$ more likely is evidence
+        that $A$ makes more likely.
+  \item Simpson's paradox needs unequal groups: suppose that in every department the admission rate of women is at
+        least that of men, and that women and men spread over the departments in the same proportions. Show with the
+        law of total probability that the overall rate of women is then at least that of men.
+  \item The odds form: show that $\frac{P(A \mid B)}{P(A^c \mid B)} = \frac{P(A)}{P(A^c)} \cdot
+        \frac{P(B \mid A)}{P(B \mid A^c)}$ (posterior odds = prior odds $\times$ likelihood ratio). If two tests are
+        independent given the person's true state, show that their likelihood ratios multiply, and use this to check
+        Task 6(b)(iii).
+\end{enumerate}
+
+\medskip
+\noindent Hand in your handwritten pages, with your name on each page.
