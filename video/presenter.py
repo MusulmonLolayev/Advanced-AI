@@ -4,7 +4,7 @@ Writes <build>/presenter/: the video without its audio (picture copied) and pres
 and pauses just before each narration line starts, so every line's animation has finished and you talk over it for as
 long as you like. Space (or P) pauses and plays: pressed while a line plays it pauses right there, pressed again it
 carries on, and once a line has finished it plays the next one. → plays the next line (pressed while a line plays,
-it jumps to that line's end; a presentation clicker sends it). The video plays at 1/1.2 of its speed, and each
+it jumps to that line's end; a presentation clicker sends it). The video plays at 1/1.1 of its speed, and each
 recording logs the speed so the build matches. ← shows the
 start of the current line (again: the line before), N moves the notes (the line's text, and the next
 one): under the picture, at the right, hidden; the choice is remembered. While a line plays, its words light up at
@@ -98,7 +98,7 @@ const L = LINES, BUILD = "BUILD", v = document.getElementById('v'), recEl = docu
 let rec = null, t0 = 0, ev = [], chunks = [];
 function log(kind){ if (rec && t0) ev.push([(performance.now() - t0) / 1000, kind, v.currentTime, v.playbackRate]); }
 v.addEventListener('playing', () => log('play'));
-v.defaultPlaybackRate = v.playbackRate = 1 / 1.2;                         // the narration's pace felt fast
+v.defaultPlaybackRate = v.playbackRate = 1 / 1.1;                         // the narration's pace felt fast
 v.addEventListener('pause', () => log('hold'));
 v.addEventListener('waiting', () => log('hold'));
 v.addEventListener('seeked', () => { if (v.paused) log('hold'); });   // a jump while held: hold the new frame
