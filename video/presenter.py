@@ -4,7 +4,8 @@ Writes <build>/presenter/: the video without its audio (picture copied) and pres
 and pauses just before each narration line starts, so every line's animation has finished and you talk over it for as
 long as you like. Space (or P) pauses and plays: pressed while a line plays it pauses right there, pressed again it
 carries on, and once a line has finished it plays the next one. → plays the next line (pressed while a line plays,
-it jumps to that line's end; a presentation clicker sends it), ← shows the
+it jumps to that line's end; a presentation clicker sends it). The video plays at 1/1.2 of its speed by default;
+[ and ] slow it down or speed it up (remembered), and each recording logs the speed so the build matches. ← shows the
 start of the current line (again: the line before), N moves the notes (the line's text, and the next
 one): under the picture, at the right, hidden; the choice is remembered. While a line plays, its words light up at
 the pace of the original narration (the subtitle chunks' times, spread over the words), so you can keep up. F is full screen, M picks the microphone (with a level meter; the choice is remembered), R records your voice
@@ -90,13 +91,21 @@ body.hidden #notes{display:none}
 <div id="rec"></div>
 <div id="mic"><div class="lab" style="margin-top:0">microphone</div><select id="micsel"></select>
 <div id="lvl"><div></div></div><div class="lab">speak to test the level · M or Esc closes</div></div>
-<div id="bar">Space pause / play · → next line (while playing: jump to its end) · ← back · N notes: below / right / off · F full screen · M microphone · R record</div>
+<div id="bar">Space pause / play · → next line (while playing: jump to its end) · ← back · N notes: below / right / off · F full screen · M microphone · [ ] speed <span id="speed"></span> · R record</div>
 <script>
 const L = LINES, BUILD = "BUILD", v = document.getElementById('v'), recEl = document.getElementById('rec');
 // recording: the microphone, and every moment the picture starts or stops, so the video can be rebuilt around the voice
 let rec = null, t0 = 0, ev = [], chunks = [];
-function log(kind){ if (rec && t0) ev.push([(performance.now() - t0) / 1000, kind, v.currentTime]); }
+function log(kind){ if (rec && t0) ev.push([(performance.now() - t0) / 1000, kind, v.currentTime, v.playbackRate]); }
 v.addEventListener('playing', () => log('play'));
+v.addEventListener('ratechange', () => { if (!v.paused) log('play'); });      // a new speed mid-line
+// the speed: 1/1.2 by default (the narration's pace felt fast), [ and ] change it by 0.05, remembered
+const speedEl = () => document.getElementById('speed');
+let speed = 1 / 1.2;
+try { const s = parseFloat(localStorage.getItem('presenterSpeed')); if (s >= 0.5 && s <= 1.5) speed = s; } catch (e) {}
+function setSpeed(s){ speed = Math.round(Math.min(1.5, Math.max(0.5, s)) * 10000) / 10000;
+  v.defaultPlaybackRate = v.playbackRate = speed; speedEl().textContent = speed.toFixed(2) + '×';
+  try { localStorage.setItem('presenterSpeed', speed); } catch (e) {} }
 v.addEventListener('pause', () => log('hold'));
 v.addEventListener('waiting', () => log('hold'));
 v.addEventListener('seeked', () => { if (v.paused) log('hold'); });   // a jump while held: hold the new frame
@@ -151,7 +160,7 @@ async function toggleRec(){
   chunks = []; ev = [];
   rec = new MediaRecorder(stream, {mimeType: 'audio/webm;codecs=opus'});
   rec.ondataavailable = e => chunks.push(e.data);
-  rec.onstart = () => { t0 = performance.now(); ev.push([0, v.paused ? 'hold' : 'play', v.currentTime]);
+  rec.onstart = () => { t0 = performance.now(); ev.push([0, v.paused ? 'hold' : 'play', v.currentTime, v.playbackRate]);
     recEl.style.display = 'block'; recEl.textContent = '● REC' + (micName ? ' — ' + micName : ''); };
   rec.onstop = async () => { stream.getTracks().forEach(t => t.stop());
     const name = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -209,9 +218,11 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); back(); }
   else if (e.key === 'r' || e.key === 'R') toggleRec();
   else if (e.key === 'n' || e.key === 'N') place(MODES[(MODES.indexOf(mode) + 1) % MODES.length]);
+  else if (e.key === '['){ e.preventDefault(); setSpeed(speed - 0.05); }
+  else if (e.key === ']'){ e.preventDefault(); setSpeed(speed + 0.05); }
   else if (e.key === 'f' || e.key === 'F'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
 });
-place(mode); show(); requestAnimationFrame(tick);
+place(mode); setSpeed(speed); show(); requestAnimationFrame(tick);
 </script></body></html>"""
 
 
