@@ -3,8 +3,9 @@
 Writes <build>/presenter/: the video without its audio (picture copied) and presenter.html, a local page that plays it
 and pauses just before each narration line starts, so every line's animation has finished and you talk over it for as
 long as you like. Space or → plays the next line (pressed while a line plays, it jumps to that line's end), P pauses mid-line, ← shows the
-start of the current line (again: the line before), N shows or hides the notes (the line's text,
-and the next one), F is full screen, M picks the microphone (with a level meter; the choice is remembered), R records your voice
+start of the current line (again: the line before), N moves the notes (the line's text, and the next
+one): under the picture, at the right, hidden; the choice is remembered. While a line plays, its words light up at
+the pace of the original narration (the subtitle chunks' times, spread over the words), so you can keep up. F is full screen, M picks the microphone (with a level meter; the choice is remembered), R records your voice
 (press R again to stop; it is saved on the server, and compose_recording.py turns it into a video). Lines are found in each scene's subtitles: chunks of one line follow each other
 0.1 s apart, a new line starts after a longer gap (>= 0.23 s).
 
@@ -36,20 +37,22 @@ def cues(srt):
 
 
 def lines(build):
-    """[(start s, text)] for every narration line of the joined video."""
+    """[(start s, text, [(chunk start, chunk end, chunk text)])] for every narration line of the joined video."""
     parts = [Path(r.split("'")[1]) for r in (build / "parts.txt").read_text().splitlines() if r.startswith("file")]
     joined = [Path(r.split("'")[1]) for r in (build / "joined.txt").read_text().splitlines() if r.startswith("file")]
     out, off = [], 0.0
     for scene, j in zip(parts, joined):
         prev_end = None
         for a, b, text in cues(scene.with_suffix(".srt")) if scene.with_suffix(".srt").exists() else []:
+            chunk = [round(off + a, 3), round(off + b, 3), text]
             if prev_end is None or a - prev_end > GAP:
-                out.append([off + a, text])
+                out.append([off + a, text, [chunk]])
             else:
                 out[-1][1] += " " + text
+                out[-1][2].append(chunk)
             prev_end = b
         off += duration(j)
-    return [(round(t, 3), s) for t, s in out], off
+    return [(round(t, 3), s, c) for t, s, c in out], off
 
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Presenter</title>
@@ -57,11 +60,20 @@ PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Presenter</tit
 :root{--bg:#000;--fg:#eee;--dim:#888;--accent:#8fb8de}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:18px/1.45 system-ui,sans-serif}
 #wrap{display:flex;height:100%}
-video{flex:1;min-width:0;height:100%;background:#000;object-fit:contain}
+video{flex:1;min-width:0;min-height:0;background:#000;object-fit:contain}
 #notes{width:30%;max-width:520px;padding:18px 22px;box-sizing:border-box;overflow:auto;border-left:1px solid #222}
-#notes.hidden{display:none}
+body.below #wrap{flex-direction:column}
+body.below video{width:100%}
+body.below #notes{width:100%;max-width:none;max-height:30vh;border-left:0;border-top:1px solid #222;
+  padding:10px 6vw 34px;text-align:center}
+body.below #cur{font-size:30px;line-height:1.35}
+body.below #next{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.below .lab{display:none}
+body.hidden #notes{display:none}
 .lab{color:var(--dim);font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-top:14px}
-#cur{font-size:22px}#next{color:var(--dim)}
+#cur{font-size:22px}#next{color:var(--dim);margin-top:6px}
+#cur span{color:#9a9a9a;transition:color .12s}
+#cur span.said{color:#fff}
 #bar{position:fixed;left:0;bottom:0;right:0;padding:6px 12px;font-size:13px;color:var(--dim);background:#000c}
 #rec{position:fixed;top:10px;left:12px;font-size:15px;color:#e5484d;display:none}
 #mic{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;border:1px solid #333;
@@ -76,7 +88,7 @@ video{flex:1;min-width:0;height:100%;background:#000;object-fit:contain}
 <div id="rec"></div>
 <div id="mic"><div class="lab" style="margin-top:0">microphone</div><select id="micsel"></select>
 <div id="lvl"><div></div></div><div class="lab">speak to test the level · M or Esc closes</div></div>
-<div id="bar">Space / → next line (while playing: jump to its end) · ← back · P pause · N notes · F full screen · M microphone · R record</div>
+<div id="bar">Space / → next line (while playing: jump to its end) · ← back · P pause · N notes: below / right / off · F full screen · M microphone · R record</div>
 <script>
 const L = LINES, BUILD = "BUILD", v = document.getElementById('v'), recEl = document.getElementById('rec');
 // recording: the microphone, and every moment the picture starts or stops, so the video can be rebuilt around the voice
@@ -149,8 +161,24 @@ async function toggleRec(){
     rec = null; t0 = 0; };
   rec.start(1000); }
 let i = 0, stopAt = null;                       // i: the line on screen; stopAt: where playing stops
+// the line's words, each with the moment the original voice reached it (a chunk's time spread over its words by length)
+const cur = document.getElementById('cur');
+let words = [];
+function lineWords(k){
+  cur.textContent = ''; words = [];
+  for (const [a, b, text] of (L[k] ? L[k][2] : [])){
+    const ws = text.split(/\\s+/).filter(Boolean), n = ws.reduce((x, w) => x + w.length + 1, 0);
+    let c = 0;
+    for (const w of ws){ const el = document.createElement('span'); el.textContent = w + ' ';
+      words.push([a + (b - a) * c / n, el]); cur.appendChild(el); c += w.length + 1; } } }
+function said(){ const t = v.currentTime; for (const [ws, el] of words) el.classList.toggle('said', t >= ws + 0.03); }
+const MODES = ['below', 'right', 'hidden'];
+let mode = 'below';
+try { mode = MODES.includes(localStorage.getItem('presenterNotes')) ? localStorage.getItem('presenterNotes') : 'below'; } catch (e) {}
+function place(m){ mode = m; document.body.classList.remove(...MODES); document.body.classList.add(m);
+  try { localStorage.setItem('presenterNotes', m); } catch (e) {} }
 function show(){ document.getElementById('num').textContent = (i+1)+' / '+L.length;
-  document.getElementById('cur').textContent = L[i] ? L[i][1] : '';
+  lineWords(i); said();
   document.getElementById('next').textContent = L[i+1] ? L[i+1][1] : '— end —'; }
 function play(k){ i = Math.max(0, Math.min(k, L.length-1)); nxt = i + 1; v.currentTime = L[i][0];
   stopAt = L[i+1] ? L[i+1][0] - 0.04 : null; show(); v.play(); }
@@ -163,7 +191,7 @@ function back(){                                // the current line's first fram
   v.pause(); stopAt = null;
   if (Math.abs(v.currentTime - L[i][0]) < 0.05) i = Math.max(0, i - 1);
   v.currentTime = L[i][0]; nxt = i; show(); }
-function tick(){ if (stopAt !== null && !v.paused && v.currentTime >= stopAt){ v.pause(); v.currentTime = stopAt; stopAt = null; }
+function tick(){ said(); if (stopAt !== null && !v.paused && v.currentTime >= stopAt){ v.pause(); v.currentTime = stopAt; stopAt = null; }
   requestAnimationFrame(tick); }
 document.addEventListener('keydown', e => {
   if (micEl.style.display === 'block'){         // the picker is open: arrows choose a microphone
@@ -174,10 +202,10 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'p' || e.key === 'P'){ e.preventDefault(); if (!v.paused) v.pause(); else if (stopAt !== null) v.play(); }
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); back(); }
   else if (e.key === 'r' || e.key === 'R') toggleRec();
-  else if (e.key === 'n' || e.key === 'N') document.getElementById('notes').classList.toggle('hidden');
+  else if (e.key === 'n' || e.key === 'N') place(MODES[(MODES.indexOf(mode) + 1) % MODES.length]);
   else if (e.key === 'f' || e.key === 'F'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
 });
-show(); requestAnimationFrame(tick);
+place(mode); show(); requestAnimationFrame(tick);
 </script></body></html>"""
 
 
