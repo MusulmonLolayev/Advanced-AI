@@ -2,7 +2,7 @@
 
 http://localhost:8080/ (through an ssh -L tunnel; the microphone needs a secure origin) lists every built lecture:
 prepare its presenter page (presenter.py), open it to present and record (key R), build each recording into a 1080p
-video with the instructor's voice (compose_recording.py), watch it in the page, delete it. Recordings and their build
+video with the instructor's voice, cleaned with the chosen profile of ~/teaching/clean_video.sh (compose_recording.py), watch it in the page, delete it. Recordings and their build
 state live in a small SQLite file, out/studio.sqlite; the files stay in <build>/presenter/recordings/. Heavy jobs run
 one at a time in the background. Video is served with Range support, so the players can seek.
 
@@ -22,6 +22,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
+from compose_recording import CLEAN
+
 HERE = Path(__file__).parent
 ROOT = HERE / "out"
 DB = ROOT / "studio.sqlite"
@@ -38,6 +40,8 @@ def db():
         build text, name text, seconds real, created real,
         state text default 'recorded',              -- recorded | queued | building | built | failed
         error text default '', primary key (build, name))""")
+    if "clean" not in [r[1] for r in c.execute("pragma table_info(recordings)")]:
+        c.execute("alter table recordings add column clean text default ''")     # the voice profile it was built with
     return c
 
 
@@ -63,14 +67,14 @@ def sync():
         c.execute("update recordings set state='recorded' where state in ('queued','building')")   # killed jobs
 
 
-def compose(build, name):
+def compose(build, name, clean):
     with db() as c:
-        c.execute("update recordings set state='queued', error='' where build=? and name=?", (build, name))
+        c.execute("update recordings set state='queued', error='', clean=? where build=? and name=?", (clean, build, name))
     def work():
         with QUEUE:
             with db() as c:
                 c.execute("update recordings set state='building' where build=? and name=?", (build, name))
-            r = subprocess.run([sys.executable, "compose_recording.py", f"out/{build}", name], cwd=HERE,
+            r = subprocess.run([sys.executable, "compose_recording.py", f"out/{build}", name, clean], cwd=HERE,
                                capture_output=True, text=True)
             err = "" if r.returncode == 0 else ((r.stdout + r.stderr).strip().splitlines() or ["?"])[-1]
             with db() as c:
@@ -127,8 +131,9 @@ def studio():
             q = f"build={b}&name={n}"
             act = {"queued": '<span class="busy">queued…</span>', "building": '<span class="busy">building…</span>'}.get(s)
             if act is None:
-                act = (f'<a class="btn" href="/watch?{q}">Watch</a> ' if s == "built" else "") + \
-                      f'<button onclick="post(\'/api/compose?{q}\')">{"Rebuild" if s == "built" else "Build video"}</button> '
+                act = (f'<a class="btn" href="/watch?{q}">Watch</a> <span class=dim>voice: {html.escape(r["clean"] or "?")}</span> '
+                       if s == "built" else "") + \
+                      f'<button onclick="build(\'{q}\')">{"Rebuild" if s == "built" else "Build video"}</button> '
                 if s == "failed":
                     act += f'<span class="bad">failed: {html.escape(r["error"])}</span> '
             act += f'<button class="quiet" onclick="del(\'{q}\')">Delete</button>'
@@ -145,8 +150,13 @@ def watch(build, name):
                                 f'style="width:100%;background:#000;border-radius:8px"></video>').replace("BUSY", "false")
 
 
-HELP = """<h1>Recording studio</h1><p class="help">Present &amp; record: Space/→ next line, P pause, ← back, N notes,
-R starts and stops recording. Then press <b>Build video</b> here, and <b>Watch</b> when it is built.</p>"""
+HELP = ("""<h1>Recording studio</h1><p class="help">Present &amp; record: Space pause / play, → next line, ← back,
+N notes (below / right / off), M microphone, R starts and stops recording. Then press <b>Build video</b> here, and
+<b>Watch</b> when it is built.</p><p>Voice cleaning when building: <select id="clean">"""
+        + "".join(f'<option value="{k}">{k}</option>' for k in sorted(CLEAN, key=lambda k: k != "deepfilter"))
+        + """</select> <span class="help">deepfilter (default): neural denoiser,
+the cleanest (DNSMOS 3.2 vs 2.2 for voice on your first recording; ~5 min per 30 min) · voice: tuned for speech · mild: lighter · strong: a noisy
+room · off: low cut only. Rebuild to try another.</span></p>""")
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Recording studio</title><style>
@@ -163,6 +173,10 @@ button.quiet{background:none;color:var(--dim);border-color:#333}
 .help{color:var(--dim);font-size:14px}
 </style></head><body><main>BODY</main><script>
 async function post(u){ const r = await fetch(u, {method:'POST'}); if (!r.ok) alert(await r.text()); location.reload(); }
+const clean = document.getElementById('clean');
+if (clean){ try { clean.value = localStorage.getItem('studioClean') || 'deepfilter'; } catch (e) { clean.value = 'deepfilter'; }
+  clean.onchange = () => { try { localStorage.setItem('studioClean', clean.value); } catch (e) {} }; }
+function build(q){ post('/api/compose?' + q + '&clean=' + (clean ? clean.value : 'deepfilter')); }
 function del(q){ if (confirm('Delete this recording and its video?')) post('/api/delete?' + q); }
 if (BUSY) setTimeout(() => location.reload(), 3000);
 </script></body></html>"""
@@ -241,7 +255,10 @@ class Studio(SimpleHTTPRequestHandler):
         if n is None:
             return self.send_error(400, "bad recording name")
         if path == "/api/compose" and (recdir(b) / f"{n}.webm").exists():
-            compose(b, n)
+            clean = q.get("clean", "deepfilter")
+            if clean not in CLEAN:
+                return self.send_error(400, "unknown cleaning profile")
+            compose(b, n, clean)
             return self.ok()
         if path == "/api/delete":
             delete(b, n)

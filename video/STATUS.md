@@ -49,6 +49,14 @@ new lines per lecture: `out/review/l0N_add.txt`.
 - Voice server: `cd ~/navoiy-stack/CosyVoice && echo $$ > ~/navoiy-stack/work/tts_server.shellpid; exec
   .venv/bin/python ../work/tts_server.py 8765` (stop with `kill $(cat ~/navoiy-stack/work/tts_server.shellpid)`).
   Stopped 2026-10-14.
+- Recording studio: `nohup .venv/bin/python serve_presenter.py 8080 > out/serve_presenter.log 2>&1 & echo $! >
+  out/serve_presenter.pid` (stop with `kill $(cat out/serve_presenter.pid)`); reach it with `ssh -L 8081:localhost:8080
+  hometqqt` → http://localhost:8081/ (the instructor's laptop has its own 8080 taken). Presenter keys: Space pause /
+  play, → next line, ← back, N notes below / right / off (words light up at the narration's pace), M microphone, R
+  record. Build cleans the voice: `deepfilter` (default; DeepFilterNet binary in `bin/`, git-ignored, from the
+  v0.5.6 release) or the profiles of `~/teaching/clean_video.sh` (voice / mild / strong / off), then one fixed gain
+  to −19 LUFS + a peak limiter, picture via NVENC. DNSMOS on the instructor's first recording: raw 1.78, voice 2.17,
+  deepfilter 3.16. Listening samples: `out/denoise_compare/` (served at /denoise_compare/).
 
 ## Slide discrepancies found by the drafts (slides not edited)
 

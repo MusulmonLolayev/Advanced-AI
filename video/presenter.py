@@ -2,7 +2,9 @@
 
 Writes <build>/presenter/: the video without its audio (picture copied) and presenter.html, a local page that plays it
 and pauses just before each narration line starts, so every line's animation has finished and you talk over it for as
-long as you like. Space or → plays the next line (pressed while a line plays, it jumps to that line's end), P pauses mid-line, ← shows the
+long as you like. Space (or P) pauses and plays: pressed while a line plays it pauses right there, pressed again it
+carries on, and once a line has finished it plays the next one. → plays the next line (pressed while a line plays,
+it jumps to that line's end; a presentation clicker sends it), ← shows the
 start of the current line (again: the line before), N moves the notes (the line's text, and the next
 one): under the picture, at the right, hidden; the choice is remembered. While a line plays, its words light up at
 the pace of the original narration (the subtitle chunks' times, spread over the words), so you can keep up. F is full screen, M picks the microphone (with a level meter; the choice is remembered), R records your voice
@@ -88,7 +90,7 @@ body.hidden #notes{display:none}
 <div id="rec"></div>
 <div id="mic"><div class="lab" style="margin-top:0">microphone</div><select id="micsel"></select>
 <div id="lvl"><div></div></div><div class="lab">speak to test the level · M or Esc closes</div></div>
-<div id="bar">Space / → next line (while playing: jump to its end) · ← back · P pause · N notes: below / right / off · F full screen · M microphone · R record</div>
+<div id="bar">Space pause / play · → next line (while playing: jump to its end) · ← back · N notes: below / right / off · F full screen · M microphone · R record</div>
 <script>
 const L = LINES, BUILD = "BUILD", v = document.getElementById('v'), recEl = document.getElementById('rec');
 // recording: the microphone, and every moment the picture starts or stops, so the video can be rebuilt around the voice
@@ -187,6 +189,10 @@ function next(){
   if (!v.paused){ v.pause(); if (stopAt !== null) v.currentTime = stopAt; stopAt = null; return; }  // finish this line now
   if (stopAt !== null){ v.play(); return; }      // a line paused with P: carry on
   if (nxt < L.length) play(nxt); }
+function toggle(){                             // Space / P: pause here, carry on, or start the next line
+  if (!v.paused){ v.pause(); return; }
+  if (stopAt !== null){ v.play(); return; }      // paused mid-line: carry on
+  if (nxt < L.length) play(nxt); }
 function back(){                                // the current line's first frame; pressed again, the line before
   v.pause(); stopAt = null;
   if (Math.abs(v.currentTime - L[i][0]) < 0.05) i = Math.max(0, i - 1);
@@ -198,8 +204,8 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape' || e.key === 'm' || e.key === 'M'){ e.preventDefault(); toggleMic(); }
     return; }
   if (e.key === 'm' || e.key === 'M') toggleMic();
-  else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); next(); }
-  else if (e.key === 'p' || e.key === 'P'){ e.preventDefault(); if (!v.paused) v.pause(); else if (stopAt !== null) v.play(); }
+  else if (e.key === ' ' || e.key === 'p' || e.key === 'P'){ e.preventDefault(); toggle(); }
+  else if (e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); next(); }
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); back(); }
   else if (e.key === 'r' || e.key === 'R') toggleRec();
   else if (e.key === 'n' || e.key === 'N') place(MODES[(MODES.indexOf(mode) + 1) % MODES.length]);
