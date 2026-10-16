@@ -151,7 +151,7 @@ def watch(build, name):
 
 
 HELP = ("""<h1>Recording studio</h1><p class="help">Present &amp; record: Space pause / play, → next line, ← back,
-N notes (below / right / off), M microphone, [ ] speed (1/1.2 by default), R starts and stops recording. Then press <b>Build video</b> here, and
+N notes (below / right / off), M microphone, R starts and stops recording. Then press <b>Build video</b> here, and
 <b>Watch</b> when it is built.</p><p>Voice cleaning when building: <select id="clean">"""
         + "".join(f'<option value="{k}">{k}</option>' for k in sorted(CLEAN, key=lambda k: k != "deepfilter"))
         + """</select> <span class="help">deepfilter (default): neural denoiser,
