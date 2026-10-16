@@ -4,7 +4,7 @@ Writes <build>/presenter/: the video without its audio (picture copied) and pres
 and pauses just before each narration line starts, so every line's animation has finished and you talk over it for as
 long as you like. Space or → plays the next line (pressed while a line plays, it jumps to that line's end), P pauses mid-line, ← shows the
 start of the current line (again: the line before), N shows or hides the notes (the line's text,
-and the next one), F is full screen, R records your voice
+and the next one), F is full screen, M picks the microphone (with a level meter; the choice is remembered), R records your voice
 (press R again to stop; it is saved on the server, and compose_recording.py turns it into a video). Lines are found in each scene's subtitles: chunks of one line follow each other
 0.1 s apart, a new line starts after a longer gap (>= 0.23 s).
 
@@ -64,11 +64,19 @@ video{flex:1;min-width:0;height:100%;background:#000;object-fit:contain}
 #cur{font-size:22px}#next{color:var(--dim)}
 #bar{position:fixed;left:0;bottom:0;right:0;padding:6px 12px;font-size:13px;color:var(--dim);background:#000c}
 #rec{position:fixed;top:10px;left:12px;font-size:15px;color:#e5484d;display:none}
+#mic{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;border:1px solid #333;
+  border-radius:8px;padding:18px 22px;width:min(460px,90vw);display:none}
+#mic select{width:100%;font:inherit;background:#222;color:var(--fg);border:1px solid #444;padding:6px}
+#lvl{height:10px;background:#222;border-radius:5px;margin-top:12px;overflow:hidden}
+#lvl div{height:100%;width:0;background:var(--accent)}
 </style></head><body>
 <div id="wrap"><video id="v" src="VIDEO" preload="auto"></video>
 <div id="notes"><div class="lab">now · <span id="num"></span></div><div id="cur"></div>
 <div class="lab">next</div><div id="next"></div></div></div>
-<div id="rec"></div><div id="bar">Space / → next line (while playing: jump to its end) · ← back · P pause · N notes · F full screen · R record</div>
+<div id="rec"></div>
+<div id="mic"><div class="lab" style="margin-top:0">microphone</div><select id="micsel"></select>
+<div id="lvl"><div></div></div><div class="lab">speak to test the level · M or Esc closes</div></div>
+<div id="bar">Space / → next line (while playing: jump to its end) · ← back · P pause · N notes · F full screen · M microphone · R record</div>
 <script>
 const L = LINES, BUILD = "BUILD", v = document.getElementById('v'), recEl = document.getElementById('rec');
 // recording: the microphone, and every moment the picture starts or stops, so the video can be rebuilt around the voice
@@ -81,16 +89,56 @@ v.addEventListener('seeked', () => { if (v.paused) log('hold'); });   // a jump 
 async function upload(name, kind, body){
   const r = await fetch(`/upload?build=${BUILD}&name=${name}&kind=${kind}`, {method: 'POST', body});
   if (!r.ok) throw new Error(await r.text()); }
+// the microphone: the one chosen with M (remembered in this browser), else the default
+const micEl = document.getElementById('mic'), micSel = document.getElementById('micsel'),
+      lvl = document.querySelector('#lvl div');
+let micId = '', meter = null;
+try { micId = localStorage.getItem('presenterMic') || ''; } catch (e) {}
+function audio(id){ return {audio: {echoCancellation: false, autoGainControl: true, ...(id ? {deviceId: {exact: id}} : {})}}; }
+async function openStream(){                    // the chosen microphone; if it is gone, the default one
+  if (micId){ try { return await navigator.mediaDevices.getUserMedia(audio(micId)); } catch (e) {} }
+  return navigator.mediaDevices.getUserMedia(audio(''));
+}
+function stopMeter(){ if (meter){ meter.stream.getTracks().forEach(t => t.stop()); meter.ctx.close(); meter = null; } lvl.style.width = 0; }
+async function startMeter(){
+  stopMeter();
+  const stream = await openStream(), ctx = new AudioContext(), an = ctx.createAnalyser();
+  an.fftSize = 1024; ctx.createMediaStreamSource(stream).connect(an);
+  const buf = new Float32Array(an.fftSize); meter = {stream, ctx};
+  const m = meter;
+  (function draw(){ if (meter !== m) return; an.getFloatTimeDomainData(buf);
+    let peak = 0; for (const x of buf) peak = Math.max(peak, Math.abs(x));
+    lvl.style.width = Math.min(100, peak * 100) + '%'; requestAnimationFrame(draw); })();
+  return stream;
+}
+async function toggleMic(){
+  if (micEl.style.display === 'block'){ micEl.style.display = 'none'; stopMeter(); micSel.blur(); return; }
+  if (rec) return;                               // not while recording
+  let stream;
+  try { stream = await startMeter(); }           // asking once lets the browser show the devices' names
+  catch (e){ alert('No microphone: open this page through http://localhost (see the ssh -L tunnel). ' + e); return; }
+  const used = stream.getAudioTracks()[0].getSettings().deviceId;
+  const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+  micSel.innerHTML = '';
+  devs.forEach((d, k) => { const o = document.createElement('option'); o.value = d.deviceId;
+    o.textContent = d.label || ('microphone ' + (k + 1)); o.selected = d.deviceId === used; micSel.appendChild(o); });
+  micEl.style.display = 'block'; micSel.focus();
+}
+micSel.addEventListener('change', async () => {
+  micId = micSel.value; try { localStorage.setItem('presenterMic', micId); } catch (e) {}
+  try { await startMeter(); } catch (e){ alert('Cannot open this microphone: ' + e); } });
 async function toggleRec(){
   if (rec){ log('stop'); rec.stop(); return; }
+  if (micEl.style.display === 'block') toggleMic();
   let stream;
-  try { stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, autoGainControl: true}}); }
+  try { stream = await openStream(); }
   catch (e){ alert('No microphone: open this page through http://localhost (see the ssh -L tunnel). ' + e); return; }
+  const micName = stream.getAudioTracks()[0].label;
   chunks = []; ev = [];
   rec = new MediaRecorder(stream, {mimeType: 'audio/webm;codecs=opus'});
   rec.ondataavailable = e => chunks.push(e.data);
   rec.onstart = () => { t0 = performance.now(); ev.push([0, v.paused ? 'hold' : 'play', v.currentTime]);
-    recEl.style.display = 'block'; recEl.textContent = '● REC'; };
+    recEl.style.display = 'block'; recEl.textContent = '● REC' + (micName ? ' — ' + micName : ''); };
   rec.onstop = async () => { stream.getTracks().forEach(t => t.stop());
     const name = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     recEl.textContent = 'saving…';
@@ -118,7 +166,11 @@ function back(){                                // the current line's first fram
 function tick(){ if (stopAt !== null && !v.paused && v.currentTime >= stopAt){ v.pause(); v.currentTime = stopAt; stopAt = null; }
   requestAnimationFrame(tick); }
 document.addEventListener('keydown', e => {
-  if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); next(); }
+  if (micEl.style.display === 'block'){         // the picker is open: arrows choose a microphone
+    if (e.key === 'Escape' || e.key === 'm' || e.key === 'M'){ e.preventDefault(); toggleMic(); }
+    return; }
+  if (e.key === 'm' || e.key === 'M') toggleMic();
+  else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); next(); }
   else if (e.key === 'p' || e.key === 'P'){ e.preventDefault(); if (!v.paused) v.pause(); else if (stopAt !== null) v.play(); }
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); back(); }
   else if (e.key === 'r' || e.key === 'R') toggleRec();
