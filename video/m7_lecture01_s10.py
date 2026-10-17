@@ -23,8 +23,8 @@ class S10Compound(Scene7):
         self.clear_all()
 
         ax = Axes(x_range=[0, 20, 5], y_range=[0, 1, 0.25], x_length=9, y_length=4.6, tips=False,
-                  axis_config={"include_numbers": True, "font_size": 24}).move_to(DOWN * 0.3 + LEFT * 0.6)
-        xl = txt(label("m7_number_of_steps"), size=22, color=GREY_B).next_to(ax.x_axis, DOWN, buff=0.45)
+                  axis_config={"include_numbers": True, "font_size": 24}).move_to(UP * 0.15 + LEFT * 0.6)
+        xl = txt(label("m7_number_of_steps"), size=22, color=GREY_B).next_to(ax.x_axis, DOWN, buff=0.4)
         yl = txt(label("m7_all_right"), size=22, color=GREY_B).rotate(PI / 2).next_to(ax.y_axis, LEFT, buff=0.45)
         good = ax.plot(lambda k: C.P_GOOD ** k, x_range=[0, 20], color=GOOD)
         good_lab = MathTex(f"p = {C.P_GOOD}", font_size=32, color=GOOD).next_to(ax.c2p(20, C.P_GOOD ** 20), UP, buff=0.15)

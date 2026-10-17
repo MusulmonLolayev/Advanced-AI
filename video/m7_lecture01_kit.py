@@ -139,11 +139,28 @@ def draft_tag():
     return txt(label("m7_draft"), size=16, color=RLRED).to_corner(DL, buff=SAFE)
 
 
+# What stays on screen after an animation must fit here: inside the frame, and above the bottom strip that holds the
+# brand mark and the draft tag (check_edges.py only sees the outer 4 px, so a card covering the tag at 7:15 passed it).
+LIMIT_X, LIMIT_TOP, LIMIT_BOTTOM = 6.95, 3.85, -3.28
+
+
 class Scene7(LectureScene):
-    """The lecture scene with the draft tag on every frame (removed once the narration is approved)."""
+    """The lecture scene with the draft tag on every frame (removed once the narration is approved), and a check
+    after every animation that nothing left on screen runs off the frame or into the bottom strip."""
     DRAFT = True
 
     def setup(self):
         super().setup()
         if self.DRAFT:
             self.brand.add(draft_tag())        # clear_all() keeps the brand group, so the tag stays too
+
+    def play(self, *args, **kwargs):
+        super().play(*args, **kwargs)
+        for m in self.mobjects:
+            if m is self.brand or m.width == 0:
+                continue
+            l, r = m.get_left()[0], m.get_right()[0]
+            b, t = m.get_bottom()[1], m.get_top()[1]
+            if l < -LIMIT_X or r > LIMIT_X or t > LIMIT_TOP or b < LIMIT_BOTTOM:
+                raise RuntimeError(f"{type(self).__name__} at {self.renderer.time:.1f}s: {type(m).__name__} spans "
+                                   f"x {l:.2f}..{r:.2f}, y {b:.2f}..{t:.2f} -- outside the safe area")

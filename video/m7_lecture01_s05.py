@@ -7,6 +7,9 @@ def answer_box(name, marks, width=60, size=19):
     """A recorded no-tools answer, its markdown stripped, with the claims `marks` lit in red."""
     text = trace(name)["answer"].replace("**", "")
     text = re.sub(r"\n\s*\n", "\n", text).strip()
+    marks = [m.replace(" ", "\u00a0") for m in marks]            # a lit claim never breaks across two lines
+    for m in marks:
+        text = text.replace(m.replace("\u00a0", " "), m)
     wrapped = "\n".join(textwrap.fill(p, width) for p in text.split("\n"))
     t = Text(wrapped, font=MONO, font_size=size, color=GREY_A, disable_ligatures=True,
              t2c={m: RLRED for m in marks if m in wrapped})
@@ -54,20 +57,23 @@ class S05NoTools(Scene7):
             self.cue(tr, t, {"uz": "Vositasiz model", "en": "Without tools"})
             self.play(FadeIn(a3), run_time=0.7)
 
-        t153 = article_card("153", chars=90, width=8.0, size=18)
+        # two columns: each answer, and under it the article it cites
+        col_w, top = 6.2, 3.3
+        t153 = fit(article_card("153", chars=90, width=5.6, size=18), col_w)
         again = txt(label("m7_asked_again"), size=24, color=GREY_B)
-        a3b = answer_box("q3_min_wage_notools2", ["1,270,000", "[Art. 209]"], width=62, size=18)
-        t209 = article_card("209", chars=90, width=8.0, size=18)
+        a3b = fit(answer_box("q3_min_wage_notools2", ["1,270,000", "[Art. 209]"], width=62, size=18), col_w)   # wrapped like the left one, so both read at one size
+        t209 = fit(article_card("209", chars=90, width=5.6, size=18), col_w)
         with self.say("5.41") as (tr, t):
-            self.play(a3.animate.scale(0.75).to_edge(UP, buff=SAFE + 0.2), FadeOut(q3), run_time=0.6)
-            t153.scale(0.8).next_to(a3, DOWN, buff=0.25)
+            self.play(FadeOut(q3), a3.animate.scale_to_fit_width(col_w).move_to([-3.45, top, 0], aligned_edge=UP),
+                      run_time=0.6)
+            t153.next_to(a3, DOWN, buff=0.3)
             self.play(FadeIn(t153), run_time=0.5)
             self.cue(tr, t, {"uz": "Xuddi shu savolni", "en": "We asked the same question"})
-            again.next_to(t153, DOWN, buff=0.3)
-            a3b.scale_to_fit_width(min(a3b.width * 0.75, 12.4)).next_to(again, DOWN, buff=0.15)
+            again.move_to([3.45, top, 0], aligned_edge=UP)
+            a3b.next_to(again, DOWN, buff=0.15)
             self.play(FadeIn(again), FadeIn(a3b), run_time=0.7)
             self.cue(tr, t, {"uz": "Bu modda esa", "en": "And that article"})
-            t209.scale(0.8).next_to(a3b, DOWN, buff=0.25)
+            t209.next_to(a3b, DOWN, buff=0.3)
             self.play(FadeIn(t209), run_time=0.5)
         self.clear_all()
 
