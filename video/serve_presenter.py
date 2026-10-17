@@ -4,8 +4,10 @@ http://localhost:8080/ (through an ssh -L tunnel; the microphone needs a secure 
 prepare its presenter page (presenter.py), open it to present and record (key R), build each recording into a 1080p
 video with the instructor's voice, cleaned with the chosen profile of ~/teaching/clean_video.sh (compose_recording.py), watch it in the page, delete it. Recordings and their build
 state live in a small SQLite file, out/studio.sqlite; the files stay in <build>/presenter/recordings/. Heavy jobs run
-one at a time in the background. Video is served with Range support, so the players can seek. Files put in (or
-linked into) out/shared/ -- a lecture PDF, say -- are listed under "Files" to open or download.
+one at a time in the background. Video is served with Range support, so the players can seek. The page is split by
+module (a panel on the left, /?m=7): a module's lectures are its builds (lectureNN_uz_navoiy for Module 0,
+mK_lectureNN_uz_navoiy for Module K), and its files are whatever is put in (or linked into) out/shared/mK/ -- a
+lecture PDF, say -- to open or download.
 
     ssh -L 8080:localhost:8080 musulmon@10.0.0.5            # on the instructor's computer
     uv run python serve_presenter.py 8080                    # here; then open http://localhost:8080/
@@ -28,7 +30,18 @@ from compose_recording import CLEAN
 HERE = Path(__file__).parent
 ROOT = HERE / "out"
 DB = ROOT / "studio.sqlite"
-BUILD = re.compile(r"lecture\d\d_uz_navoiy")          # the statistics lectures
+BUILD = re.compile(r"(?:m(\d)_)?lecture(\d\d)_uz_navoiy")   # Module 0 has no prefix; Module K is mK_
+MODULES = {0: "Statistics for Advanced AI", 1: "Classical Machine Learning", 2: "Vision / Deep Neural Networks",
+           3: "Natural Language Processing", 4: "Graph Neural Networks", 5: "Reinforcement Learning & Alignment",
+           6: "Efficient AI & Deployment", 7: "AI Agents, Tool Use & Retrieval"}      # course-map.md
+
+
+def module_of(build):
+    return int(BUILD.fullmatch(build).group(1) or 0)
+
+
+def lecture_title(build):
+    return f"Lecture {BUILD.fullmatch(build).group(2)}"
 NAME = re.compile(r"[0-9T-]+")                         # a recording's name: its start time
 QUEUE = threading.Semaphore(1)                         # one heavy job at a time
 PREPARING = {}                                         # build -> "running" | "failed: …"
@@ -54,7 +67,7 @@ def sync():
     """Add recordings found on disk (made before the database existed), drop rows whose files are gone."""
     import json
     with db() as c:
-        for d in ROOT.glob("lecture*_uz_navoiy/presenter/recordings"):
+        for d in ROOT.glob("*lecture*_uz_navoiy/presenter/recordings"):
             for w in d.glob("*.webm"):
                 j = d / f"{w.stem}.json"
                 if j.exists():
@@ -106,17 +119,33 @@ def delete(build, name):
 SHARED = ROOT / "shared"
 
 
-def files():
-    """The Files section: everything in out/shared/ (links are followed, so a rebuilt PDF shows up as it is)."""
+def shared(module):
+    """A module's files: everything in out/shared/mK/ (links are followed, so a rebuilt PDF shows up as it is)."""
+    d = SHARED / f"m{module}"
+    return [f for f in sorted(d.iterdir()) if f.is_file() and not f.name.startswith(".")] if d.is_dir() else []
+
+
+def files(module):
     rows = []
-    for f in sorted(SHARED.iterdir()) if SHARED.is_dir() else []:
-        if f.is_file() and not f.name.startswith("."):
-            st, q = f.stat(), quote(f.name)
-            rows.append(f'<li>{html.escape(f.name)} <span class=dim>· {st.st_size / 1e6:.1f} MB · '
-                        f'{time.strftime("%d %b %H:%M", time.localtime(st.st_mtime))}</span> · '
-                        f'<a class="btn" href="/shared/{q}" target="_blank">Open</a> '
-                        f'<a class="btn" href="/shared/{q}" download>Download</a></li>')
+    for f in shared(module):
+        st, q = f.stat(), f"m{module}/{quote(f.name)}"
+        rows.append(f'<li>{html.escape(f.name)} <span class=dim>· {st.st_size / 1e6:.1f} MB · '
+                    f'{time.strftime("%d %b %H:%M", time.localtime(st.st_mtime))}</span> · '
+                    f'<a class="btn" href="/shared/{q}" target="_blank">Open</a> '
+                    f'<a class="btn" href="/shared/{q}" download>Download</a></li>')
     return f"<section><h2>Files</h2><ul>{''.join(rows) or '<li class=dim>nothing shared yet</li>'}</ul></section>"
+
+
+def sidebar(module, all_builds):
+    items = []
+    for k, title in MODULES.items():
+        n_lec = sum(module_of(b) == k for b in all_builds)
+        n_files = len(shared(k))
+        count = " · ".join(x for x in (f"{n_lec} lecture{'s' * (n_lec != 1)}" if n_lec else "",
+                                        f"{n_files} file{'s' * (n_files != 1)}" if n_files else "") if x)
+        items.append(f'<a href="/?m={k}" class="mod{" on" if k == module else ""}{"" if count else " empty"}">'
+                     f'<b>Module {k}</b><span>{html.escape(title)}</span><small>{count or "nothing yet"}</small></a>')
+    return f'<nav><div class="brand">Recording studio</div>{"".join(items)}</nav>' 
 
 
 def builds():
@@ -124,11 +153,12 @@ def builds():
             and (d / f"{d.name}.mp4").exists() and (d / "joined.txt").exists()]
 
 
-def studio():
+def studio(module):
     with db() as c:
         rows = c.execute("select * from recordings order by created desc").fetchall()
     out, busy = [], bool(PREPARING) and any(v == "running" for v in PREPARING.values())
-    for b in builds():
+    all_builds = builds()
+    for b in (b for b in all_builds if module_of(b) == module):
         ready = (ROOT / b / "presenter" / "presenter.html").exists()
         st = PREPARING.get(b, "")
         if st == "running":
@@ -155,19 +185,26 @@ def studio():
                     act += f'<span class="bad">failed: {html.escape(r["error"])}</span> '
             act += f'<button class="quiet" onclick="del(\'{q}\')">Delete</button>'
             recs.append(f"<li><span class=mono>{when}</span> · {r['seconds'] / 60:.1f} min · {act}</li>")
-        out.append(f"<section><h2>{b.split('_')[0].replace('lecture', 'Lecture ')}</h2><p>{pres}</p>"
+        out.append(f"<section><h2>{lecture_title(b)}</h2><p>{pres}</p>"
                    f"<ul>{''.join(recs) or '<li class=dim>no recordings yet</li>'}</ul></section>")
-    return PAGE.replace("BODY", HELP + files() + "".join(out)).replace("BUSY", "true" if busy else "false")
+    head = f'<h1>Module {module} · {html.escape(MODULES[module])}</h1>'
+    lectures = "".join(out) or '<section><h2>Lectures</h2><p class=dim>no lecture video built yet</p></section>'
+    return (PAGE.replace("NAV", sidebar(module, all_builds))
+            .replace("BODY", head + files(module) + lectures + HELP)
+            .replace("BUSY", "true" if busy else "false").replace("MODULE", str(module)))
 
 
 def watch(build, name):
     src = f"/{build}/presenter/recordings/{quote(name)}.mp4"
-    return PAGE.replace("BODY", f'<p><a href="/">← studio</a> · {build.split("_")[0].replace("lecture", "Lecture ")} · '
-                                f'<span class=mono>{name}</span></p><video src="{src}" controls autoplay '
-                                f'style="width:100%;background:#000;border-radius:8px"></video>').replace("BUSY", "false")
+    m = module_of(build)
+    return (PAGE.replace("NAV", sidebar(m, builds()))
+            .replace("BODY", f'<p><a href="/?m={m}">← Module {m}</a> · {lecture_title(build)} · '
+                             f'<span class=mono>{name}</span></p><video src="{src}" controls autoplay '
+                             f'style="width:100%;background:#000;border-radius:8px"></video>')
+            .replace("BUSY", "false").replace("MODULE", str(m)))
 
 
-HELP = ("""<h1>Recording studio</h1><p class="help">Present &amp; record: Space pause / play, → next line, ← back,
+HELP = ("""<h2 class="sub">How it works</h2><p class="help">Present &amp; record: Space pause / play, → next line, ← back,
 N notes (below / right / off), M microphone, R starts and stops recording. Then press <b>Build video</b> here, and
 <b>Watch</b> when it is built.</p><p>Voice cleaning when building: <select id="clean">"""
         + "".join(f'<option value="{k}">{k}</option>' for k in sorted(CLEAN, key=lambda k: k != "deepfilter"))
@@ -179,7 +216,21 @@ PAGE = """<!doctype html><html><head><meta charset="utf-8"><meta name="viewport"
 <title>Recording studio</title><style>
 :root{--bg:#111;--fg:#eee;--dim:#888;--acc:#8fb8de;--bad:#e5484d}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
-main{max-width:960px;margin:0 auto;padding:24px 16px}a{color:var(--acc)}
+.wrap{display:flex;min-height:100vh}
+nav{width:250px;flex:none;border-right:1px solid #2a2a2a;padding:16px 10px;box-sizing:border-box;
+  position:sticky;top:0;height:100vh;overflow-y:auto;background:#151515}
+nav .brand{font-weight:600;padding:4px 10px 12px;color:var(--fg)}
+nav a.mod{display:block;padding:8px 10px;border-radius:8px;color:var(--fg);text-decoration:none;margin:2px 0}
+nav a.mod span{display:block;font-size:14px;line-height:1.3}
+nav a.mod small{display:block;font-size:12px;color:var(--dim)}
+nav a.mod:hover{background:#1d1d1d}nav a.mod.on{background:#1f2a36}nav a.mod.on b{color:var(--acc)}
+nav a.mod.empty{opacity:.55}
+main{flex:1;min-width:0;max-width:960px;margin:0 auto;padding:24px 16px}a{color:var(--acc)}
+h2.sub{margin-top:24px}
+@media (max-width:720px){.wrap{flex-direction:column}
+  nav{width:auto;height:auto;position:static;display:flex;overflow-x:auto;gap:6px;border-right:0;
+    border-bottom:1px solid #2a2a2a;padding:8px}
+  nav .brand{display:none}nav a.mod{flex:none;width:170px}}
 h1{font-size:24px}h2{font-size:18px;margin:0 0 6px}
 section{border:1px solid #2a2a2a;border-radius:10px;padding:14px 16px;margin:12px 0}
 ul{margin:6px 0 0;padding-left:18px}li{margin:6px 0}
@@ -188,7 +239,13 @@ font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
 button.quiet{background:none;color:var(--dim);border-color:#333}
 .mono{font-family:ui-monospace,monospace;font-size:14px}.dim{color:var(--dim)}.busy{color:#d7b46a}.bad{color:var(--bad)}
 .help{color:var(--dim);font-size:14px}
-</style></head><body><main>BODY</main><script>
+</style></head><body><div class="wrap">NAV<main>BODY</main></div><script>
+// the module last opened is remembered: "/" without ?m= goes back to it
+const MOD = "MODULE", asked = new URLSearchParams(location.search).get('m');
+try { if (location.pathname === '/' && asked === null && (localStorage.getItem('studioModule') || MOD) !== MOD)
+        location.replace('/?m=' + localStorage.getItem('studioModule'));
+      else if (location.pathname === '/') localStorage.setItem('studioModule', MOD); } catch (e) {}
+document.querySelector('nav a.mod.on')?.scrollIntoView({inline: 'center', block: 'nearest'});   // on a phone, a strip
 async function post(u){ const r = await fetch(u, {method:'POST'}); if (!r.ok) alert(await r.text()); location.reload(); }
 const clean = document.getElementById('clean');
 if (clean){ try { clean.value = localStorage.getItem('studioClean') || 'deepfilter'; } catch (e) { clean.value = 'deepfilter'; }
@@ -246,9 +303,10 @@ class Studio(SimpleHTTPRequestHandler):
         return u.path, q, b if ok_b else None, n if ok_n else None
 
     def do_GET(self):
-        path, _, b, n = self.args()
+        path, q, b, n = self.args()
         if path in ("/", "/index.html"):
-            return self.html(studio())
+            m = q.get("m", "0")
+            return self.html(studio(int(m) if m.isdigit() and int(m) in MODULES else 0))
         if path == "/watch":
             if not (b and n and (recdir(b) / f"{n}.mp4").exists()):
                 return self.send_error(404, "no such video")
