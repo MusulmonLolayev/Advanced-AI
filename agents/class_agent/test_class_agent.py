@@ -235,6 +235,20 @@ class UKRecordedRuns(unittest.TestCase):
         for fact in ("average of 48 hours", "17 weeks", "attained the age of 15 but not 18", "8 hours a day or 40 hours a week"):
             self.assertIn(fact, a)
 
+    def test_what_the_english_narration_quotes(self):
+        """video/narration/m7_lecture01_en.md, lines 33, 34, 66a, 71, 74a."""
+        q2 = self.t("q2_under18")["trace"]
+        self.assertNotIn("WTR 2:", q2[3]["observation"])                        # the search did not list WTR 2 ...
+        self.assertIn("likely in the interpretation provision", q2[4]["model"])  # ... the thought chose it
+        q3 = self.t("q3_min_wage")["trace"]
+        self.assertIn("or delegates it to regulations", q3[0]["model"])          # before reading anything
+        self.assertIn("No monetary figure appears anywhere", q3[3]["model"])     # after the empty £ search
+        self.assertEqual(self.actions("q3_min_wage_steps3")[2], ("search", "pounds per hour"))
+        notools = self.t("q3_min_wage_notools")["answer"]
+        self.assertIn("From 1 April 2026", notools)
+        self.assertIn("**21 and over:** £12.71", notools)
+        self.assertIn("does not itself set a pound-per-hour figure", notools)
+
     def test_q3_says_the_act_has_no_amount(self):
         self.assertEqual([n for n, _ in self.actions("q3_min_wage")], ["search", "fetch", "search", "answer"])
         self.assertEqual(self.actions("q3_min_wage")[2], ("search", "£"))         # a search that cannot match anything

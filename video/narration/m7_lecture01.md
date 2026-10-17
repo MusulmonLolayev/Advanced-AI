@@ -1,5 +1,8 @@
 # Module 7, Lecture 1 — What is an agent? — video narration (draft 1, for approval)
 
+**The English video has its own narration since 2026-10-17** (`m7_lecture01_en.md`, on UK law); the italic
+English lines here are a gloss of the Uzbek, for review only.
+
 **One video for the lecture** (the slides have one part): a lecture opening, then ten sections, each with a short
 section card ("3-boʻlim · ReAct"). Each section: problem first → concept as the answer → the real agent → a hands-on
 pause → the question the next section answers. Built fresh for this course, not from the short agent-course video.
