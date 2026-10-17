@@ -105,8 +105,10 @@ class EdgeTTSService(SpeechService):
             return cached
         audio_path = str(path) if path else self.get_audio_basename(input_data) + ".mp3"
         target = str(Path(cache_dir) / audio_path)
-        # edge-tts occasionally returns a truncated clip; check against word count.
-        min_seconds = len(input_text.split()) / 4.5
+        # edge-tts occasionally returns a truncated clip; check against word count. Five words a second: Andrew
+        # reads a short plain line at ~4.5 (m7 L1, 16 words in 3.55 s failed a 4.5 limit), and a cut clip loses
+        # whole words, so it stays well under this.
+        min_seconds = len(input_text.split()) / 5.0
         for _ in range(3):
             asyncio.run(edge_tts.Communicate(input_text, self.voice, **({"rate": rate} if rate else {})).save(target))
             if MP3(target).info.length >= min_seconds:

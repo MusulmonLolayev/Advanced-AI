@@ -49,7 +49,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
    *Today's question is simple: what is an agent, and how is it different from an ordinary program? We find the answer not in theory but in a real example. We build a small agent on the Labor Code of Uzbekistan and look at every step it takes.*
    ▸ the code's cover line "Oʻzbekiston Respublikasining Mehnat kodeksi", 581 article tiles fill the screen
 
-### 1-boʻlim · Nega agent kerak? · Why do we need an agent?
+### 1-boʻlim · Section 1 — Nega agent kerak? · Why do we need an agent?
 2. **Keling, bitta savoldan boshlaymiz: normal ish haftasi eng koʻpi bilan necha soat? Bu savolga bitta qidiruv yetarli. Kodeksdan kerakli moddani topamiz, oʻqiymiz, va javob beramiz.**
    *Let's start with one question: at most, how many hours is a normal working week? One search is enough for it. We find the right article in the code, read it, and answer.*
    ▸ a row of boxes: savol → qidiruv → javob
@@ -71,7 +71,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 9. **Demak, agent sikl ichida ishlaydi. Xoʻp, endi bu siklning qismlariga nom beraylik.**
    *So an agent works inside a loop. Now let's name the parts of that loop.*
 
-### 2-boʻlim · Vosita, harakat, traektoriya · Tool, action, trajectory
+### 2-boʻlim · Section 2 — Vosita, harakat, traektoriya · Tool, action, trajectory
 10. **Birinchi tushuncha — vosita. Vosita bu model nomi bilan chaqira oladigan funksiya. Model uni faqat matndagi tavsifidan biladi.**
     *The first concept is a tool. A tool is a function the model can ask for by name. The model knows it only from its description in text.*
 11. **Bizning agentimizda uchta harakat bor. Qidiruv soʻzlar boʻyicha moddalarni topadi. Moddani olish bitta moddaning toʻliq matnini beradi. Javob esa ishni tugatadi, va undagi har bir daʼvo modda raqami bilan koʻrsatiladi.**
@@ -92,7 +92,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 17. **Endi model fikr bilan harakatni qanday navbatlashtirishini koʻraylik.**
     *Now let's see how the model takes turns between thinking and acting.*
 
-### 3-boʻlim · ReAct · ReAct
+### 3-boʻlim · Section 3 — ReAct · ReAct
 18. **Agentni qurishning ikkita oddiy yoʻli bor, va ikkalasi ham oʻziga xos tarzda buziladi.**
     *There are two obvious ways to build an agent, and each fails in its own way.*
 19. **Birinchi yoʻl — faqat fikrlash. Model rejani chiroyli tuzadi, lekin hech narsani tekshirmaydi. Notoʻgʻri boshlangʻich fikr oxirgi javobgacha yetib boradi.**
@@ -115,7 +115,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 26. **Endi bu siklni haqiqiy agentda ishga tushirib koʻramiz.**
     *Now let's run this loop in a real agent.*
 
-### 4-boʻlim · Haqiqiy traektoriya · A real trajectory
+### 4-boʻlim · Section 4 — Haqiqiy traektoriya · A real trajectory
 27. **Bizning agentimiz Mehnat kodeksi ustida ishlaydi: ikki ming yigirma ikkinchi yilgi kodeks, besh yuz sakson bir modda, hammasi oʻzbek tilida. Agent boshida birorta moddani ham koʻrmagan. U faqat harakat orqali oʻqiydi.**
     *Our agent works on the Labor Code: the 2022 code, five hundred and eighty-one articles, all in Uzbek. At the start the agent has seen none of them. It reads only by acting.*
 28. **Savolimiz: normal ish haftasi eng koʻpi bilan necha soat, va oʻn sakkiz yoshgacha boʻlgan xodimlar uchun u farq qiladimi?**
@@ -141,7 +141,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 36. **Agent toʻgʻri javob berdi. Vositalarsiz-chi? Keyingi boʻlimda shuni tekshiramiz.**
     *The agent answered correctly. And without tools? That is what we check in the next section.*
 
-### 5-boʻlim · Vositasiz javob · An answer without tools
+### 5-boʻlim · Section 5 — Vositasiz javob · An answer without tools
 37. **Endi xuddi shu modelga xuddi shu savolni beramiz, lekin vositalarsiz. Sikl yoʻq, qidiruv yoʻq, oddiy chatbot kabi bir marta soʻraymiz.**
     *Now we give the same model the same question, but with no tools. No loop, no search: we ask once, like an ordinary chatbot.*
 38. **Javob ishonchli eshitiladi: qirq soat, oʻttiz olti soat, yigirma toʻrt soat. Raqamlar toʻgʻri. Lekin manba sifatida yuz sakson uchinchi modda koʻrsatilgan.**
@@ -164,7 +164,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 45. **Agent oʻqiydi, oʻqish esa bepul emas. Keyingi boʻlimda narxini hisoblaymiz.**
     *An agent reads, and reading is not free. In the next section we work out the cost.*
 
-### 6-boʻlim · Qoralama va narx · The scratchpad and the bill
+### 6-boʻlim · Section 6 — Qoralama va narx · The scratchpad and the bill
 46. **Agentning qoralamasi alohida joyda saqlanmaydi. Har bir fikr, harakat va kuzatuv bir-biriga ulanadi va keyingi navbatda modelga butunlay qayta yuboriladi. Yaʼni qoralama bu kontekst oynasining oʻzi.**
     *An agent's scratchpad is not stored anywhere special. Every thought, action and observation is joined together and sent to the model again, whole, on the next turn. The scratchpad is the context window itself.*
 47. **Hisoblaymiz. Tizim koʻrsatmasi va vositalar tavsifi doimiy qism, aytaylik, bir ming ikki yuz token. Har bir qadam yana besh yuz token qoʻshadi.**
@@ -187,7 +187,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 53. **Bu narxni kamaytirishning bir yoʻli bor. Keyingi boʻlimda koʻramiz.**
     *There is a way to bring this bill down. We see it in the next section.*
 
-### 7-boʻlim · Kesh · The cache
+### 7-boʻlim · Section 7 — Kesh · The cache
 54. **Model har bir yangi tokenni yozish uchun undan oldingi hamma tokenlar boʻyicha hisob-kitob qiladi. Lekin bu hisob-kitob faqat oldingi matnga bogʻliq. Server uni bir marta bajarib, saqlab qoʻyishi mumkin. Buni kesh deymiz.**
     *To write each new token, the model computes over every token before it. But that computation depends only on the earlier text. A server can do it once and keep it. We call this a cache.*
 55. **Agent sikli kesh uchun eng qulay holat: har bir navbat oldingi navbatning matni bilan aynan bir xil boshlanadi. Faqat oxirgi qoʻshilgan tokenlar yangi.**
@@ -207,7 +207,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 61. **Endi narxdan vositalarning oʻziga qaytamiz: ularni qanday tanlaymiz?**
     *Now from the bill back to the tools themselves: how do we choose them?*
 
-### 8-boʻlim · Harakatlar toʻplamini loyihalash · Designing the action space
+### 8-boʻlim · Section 8 — Harakatlar toʻplamini loyihalash · Designing the action space
 62. **Harakatlar toʻplami modelning yagona lugʻati. Uni notoʻgʻri oʻlchamda tanlash ikki tomonga ham zarar.**
     *The action space is the model's only vocabulary. Sizing it wrong hurts in both directions.*
 63. **Juda katta boʻlsa: qidiruv, izlash, moddani topish, korpusdan soʻrash, toʻrtta deyarli bir xil vosita. Model qaysi birini nazarda tutganimizni taxmin qilishga majbur boʻladi.**
@@ -225,7 +225,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 68. **Xato javoblari boʻlsa ham, sikl baribir buzilishi mumkin. Qanday qilib, keyingi boʻlimda koʻramiz.**
     *Even with failure replies, the loop can still break. How, we see in the next section.*
 
-### 9-boʻlim · Sikl qanday buziladi · How the loop breaks
+### 9-boʻlim · Section 9 — Sikl qanday buziladi · How the loop breaks
 69. **Sikl uch xil yoʻl bilan buziladi. Birinchisi cheksiz sikl. Model bir xil harakatni qayta-qayta takrorlaydi, chunki kuzatuv uning fikrida hech narsani oʻzgartirmagan.**
     *The loop breaks in three ways. The first is an endless loop. The model repeats the same action again and again, because the observation changed nothing in its thinking.*
 70. **Davosi qadamlar chegarasi. Bizning agentimizda u sakkiz qadam. Eng kam ish haqi haqidagi savol yetti qadam oldi: ikki marta qidiruv, ikki yuz qirq beshinchi modda, yana qidiruv, ikki yuz qirq uchinchi modda, yana bir qidiruv, va javob.**
@@ -246,7 +246,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 76. **Xoʻp, endi hisob-kitobga oʻtamiz.**
     *Now let's turn to the arithmetic.*
 
-### 10-boʻlim · Xatolar toʻplanadi · Errors compound
+### 10-boʻlim · Section 10 — Xatolar toʻplanadi · Errors compound
 77. **Nolinchi modulning ikkinchi maʼruzasini eslaylik: bir-biriga bogʻliq boʻlmagan hodisalarning hammasi roʻy berish ehtimoli ularning ehtimolliklari koʻpaytmasiga teng.**
     *Let's recall lecture two of module zero: the probability that independent events all happen is the product of their probabilities.*
 78. **Agentning har bir qadami bir xil ehtimollik bilan toʻgʻri boʻlsin deylik. Unda oʻn qadamning hammasi toʻgʻri boʻlish ehtimoli shu ehtimollikni oʻn marta oʻziga koʻpaytirganimizga teng.**

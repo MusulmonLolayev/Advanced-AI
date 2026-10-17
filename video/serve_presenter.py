@@ -30,7 +30,7 @@ from compose_recording import CLEAN
 HERE = Path(__file__).parent
 ROOT = HERE / "out"
 DB = ROOT / "studio.sqlite"
-BUILD = re.compile(r"(?:m(\d)_)?lecture(\d\d)_uz_navoiy")   # Module 0 has no prefix; Module K is mK_
+BUILD = re.compile(r"(?:m(\d)_)?lecture(\d\d)_(uz_navoiy|en)")   # Module 0 has no prefix; Module K is mK_
 MODULES = {0: "Statistics for Advanced AI", 1: "Classical Machine Learning", 2: "Vision / Deep Neural Networks",
            3: "Natural Language Processing", 4: "Graph Neural Networks", 5: "Reinforcement Learning & Alignment",
            6: "Efficient AI & Deployment", 7: "AI Agents, Tool Use & Retrieval"}      # course-map.md
@@ -41,7 +41,8 @@ def module_of(build):
 
 
 def lecture_title(build):
-    return f"Lecture {BUILD.fullmatch(build).group(2)}"
+    m = BUILD.fullmatch(build)
+    return f"Lecture {m.group(2)} · {'Uzbek' if m.group(3) == 'uz_navoiy' else 'English'}"
 NAME = re.compile(r"[0-9T-]+")                         # a recording's name: its start time
 QUEUE = threading.Semaphore(1)                         # one heavy job at a time
 PREPARING = {}                                         # build -> "running" | "failed: …"
@@ -67,7 +68,7 @@ def sync():
     """Add recordings found on disk (made before the database existed), drop rows whose files are gone."""
     import json
     with db() as c:
-        for d in ROOT.glob("*lecture*_uz_navoiy/presenter/recordings"):
+        for d in ROOT.glob("*lecture*/presenter/recordings"):
             for w in d.glob("*.webm"):
                 j = d / f"{w.stem}.json"
                 if j.exists():
@@ -170,6 +171,7 @@ def studio(module):
             pres = f'<button onclick="post(\'/api/prepare?build={b}\')">Prepare presenter page</button>'
         if st.startswith("failed"):
             pres += f' <span class="bad">{html.escape(st)}</span>'
+        pres = f'<a class="btn" href="/lecture?build={b}">Watch video</a> ' + pres
         recs = []
         for r in (r for r in rows if r["build"] == b):
             n, s = r["name"], r["state"]
@@ -192,6 +194,17 @@ def studio(module):
     return (PAGE.replace("NAV", sidebar(module, all_builds))
             .replace("BODY", head + files(module) + lectures + HELP)
             .replace("BUSY", "true" if busy else "false").replace("MODULE", str(module)))
+
+
+def lecture(build):
+    """The built lecture video itself (the narrated Manim video), to watch before presenting it."""
+    m = module_of(build)
+    src = f"/{build}/{build}.mp4"
+    return (PAGE.replace("NAV", sidebar(m, builds()))
+            .replace("BODY", f'<p><a href="/?m={m}">← Module {m}</a> · {lecture_title(build)} · the narrated video</p>'
+                             f'<video src="{src}" controls autoplay style="width:100%;background:#000;border-radius:8px">'
+                             f'</video>')
+            .replace("BUSY", "false").replace("MODULE", str(m)))
 
 
 def watch(build, name):
@@ -307,6 +320,10 @@ class Studio(SimpleHTTPRequestHandler):
         if path in ("/", "/index.html"):
             m = q.get("m", "0")
             return self.html(studio(int(m) if m.isdigit() and int(m) in MODULES else 0))
+        if path == "/lecture":
+            if not b:
+                return self.send_error(404, "no such lecture")
+            return self.html(lecture(b))
         if path == "/watch":
             if not (b and n and (recdir(b) / f"{n}.mp4").exists()):
                 return self.send_error(404, "no such video")
