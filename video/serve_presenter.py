@@ -4,7 +4,8 @@ http://localhost:8080/ (through an ssh -L tunnel; the microphone needs a secure 
 prepare its presenter page (presenter.py), open it to present and record (key R), build each recording into a 1080p
 video with the instructor's voice, cleaned with the chosen profile of ~/teaching/clean_video.sh (compose_recording.py), watch it in the page, delete it. Recordings and their build
 state live in a small SQLite file, out/studio.sqlite; the files stay in <build>/presenter/recordings/. Heavy jobs run
-one at a time in the background. Video is served with Range support, so the players can seek.
+one at a time in the background. Video is served with Range support, so the players can seek. Files put in (or
+linked into) out/shared/ -- a lecture PDF, say -- are listed under "Files" to open or download.
 
     ssh -L 8080:localhost:8080 musulmon@10.0.0.5            # on the instructor's computer
     uv run python serve_presenter.py 8080                    # here; then open http://localhost:8080/
@@ -102,6 +103,22 @@ def delete(build, name):
         c.execute("delete from recordings where build=? and name=?", (build, name))
 
 
+SHARED = ROOT / "shared"
+
+
+def files():
+    """The Files section: everything in out/shared/ (links are followed, so a rebuilt PDF shows up as it is)."""
+    rows = []
+    for f in sorted(SHARED.iterdir()) if SHARED.is_dir() else []:
+        if f.is_file() and not f.name.startswith("."):
+            st, q = f.stat(), quote(f.name)
+            rows.append(f'<li>{html.escape(f.name)} <span class=dim>· {st.st_size / 1e6:.1f} MB · '
+                        f'{time.strftime("%d %b %H:%M", time.localtime(st.st_mtime))}</span> · '
+                        f'<a class="btn" href="/shared/{q}" target="_blank">Open</a> '
+                        f'<a class="btn" href="/shared/{q}" download>Download</a></li>')
+    return f"<section><h2>Files</h2><ul>{''.join(rows) or '<li class=dim>nothing shared yet</li>'}</ul></section>"
+
+
 def builds():
     return [d.name for d in sorted(ROOT.iterdir()) if d.is_dir() and BUILD.fullmatch(d.name)
             and (d / f"{d.name}.mp4").exists() and (d / "joined.txt").exists()]
@@ -140,7 +157,7 @@ def studio():
             recs.append(f"<li><span class=mono>{when}</span> · {r['seconds'] / 60:.1f} min · {act}</li>")
         out.append(f"<section><h2>{b.split('_')[0].replace('lecture', 'Lecture ')}</h2><p>{pres}</p>"
                    f"<ul>{''.join(recs) or '<li class=dim>no recordings yet</li>'}</ul></section>")
-    return PAGE.replace("BODY", HELP + "".join(out)).replace("BUSY", "true" if busy else "false")
+    return PAGE.replace("BODY", HELP + files() + "".join(out)).replace("BUSY", "true" if busy else "false")
 
 
 def watch(build, name):

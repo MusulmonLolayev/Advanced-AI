@@ -56,7 +56,8 @@ new lines per lecture: `out/review/l0N_add.txt`.
   the video plays at 1/1.1 speed (logged per recording, the build slows the picture to match). Build cleans the voice: `deepfilter` (default; DeepFilterNet binary in `bin/`, git-ignored, from the
   v0.5.6 release) or the profiles of `~/teaching/clean_video.sh` (voice / mild / strong / off), then one fixed gain
   to −19 LUFS + a peak limiter, picture via NVENC. DNSMOS on the instructor's first recording: raw 1.78, voice 2.17,
-  deepfilter 3.16. Listening samples: `out/denoise_compare/` (served at /denoise_compare/).
+  deepfilter 3.16. Listening samples: `out/denoise_compare/` (served at /denoise_compare/). Files linked into `out/shared/`
+  (e.g. `agents/lecture01.pdf`) are listed on the studio page under "Files" to open or download.
 
 ## Slide discrepancies found by the drafts (slides not edited)
 
