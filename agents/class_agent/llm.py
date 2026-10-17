@@ -50,6 +50,7 @@ class Model:
 
     def save(self, extra):
         if self.mode == "record":
-            TRACES.mkdir(exist_ok=True)
-            (TRACES / f"{self.name}.json").write_text(
+            path = TRACES / f"{self.name}.json"           # a name may carry a folder: uk/q1_week
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
                 json.dumps({"model": MODEL, **extra, "calls": self.calls}, ensure_ascii=False, indent=1))

@@ -1,0 +1,39 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the national minimum wage per hour, in pounds?",
+ "max_steps": 3,
+ "stop": true,
+ "no_tools": false,
+ "answer": null,
+ "trace": [
+  {
+   "step": 1,
+   "model": "Thought: I need to find whether the NMWA specifies an hourly rate or only provides for rates to be set by regulations.\nAction: search[national minimum wage per hour]",
+   "observation": "NMWA 1: Workers to be paid at least the national minimum wage.\nNMWA 12: Employer to provide worker with national minimum wage statement.\nWTR 15B: Irregular hours workers and part-year workers: entitlement to annual leave\nWTR 15C: Irregular hours workers and part-year workers: annual leave accrued while on sick or statutory leave\nNMWA 3: Exclusion of, and modifications for, certain classes of person."
+  },
+  {
+   "step": 2,
+   "model": "Thought: NMWA 1 likely defines the minimum wage but may not state the amount; I should read it.\nAction: fetch[NMWA 1]",
+   "observation": "NMWA 1 (National Minimum Wage Act 1998, section 1). Workers to be paid at least the national minimum wage.\n(1) A person who qualifies for the national minimum wage shall be remunerated by his employer in respect of his work in any pay reference period at a rate which is not less than the national minimum wage.\n(2) A person qualifies for the national minimum wage if he is an individual who—\n(a) is a worker;\n(b) is working, or ordinarily works, in the United Kingdom under his contract; and\n(c) has ceased to be of compulsory school age.\n(3) The national minimum wage shall be such single hourly rate as the Secretary of State may from time to time prescribe.\n(4) For the purposes of this Act a “pay reference period” is such period as the Secretary of State may prescribe for the purpose.\n(5) Subsections (1) to (4) above are subject to the following provisions of this Act."
+  },
+  {
+   "step": 3,
+   "model": "Thought: Section 1(3) says the rate is prescribed by the Secretary of State in regulations, not fixed by the Act itself; I should check whether any provision states a figure.\nAction: search[pounds per hour]",
+   "observation": "WTR 15C: Irregular hours workers and part-year workers: annual leave accrued while on sick or statutory leave\nWTR 15B: Irregular hours workers and part-year workers: entitlement to annual leave\nWTR 15D: Irregular hours workers and part-year workers: right to carry forward annual leave\nWTR 15E: Irregular hours workers and part-year workers: compensation related to entitlement to leave\nWTR 15F: Meaning of irregular hours workers and part-year workers"
+  }
+ ],
+ "calls": [
+  {
+   "prompt": "adee1c02da6956a1",
+   "reply": "Thought: I need to find whether the NMWA specifies an hourly rate or only provides for rates to be set by regulations.\nAction: search[national minimum wage per hour]"
+  },
+  {
+   "prompt": "618e0c4570e485ba",
+   "reply": "Thought: NMWA 1 likely defines the minimum wage but may not state the amount; I should read it.\nAction: fetch[NMWA 1]"
+  },
+  {
+   "prompt": "66eb034fd2b1bd47",
+   "reply": "Thought: Section 1(3) says the rate is prescribed by the Secretary of State in regulations, not fixed by the Act itself; I should check whether any provision states a figure.\nAction: search[pounds per hour]"
+  }
+ ]
+}

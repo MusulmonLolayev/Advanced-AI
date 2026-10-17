@@ -1,0 +1,15 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the maximum weekly working time, and does it differ for workers under 18?",
+ "max_steps": 8,
+ "stop": true,
+ "no_tools": true,
+ "answer": "For an adult worker (18 or over), working time must not exceed an average of **48 hours per 7 days** over the reference period [WTR 4(1)]; the reference period is **17 weeks** [WTR 4(2)]. That limit can be exceeded only if the employer has the worker’s **written agreement to opt out** [WTR 5(1)].\n\nFor a **young worker**—over compulsory school age but under 18 [WTR 2]—the limit is different: working time must not exceed **40 hours for each week** [WTR 5A(1)]. So yes, it differs: under-18s have a lower weekly limit, and it is expressed as a weekly limit rather than the adult 48-hour average.",
+ "trace": [],
+ "calls": [
+  {
+   "prompt": "50377201e6078886",
+   "reply": "For an adult worker (18 or over), working time must not exceed an average of **48 hours per 7 days** over the reference period [WTR 4(1)]; the reference period is **17 weeks** [WTR 4(2)]. That limit can be exceeded only if the employer has the worker’s **written agreement to opt out** [WTR 5(1)].\n\nFor a **young worker**—over compulsory school age but under 18 [WTR 2]—the limit is different: working time must not exceed **40 hours for each week** [WTR 5A(1)]. So yes, it differs: under-18s have a lower weekly limit, and it is expressed as a weekly limit rather than the adult 48-hour average."
+  }
+ ]
+}

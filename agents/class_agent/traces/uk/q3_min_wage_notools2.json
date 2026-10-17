@@ -1,0 +1,15 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the national minimum wage per hour, in pounds?",
+ "max_steps": 8,
+ "stop": true,
+ "no_tools": true,
+ "answer": "There is no single pound-per-hour figure in the National Minimum Wage Act 1998. The Act requires a worker to be remunerated at not less than the national minimum wage [NMWA 1(1)]; the “national minimum wage” is the single hourly rate prescribed by regulations [NMWA 2(1)], and different rates may be prescribed for different cases [NMWA 2(2)].\n\nSo a current £/hour rate cannot be cited to the NMWA 1998 itself: the operative figures are in the National Minimum Wage Regulations 2015 (as amended), not the 1998 Act.",
+ "trace": [],
+ "calls": [
+  {
+   "prompt": "35de0bd06a7cf272",
+   "reply": "There is no single pound-per-hour figure in the National Minimum Wage Act 1998. The Act requires a worker to be remunerated at not less than the national minimum wage [NMWA 1(1)]; the “national minimum wage” is the single hourly rate prescribed by regulations [NMWA 2(1)], and different rates may be prescribed for different cases [NMWA 2(2)].\n\nSo a current £/hour rate cannot be cited to the NMWA 1998 itself: the operative figures are in the National Minimum Wage Regulations 2015 (as amended), not the 1998 Act."
+  }
+ ]
+}

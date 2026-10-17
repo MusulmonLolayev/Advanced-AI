@@ -10,6 +10,7 @@ import re
 import unittest
 
 import agent
+import corpus_uk as uk
 from corpus import ARTICLES, DATA, fetch_article, search
 from llm import TRACES, Model
 
@@ -22,6 +23,16 @@ def trace(name):
 
 def cited(text):
     return set(re.findall(r"Art\. (\d+)", text))
+
+
+def cited_uk(text):
+    """Provisions cited, subsections dropped: [WTR 4(6)–(7)] -> 'WTR 4'."""
+    return {f"{law} {n}" for law, n in re.findall(r"\b(WTR|NMWA) (\d+[A-Z]?)", text)}
+
+
+def paragraph(ref, label):
+    """One numbered line of a provision: paragraph('WTR 4', '(3)')."""
+    return next(line for line in uk.ARTICLES[ref]["text"].splitlines() if line.startswith(label + " "))
 
 
 class Corpus(unittest.TestCase):
@@ -147,6 +158,107 @@ class RecordedRuns(unittest.TestCase):
         again = trace("q3_min_wage_notools2")["answer"]          # the same question, asked again
         self.assertIn("1,270,000", again)                      # ... a different figure
         self.assertEqual(cited(again), {"209"})                # 209 forbids work on days off
+
+
+class UKCorpus(unittest.TestCase):
+    """The English version's corpus (corpus_uk.py): the Working Time Regulations 1998 and the NMW Act 1998."""
+    def test_the_file_is_the_pinned_one(self):
+        self.assertIn(hashlib.sha256(uk.DATA.read_bytes()).hexdigest(), (uk.DATA.parent / "SOURCE_UK.md").read_text())
+        self.assertEqual(len(uk.ARTICLES), 118)
+        self.assertEqual(sum(k.startswith("WTR ") for k in uk.ARTICLES), 64)
+
+    def test_facts_the_session_quotes(self):
+        self.assertIn("an average of 48 hours for each seven days", paragraph("WTR 4", "(1)"))
+        self.assertIn("agreement in writing", paragraph("WTR 4", "(1)"))                 # the opt-out is in 4(1)
+        self.assertIn("any period of 17 weeks", paragraph("WTR 4", "(b)"))              # 4(3)(b)
+        self.assertIn("reference periods", paragraph("WTR 4", "(3)"))
+        self.assertNotIn("17 weeks", paragraph("WTR 4", "(2)"))                         # 4(2): the employer's duty
+        self.assertNotRegex(paragraph("WTR 5", "(1)"), r"[a-z]")                         # 5(1) is repealed: dots
+        self.assertEqual(paragraph("WTR 5A", "(a)"), "(a) eight hours a day, or")
+        self.assertEqual(paragraph("WTR 5A", "(b)"), "(b) 40 hours a week.")
+        self.assertIn("attained the age of 15 but not the age of 18", uk.fetch_article("WTR 2"))
+        self.assertIn("such single hourly rate as the Secretary of State may from time to time prescribe",
+                      paragraph("NMWA 1", "(3)"))
+        self.assertIn("the hourly rate at which a person is to be regarded", paragraph("NMWA 2", "(1)"))
+        self.assertIn("provision for determining the hourly rate in cases where", paragraph("NMWA 2", "(2)"))
+        self.assertIn("have not attained the age of 26", paragraph("NMWA 3", "(1)"))
+        self.assertIn("an hourly rate for the national minimum wage other than the single hourly rate",
+                      uk.ARTICLES["NMWA 3"]["text"])                            # other rates by group: s. 3(2)(b)
+        self.assertFalse([k for k, a in uk.ARTICLES.items() if re.search(r"£\s*\d", a["text"])])  # no amount anywhere
+
+    def test_search_and_fetch(self):
+        self.assertEqual(uk.search("maximum weekly working time")[0][0], "WTR 4")
+        self.assertEqual(uk.search("young workers working time")[0][0], "WTR 5A")
+        self.assertEqual(uk.search("national minimum wage")[0][0], "NMWA 1")
+        self.assertEqual(uk.search("£"), [])                       # a symbol is not a word: nothing to match
+        self.assertEqual(agent.act("search", "£", uk), "no provision contains these words")
+        self.assertEqual(uk.fetch_article("wtr reg. 5a"), uk.fetch_article("WTR 5A"))
+        self.assertEqual(uk.fetch_article("NMWA s.1"), uk.fetch_article("NMWA 1"))
+        self.assertIn("there is no provision WTR 99", agent.act("fetch", "WTR 99", uk))
+        self.assertIn("the actions are search, fetch, answer", agent.act("fetch_article", "WTR 4", uk))
+
+
+class UKRecordedRuns(unittest.TestCase):
+    """The English version's runs (traces/uk/), and what its slides and video may say about them."""
+    def setUp(self):
+        self.t = lambda name: trace(f"uk/{name}")
+
+    def actions(self, name):
+        """[(action, argument)], (None, None) for a turn with no action; an answer's argument is left out."""
+        found = [re.search(r"Action: (\w+)\[(.*)\]", s["model"], re.S) for s in self.t(name)["trace"]]
+        return [(m[1], None if m[1] == "answer" else m[2]) if m else (None, None) for m in found]
+
+    def test_every_run_replays_to_its_recorded_answer(self):
+        for path in sorted((TRACES / "uk").glob("*.json")):
+            t, m = json.loads(path.read_text()), Model("replay", f"uk/{path.stem}")
+            if t.get("no_tools"):
+                got = m.complete([{"role": "system", "content": uk.NO_TOOLS}, {"role": "user", "content": t["question"]}])
+            else:
+                got = agent.run(t["question"], m, max_steps=t["max_steps"], stop=t["stop"], show=lambda *_: None,
+                                law=uk)[0]
+            self.assertEqual(got, t["answer"], path.stem)
+
+    def test_q1_an_empty_turn_gets_the_correction(self):
+        self.assertEqual(self.actions("q1_week"), [("search", "maximum weekly working time"), ("fetch", "WTR 4"),
+                                                   (None, None), ("fetch", "WTR 5A"), ("answer", None)])
+        empty = self.t("q1_week")["trace"][2]
+        self.assertEqual(empty["model"], "")
+        self.assertIn("could not read an action", empty["observation"])
+        self.assertEqual(cited_uk(self.t("q1_week")["answer"]), {"WTR 4", "WTR 5A"})
+        self.assertRegex(self.t("q1_week")["answer"], r"average of 48 hours.*17 weeks.*40 hours a week")
+
+    def test_q2_reads_the_definition_too(self):
+        fetched = [a for name, a in self.actions("q2_under18") if name == "fetch"]
+        self.assertEqual(fetched, ["WTR 4", "WTR 5A", "WTR 2"])
+        a = self.t("q2_under18")["answer"]
+        self.assertEqual(cited_uk(a), {"WTR 4", "WTR 2", "WTR 5A"})
+        for fact in ("average of 48 hours", "17 weeks", "attained the age of 15 but not 18", "8 hours a day or 40 hours a week"):
+            self.assertIn(fact, a)
+
+    def test_q3_says_the_act_has_no_amount(self):
+        self.assertEqual([n for n, _ in self.actions("q3_min_wage")], ["search", "fetch", "search", "answer"])
+        self.assertEqual(self.actions("q3_min_wage")[2], ("search", "£"))         # a search that cannot match anything
+        a = self.t("q3_min_wage")["answer"]
+        self.assertIn("does not itself state", a)
+        self.assertEqual(cited_uk(a), {"NMWA 1"})
+        self.assertIsNone(self.t("q3_min_wage_steps3")["answer"])                # 3 steps are too few
+        self.assertEqual(len(self.t("q3_min_wage_steps3")["trace"]), 3)
+
+    def test_without_the_stop_it_still_wrote_no_observation(self):
+        self.assertFalse([s for s in self.t("q1_week_nostop")["trace"] if "Observation:" in s["model"]])
+
+    def test_without_tools_the_citations_are_wrong(self):
+        q2 = self.t("q2_under18_notools")["answer"]
+        self.assertIn("the reference period is **17 weeks** [WTR 4(2)]", q2)   # 17 weeks is 4(3); 4(2) is not it
+        self.assertIn("[WTR 5(1)]", q2)                                         # a repealed paragraph
+        self.assertNotRegex(q2, r"\b8 hours|eight hours")                       # the daily limit is missing
+        q3 = self.t("q3_min_wage_notools")["answer"]
+        self.assertIn("£12.71", q3)                                             # from memory; not in the corpus
+        self.assertIn("NMW Regulations 2015", q3)
+        again = self.t("q3_min_wage_notools2")["answer"]                        # the same question, asked again
+        self.assertNotRegex(again, r"£\s*\d")                                  # ... no figure this time
+        self.assertIn("[NMWA 2(1)]", again)                                     # the rate is in 1(3), not 2(1)
+        self.assertIn("[NMWA 2(2)]", again)                                     # rates by group: 3(2)(b), not 2(2)
 
 
 if __name__ == "__main__":

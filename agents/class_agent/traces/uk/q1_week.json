@@ -1,0 +1,57 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the maximum weekly working time?",
+ "max_steps": 8,
+ "stop": true,
+ "no_tools": false,
+ "answer": "For adult workers, working time (including overtime) must not exceed an average of 48 hours for each seven days over the applicable reference period — generally 17 weeks — unless the employer has first obtained the worker's written agreement to perform such work [WTR 4]. The employer must take all reasonable steps to ensure the limit is complied with and keep records of workers who have opted out [WTR 4]. A young worker's working time must not exceed 8 hours a day or 40 hours a week, aggregated across employers if employed by more than one [WTR 5A].",
+ "trace": [
+  {
+   "step": 1,
+   "model": "Thought: I need the WTR provision setting the maximum weekly working time.\nAction: search[maximum weekly working time]",
+   "observation": "WTR 4: Maximum weekly working time\nWTR 5A: Maximum working time for young workers\nWTR 20: Unmeasured working time\nWTR 11: Weekly rest period\nWTR 30B: Extension of time limit to facilitate conciliation before institution of proceedings"
+  },
+  {
+   "step": 2,
+   "model": "Thought: WTR 4 is the direct provision on maximum weekly working time; I'll read it.\nAction: fetch[WTR 4]",
+   "observation": "WTR 4 (The Working Time Regulations 1998, regulation 4). Maximum weekly working time\n(1) Unless his employer has first obtained the worker’s agreement in writing to perform such work, a worker’s working time, including overtime, in any reference period which is applicable in his case shall not exceed an average of 48 hours for each seven days.\n(2) An employer shall take all reasonable steps, in keeping with the need to protect the health and safety of workers, to ensure that the limit specified in paragraph (1) is complied with in the case of each worker employed by him in relation to whom it applies and shall keep up-to-date records of all workers who carry out work to which it does not apply by reason of the fact that the employer has obtained the worker’s agreement as mentioned in paragraph (1).\n(3) Subject to paragraphs (4) and (5) and any agreement under regulation 23(b), the reference periods which apply in the case of a worker are—\n(a) where a relevant agreement provides for the application of this regulation in relation to successive periods of 17 weeks, each such period, or\n(b) in any other case, any period of 17 weeks in the course of his employment.\n(4) Where a worker has worked for his employer for less than 17 weeks, the reference period applicable in his case is the period that has elapsed since he started work for his employer.\n(5) Paragraphs (3) and (4) shall apply to a worker who is excluded from the scope of certain provisions of these Regulations by regulation 21 as if for each reference to 17 weeks there were substituted a reference to 26 weeks.\n(6) For the purposes of this regulation, a worker’s average working time for each seven days during a reference period shall be determined according to the formula—\n(A + B) / (C)\nwhere—A is the aggregate number of hours comprised in the worker’s working time during the course of the reference period;\nB is the aggregate number of hours comprised in his working time during the course of the period beginning immediately after the end of the reference period and ending when the number of days in that subsequent period on which he has worked equals the number of excluded days during the reference period; and\nC> is the number of weeks in the reference period.\n(7) In paragraph (6), “excluded days\" means days comprised in—\n(a) any period of annual leave taken by the worker in exercise of his entitlement under regulation 13 , 13A or 15B;\n(b) any period of sick leave taken by the worker;\n(c) any period of maternity paternity, adoption or parental leave taken by the worker; and\n(d) any period in respect of which the limit specified in paragraph (1) did not apply in relation to the worker by reason of the fact that the employer has obtained the worker’s agreement as mentioned in paragraph (1)."
+  },
+  {
+   "step": 3,
+   "model": "",
+   "observation": "I could not read an action. Write one line: Action: search[...], fetch[...] or answer[...]"
+  },
+  {
+   "step": 4,
+   "model": "Thought: Regulation 4 gives the 48-hour average limit subject to the written opt-out; young workers have a separate limit under regulation 5A, so I'll check that before answering.\nAction: fetch[WTR 5A]",
+   "observation": "WTR 5A (The Working Time Regulations 1998, regulation 5A). Maximum working time for young workers\n(1) A young worker’s working time shall not exceed—\n(a) eight hours a day, or\n(b) 40 hours a week.\n(2) If, on any day, or, as the case may be, during any week, a young worker is employed by more than one employer, his working time shall be determined for the purpose of paragraph (1) by aggregating the number of hours worked by him for each employer.\n(3) For the purposes of paragraphs (1) and (2), a week starts at midnight between Sunday and Monday.\n(4) An employer shall take all reasonable steps, in keeping with the need to protect the health and safety of workers, to ensure that the limits specified in paragraph (1) are complied with in the case of each worker employed by him in relation to whom they apply."
+  },
+  {
+   "step": 5,
+   "model": "Thought: I have the general limit under WTR 4 and the young-worker limit under WTR 5A.\nAction: answer[For adult workers, working time (including overtime) must not exceed an average of 48 hours for each seven days over the applicable reference period — generally 17 weeks — unless the employer has first obtained the worker's written agreement to perform such work [WTR 4]. The employer must take all reasonable steps to ensure the limit is complied with and keep records of workers who have opted out [WTR 4]. A young worker's working time must not exceed 8 hours a day or 40 hours a week, aggregated across employers if employed by more than one [WTR 5A].]",
+   "observation": null
+  }
+ ],
+ "calls": [
+  {
+   "prompt": "fb09ca5a9f7ccd6e",
+   "reply": "Thought: I need the WTR provision setting the maximum weekly working time.\nAction: search[maximum weekly working time]"
+  },
+  {
+   "prompt": "4809ac0b4cb981e3",
+   "reply": "Thought: WTR 4 is the direct provision on maximum weekly working time; I'll read it.\nAction: fetch[WTR 4]"
+  },
+  {
+   "prompt": "47f6974293a90a21",
+   "reply": ""
+  },
+  {
+   "prompt": "d8110dc005ccd7af",
+   "reply": "Thought: Regulation 4 gives the 48-hour average limit subject to the written opt-out; young workers have a separate limit under regulation 5A, so I'll check that before answering.\nAction: fetch[WTR 5A]"
+  },
+  {
+   "prompt": "0069e21f7120450c",
+   "reply": "Thought: I have the general limit under WTR 4 and the young-worker limit under WTR 5A.\nAction: answer[For adult workers, working time (including overtime) must not exceed an average of 48 hours for each seven days over the applicable reference period — generally 17 weeks — unless the employer has first obtained the worker's written agreement to perform such work [WTR 4]. The employer must take all reasonable steps to ensure the limit is complied with and keep records of workers who have opted out [WTR 4]. A young worker's working time must not exceed 8 hours a day or 40 hours a week, aggregated across employers if employed by more than one [WTR 5A].]"
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the national minimum wage per hour, in pounds?",
+ "max_steps": 8,
+ "stop": true,
+ "no_tools": true,
+ "answer": "The NMWA 1998 does not itself set a pound-per-hour figure: it requires a worker to be paid at least the national minimum wage [NMWA 1], with the rate determined by regulations under the Act [NMWA 1]. So the actual figures come from the National Minimum Wage Regulations 2015, not from a section of the NMWA.\n\nFrom 1 April 2026, the hourly rates are (NMW Regulations 2015, reg 4, made under [NMWA 1]):\n\n- **21 and over:** £12.71\n- **18–20:** £10.85\n- **16–17:** £8.00\n- **Apprentice (eligible):** £8.00\n\nSo there is no single “national minimum wage per hour” in the NMWA itself [NMWA 1]; it depends on the worker’s category.",
+ "trace": [],
+ "calls": [
+  {
+   "prompt": "35de0bd06a7cf272",
+   "reply": "The NMWA 1998 does not itself set a pound-per-hour figure: it requires a worker to be paid at least the national minimum wage [NMWA 1], with the rate determined by regulations under the Act [NMWA 1]. So the actual figures come from the National Minimum Wage Regulations 2015, not from a section of the NMWA.\n\nFrom 1 April 2026, the hourly rates are (NMW Regulations 2015, reg 4, made under [NMWA 1]):\n\n- **21 and over:** £12.71\n- **18–20:** £10.85\n- **16–17:** £8.00\n- **Apprentice (eligible):** £8.00\n\nSo there is no single “national minimum wage per hour” in the NMWA itself [NMWA 1]; it depends on the worker’s category."
+  }
+ ]
+}
