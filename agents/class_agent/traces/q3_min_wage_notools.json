@@ -1,0 +1,15 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the minimum monthly wage in Uzbekistan, in soʻm?",
+ "max_steps": 8,
+ "stop": true,
+ "no_tools": true,
+ "answer": "Under the Labor Code, the minimum wage is not fixed in the Code itself; it is established by law [Art. 153]. The latest statutory minimum monthly wage I can verify is **1,155,000 soʻm** (2025 figure).\n\nBecause that numeral is set by the annual law/decree rather than by the Labor Code, there is no Labor Code article that itself states “1,155,000 soʻm”; **Art. 153** is the Code’s referral provision. If a 2026 increase has been enacted, the operative figure would be in that later act.",
+ "trace": [],
+ "calls": [
+  {
+   "prompt": "4f49d2dae0f006e6",
+   "reply": "Under the Labor Code, the minimum wage is not fixed in the Code itself; it is established by law [Art. 153]. The latest statutory minimum monthly wage I can verify is **1,155,000 soʻm** (2025 figure).\n\nBecause that numeral is set by the annual law/decree rather than by the Labor Code, there is no Labor Code article that itself states “1,155,000 soʻm”; **Art. 153** is the Code’s referral provision. If a 2026 increase has been enacted, the operative figure would be in that later act."
+  }
+ ]
+}

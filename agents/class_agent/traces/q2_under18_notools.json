@@ -1,0 +1,15 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the maximum normal working week, and does it differ for employees under 18?",
+ "max_steps": 8,
+ "stop": true,
+ "no_tools": true,
+ "answer": "The general maximum normal working week is **40 hours** [Art. 182].  \n\nYes, it differs for employees under 18: they are subject to **reduced working time** — no more than **24 hours per week** for workers under 16, and no more than **36 hours per week** for workers aged 16 to 18 [Art. 183]. Therefore, the 40-hour normal maximum does not apply to them; their maximum is lower [Art. 183].",
+ "trace": [],
+ "calls": [
+  {
+   "prompt": "84c3716e2edb1491",
+   "reply": "The general maximum normal working week is **40 hours** [Art. 182].  \n\nYes, it differs for employees under 18: they are subject to **reduced working time** — no more than **24 hours per week** for workers under 16, and no more than **36 hours per week** for workers aged 16 to 18 [Art. 183]. Therefore, the 40-hour normal maximum does not apply to them; their maximum is lower [Art. 183]."
+  }
+ ]
+}

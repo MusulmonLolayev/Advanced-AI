@@ -132,34 +132,39 @@
 Every turn the model sees the \emph{entire} trace so far and produces the next thought. Nothing else is remembered.
 \end{frame}
 
-\begin{frame}{Worked Trace: One Task, Three Turns}
+\begin{frame}{Worked Trace: One Task, Four Turns}
 \footnotesize
-\textbf{Task:} ``What is the maximum normal working week, and does it differ for employees under 18?''
+\textbf{Task:} ``What is the maximum normal working week, and does it differ for employees under 18?'' \emph{A real run of our class agent over the Labor Code (2022); its articles are in Uzbek.}
 \smallskip
 
 \scriptsize
 \begin{tabular}{@{}p{1.5cm}p{0.78\textwidth}@{}}
-\textcolor{RLBlue}{\textbf{Thought 1}} & Two parts. Start with the general rule on working hours. \\[2pt]
-\textcolor{RLGreen}{\textbf{Action 1}}  & \texttt{search("normal working time hours per week")} \\[2pt]
-\textbf{Obs.\ 1}                        & Labor Code, Article 182 --- normal working time may not exceed 40 hours per week. \\
+\textcolor{RLBlue}{\textbf{Thought 1}} & I need the provisions on normal working week and reduced hours for minors. \\[1pt]
+\textcolor{RLGreen}{\textbf{Action 1}}  & \texttt{search[ish haftasining davomiyligi]} \quad(``length of the working week'') \\[1pt]
+\textbf{Obs.\ 1}                        & Art.~182 \emph{normal working time}; Art.~184; Art.~397; Art.~415 \emph{reduced working time for employees under 18}; \dots \\
 \end{tabular}
 \pause
 
 \begin{tabular}{@{}p{1.5cm}p{0.78\textwidth}@{}}
-\textcolor{RLBlue}{\textbf{Thought 2}} & Part one is answered and cited. Part two asks about employees under 18, which Article 182 does not address. Search again. \\[2pt]
-\textcolor{RLGreen}{\textbf{Action 2}}  & \texttt{search("reduced working time employees under eighteen")} \\[2pt]
-\textbf{Obs.\ 2}                        & Three candidate articles returned; none of them states a limit for that category. \\
+\textcolor{RLBlue}{\textbf{Thought 2}} & Let me read the general norm in Art.~182. \\[1pt]
+\textcolor{RLGreen}{\textbf{Action 2}}  & \texttt{fetch\_article[182]} \\[1pt]
+\textbf{Obs.\ 2}                        & ``\dots haftasiga qirq soatdan ortiq bo\textquoteleft lishi mumkin emas'' -- may not exceed \textbf{40 hours} a week. \\
 \end{tabular}
 \pause
 
 \begin{tabular}{@{}p{1.5cm}p{0.78\textwidth}@{}}
-\textcolor{RLBlue}{\textbf{Thought 3}} & Part one is grounded; part two has no support in what I retrieved. Report both honestly. \\[2pt]
-\textcolor{RLGreen}{\textbf{Action 3}}  & \texttt{answer(...)} --- 40 hours per week [Art.~182]; \emph{no supporting article found} for employees under 18. \\
+\textcolor{RLBlue}{\textbf{Thought 3}} & Now I need the specific rule for employees under 18. \\[1pt]
+\textcolor{RLGreen}{\textbf{Action 3}}  & \texttt{fetch\_article[415]} \\[1pt]
+\textbf{Obs.\ 3}                        & at most \textbf{36 hours} a week from 16 to 18, and \textbf{24 hours} from 15 to 16. \\
 \end{tabular}
 \pause
+
+\begin{tabular}{@{}p{1.5cm}p{0.78\textwidth}@{}}
+\textcolor{RLGreen}{\textbf{Action 4}}  & \texttt{answer[\dots]} --- 40 hours [Art.~182]; yes: 36 hours from 16 to 18, 24 hours from 15 to 16 [Art.~415]. \\
+\end{tabular}
 
 \smallskip
-\footnotesize The number of searches was not fixed in advance. That is the whole difference from a pipeline.
+\footnotesize The model, not our code, decided that one article was not enough and went back for a second.
 \end{frame}
 
 \begin{frame}{The Scratchpad Is Just the Context Window}
@@ -297,6 +302,76 @@ A \textbf{tool} is a function the model may request by name and arguments, descr
   \item \textbf{Reflexion} (Shinn et al., 2023) is the third lever: after a failed attempt the model writes a short verbal critique of its own trajectory and keeps it for the next attempt -- turning a one-shot failure into a second try that knows something.
   \pause
   \item This is also why Lecture 8 scores whole trajectories rather than final answers. $p$ is a \emph{per-step} quantity, and you cannot estimate it from the last line alone.
+\end{itemize}
+\end{frame}
+
+% ─── Build it in class ──────────────────────────────────────────────────────
+\begin{frame}{Build It in Class: Our Agent}
+\begin{itemize}
+  \item \textbf{The world:} the Labor Code of Uzbekistan (2022), 581 articles, in Uzbek -- the corpus of the module project. The agent sees none of it until it acts.
+  \pause
+  \item \textbf{The action space:} \texttt{search[words]} returns article numbers and titles; \texttt{fetch\_article[N]} returns one article's text; \texttt{answer[text]} ends the run, every claim cited as [Art.~N].
+  \pause
+  \item \textbf{The protocol:} each turn the model writes two lines, \texttt{Thought:} and \texttt{Action:}. Generation is cut off at the word \texttt{Observation:} -- only our code may write what a tool returned.
+  \pause
+  \item \textbf{One file per lecture:} \texttt{agents/class\_agent/agent.py}. Lecture 2 replaces the text protocol with schemas, Lectures 5--7 replace the search, Lecture 8 grades the runs.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{The Loop, in Twenty Lines}
+\scriptsize
+\begin{semiverbatim}
+def run(question, model, max_steps=8):
+    messages = [system(SYSTEM), user(question)]
+    for step in range(max_steps):           \textcolor{RLGreen}{# the budget}
+        text = model.complete(messages, stop=["Observation:"])
+        messages.append(assistant(text))     \textcolor{RLGreen}{# the scratchpad grows}
+        m = ACTION.search(text)              \textcolor{RLGreen}{# Action: name[argument]}
+        if m is None:
+            obs = "I could not read an action. Write one line: ..."
+        elif m.group(1) == "answer":
+            return m.group(2)                \textcolor{RLGreen}{# the model chose to stop}
+        else:
+            obs = act(m.group(1), m.group(2))  \textcolor{RLGreen}{# our code runs the tool}
+        messages.append(user("Observation: " + obs))
+    return None                              \textcolor{RLGreen}{# budget spent: no answer}
+\end{semiverbatim}
+\normalsize
+\begin{itemize}
+  \item Every failure reply is an observation, never an exception: an unreadable turn, an unknown action, an article that does not exist.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{In Class: First, Ask Without Tools}
+\small
+The same model, asked once with no loop, as a chatbot would be. Then we open the articles it cites.
+\smallskip
+
+\scriptsize
+\begin{tabular}{@{}p{0.30\textwidth}p{0.30\textwidth}p{0.32\textwidth}@{}}
+\textbf{Question} & \textbf{It answered} & \textbf{The code says} \tabularnewline \hline
+\raggedright Working week, and under 18? & \raggedright 40 h [Art.~182]; 36 h and 24 h [Art.~183] & \raggedright 183 only lists who gets shorter hours; the 36 and 24 are in \textbf{Art.~415} \tabularnewline[3pt]
+\raggedright Minimum monthly wage in so\textquoteleft m? & \raggedright 1{,}155{,}000 so\textquoteleft m, ``2025 figure'' [Art.~153] & \raggedright Art.~153 is about \emph{suspending an employee from work}; no article states an amount \tabularnewline
+\end{tabular}
+\pause
+
+\small
+\begin{itemize}
+  \item Fluent, confident, and the citations do not hold. Asked again: 1{,}270{,}000 so\textquoteleft m [Art.~209] -- a new figure, and Art.~209 forbids work on days off.
+  \pause
+  \item With the loop, the second question took 7 steps and ended: \emph{the code does not state an amount; the President sets it [Art.~245]}. That is the right answer.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{In Class: The Budget and the Abstention}
+\begin{itemize}
+  \item The minimum-wage run needed 7 steps: two searches, read Art.~245, search for a figure, read Art.~243, one more search, then answer that the code states none.
+  \pause
+  \item \textbf{With a budget of 3 steps} the same run stops after reading Art.~245 and returns \emph{nothing}. The loop ended safely; the user learned nothing.
+  \pause
+  \item \textbf{Design question for the class:} what should the agent say when the budget runs out? ``Not found within budget, last read Art.~245'' is honest; a guess is not.
+  \pause
+  \item \textbf{Try it:} \texttt{python agent.py -{}-replay q3\_min\_wage\_steps3}, then add a few lines so a repeated action returns ``already tried'' (the fix on the ``three ways'' slide).
 \end{itemize}
 \end{frame}
 

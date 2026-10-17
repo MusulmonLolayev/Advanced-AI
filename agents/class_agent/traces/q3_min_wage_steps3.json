@@ -1,0 +1,39 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the minimum monthly wage in Uzbekistan, in soʻm?",
+ "max_steps": 3,
+ "stop": true,
+ "no_tools": false,
+ "answer": null,
+ "trace": [
+  {
+   "step": 1,
+   "model": "Thought: I need to find the Labor Code provisions on the minimum monthly wage and whether the code states an amount.\nAction: search[eng kam ish haqi]",
+   "observation": "Art. 99: Ish oʻrinlarining belgilangan eng kam soni hisobiga ishga joylashtirish\nArt. 240: Ish haqi qisman saqlanadigan taʼtil\nArt. 243: Mehnatga haq toʻlash va ish haqi tushunchalari\nArt. 257: Oʻrtacha ish haqi va uni hisoblab chiqarish tartibi\nArt. 331: Boquvchining yoʻqotilgan ish haqi oʻrnini qoplash uchun amalga oshiriladigan har oylik toʻlovlar miqdori"
+  },
+  {
+   "step": 2,
+   "model": "Thought: The results don't directly address the minimum monthly wage amount; I should try a more specific Uzbek term.\nAction: search[eng kam oylik ish haqi miqdori]",
+   "observation": "Art. 331: Boquvchining yoʻqotilgan ish haqi oʻrnini qoplash uchun amalga oshiriladigan har oylik toʻlovlar miqdori\nArt. 324: Xodimning sogʻligʻiga ziyon yetkazilganligi munosabati bilan yoʻqotilgan ish haqining oʻrnini qoplash uchun amalga oshiriladigan oylik toʻlovlar miqdori\nArt. 243: Mehnatga haq toʻlash va ish haqi tushunchalari\nArt. 245: Mehnatga haq toʻlashning eng kam miqdorini belgilash\nArt. 257: Oʻrtacha ish haqi va uni hisoblab chiqarish tartibi"
+  },
+  {
+   "step": 3,
+   "model": "Thought: Article 245 directly concerns setting the minimum amount of remuneration, so I should read it.\nAction: fetch_article[245]",
+   "observation": "245-modda. Mehnatga haq toʻlashning eng kam miqdorini belgilash\nMehnatga haq toʻlashning eng kam miqdori Oʻzbekiston Respublikasi Prezidenti tomonidan insonning munosib turmush darajasini taʼminlash zarurati hamda Ijtimoiy-mehnat masalalari boʻyicha respublika uch tomonlama komissiyasi tomonidan ishlab chiqilgan takliflar hisobga olingan holda Oʻzbekiston Respublikasining butun hududida bir vaqtning oʻzida belgilanadi hamda tashkiliy-huquqiy shakllaridan, mulkchilik shakllaridan va idoraviy boʻysunuvidan qatʼi nazar, barcha ish beruvchilar uchun majburiydir.\nIsh vaqtining oylik normasini ishlab bergan va mehnat shartnomasida belgilangan mehnat vazifasini bajargan xodimning mehnatiga haq toʻlashning oylik miqdori qonunchilikda belgilangan mehnatga haq toʻlashning eng kam miqdoridan kam boʻlishi mumkin emas.\nOʻz mehnat majburiyatlarini bajargan xodimning mehnatiga soatbay haq toʻlashning eng kam miqdori tegishli kalendar yilda olti kunlik ish haftasidagi ish soatlarining oʻrtacha oylik miqdoriga boʻlingan, bir oyda mehnatga haq toʻlashning qonunchilikda belgilangan eng kam miqdoridan kam boʻlishi mumkin emas.\nMehnatga haq toʻlash tizimida nazarda tutilgan mukofotlar, ish haqiga ustamalar, boshqa ragʻbatlantiruvchi toʻlovlar, shuningdek ish vaqtidan tashqari ish, dam olish kunlaridagi va ishlanmaydigan bayram kunlaridagi ish, tungi vaqtdagi ish uchun toʻlovlar, tuman koeffitsiyentlariga doir toʻlovlar hamda boshqa kompensatsiyaga oid va ijtimoiy toʻlovlar mehnatga haq toʻlashning eng kam miqdoriga kiritilmaydi."
+  }
+ ],
+ "calls": [
+  {
+   "prompt": "fd376e11647bcb4e",
+   "reply": "Thought: I need to find the Labor Code provisions on the minimum monthly wage and whether the code states an amount.\nAction: search[eng kam ish haqi]"
+  },
+  {
+   "prompt": "dbc16c54a7378aca",
+   "reply": "Thought: The results don't directly address the minimum monthly wage amount; I should try a more specific Uzbek term.\nAction: search[eng kam oylik ish haqi miqdori]"
+  },
+  {
+   "prompt": "2c8521063f2fe1d1",
+   "reply": "Thought: Article 245 directly concerns setting the minimum amount of remuneration, so I should read it.\nAction: fetch_article[245]"
+  }
+ ]
+}

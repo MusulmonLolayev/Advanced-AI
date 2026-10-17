@@ -1,0 +1,6 @@
+[project]
+name = "class-agent"
+version = "0.1.0"
+description = "The agent we build together in Module 7, one step per lecture, over the Labor Code of Uzbekistan"
+requires-python = ">=3.11"
+dependencies = ["openai>=1.40"]

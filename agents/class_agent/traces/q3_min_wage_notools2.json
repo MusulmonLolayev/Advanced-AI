@@ -1,0 +1,15 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the minimum monthly wage in Uzbekistan, in soʻm?",
+ "max_steps": 8,
+ "stop": true,
+ "no_tools": true,
+ "answer": "The Labor Code does not itself fix the numerical amount; it makes the minimum monthly wage statutory and binding [Art. 209]. The current statutory minimum monthly wage is **1,270,000 soʻm** (from 1 January 2026) [Art. 209].",
+ "trace": [],
+ "calls": [
+  {
+   "prompt": "4f49d2dae0f006e6",
+   "reply": "The Labor Code does not itself fix the numerical amount; it makes the minimum monthly wage statutory and binding [Art. 209]. The current statutory minimum monthly wage is **1,270,000 soʻm** (from 1 January 2026) [Art. 209]."
+  }
+ ]
+}

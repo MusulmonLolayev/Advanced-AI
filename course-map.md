@@ -297,6 +297,11 @@ jurisdiction-neutral — they teach algorithms and cite papers — while one Uzb
 runs through the whole module as the worked example (chunked in L5, embedded in L6, indexed in L7,
 attacked in L8), and the capstone below is where jurisdiction-specific work lives.
 
+**The class agent** (`agents/class_agent/`) is built together in class, one step per lecture, on the real Labor Code
+(581 articles from the capstone corpus, pinned). Each step has recorded runs that replay offline and a session plan in
+`sessions/`. Lecture 1 (the ReAct loop) is done; its runs replaced the slide's invented worked trace: the real code
+answers the under-18 half (Art. 415: 36 h at 16-18, 24 h at 15-16), so it is not an abstention example.
+
 1. **Lecture 1 - What is an Agent? ReAct, Tool Use & Action Loops**
    - agents vs. pipelines: when a model controls its own next step
    - ReAct: interleaving reasoning traces and actions; scratchpad pattern
