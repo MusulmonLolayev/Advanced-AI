@@ -70,7 +70,18 @@ new lines per lecture: `out/review/l0N_add.txt`.
   for English, MMS alignment: missing / extra / heard differently -- only extra words are offered for cutting), previews
   in the browser with no rebuild, and exports `presenter/export/<build>_edited.{mp4,srt,chapters.txt}` from the same
   edit list. A recording made against an earlier build of the video (another line list) is shown but not used.
-  Tests: `studio/run_tests.sh` (34; `fast` skips the server run and the GPU recognisers).
+  Unrecorded lines keep the video's own narration (the cloned or synthetic voice, as built; or silence, a switch in
+  the header), every voice source brought to −19 LUFS, so a few recorded lines can replace just those lines.
+  **Rewrite a line** (each line's "narration" box; the instructor's edit there is their approval): the new text goes
+  into the narration file (Uzbek apostrophes normalised; the bilingual file's other language left as it was), the
+  cloned voice says it (several seeds per sentence, each judged like voice_check.py; the old clip stays if it scores
+  better), only that section is rendered again and the video rejoined (`<build>.before_rewrite.mp4` kept), the
+  presenter page prepared again and earlier recordings moved to the new timings. "Re-voice as is" does the same with
+  the text unchanged. Red / amber marks on lines and the timeline are voice_check.json's fails / listen list. The
+  voice server can be started and stopped from the editor (only the one started there, by its PID file). Tried on
+  lecture01's failing line 29 («…eks ikki…»): no seed fixed the letter names and the old clip was kept, as the rule
+  of 2026-10-14 predicts (say the term) -- such a line needs rewriting, not re-voicing.
+  Tests: `studio/run_tests.sh` (55; `fast` skips the server run and the GPU recognisers).
 
 ## Slide discrepancies found by the drafts (slides not edited)
 

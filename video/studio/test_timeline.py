@@ -118,6 +118,17 @@ class EditList(unittest.TestCase):
         self.assertAlmostEqual(T.length(el["voice"]), T.length(el["picture"]))
         self.assertAlmostEqual(el["lines"][-1][2], T.length(el["voice"]))
 
+    def test_unrecorded_lines_can_keep_the_original_voice(self):
+        ev = session()
+        t0 = T.takes("s1", ev, STARTS)[0]
+        el = T.edit_list(STARTS, 30.0, {0: dict(T.take_tracks(t0, ev), id=t0["id"])}, fallback="original")
+        k, a, b, tid = el["lines"][1]
+        self.assertEqual((tid, b - a), (None, 10.0))                 # at full speed, as built
+        voice = [p for p in el["voice"] if p[1] == T.ORIGINAL]
+        self.assertEqual([(d, pos) for d, _, pos in voice], [(10.0, 10.0), (10.0, 20.0)])
+        self.assertIn((10.0, "play", 10.0, 20.0, 1.0), el["picture"])
+        self.assertAlmostEqual(T.length(el["voice"]), T.length(el["picture"]))
+
     def test_frame_counts_never_drift(self):
         track = [(1 / 3, "hold", 0, None, 1)] * 300                 # 100 s in pieces of a third of a second
         n = T.frame_counts(track, fps=60)
@@ -130,6 +141,23 @@ class EditList(unittest.TestCase):
         p = [(1, "play", 0, 1, 1), (1, "play", 1, 2, 1), (1, "hold", 2, None, 1), (0.5, "hold", 2, None, 1),
              (1, "play", 2, 3, 0.5)]
         self.assertEqual(T.merge_picture(p), [(2, "play", 0, 2, 1), (1.5, "hold", 2, None, 1), (1, "play", 2, 3, 0.5)])
+
+
+class Remap(unittest.TestCase):
+    def test_positions_keep_their_offset_in_their_line(self):
+        ev = [[1.0, "line", 10.0, R, 1], [1.05, "play", 10.0, R], [5.0, "hold", 13.6, R], [9.0, "play", 25.0, R]]
+        new = T.remap_events(ev, [0, 10, 20], 30, [0, 12, 21], 31)  # line 0 grew by 2 s, line 1 shrank by 1 s
+        self.assertEqual([e[2] for e in new], [12.0, 12.0, 15.6, 26.0])
+        self.assertEqual([e[0] for e in new], [1.0, 1.05, 5.0, 9.0])  # the clock is untouched
+        self.assertEqual(new[0][4], 1)
+
+    def test_a_position_past_a_shorter_line_stops_at_its_end(self):
+        new = T.remap_events([[0, "hold", 19.9, R]], [0, 10, 20], 30, [0, 10, 15], 30)
+        self.assertAlmostEqual(new[0][2], 14.96)
+
+    def test_a_different_line_count_is_refused(self):
+        with self.assertRaises(ValueError):
+            T.remap_events([], [0, 10], 20, [0, 5, 10], 20)
 
 
 class Exports(unittest.TestCase):

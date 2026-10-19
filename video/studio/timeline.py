@@ -207,22 +207,30 @@ def shrink_silences(silences, picture, total, keep=0.5, keep_end=0.25, min_cut=0
     return merge(out)
 
 
-def edit_list(starts, video_end, chosen, speed=1 / 1.1):
+ORIGINAL = "__original__"                        # the lecture video's own narration, as a voice source
+
+
+def edit_list(starts, video_end, chosen, speed=1 / 1.1, fallback="silent"):
     """The lecture's two tracks and where each line sits in them.
-    chosen: {line: tracks of its chosen take} (edited). Lines without a take show their picture, silent.
+    chosen: {line: tracks of its chosen take} (edited). A line without a take shows its own picture with
+    fallback "silent": no voice, at the presenter's speed; or "original": the video's own narration (the cloned or
+    synthetic voice), picture and voice as built, at full speed -- so a few recorded lines replace just those lines.
     Returns {"voice": [...], "picture": [...], "lines": [(line, from, to, take id or None)]}."""
     voice, picture, spans, t = [], [], [], 0.0
+    own = fallback == "original"
+    rate = 1.0 if own else speed
     if starts and starts[0] > EPS:
-        voice.append((starts[0] / speed, None, None))
-        picture.append((starts[0] / speed, "play", 0.0, starts[0], speed))
-        t = starts[0] / speed
+        d = starts[0] / rate
+        voice.append((d, ORIGINAL, 0.0) if own else (d, None, None))
+        picture.append((d, "play", 0.0, starts[0], rate))
+        t = d
     for k, s in enumerate(starts):
         e = starts[k + 1] if k + 1 < len(starts) else video_end
         tr = chosen.get(k)
         if tr is None:
-            d = (e - s) / speed
-            voice.append((d, None, None))
-            picture.append((d, "play", s, e, speed))
+            d = (e - s) / rate
+            voice.append((d, ORIGINAL, s) if own else (d, None, None))
+            picture.append((d, "play", s, e, rate))
             spans.append((k, t, t + d, None))
             t += d
             continue
@@ -233,6 +241,21 @@ def edit_list(starts, video_end, chosen, speed=1 / 1.1):
         spans.append((k, t, t + d, tr.get("id")))
         t += d
     return {"voice": voice, "picture": picture, "lines": spans}
+
+
+def remap_events(events, old_starts, old_end, new_starts, new_end):
+    """A session's events moved onto a rebuilt video whose lines kept their order and number but not their timings
+    (one section re-rendered after a line was rewritten): a position inside old line k keeps its offset from that
+    line's start, clipped to the new line's length. Wall-clock times do not change, so the voice stays where it was."""
+    if len(old_starts) != len(new_starts):
+        raise ValueError("the line count changed: these recordings cannot follow")
+    olds, news = list(old_starts) + [old_end], list(new_starts) + [new_end]
+
+    def move(pos):
+        k = max(0, min(len(old_starts) - 1, sum(1 for s in old_starts if s <= pos + 1e-6) - 1))
+        off = pos - olds[k]
+        return round(news[k] + max(0.0, min(off, news[k + 1] - news[k] - 0.04)), 4)
+    return [[e[0], e[1], move(e[2]), *e[3:]] for e in events]
 
 
 def placed(track):

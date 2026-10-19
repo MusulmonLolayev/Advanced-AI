@@ -8,8 +8,10 @@ import time
 from pathlib import Path
 
 from studio import media as M
+from studio import narration_edit as N
 from studio import store as S
 from studio import timeline as T
+from studio import voice_server
 
 ABANDONED = 120              # seconds without a piece: a session still "recording" was cut off (tab closed, crash)
 EDIT_KEYS = {"cuts", "trim_in", "trim_out", "nudge", "rejected", "deleted"}
@@ -123,13 +125,43 @@ def take_view(root, build, t, text, events, silences):
             "words": w, "check": check}
 
 
+def voice_marks(root, build):
+    """{line: the voice check's verdict on its clip} (voice_check.py / revoice_line.py), where there is one."""
+    b = Path(root) / build
+    p = b / "voice_check.json"
+    if not p.exists():
+        return {}
+    by_text = {N.norm(r["text"]): r for r in json.loads(p.read_text())}
+    out = {}
+    for k, l in enumerate(M.lines(b)):
+        r = by_text.get(N.norm(l[1]))
+        if r:
+            out[k] = {"ok": r["ok"], "listen": r.get("listen", False), "fails": r["fails"],
+                      "heard": (r["heard"][0] if isinstance(r["heard"], list) else r["heard"])}
+    return out
+
+
+def editable(build):
+    try:
+        path, _, _ = N.source(build)
+        return path.exists()
+    except ValueError:
+        return False
+
+
 def project(root, build, c):
     b = Path(root) / build
     ls = M.lines(b)
     sessions = S.sessions(c, build)
     good = usable(root, build, sessions)
-    eds, ch = S.edits(c, build), S.choices(c, build)
-    el, tk = M.project_edit_list(b, good, eds, ch)
+    eds, ch, st = S.edits(c, build), S.choices(c, build), S.settings(c, build)
+    if st["missing"] == "original":
+        try:
+            M.original(b)
+        except Exception:                          # a video without a soundtrack: nothing to fall back on
+            st["missing"] = "silent"
+    el, tk = M.project_edit_list(b, good, eds, ch, fallback=st["missing"])
+    navoiy = build.endswith("_uz_navoiy")
     takes = {}
     for k, lst in tk.items():
         views = []
@@ -146,9 +178,15 @@ def project(root, build, c):
     return {
         "build": build,
         "video": f"/{build}/presenter/{build}_silent.mp4",
+        "video_version": int((b / "presenter" / f"{build}_silent.mp4").stat().st_mtime),
         "lines": [[l[0], l[1]] for l in ls],
         "sessions": [dict(s, stale=s["name"] in stale) for s in sessions],
-        "audio": {s["name"]: f"/{build}/presenter/recordings/{s['name']}.m4a" for s in good if s["state"] == "ready"},
+        "audio": {**{s["name"]: f"/{build}/presenter/recordings/{s['name']}.m4a" for s in good if s["state"] == "ready"},
+                  **({T.ORIGINAL: f"/{build}/presenter/original.m4a"} if st["missing"] == "original" else {})},
+        "settings": st, "voice": voice_marks(root, build), "editable": editable(build),
+        "old_page": bool(ls) and len(ls[0]) < 4,      # prepared before lines knew their section: refresh it
+        "engine": "navoiy" if navoiy else "edge",
+        "voice_server": voice_server.status() if navoiy else None,
         "takes": takes, "choices": ch, "used": sorted(used),
         "edit_list": el,
         "jobs": S.jobs(c, build),
@@ -222,5 +260,13 @@ def cut_extras(root, build, take_id, c, pad=0.03):
 
 def chosen_ids(root, build, c):
     b = Path(root) / build
-    el, _ = M.project_edit_list(b, usable(root, build, S.sessions(c, build)), S.edits(c, build), S.choices(c, build))
+    el, _ = M.project_edit_list(b, usable(root, build, S.sessions(c, build)), S.edits(c, build), S.choices(c, build),
+                                fallback=S.settings(c, build)["missing"])
     return [tid for _, _, _, tid in el["lines"] if tid]
+
+
+def set_setting(root, build, key, value, c):
+    allowed = {"missing": ("original", "silent")}
+    if key not in allowed or value not in allowed[key]:
+        raise ValueError(f"unknown setting {key}={value}")
+    S.set_setting(c, build, key, value)

@@ -22,6 +22,11 @@ button:disabled{opacity:.45;cursor:default}
 #tl .seg{position:absolute;top:3px;bottom:3px;border-radius:2px;background:#3a5a7a}
 #tl .seg.missing{background:repeating-linear-gradient(45deg,#333 0 4px,#262626 4px 8px)}
 #tl .seg.flag{background:#7a4a2a}
+#tl .seg.orig{background:#2c3a48}
+#tl .seg.vbad{box-shadow:inset 0 3px 0 var(--bad)}
+#tl .seg.vlisten{box-shadow:inset 0 3px 0 var(--warn)}
+textarea{width:100%;min-height:4.2em;background:#1c1c1c;color:var(--fg);border:1px solid #333;border-radius:6px;padding:6px 8px;font:inherit}
+.narr{border-top:1px dashed #2a2a2a;margin-top:10px;padding-top:8px}
 #tl #cursor{position:absolute;top:0;bottom:0;width:2px;background:#fff}
 #nowline{padding:6px 10px 10px;min-height:3.2em;color:#ccc}
 aside{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14px}
@@ -62,7 +67,9 @@ input[type=range]{width:180px}
   <button onclick="api('/api/shrink')" title="Shorten every pause over a still picture in the chosen takes">Shorten all pauses</button>
   <button onclick="api('/api/words')" title="Transcribe the chosen takes and compare them with the approved text">Check all against the script</button>
   <span style="flex:1"></span>
-  <label class="dim">voice</label><select id="clean">__CLEAN__</select>
+  <label class="dim" title="lines you have not recorded">unrecorded lines</label>
+  <select id="missing" onchange="api('/api/settings?key=missing&value=' + this.value)"><option value="original">original voice</option><option value="silent">silent</option></select>
+  <label class="dim">voice cleaning</label><select id="clean">__CLEAN__</select>
   <button onclick="exportNow()">Export</button>
 </header>
 <div id="top">
@@ -81,11 +88,13 @@ input[type=range]{width:180px}
   <aside>
     <h2>Recordings</h2><ul id="sessions"></ul>
     <p><button class="quiet" onclick="api('/api/import')">Add recordings made before the editor</button></p>
+    <div id="vs"></div>
     <h2>Jobs</h2><ul id="jobs"></ul>
     <h2>Exports</h2><ul id="exports"></ul>
     <h2>Keys</h2><p class="dim">Space play / pause · ← → previous / next line · Enter open the line · a link ending #open=41 opens line 41</p>
   </aside>
 </div>
+<div id="banner"></div>
 <div id="lines"></div>
 <div id="msg"></div>
 <script>
@@ -148,9 +157,13 @@ function loadAll(at){
   const tl = document.getElementById('tl'); tl.querySelectorAll('.seg').forEach(x => x.remove());
   const flagged = new Set(Object.values(D.takes).flat().filter(t => t.check && (t.check.missing.length || t.check.extra.length)).map(t => t.id));
   for (const [k, a, b, tid] of el.lines){
-    const s = document.createElement('div'); s.className = 'seg' + (tid ? (flagged.has(tid) ? ' flag' : '') : ' missing');
+    const vm = D.voice[k], orig = !tid && D.settings.missing === 'original';
+    const s = document.createElement('div');
+    s.className = 'seg' + (tid ? (flagged.has(tid) ? ' flag' : '') : orig ? ' orig' : ' missing') +
+      (orig && vm ? (!vm.ok ? ' vbad' : vm.listen ? ' vlisten' : '') : '');
     s.style.left = 100 * a / P.total + '%'; s.style.width = Math.max(0.1, 100 * (b - a) / P.total - 0.05) + '%';
-    s.title = (k + 1) + '. ' + D.lines[k][1].slice(0, 80) + (tid ? '' : ' — no take yet'); tl.insertBefore(s, tl.firstChild); }
+    s.title = (k + 1) + '. ' + D.lines[k][1].slice(0, 80) + (tid ? '' : orig ? ' — original voice' : ' — no take yet, silent') +
+      (vm && !vm.ok ? ' — voice check: ' + vm.fails.join(', ') : ''); tl.insertBefore(s, tl.firstChild); }
 }
 function lineStart(k){ const sp = D.edit_list.lines.find(x => x[0] === k); return sp ? sp[1] : 0; }
 function playLine(k){ if (document.getElementById('mode').textContent !== 'whole lecture') loadAll(); P.seek(lineStart(k)); P.play(); }
@@ -165,8 +178,10 @@ async function api(url, body){
   await refresh(); return r; }
 async function refresh(keepPlace = true){
   const r = await fetch('/api/project?build=' + BUILD); if (!r.ok){ say('cannot load the project'); return; }
-  const first = !D; D = await r.json();
-  if (first){ v.src = D.video; loadAll();
+  const first = !D, oldVersion = D && D.video_version; D = await r.json();
+  if (!first && D.video_version !== oldVersion){ v.src = D.video + '?v=' + D.video_version; loadAll(); say('the lecture video was rebuilt'); }
+  document.getElementById('missing').value = D.settings.missing;
+  if (first){ v.src = D.video + '?v=' + D.video_version; loadAll();
     const h = location.hash.match(/open=(\d+)/);           // /edit?build=…#open=41 opens line 41
     if (h){ const k = Math.min(+h[1] - 1, D.lines.length - 1); open.add(k); curLine = k; setTimeout(() => document.getElementById('row' + k)?.scrollIntoView({block: 'center'}), 50); } }
   else if (document.getElementById('mode').textContent === 'whole lecture'){ const T = P.T, was = P.playing; loadAll(T); if (was) P.play(); }
@@ -187,12 +202,23 @@ function render(){
       ({recording: '<span class="warn">recording…</span> ' + s.chunks + ' s', recorded: '<span class="warn">waiting</span>',
         processing: '<span class="warn">cleaning the voice…</span>', ready: (s.seconds / 60).toFixed(1) + ' min · ' + esc(s.clean),
         failed: '<span class="bad">failed</span> ' + esc(s.error)}[s.state] || esc(s.state))}</li>`).join('') || '<li class="dim">none yet: press ● Record</li>';
+  document.getElementById('banner').innerHTML = D.old_page ? `<p style="margin:0 16px" class="warn">This lecture's presenter page was prepared before the editor:
+    rewriting a line needs it prepared again. <button onclick="fetch('/api/prepare?build=' + BUILD, {method: 'POST'}).then(() => say('preparing: about a minute'))">prepare it again</button></p>` : '';
+  const vs = D.voice_server;
+  document.getElementById('vs').innerHTML = !vs ? '' : `<h2>Cloned voice</h2><p>${vs.up ? '<span class="good">server running</span>' : '<span class="dim">server off</span>'}
+    ${vs.up ? (vs.pid ? `<button class="quiet" onclick="api('/api/voice-server?action=stop')">stop</button>` : '<span class="dim">(not started here)</span>')
+            : `<button onclick="api('/api/voice-server?action=start'); say('starting: about a minute')">start</button>`}</p>
+    <p class="dim">Re-voicing starts it when needed. It uses the GPU while it runs.</p>`;
   document.getElementById('jobs').innerHTML = D.jobs.slice(-6).reverse().map(j =>
     `<li>${esc(j.kind)} <span class="dim">${esc(j.key).slice(0, 40)}</span> · <span class="${j.state === 'failed' ? 'bad' : j.state === 'done' ? 'good' : 'warn'}">${esc(j.state)}</span> ${esc(j.error || j.detail || '')}</li>`).join('') || '<li class="dim">none</li>';
   document.getElementById('exports').innerHTML = D.exports.map(f =>
     `<li><a href="${f.url}" ${f.name.endsWith('.mp4') ? 'target="_blank"' : 'download'}>${esc(f.name)}</a> <span class="dim">${(f.size / 1e6).toFixed(1)} MB</span></li>`).join('') || '<li class="dim">none yet</li>';
-  const scroll = window.scrollY;
+  const scroll = window.scrollY, focus = document.activeElement, drafts = {};
+  document.querySelectorAll('#lines textarea').forEach(t => { drafts[t.id] = [t.value, t === focus, t.selectionStart, t.selectionEnd]; });
   document.getElementById('lines').innerHTML = D.lines.map((l, k) => rowHtml(k, l)).join('');
+  for (const [id, [val, had, a, b]] of Object.entries(drafts)){     // a refresh keeps what is being typed
+    const t = document.getElementById(id); if (!t) continue;
+    t.value = val; if (had){ t.focus(); t.setSelectionRange(a, b); } }
   window.scrollTo(0, scroll); showNow(); }
 
 function rowHtml(k, l){
@@ -203,12 +229,32 @@ function rowHtml(k, l){
     : odd ? `<span class="warn" title="extra, heard differently or unclear words: open the line">${odd} to check</span>` : '<span class="good">script ✓</span>';
   const chips = takes.map((x, n) => `<span class="chip${x.id === cid ? ' chosen' : ''}${x.rejected ? ' rejected' : ''}${open.has(k) && x.id === s ? ' sel' : ''}"
       onclick="event.stopPropagation(); pick(${k}, '${x.id}')" title="${esc(x.id)} · ${x.length.toFixed(1)} s${x.rejected ? ' · marked a mistake' : ''}">T${n + 1}</span>`).join('');
+  const vm = D.voice[k], vflag = !vm ? '' : !vm.ok ? `<span class="bad" title="the voice check heard: ${esc(vm.heard)}">voice: ${esc(vm.fails.join(', '))}</span>`
+    : vm.listen ? '<span class="warn" title="the voice check put this line on the listen list">listen</span>' : '';
   return `<div class="row${open.has(k) ? ' open' : ''}${k === curLine ? ' cur' : ''}" id="row${k}">
   <div class="head" onclick="toggleRow(${k})"><span class="num">${k + 1}</span><span class="text">${esc(l[1])}</span>
-   <span class="side">${flag} ${chips || '<span class="dim">no take</span>'} <span class="dim mono">${ct ? ct.length.toFixed(1) + ' s' : ''}</span>
+   <span class="side">${vflag} ${flag} ${chips || `<span class="dim">${D.settings.missing === 'original' ? 'original voice' : 'no take'}</span>`} <span class="dim mono">${ct ? ct.length.toFixed(1) + ' s' : ''}</span>
     <button class="quiet" onclick="event.stopPropagation(); playLine(${k})" title="preview from here">▶</button>
     <a class="btn" href="/${BUILD}/presenter/presenter.html#line=${k + 1}" target="_blank" onclick="event.stopPropagation()" title="record this line again">●</a></span></div>
-  <div class="detail">${t ? detailHtml(k, t, cid) : '<p class="dim">No take of this line yet. Press ● to record it: the presenter opens at this line.</p>'}</div></div>`; }
+  <div class="detail">${t ? detailHtml(k, t, cid) : '<p class="dim">No take of this line yet. Press ● to record it: the presenter opens at this line.</p>'}${narrHtml(k)}</div></div>`; }
+
+function narrHtml(k){
+  if (!D.editable) return '';
+  const vm = D.voice[k], job = D.jobs.find(j => j.kind === 'rewrite' && j.key === 'line ' + (k + 1));
+  const busy = D.jobs.some(j => j.kind === 'rewrite' && (j.state === 'queued' || j.state === 'running'));
+  const status = !job ? '' : `<p class="${job.state === 'failed' ? 'bad' : job.state === 'done' ? 'good' : 'warn'}">${esc(job.state)}: ${esc(job.error || job.detail)}</p>`;
+  return `<div class="narr"><div class="ctl"><label>narration — rewrite the line, and the ${D.engine === 'navoiy' ? 'cloned' : 'synthetic'} voice says it again (its section is rendered again, a few minutes)</label></div>
+    ${vm ? `<p class="${vm.ok ? (vm.listen ? 'warn' : 'dim') : 'bad'}">Voice check: ${vm.ok ? (vm.listen ? 'passes, but listen' : 'passes') : 'fails (' + esc(vm.fails.join(', ')) + ')'} · heard: “${esc(vm.heard)}”</p>` : ''}
+    <textarea id="nar${k}">${esc(D.lines[k][1])}</textarea>
+    <div class="ctl"><button ${busy ? 'disabled' : ''} onclick="rewriteLine(${k})">save and re-voice</button>
+    ${D.engine === 'navoiy' ? `<button class="quiet" ${busy ? 'disabled' : ''} onclick="revoiceLine(${k})" title="same words, new takes; the old clip stays if it scores better">re-voice as is</button>` : ''}
+    <span class="dim">Uzbek apostrophes are fixed for you (o'n → oʻn). In the bilingual file the English line is left as it was.</span></div>${status}</div>`; }
+function rewriteLine(k){
+  const text = document.getElementById('nar' + k).value.trim();
+  if (text === D.lines[k][1].trim()) return say('the text is unchanged: use “re-voice as is”');
+  if (!confirm('Save this text to the narration file and voice it again? Its section is rendered again and the video rejoined.')) return;
+  api('/api/rewrite?line=' + k, {text}).then(r => r && say('queued: line ' + (k + 1))); }
+function revoiceLine(k){ api('/api/revoice?line=' + k).then(r => r && say('queued: line ' + (k + 1))); }
 
 function detailHtml(k, t, cid){
   const e = t.edit, cuts = (e.cuts || []);

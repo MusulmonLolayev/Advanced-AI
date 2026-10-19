@@ -18,6 +18,7 @@ create table if not exists sessions (
     primary key (build, name));
 create table if not exists edits (build text, take text, edit text, primary key (build, take));
 create table if not exists choices (build text, line integer, take text, primary key (build, line));
+create table if not exists settings (build text, key text, value text, primary key (build, key));
 create table if not exists jobs (
     build text, kind text, key text, state text, error text default '', updated real, detail text default '',
     primary key (build, kind, key));
@@ -94,3 +95,16 @@ def reset_running(c):
     """A server restart kills running jobs: mark them as interrupted, so they can be started again."""
     c.execute("update jobs set state='failed', error='interrupted (server restarted)' where state in ('queued','running')")
     c.execute("update sessions set state='recorded' where state='processing'")
+
+
+DEFAULTS = {"missing": "original"}          # a line nobody recorded keeps the video's own narration
+
+
+def settings(c, build):
+    out = dict(DEFAULTS)
+    out.update({r["key"]: r["value"] for r in c.execute("select * from settings where build=?", (build,))})
+    return out
+
+
+def set_setting(c, build, key, value):
+    c.execute("insert or replace into settings values (?,?,?)", (build, key, value))

@@ -156,6 +156,22 @@ def process(build_dir, name, profile="deepfilter"):
     return len(x) / SR
 
 
+def original(build_dir):
+    """The lecture video's own narration, for lines nobody recorded: presenter/original.f32 (for the export) and
+    presenter/original.m4a (the preview), both remade when the video is newer."""
+    b = Path(build_dir)
+    video, f32, m4a = b / f"{b.name}.mp4", b / "presenter" / "original.f32", b / "presenter" / "original.m4a"
+    if not (f32.exists() and m4a.exists() and f32.stat().st_mtime >= video.stat().st_mtime):
+        ff("-i", video, "-vn", "-ac", 1, "-ar", SR, "-f", "f32le", f32.with_suffix(".tmp"))
+        f32.with_suffix(".tmp").replace(f32)
+        ff("-i", video, "-vn", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", m4a)
+    return f32, m4a
+
+
+def source_f32(build_dir, src, profile):
+    return original(build_dir)[0] if src == T.ORIGINAL else clean(build_dir, src, profile)
+
+
 # ─── the project: lines, takes, the edit list ─────────────────────────────
 def lines(build_dir):
     return json.loads((Path(build_dir) / "presenter" / "lines.json").read_text())
@@ -195,7 +211,7 @@ def chosen_take(takes_of_line, choice):
     return ok[-1] if ok else None
 
 
-def project_edit_list(build_dir, sessions, edits, choices, speed=1 / 1.1):
+def project_edit_list(build_dir, sessions, edits, choices, speed=1 / 1.1, fallback="silent"):
     ls = lines(build_dir)
     tk = all_takes(build_dir, sessions, edits)
     events = {s["name"]: session_events(build_dir, s["name"]) for s in sessions}
@@ -204,7 +220,7 @@ def project_edit_list(build_dir, sessions, edits, choices, speed=1 / 1.1):
         t = chosen_take(tk.get(k, []), choices.get(k))
         if t is not None:
             chosen[k] = dict(T.edited(t, events[t["session"]], t["edit"], speed), id=t["id"])
-    return T.edit_list([l[0] for l in ls], video_end(build_dir), chosen, speed), tk
+    return T.edit_list([l[0] for l in ls], video_end(build_dir), chosen, speed, fallback), tk
 
 
 # ─── chapters ─────────────────────────────────────────────────────────────
@@ -250,8 +266,13 @@ def line_sections(build_dir):
 
 # ─── the export ───────────────────────────────────────────────────────────
 def voice_track(build_dir, voice, profile):
-    """The edit list's voice as one float32 array: each piece sliced sample-exact from its cleaned session."""
-    srcs = {s: read_f32(clean(build_dir, s, profile)) for s in {p[1] for p in voice if p[1]}}
+    """The edit list's voice as one float32 array: each piece sliced sample-exact from its cleaned session (or the
+    video's own narration), every source first brought to the narration's loudness, so the instructor's voice and
+    the cloned one sit at one level where they alternate."""
+    srcs = {}
+    for s in {p[1] for p in voice if p[1]}:
+        f = source_f32(build_dir, s, profile)
+        srcs[s] = read_f32(f) * np.float32(10 ** ((TARGET - loudness(f)) / 20))
     total = round(T.length(voice) * SR)
     out = np.zeros(total, dtype=np.float32)
     t, done = 0.0, 0
@@ -280,10 +301,10 @@ def picture_piece(src, piece, frames, enc, tmp, k):
     return f
 
 
-def export(build_dir, sessions, edits, choices, profile="deepfilter", out=None, jobs=3, log=print):
+def export(build_dir, sessions, edits, choices, profile="deepfilter", out=None, jobs=3, log=print, fallback="silent"):
     """Render the edit list: <out>.mp4, <out>.srt, <out>.chapters.txt. Returns the paths."""
     b = Path(build_dir)
-    el, _ = project_edit_list(b, sessions, edits, choices)
+    el, _ = project_edit_list(b, sessions, edits, choices, fallback=fallback)
     out = Path(out or b / "presenter" / "export" / f"{b.name}_edited")
     out.parent.mkdir(parents=True, exist_ok=True)
     src = b / "presenter" / f"{b.name}_silent.mp4"

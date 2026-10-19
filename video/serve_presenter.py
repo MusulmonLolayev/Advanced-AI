@@ -35,7 +35,9 @@ from urllib.parse import parse_qs, quote, urlparse
 from compose_recording import CLEAN
 from studio import api as A
 from studio import media as M
+from studio import rewrite as RW
 from studio import store as S
+from studio import voice_server
 
 HERE = Path(__file__).parent
 ROOT = Path(os.environ.get("STUDIO_ROOT", HERE / "out"))     # tests point this at a scratch folder
@@ -196,10 +198,29 @@ def export(build, profile):
     def fn():
         with dbc() as c:
             sessions = A.usable(ROOT, build, S.sessions(c, build))
-            eds, ch = S.edits(c, build), S.choices(c, build)
-        paths = M.export(ROOT / build, sessions, eds, ch, profile)
+            eds, ch, st = S.edits(c, build), S.choices(c, build), S.settings(c, build)
+        paths = M.export(ROOT / build, sessions, eds, ch, profile, fallback=st["missing"])
         return paths[0].name
     enqueue(build, "export", "export", fn)
+
+
+def rewrite(build, line, text):
+    """Rewrite (text) or re-voice (None) one line: its scene is rendered again and the video joined again."""
+    key = f"line {line + 1}"
+
+    def progress(msg):
+        with dbc() as c:
+            S.job(c, build, "rewrite", key, "running", detail=msg)
+    enqueue(build, "rewrite", key, lambda: RW.rewrite(ROOT, build, line, text, dbc, progress))
+
+
+def voice_server_action(action):
+    def go():
+        try:
+            (voice_server.start if action == "start" else voice_server.stop)()
+        except Exception as e:                                # shown as the server's state in the editor
+            print("voice server:", e, flush=True)
+    threading.Thread(target=go, daemon=True).start()
 
 
 def editor(build):
@@ -530,6 +551,18 @@ class Studio(SimpleHTTPRequestHandler):
                 later += [lambda name=name: process(b, name) for name in names]
             elif path == "/api/process" and n is not None:
                 later.append(lambda: process(b, n, q.get("clean") if q.get("clean") in CLEAN else None))
+            elif path in ("/api/rewrite", "/api/revoice") and q.get("line", "").isdigit():
+                line = int(q["line"])
+                if line >= len(M.lines(ROOT / b)):
+                    raise ValueError("no such line")
+                text = json.loads(self.body() or b"{}").get("text") if path == "/api/rewrite" else None
+                if path == "/api/rewrite" and not (text or "").strip():
+                    raise ValueError("the new text is empty")
+                later.append(lambda: rewrite(b, line, text))
+            elif path == "/api/settings" and q.get("key"):
+                A.set_setting(ROOT, b, q["key"], q.get("value", ""), c)
+            elif path == "/api/voice-server" and q.get("action") in ("start", "stop"):
+                later.append(lambda: voice_server_action(q["action"]))
             elif path == "/api/export":
                 later.append(lambda: export(b, q.get("clean") if q.get("clean") in CLEAN else "deepfilter"))
             else:

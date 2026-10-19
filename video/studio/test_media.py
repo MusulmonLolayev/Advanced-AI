@@ -58,12 +58,33 @@ class VoiceTrack(unittest.TestCase):
             (rec / "s.webm").write_bytes(b"x")                         # older than the f32: no re-cleaning
             import os
             os.utime(rec / "s.webm", (0, 0))
-            out = M.voice_track(b, [(1.0, "s", 2.0), (0.5, None, None), (1.0, "s", 7.0)], "off")
+            loud, M.loudness = M.loudness, lambda f: M.TARGET            # already at the target: gain 1
+            try:
+                out = M.voice_track(b, [(1.0, "s", 2.0), (0.5, None, None), (1.0, "s", 7.0)], "off")
+            finally:
+                M.loudness = loud
             self.assertEqual(len(out), round(2.5 * M.SR))
             self.assertAlmostEqual(float(out[0]), 2.0, places=4)
             self.assertAlmostEqual(float(out[M.SR - 1]), 3.0 - 1 / M.SR, places=4)
             self.assertTrue(np.all(out[M.SR: M.SR + M.SR // 2] == 0))
             self.assertAlmostEqual(float(out[int(1.5 * M.SR)]), 7.0, places=4)
+
+
+class Loudness(unittest.TestCase):
+    def test_every_source_is_brought_to_the_narration_loudness(self):
+        with tempfile.TemporaryDirectory() as d:
+            b = Path(d) / "m7_lecture99_en"
+            rec = M.recdir(b)
+            rec.mkdir(parents=True)
+            import os
+            for name, amp in (("quiet", 0.02), ("loud", 0.4)):
+                np.tile(tone(1.0, amp=amp), 20).tofile(rec / f"{name}.off.f32")
+                (rec / f"{name}.webm").write_bytes(b"x")
+                os.utime(rec / f"{name}.webm", (0, 0))
+            out = M.voice_track(b, [(5.0, "quiet", 0.0), (5.0, "loud", 0.0)], "off")
+            a, z = out[: 5 * M.SR], out[5 * M.SR:]
+            rms = lambda x: float(np.sqrt(np.mean(x ** 2)))           # noqa: E731
+            self.assertAlmostEqual(rms(a) / rms(z), 1.0, delta=0.05)   # one level, whichever source
 
 
 class Chapters(unittest.TestCase):

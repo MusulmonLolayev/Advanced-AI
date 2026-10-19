@@ -66,7 +66,8 @@ class Studio(unittest.TestCase):
         (b / "presenter").mkdir(parents=True)
         ff("-f", "lavfi", "-i", "testsrc2=s=320x180:r=60:d=30", "-c:v", "libx264", "-preset", "ultrafast",
            "-pix_fmt", "yuv420p", b / "presenter" / f"{B}_silent.mp4")
-        (b / f"{B}.mp4").write_bytes((b / "presenter" / f"{B}_silent.mp4").read_bytes())
+        ff("-i", b / "presenter" / f"{B}_silent.mp4", "-f", "lavfi", "-i", "sine=f=440:r=48000:d=30", "-c:v", "copy",
+           "-c:a", "aac", "-shortest", b / f"{B}.mp4")              # the lecture as built: its own narration is a tone
         (b / "joined.txt").write_text("")
         (b / "parts.txt").write_text("".join(f"file '/x/{s}.mp4'\n" for s in ("S00Opening", "S01Why", "S02Tools")))
         (b / "presenter" / "lines.json").write_text(json.dumps(LINES))
@@ -200,6 +201,30 @@ class Studio(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError, msg=path) as cm:
                 self.req(path, body)
             self.assertEqual(cm.exception.code, 400, path)
+
+    def test_5_an_unrecorded_line_keeps_the_original_voice_or_is_silent(self):
+        p = self.get(f"/api/project?build={B}")
+        self.assertEqual(p["settings"]["missing"], "original")
+        for t in p["takes"]["2"]:                                       # hide every take of line 2
+            self.req(f"/api/edit?build={B}&take={t['id']}", {"deleted": True})
+        p = self.get(f"/api/project?build={B}")
+        k, a, b, tid = p["edit_list"]["lines"][2]
+        self.assertEqual((tid, round(b - a, 3)), (None, 10.0))          # line 2 as built: 10 s at full speed
+        self.assertIn("__original__", p["audio"])
+        for mode, loud in (("original", True), ("silent", False)):
+            self.req(f"/api/settings?build={B}&key=missing&value={mode}")
+            self.req(f"/api/export?build={B}&clean=off")
+            self.wait(lambda p: all(j["state"] in ("done", "failed") for j in p["jobs"] if j["kind"] == "export"),
+                      "export", 240)
+            out = self.root / B / "presenter" / "export" / f"{B}_edited.mp4"
+            x = np.frombuffer(subprocess.run(["ffmpeg", "-v", "error", "-i", str(out), "-ac", "1", "-ar", str(SR),
+                                              "-f", "f32le", "-"], capture_output=True).stdout, np.float32)
+            seg = x[int((a + 2) * SR):int((b - 2) * SR)]
+            rms = float(np.sqrt(np.mean(seg ** 2)))
+            self.assertEqual(rms > 0.05, loud, f"{mode}: rms {rms:.3f}")
+        self.req(f"/api/settings?build={B}&key=missing&value=original")
+        with self.assertRaises(urllib.error.HTTPError):
+            self.req(f"/api/settings?build={B}&key=missing&value=loud")
 
     def test_4_pages(self):
         page = self.get(f"/edit?build={B}").decode()
