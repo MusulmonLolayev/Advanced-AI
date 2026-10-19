@@ -83,7 +83,7 @@ class S03ReAct(Scene7):
         self.hands_on()
         self.clear_all()
         with self.say("3.26") as (tr, t):
-            self.play(FadeIn(txt(ARTICLES["1"]["code_title"], size=34, weight=BOLD)), run_time=0.7)
+            self.play(FadeIn(law_title()), run_time=0.7)
         self.clear_all()
 
 

@@ -1,5 +1,6 @@
 """Module 7, Lecture 1, section 8 — designing the action space; a failure reply is an observation
-(the class agent's real act(): fetch_article[1182])."""
+(the class agent's real act(): fetch_article[1182], or fetch[WTR 99] in English; and in English, the real empty turn
+of traces/uk/q1_week.json)."""
 from m7_lecture01_kit import *
 
 
@@ -42,11 +43,11 @@ class S08Design(Scene7):
             self.play(FadeIn(r2), run_time=0.5)
         self.clear_all()
 
-        call = trace_line("action", "fetch_article[1182]", size=24).move_to(UP * 1.2 + LEFT * 4.2, aligned_edge=LEFT)
-        obs = trace_line("observation", class_agent.act("fetch_article", "1182"), size=24)
+        call = trace_line("action", f"{FETCH}[{FACT['no_such']}]", size=24).move_to(UP * 1.2 + LEFT * 4.2, aligned_edge=LEFT)
+        obs = fit(trace_line("observation", act(FETCH, FACT["no_such"]), size=24, width=40), 11.0)
         obs.next_to(call, DOWN, aligned_edge=LEFT, buff=0.35)
         call2 = trace_line("action", "calculator[36/5]", size=24).next_to(obs, DOWN, aligned_edge=LEFT, buff=0.6)
-        obs2 = fit(trace_line("observation", class_agent.act("calculator", "36/5"), size=24, width=40), 11.0)
+        obs2 = fit(trace_line("observation", act("calculator", "36/5"), size=24, width=40), 11.0)
         obs2.next_to(call2, DOWN, aligned_edge=LEFT, buff=0.35)
         rule = txt(label("m7_failure_reply"), size=28, weight=BOLD, color=HILITE).to_edge(DOWN, buff=SAFE + 0.4)
         with self.say("8.66") as (tr, t):
@@ -57,6 +58,30 @@ class S08Design(Scene7):
             self.cue(tr, t, {"uz": "U kuzatuv", "en": "It goes back"})
             self.play(FadeIn(rule), run_time=0.5)
         self.clear_all()
+
+        if "8.66a" in NARRATION:               # English: a real failure reply, from the weekly-hours run
+            q1 = trace("q1_week")["trace"]
+            empty = next(i for i, s in enumerate(q1) if not s["model"].strip())
+            run = VGroup(txt(label("m7_q_week"), size=24, color=GREY_B),
+                         txt(label("m7_real_run"), size=20, color=GREY_B)).arrange(DOWN, buff=0.1)
+            run.to_edge(UP, buff=SAFE + 0.3)
+            step = VGroup(mono(f"{empty + 1}", size=26, color=HILITE),
+                          txt(label("m7_empty_turn"), size=26, color=RLRED)).arrange(RIGHT, buff=0.4)
+            step.move_to(UP * 1.0 + LEFT * 6.0, aligned_edge=LEFT)
+            fix = fit(trace_line("observation", q1[empty]["observation"], size=22, width=60), 11.5)
+            fix.next_to(step, DOWN, aligned_edge=LEFT, buff=0.35)
+            nxt = trace_line("action", re.search(r"Action:\s*(.*)", q1[empty + 1]["model"])[1], size=22)
+            nxt = VGroup(mono(f"{empty + 2}", size=26, color=GOOD), nxt).arrange(RIGHT, buff=0.4)
+            nxt.next_to(fix, DOWN, aligned_edge=LEFT, buff=0.5)
+            with self.say("8.66a") as (tr, t):
+                self.play(FadeIn(run), run_time=0.4)
+                self.cue(tr, t, "came back empty")
+                self.play(FadeIn(step), run_time=0.5)
+                self.cue(tr, t, "Our code answered")
+                self.play(FadeIn(fix), run_time=0.5)
+                self.cue(tr, t, "On the next turn")
+                self.play(FadeIn(nxt), run_time=0.5)
+            self.clear_all()
 
         card = pause([label("m7_pause_argument")])
         with self.say("8.67") as (tr, t):

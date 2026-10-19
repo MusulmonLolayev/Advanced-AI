@@ -8,13 +8,13 @@ m7_subtitle:
   en: "What is an agent?"
   uz: "Agent nima?"
 m7_articles:
-  en: "articles"
+  en: "provisions"
   uz: "modda"
 m7_q_week:
-  en: "At most how many hours is a normal working week?"
+  en: "What is the maximum weekly working time?"
   uz: "Normal ish haftasi eng koʻpi bilan necha soat?"
 m7_q_minors:
-  en: "And for employees under eighteen?"
+  en: "And for workers under eighteen?"
   uz: "Oʻn sakkiz yoshga toʻlmaganlar uchun-chi?"
 m7_question:
   en: "question"
@@ -47,10 +47,10 @@ m7_model_decides:
   en: "the model chooses the next step"
   uz: "keyingi qadamni model tanlaydi"
 m7_pause_leave:
-  en: "How many days of annual leave?"
+  en: "How much annual leave does a worker get?"
   uz: "Yillik taʼtil necha kun?"
 m7_pause_teen:
-  en: "How many hours a week and a day may a seventeen-year-old work?"
+  en: "How many hours a day and a week may a seventeen-year-old work?"
   uz: "Oʻn yetti yoshli xodim haftasiga va kuniga necha soat ishlay oladi?"
 m7_pause_which:
   en: "Which needs one search, which needs several?"
@@ -59,10 +59,10 @@ m7_tool_def:
   en: "a function the model asks for by name"
   uz: "model nomi bilan chaqiradigan funksiya"
 m7_tool_search:
-  en: "finds articles by words"
+  en: "finds provisions by words"
   uz: "soʻzlar boʻyicha moddalarni topadi"
 m7_tool_fetch:
-  en: "one article's full text"
+  en: "one provision's full text"
   uz: "bitta moddaning toʻliq matni"
 m7_tool_answer:
   en: "ends the run, every claim cited"
@@ -146,10 +146,10 @@ m7_cite_read:
   en: "cite what you read, not what you remember"
   uz: "eslaganini emas, oʻqiganini manba qiladi"
 m7_pause_daily:
-  en: "How many hours a day may a seventeen-year-old work in a five-day week?"
+  en: "How many hours a day may a seventeen-year-old work?"
   uz: "Oʻn yetti yoshli xodim besh kunlik haftada kuniga necha soat ishlay oladi?"
 m7_pause_which_articles:
-  en: "Which articles must the agent read?"
+  en: "Which provisions must the agent read?"
   uz: "Agent qaysi moddalarni oʻqishi kerak?"
 m7_no_tools:
   en: "the same model, no tools"
@@ -164,7 +164,7 @@ m7_wrong_citation:
   en: "the citation does not hold"
   uz: "manba notoʻgʻri"
 m7_q_wage:
-  en: "What is the minimum monthly wage, in soʻm?"
+  en: "What is the national minimum wage per hour, in pounds?"
   uz: "Eng kam oylik ish haqi necha soʻm?"
 m7_worse:
   en: "in reality lower still: one bad step spoils the next"
@@ -173,13 +173,13 @@ m7_asked_again:
   en: "asked again"
   uz: "yana soʻradik"
 m7_no_amount:
-  en: "the code states no amount"
+  en: "the Act states no amount"
   uz: "kodeksda summa yoʻq"
 m7_read_not_remember:
   en: "an agent has to read, not remember"
   uz: "agent eslamasligi, oʻqishi kerak"
 m7_pause_claims:
-  en: "Mark each claim: “in the code” or “not in the code”"
+  en: "Mark each claim: “in the law” or “not in the law”"
   uz: "Har bir daʼvo yoniga: «kodeksda bor» yoki «kodeksda yoʻq»"
 m7_fixed_part:
   en: "fixed part"
@@ -248,7 +248,7 @@ m7_which_one:
   en: "which one did we mean?"
   uz: "qaysi birini nazarda tutdik?"
 m7_only_labor:
-  en: "“only inside the Labor Code” — cannot be said"
+  en: "“only the Working Time Regulations” — cannot be said"
   uz: "«faqat Mehnat kodeksi ichidan» — aytib boʻlmaydi"
 m7_rule_one_sentence:
   en: "each tool: one sentence"
@@ -281,7 +281,7 @@ m7_not_found:
   en: "not found within the limit"
   uz: "chegara ichida topilmadi"
 m7_last_read:
-  en: "last article read"
+  en: "last provision read"
   uz: "oxirgi oʻqilgan modda"
 m7_pause_repeat:
   en: "The same search twice: what observation do we return?"
@@ -328,3 +328,24 @@ m7_next:
 m7_draft:
   en: "DRAFT — narration not yet approved"
   uz: "QORALAMA — matn hali tasdiqlanmagan"
+m7_from_memory:
+  en: "from memory"
+  uz: "xotiradan"
+m7_not_in_corpus:
+  en: "nothing we gave the model contains it"
+  uz: "biz bergan matnlarda yoʻq"
+m7_repealed:
+  en: "repealed: only dots are left"
+  uz: "bekor qilingan: faqat nuqtalar qolgan"
+m7_never_cited:
+  en: "the daily limit: missing from the answer"
+  uz: "kunlik chegara: javobda yoʻq"
+m7_empty_turn:
+  en: "an empty turn"
+  uz: "boʻsh navbat"
+m7_words_only:
+  en: "our search reads words only: “£” matches nothing"
+  uz: "qidiruvimiz faqat soʻzlarni oʻqiydi: «£» hech narsaga mos kelmaydi"
+m7_proved_nothing:
+  en: "true this time — but this step proved nothing"
+  uz: "bu safar toʻgʻri — lekin bu qadam hech narsani isbotlamadi"

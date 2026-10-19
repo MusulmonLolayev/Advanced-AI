@@ -1,5 +1,6 @@
 """Module 7, Lecture 1, section 9 — how the loop breaks; the step budget on the recorded minimum-wage runs
-(traces/q3_min_wage.json: 7 steps; q3_min_wage_steps3.json: stopped after 3)."""
+(traces/q3_min_wage.json: 7 steps, English traces/uk/: 4; q3_min_wage_steps3.json: stopped after 3), and in English
+the run's step that proved nothing (search[£])."""
 from m7_lecture01_kit import *
 
 FULL = turns("q3_min_wage")
@@ -10,8 +11,8 @@ CUT_LIMIT = trace("q3_min_wage_steps3")["max_steps"]
 
 def tile(action, width=1.5):
     name = re.match(r"(\w+)\[(.*)\]", action, re.S)
-    short_name = {"search": "search", "fetch_article": "fetch", "answer": "answer"}[name[1]]
-    arg = name[2] if name[1] == "fetch_article" else ""
+    short_name = {"search": "search", "fetch_article": "fetch", "fetch": "fetch", "answer": "answer"}[name[1]]
+    arg = name[2] if name[1] == FETCH else ""
     color = HILITE if name[1] == "answer" else GOOD
     r = RoundedRectangle(corner_radius=0.1, width=width, height=1.0, stroke_color=color, stroke_width=3,
                          fill_color=BLACK, fill_opacity=0.6)
@@ -31,7 +32,7 @@ class S09Breaks(Scene7):
         self.section_card(9)
         ways = VGroup(*[txt(label(k), size=30, weight=BOLD) for k in ("m7_endless", "m7_invalid", "m7_compound")])
         ways.arrange(RIGHT, buff=0.9).to_edge(UP, buff=SAFE + 0.5)
-        same = VGroup(*[mono("search[ish vaqti]", size=22, color=GOOD) for _ in range(3)]).arrange(DOWN, buff=0.35)
+        same = VGroup(*[mono(f"search[{FACT['repeat_query']}]", size=22, color=GOOD) for _ in range(3)]).arrange(DOWN, buff=0.35)
         same.move_to(DOWN * 0.4)
         with self.say("9.69") as (tr, t):
             self.play(LaggedStart(*[FadeIn(w) for w in ways], lag_ratio=0.3), run_time=1.0)
@@ -61,7 +62,7 @@ class S09Breaks(Scene7):
             self.play(FadeIn(none), run_time=0.4)
         self.clear_all()
 
-        last = re.search(r"fetch_article\[(\d+)\]", [a for _, a, _ in CUT if a.startswith("fetch_article")][-1])[1]
+        last = re.search(rf"{FETCH}\[(.+?)\]", [a for _, a, _ in CUT if a.startswith(FETCH + "[")][-1])[1]
         msg = VGroup(txt(label("m7_not_found"), size=34, weight=BOLD, color=HILITE),
                      tagged(last, label("m7_last_read"), after=False, size=30))
         msg.arrange(DOWN, buff=0.35)
@@ -72,7 +73,7 @@ class S09Breaks(Scene7):
 
         ways2 = ways.copy().set_color(WHITE)
         bad = trace_line("action", "calculator[36/5]", size=22).move_to(UP * 0.4 + LEFT * 4.2, aligned_edge=LEFT)
-        reply = fit(trace_line("observation", class_agent.act("calculator", "36/5"), size=22, width=40), 11.0)
+        reply = fit(trace_line("observation", act("calculator", "36/5"), size=22, width=40), 11.0)
         reply.next_to(bad, DOWN, aligned_edge=LEFT, buff=0.3)
         with self.say("9.73") as (tr, t):
             self.play(FadeIn(ways2), run_time=0.4)
@@ -92,6 +93,33 @@ class S09Breaks(Scene7):
             for s in chainrow[2:]:
                 self.play(s.animate.set_stroke(RLRED), run_time=0.25)
         self.clear_all()
+
+        if "9.74a" in NARRATION:               # English: the minimum-wage run's step 3, a search that cannot match
+            k = next(i for i, (_, a, _) in enumerate(FULL) if a == "search[£]")
+            th_next = FULL[k + 1][0]
+            row = VGroup(mono(f"{k + 1}", size=26, color=HILITE),
+                         trace_line("action", FULL[k][1], size=24)).arrange(RIGHT, buff=0.4)
+            row.move_to(UP * 2.0 + LEFT * 5.0, aligned_edge=LEFT)
+            got = trace_line("observation", FULL[k][2], size=24).next_to(row, DOWN, aligned_edge=LEFT, buff=0.3)
+            words = txt(label("m7_words_only"), size=22, color=GREY_B).next_to(got, DOWN, aligned_edge=LEFT, buff=0.25)
+            then = fit(trace_line("thought", th_next, size=22, width=56), 11.8)
+            then.next_to(words, DOWN, aligned_edge=LEFT, buff=0.45)
+            key = "No monetary figure appears anywhere"
+            line1 = then[1]
+            under = Underline(line1, color=RLRED, buff=0.04)
+            proof = txt(label("m7_proved_nothing"), size=28, weight=BOLD, color=RLRED).to_edge(DOWN, buff=SAFE + 0.5)
+            assert key in th_next
+            with self.say("9.74a") as (tr, t):
+                self.cue(tr, t, "the model searched for the pound sign")
+                self.play(FadeIn(row), run_time=0.5)
+                self.cue(tr, t, "Our search reads only words")
+                self.play(FadeIn(got), FadeIn(words), run_time=0.5)
+                self.cue(tr, t, "and the model took")
+                self.play(FadeIn(then), run_time=0.5)
+                self.play(Create(under), run_time=0.5)
+                self.cue(tr, t, "But that step proved nothing")
+                self.play(FadeIn(proof), run_time=0.5)
+            self.clear_all()
 
         card = pause([label("m7_pause_repeat")])
         with self.say("9.75") as (tr, t):

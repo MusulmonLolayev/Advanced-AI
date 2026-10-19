@@ -1,4 +1,4 @@
-"""Module 7, Lecture 1 — the opening: the module, the question, and the 581 real articles our agent will read."""
+"""Module 7, Lecture 1 — the opening: the module, the question, and the real provisions our agent will read."""
 from m7_lecture01_kit import *
 
 
@@ -8,9 +8,11 @@ class S00Opening(Scene7):
         with self.say("0.0") as (tr, t):
             self.play(FadeIn(card, shift=UP * 0.3), run_time=0.8)
 
-        head = txt(ARTICLES["1"]["code_title"], size=34, weight=BOLD).to_edge(UP, buff=SAFE + 0.3)
-        tiles = VGroup(*[Square(0.15, stroke_width=0, fill_color=RLBLUE, fill_opacity=0.85) for _ in ARTICLES])
-        tiles.arrange_in_grid(cols=42, buff=0.05).next_to(head, DOWN, buff=0.5)
+        head = law_title().to_edge(UP, buff=SAFE + 0.3)
+        few = len(ARTICLES) < 300                     # the UK laws: 118 provisions, drawn larger
+        tiles = VGroup(*[Square(0.3 if few else 0.15, stroke_width=0, fill_color=RLBLUE, fill_opacity=0.85)
+                         for _ in ARTICLES])
+        tiles.arrange_in_grid(cols=24 if few else 42, buff=0.08 if few else 0.05).next_to(head, DOWN, buff=0.5)
         count = tagged(len(ARTICLES), label("m7_articles"), size=34, value_color=HILITE, value_weight=BOLD)
         count.next_to(tiles, DOWN, buff=0.4)
         with self.say("0.1") as (tr, t):

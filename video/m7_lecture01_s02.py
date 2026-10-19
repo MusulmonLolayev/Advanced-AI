@@ -22,12 +22,12 @@ class S02Tools(Scene7):
             self.play(FadeIn(define, shift=UP * 0.2), run_time=0.6)
 
         cards = VGroup(tool_card("search[…]", "m7_tool_search", GOOD),
-                       tool_card("fetch_article[N]", "m7_tool_fetch", GOOD),
+                       tool_card(f"{FETCH}[{'id' if UK else 'N'}]", "m7_tool_fetch", GOOD),
                        tool_card("answer[…]", "m7_tool_answer", HILITE)).arrange(RIGHT, buff=0.4)
         cards.scale_to_fit_width(min(cards.width, 12.6)).move_to(DOWN * 0.2)
         with self.say("2.11") as (tr, t):
             for c, k in zip(cards, [{"uz": "Qidiruv soʻzlar", "en": "Search finds"},
-                                    {"uz": "Moddani olish bitta", "en": "Fetch article returns"},
+                                    {"uz": "Moddani olish bitta", "en": "Fetch returns"},
                                     {"uz": "Javob esa", "en": "Answer ends"}]):
                 self.cue(tr, t, k)
                 self.play(FadeIn(c, shift=UP * 0.2), run_time=0.5)
@@ -52,8 +52,8 @@ class S02Tools(Scene7):
         model = node(label("m7_model"), color=THINK).move_to(LEFT * 4.6 + UP * 1.0)
         code = node(label("m7_our_code"), color=GOOD).move_to(RIGHT * 0.4 + UP * 1.0)
         tool = node(label("m7_tool"), color=GOOD).move_to(RIGHT * 4.8 + UP * 1.0)
-        slip = mono("fetch_article[182]", size=22, color=GOOD).next_to(model, DOWN, buff=0.4)
-        result = article_card("182", "haftasiga qirq soatdan ortiq", chars=170, width=8.0, size=18)
+        slip = mono(f"{FETCH}[{FACT['week'][0]}]", size=22, color=GOOD).next_to(model, DOWN, buff=0.4)
+        result = article_card(*FACT["week"], chars=170, width=8.0, size=18)
         result.scale(0.8).move_to(DOWN * 2.0)
         with self.say("2.14") as (tr, t):
             self.play(FadeIn(model), FadeIn(code), FadeIn(tool), run_time=0.6)

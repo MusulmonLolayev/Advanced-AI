@@ -1,6 +1,10 @@
-"""Module 7, Lecture 1's kit: its narration (narration/m7_lecture01.md), its numbers (m7/raw/l01_numbers.json,
-tested by m7/test_l01.py), the class agent's recorded runs (agents/class_agent/traces/, facts tested by
-test_class_agent.py) and the real Labor Code articles they read. Nothing shown here is typed by hand.
+"""Module 7, Lecture 1's kit: its narration, its numbers (m7/raw/l01_numbers.json, tested by m7/test_l01.py), the
+class agent's recorded runs (facts tested by test_class_agent.py) and the real provisions they read. Nothing shown
+here is typed by hand.
+
+Two laws, by language (the instructor, 2026-10-17): the English video runs on UK law (narration/m7_lecture01_en.md,
+agents/class_agent/corpus_uk.py, traces/uk/), the Uzbek one on the Labor Code of Uzbekistan
+(narration/m7_lecture01.md, corpus.py, traces/). The scenes are shared; UK says which, and FACT holds what differs.
 """
 import json
 import re
@@ -19,10 +23,35 @@ assert C.compute() == N, "m7/raw/l01_numbers.json is stale: rerun m7/capture_l01
 AGENT = REPO / "agents" / "class_agent"
 sys.path.insert(0, str(AGENT))
 import agent as class_agent                     # noqa: E402  the real loop's act(): failure replies, search lists
-from corpus import ARTICLES                     # noqa: E402
 
-NARRATION, HEADS = parse((HERE / "narration" / "m7_lecture01.md").read_text())
+UK = LANG == "en"
+LAW = class_agent.LAWS["uk" if UK else "uz"]
+ARTICLES = LAW.ARTICLES
+FETCH = LAW.FETCH                               # the fetch action's name: fetch / fetch_article
+if UK:
+    NARRATION, HEADS = parse((HERE / "narration" / "m7_lecture01_en.md").read_text(), single="en")
+else:
+    NARRATION, HEADS = parse((HERE / "narration" / "m7_lecture01.md").read_text())
 assert len(HEADS) == 10 and "0.0" in NARRATION and "10.86" in NARRATION
+
+# What each law's scenes point at: a provision id, and the words of it to light (all asserted in test_class_agent.py)
+FACT = {
+    "week": ("WTR 4", "an average of 48 hours for each seven days") if UK else ("182", "haftasiga qirq soatdan ortiq"),
+    "minors": ("WTR 5A", "40 hours a week") if UK else ("415", "haftasiga oʻttiz olti soatdan"),
+    "no_such": "WTR 99" if UK else "1182",
+    "repeat_query": "working time" if UK else "ish vaqti",
+}
+
+
+def act(name, arg):
+    """The class agent's real reply to an action, on this video's law."""
+    return class_agent.act(name, arg, LAW)
+
+
+def law_title(size=34):
+    """The law(s) the agent reads, by their own titles."""
+    titles = list(dict.fromkeys(a["code_title"] for a in ARTICLES.values()))
+    return VGroup(*[txt(x, size=size, weight=BOLD) for x in titles]).arrange(DOWN, buff=0.15)
 
 LectureScene, line = bind(_BaseScene, (NARRATION, HEADS), {}, {})
 
@@ -32,7 +61,7 @@ KIND_COLOR = {"thought": THINK, "action": GOOD, "observation": GREY_B, "answer":
 
 
 def trace(name):
-    return json.loads((AGENT / "traces" / f"{name}.json").read_text())
+    return json.loads((AGENT / "traces" / ("uk" if UK else "") / f"{name}.json").read_text())
 
 
 def turns(name):
@@ -73,21 +102,34 @@ def stack(rows, buff=0.18, left=-6.5, top=2.7):
     return g
 
 
-def article_card(aid, phrase=None, chars=260, width=10.5, size=20):
-    """A real article: its number and title, then the start of its text with `phrase` lit."""
+def lit(wrapped, phrase):
+    """t2c for `phrase` in wrapped text, one piece per line it spans (a phrase broken by the wrap stays lit)."""
+    if not phrase:
+        return {}
+    i = wrapped.replace("\n", " ").find(phrase)
+    if i < 0:
+        return {}
+    return {piece: HILITE for piece in wrapped[i:i + len(phrase)].split("\n") if piece.strip()}
+
+
+def article_card(aid, phrase=None, chars=260, width=10.5, size=20, lead=80, text=None, head=None):
+    """A real provision: its number and title, then the start of its text (or of `text`, one paragraph of it) with
+    `phrase` lit."""
     a = ARTICLES[str(aid)]
-    body = a["text"].replace("\n", " ")
+    body = (text or a["text"]).replace("\n", " ")
     if phrase and phrase in body:
         i = body.index(phrase)
-        start = max(0, i - 80)
+        start = max(0, i - lead)
+        if start:
+            start = body.rfind(" ", 0, start) + 1             # a whole word first
         body = ("…" if start else "") + body[start:]
     body = short(body, chars)
-    head = txt(f"{a['article_display']}. {a['title']}", size=size + 4, weight=BOLD, color=HILITE)
+    sep = " · " if UK else ". "
+    head = txt(head or f"{a['article_display']}{sep}{a['title'].rstrip('.')}", size=size + 4, weight=BOLD, color=HILITE)
     if head.width > width:
         head.scale_to_fit_width(width)
     lines = textwrap.fill(body, 64)
-    t2c = {phrase: HILITE} if phrase and phrase in lines else {}
-    text = Text(lines, font_size=size, color=GREY_A, t2c=t2c, disable_ligatures=True)
+    text = Text(lines, font_size=size, color=GREY_A, t2c=lit(lines, phrase), disable_ligatures=True)
     if text.width > width:
         text.scale_to_fit_width(width)
     g = VGroup(head, text).arrange(DOWN, aligned_edge=LEFT, buff=0.25)
@@ -164,3 +206,8 @@ class Scene7(LectureScene):
             if l < -LIMIT_X or r > LIMIT_X or t > LIMIT_TOP or b < LIMIT_BOTTOM:
                 raise RuntimeError(f"{type(self).__name__} at {self.renderer.time:.1f}s: {type(m).__name__} spans "
                                    f"x {l:.2f}..{r:.2f}, y {b:.2f}..{t:.2f} -- outside the safe area")
+
+
+def paragraph(aid, mark):
+    """One numbered paragraph of a provision, '(2)' or '(a)', as its text says it."""
+    return next(r for r in ARTICLES[aid]["text"].splitlines() if r.startswith(mark + " "))
