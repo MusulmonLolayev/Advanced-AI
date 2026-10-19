@@ -1,0 +1,269 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lecture editor</title>
+<style>
+:root{--bg:#111;--panel:#171717;--line:#2a2a2a;--fg:#eee;--dim:#8a8a8a;--acc:#8fb8de;--good:#5fa0a4;--warn:#d7b46a;--bad:#e5484d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,sans-serif}
+a{color:var(--acc)}
+header{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+header h1{font-size:17px;margin:0 8px 0 0}
+button,.btn,select{background:#1f2a36;color:var(--acc);border:1px solid #2f4256;border-radius:6px;padding:4px 10px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none;white-space:nowrap}
+button.quiet{background:none;color:var(--dim);border-color:#333}
+button.on{background:#2c4a33;color:#bfe3c3;border-color:#3d6b47}
+button:disabled{opacity:.45;cursor:default}
+.dim{color:var(--dim)}.bad{color:var(--bad)}.warn{color:var(--warn)}.good{color:var(--good)}
+.mono{font-family:ui-monospace,monospace;font-size:13px}
+#top{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;padding:14px 16px}
+@media (max-width:900px){#top{grid-template-columns:1fr}}
+#stage{background:#000;border-radius:8px;overflow:hidden}
+#stage video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+#transport{display:flex;gap:10px;align-items:center;padding:8px 10px;background:#0c0c0c}
+#tl{position:relative;height:30px;margin:0 10px 10px;background:#1a1a1a;border-radius:4px;cursor:pointer;overflow:hidden}
+#tl .seg{position:absolute;top:3px;bottom:3px;border-radius:2px;background:#3a5a7a}
+#tl .seg.missing{background:repeating-linear-gradient(45deg,#333 0 4px,#262626 4px 8px)}
+#tl .seg.flag{background:#7a4a2a}
+#tl #cursor{position:absolute;top:0;bottom:0;width:2px;background:#fff}
+#nowline{padding:6px 10px 10px;min-height:3.2em;color:#ccc}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:14px}
+aside h2{font-size:14px;margin:12px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+aside h2:first-child{margin-top:0}
+aside ul{margin:0;padding-left:18px}aside li{margin:3px 0}
+#lines{padding:0 16px 40px}
+.row{border:1px solid var(--line);border-radius:8px;margin:8px 0;background:var(--panel)}
+.row.cur{border-color:#4a6a8a}
+.head{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;padding:8px 10px;align-items:start;cursor:pointer}
+.num{color:var(--dim);font-variant-numeric:tabular-nums}
+.text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.row.open .text{-webkit-line-clamp:unset}
+.side{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.chip{border:1px solid #3a3a3a;border-radius:12px;padding:1px 9px;font-size:13px;cursor:pointer;background:#1c1c1c;color:#ccc}
+.chip.chosen{border-color:var(--good);color:#bfe3c3;background:#1d2b25}
+.chip.rejected{text-decoration:line-through;color:#777}
+.chip.sel{outline:2px solid var(--acc)}
+.detail{border-top:1px solid var(--line);padding:10px 12px;display:none}
+.row.open .detail{display:block}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:6px 0}
+.ctl label{color:var(--dim);font-size:13px}
+input[type=number]{width:70px;background:#1c1c1c;color:var(--fg);border:1px solid #333;border-radius:4px;padding:2px 4px}
+input[type=range]{width:180px}
+.words{line-height:2;margin:8px 0}
+.w{padding:1px 3px;border-radius:3px;cursor:pointer}
+.w:hover{background:#2a2a2a}
+.w.extra{color:var(--bad);border-bottom:1px dashed var(--bad)}
+.w.changed{color:var(--warn)}
+.w.cut{text-decoration:line-through;opacity:.45}
+.pause{color:var(--dim);font-size:12px;margin:0 3px}
+#msg{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#222;border:1px solid #444;border-radius:6px;padding:6px 14px;display:none;z-index:9}
+</style></head><body>
+<header>
+  <a href="/?m=__MODULE__">← Module __MODULE__</a>
+  <h1>__TITLE__ · editor</h1>
+  <a class="btn" href="/__BUILD__/presenter/presenter.html" target="_blank">● Record</a>
+  <button onclick="api('/api/shrink')" title="Shorten every pause over a still picture in the chosen takes">Shorten all pauses</button>
+  <button onclick="api('/api/words')" title="Transcribe the chosen takes and compare them with the approved text">Check all against the script</button>
+  <span style="flex:1"></span>
+  <label class="dim">voice</label><select id="clean">__CLEAN__</select>
+  <button onclick="exportNow()">Export</button>
+</header>
+<div id="top">
+  <div id="stage">
+    <video id="v" preload="auto" muted playsinline></video>
+    <div id="transport">
+      <button id="pp" onclick="P.toggle()">▶</button>
+      <span class="mono" id="clock">0:00 / 0:00</span>
+      <span class="dim" id="mode">whole lecture</span>
+      <span style="flex:1"></span>
+      <button class="quiet" onclick="loadAll()">whole lecture</button>
+    </div>
+    <div id="tl"><div id="cursor"></div></div>
+    <div id="nowline" class="dim"></div>
+  </div>
+  <aside>
+    <h2>Recordings</h2><ul id="sessions"></ul>
+    <p><button class="quiet" onclick="api('/api/import')">Add recordings made before the editor</button></p>
+    <h2>Jobs</h2><ul id="jobs"></ul>
+    <h2>Exports</h2><ul id="exports"></ul>
+    <h2>Keys</h2><p class="dim">Space play / pause · ← → previous / next line · Enter open the line · a link ending #open=41 opens line 41</p>
+  </aside>
+</div>
+<div id="lines"></div>
+<div id="msg"></div>
+<script>
+const BUILD = "__BUILD__", v = document.getElementById('v');
+let D = null, open = new Set(), sel = {}, curLine = 0;
+const fmt = s => { s = Math.max(0, s); const m = Math.floor(s / 60); return m + ':' + String(Math.floor(s % 60)).padStart(2, '0'); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+function say(t){ const m = document.getElementById('msg'); m.textContent = t; m.style.display = 'block'; clearTimeout(say.t); say.t = setTimeout(() => m.style.display = 'none', 2500); }
+
+// ─── the player: plays two tracks (voice, picture) built by the server, the same ones the export renders ───
+const P = {
+  vp: [], ap: [], total: 0, T: 0, playing: false, T0: 0, w0: 0, audios: {}, cur: null, spans: [],
+  load(tr, spans, at){ this.pause(); this.vp = this.place(tr.picture); this.ap = this.place(tr.voice);
+    this.total = this.vp.length ? this.vp[this.vp.length - 1].t + this.vp[this.vp.length - 1].p[0] : 0;
+    this.spans = spans || []; this.seek(at || 0); },
+  place(track){ let t = 0; return track.map(p => { const o = {t, p}; t += p[0]; return o; }); },
+  find(list, T){ let lo = 0, hi = list.length - 1, k = -1;
+    while (lo <= hi){ const m = (lo + hi) >> 1; if (list[m].t <= T + 1e-9){ k = m; lo = m + 1; } else hi = m - 1; }
+    return k < 0 ? null : list[k]; },
+  audio(src){ const url = D.audio[src]; if (!url) return null;
+    if (!this.audios[src]){ const a = new Audio(url); a.preload = 'auto'; this.audios[src] = a; } return this.audios[src]; },
+  play(){ if (this.T >= this.total - 0.01) this.T = 0; this.playing = true; this.T0 = this.T; this.w0 = performance.now(); document.getElementById('pp').textContent = '⏸'; },
+  pause(){ this.playing = false; v.pause(); Object.values(this.audios).forEach(a => a.pause()); document.getElementById('pp').textContent = '▶'; },
+  toggle(){ this.playing ? this.pause() : this.play(); },
+  seek(T){ this.T = Math.max(0, Math.min(T, this.total)); this.T0 = this.T; this.w0 = performance.now(); this.sync(true); },
+  frame(){ if (this.playing){ this.T = this.T0 + (performance.now() - this.w0) / 1000;
+      if (this.T >= this.total){ this.T = this.total; this.pause(); } }
+    this.sync(false); },
+  sync(force){
+    const T = this.T, pv = this.find(this.vp, T), pa = this.find(this.ap, T);
+    if (pv){ const [d, kind, a, b, s] = pv.p, local = T - pv.t;
+      if (kind === 'play'){ const want = a + local * s;
+        if (v.playbackRate !== s) v.playbackRate = s;
+        if (force || Math.abs(v.currentTime - want) > 0.25) v.currentTime = want;
+        if (this.playing && v.paused) v.play().catch(() => {}); if (!this.playing && !v.paused) v.pause(); }
+      else { if (!v.paused) v.pause(); if (Math.abs(v.currentTime - a) > 0.03) v.currentTime = a; } }
+    let el = null;
+    if (pa && pa.p[1]){ el = this.audio(pa.p[1]);
+      if (el){ const want = pa.p[2] + (T - pa.t);
+        if (force || Math.abs(el.currentTime - want) > 0.15) el.currentTime = want;
+        if (this.playing && el.paused) el.play().catch(() => {}); if (!this.playing && !el.paused) el.pause(); } }
+    if (this.cur && this.cur !== el) this.cur.pause();
+    this.cur = el;
+    document.getElementById('clock').textContent = fmt(T) + ' / ' + fmt(this.total);
+    document.getElementById('cursor').style.left = (this.total ? 100 * T / this.total : 0) + '%';
+    const sp = this.spans.find(x => T >= x[1] && T < x[2]) || this.spans[this.spans.length - 1];
+    if (sp && sp[0] !== curLine){ curLine = sp[0]; showNow(); }
+  },
+};
+(function loop(){ P.frame(); requestAnimationFrame(loop); })();
+
+function showNow(){
+  document.getElementById('nowline').textContent = D && D.lines[curLine] ? (curLine + 1) + '. ' + D.lines[curLine][1] : '';
+  document.querySelectorAll('.row.cur').forEach(r => r.classList.remove('cur'));
+  document.getElementById('row' + curLine)?.classList.add('cur'); }
+
+function loadAll(at){
+  const el = D.edit_list; P.load(el, el.lines, at || 0);
+  document.getElementById('mode').textContent = 'whole lecture';
+  const tl = document.getElementById('tl'); tl.querySelectorAll('.seg').forEach(x => x.remove());
+  const flagged = new Set(Object.values(D.takes).flat().filter(t => t.check && (t.check.missing.length || t.check.extra.length)).map(t => t.id));
+  for (const [k, a, b, tid] of el.lines){
+    const s = document.createElement('div'); s.className = 'seg' + (tid ? (flagged.has(tid) ? ' flag' : '') : ' missing');
+    s.style.left = 100 * a / P.total + '%'; s.style.width = Math.max(0.1, 100 * (b - a) / P.total - 0.05) + '%';
+    s.title = (k + 1) + '. ' + D.lines[k][1].slice(0, 80) + (tid ? '' : ' — no take yet'); tl.insertBefore(s, tl.firstChild); }
+}
+function lineStart(k){ const sp = D.edit_list.lines.find(x => x[0] === k); return sp ? sp[1] : 0; }
+function playLine(k){ if (document.getElementById('mode').textContent !== 'whole lecture') loadAll(); P.seek(lineStart(k)); P.play(); }
+function playTake(t){ P.load(t.tracks, [[t.line, 0, t.length, t.id]], 0); document.getElementById('mode').textContent = 'take ' + t.id; P.play(); }
+document.getElementById('tl').addEventListener('click', e => {
+  const r = e.currentTarget.getBoundingClientRect(); P.seek(P.total * (e.clientX - r.left) / r.width); });
+
+// ─── the server ───
+async function api(url, body){
+  const r = await fetch(url + (url.includes('?') ? '&' : '?') + 'build=' + BUILD, {method: 'POST', body: body ? JSON.stringify(body) : undefined});
+  if (!r.ok){ say('failed: ' + (await r.text()).replace(/<[^>]+>/g, ' ').trim().slice(0, 160)); return null; }
+  await refresh(); return r; }
+async function refresh(keepPlace = true){
+  const r = await fetch('/api/project?build=' + BUILD); if (!r.ok){ say('cannot load the project'); return; }
+  const first = !D; D = await r.json();
+  if (first){ v.src = D.video; loadAll();
+    const h = location.hash.match(/open=(\d+)/);           // /edit?build=…#open=41 opens line 41
+    if (h){ const k = Math.min(+h[1] - 1, D.lines.length - 1); open.add(k); curLine = k; setTimeout(() => document.getElementById('row' + k)?.scrollIntoView({block: 'center'}), 50); } }
+  else if (document.getElementById('mode').textContent === 'whole lecture'){ const T = P.T, was = P.playing; loadAll(T); if (was) P.play(); }
+  render(); poll(); }
+function poll(){
+  clearTimeout(poll.t);
+  const busy = D.jobs.some(j => j.state === 'queued' || j.state === 'running') || D.sessions.some(s => ['recording', 'recorded', 'processing'].includes(s.state));
+  if (busy) poll.t = setTimeout(refresh, 3000); }
+function exportNow(){ const c = document.getElementById('clean').value; try { localStorage.setItem('studioClean', c); } catch (e) {}
+  api('/api/export?clean=' + c).then(r => r && say('export queued')); }
+try { document.getElementById('clean').value = localStorage.getItem('studioClean') || 'deepfilter'; } catch (e) {}
+
+// ─── the page ───
+function chosenId(k){ const sp = D.edit_list.lines.find(x => x[0] === k); return sp ? sp[3] : null; }
+function render(){
+  document.getElementById('sessions').innerHTML = D.sessions.map(s =>
+    `<li><span class="mono">${esc(s.name)}</span> · ${s.stale ? '<span class="dim">earlier build of the video: not used</span>' :
+      ({recording: '<span class="warn">recording…</span> ' + s.chunks + ' s', recorded: '<span class="warn">waiting</span>',
+        processing: '<span class="warn">cleaning the voice…</span>', ready: (s.seconds / 60).toFixed(1) + ' min · ' + esc(s.clean),
+        failed: '<span class="bad">failed</span> ' + esc(s.error)}[s.state] || esc(s.state))}</li>`).join('') || '<li class="dim">none yet: press ● Record</li>';
+  document.getElementById('jobs').innerHTML = D.jobs.slice(-6).reverse().map(j =>
+    `<li>${esc(j.kind)} <span class="dim">${esc(j.key).slice(0, 40)}</span> · <span class="${j.state === 'failed' ? 'bad' : j.state === 'done' ? 'good' : 'warn'}">${esc(j.state)}</span> ${esc(j.error || j.detail || '')}</li>`).join('') || '<li class="dim">none</li>';
+  document.getElementById('exports').innerHTML = D.exports.map(f =>
+    `<li><a href="${f.url}" ${f.name.endsWith('.mp4') ? 'target="_blank"' : 'download'}>${esc(f.name)}</a> <span class="dim">${(f.size / 1e6).toFixed(1)} MB</span></li>`).join('') || '<li class="dim">none yet</li>';
+  const scroll = window.scrollY;
+  document.getElementById('lines').innerHTML = D.lines.map((l, k) => rowHtml(k, l)).join('');
+  window.scrollTo(0, scroll); showNow(); }
+
+function rowHtml(k, l){
+  const takes = D.takes[k] || [], cid = chosenId(k), s = sel[k] || cid || (takes[takes.length - 1] || {}).id;
+  const t = takes.find(x => x.id === s), ct = takes.find(x => x.id === cid);
+  const ck = ct && ct.check, odd = ck ? ck.extra.length + ck.changed.length + ck.weak.length : 0;
+  const flag = !ck ? '' : ck.missing.length ? `<span class="bad" title="not heard: ${esc(ck.missing.join(' '))}">${ck.missing.length} missed</span>`
+    : odd ? `<span class="warn" title="extra, heard differently or unclear words: open the line">${odd} to check</span>` : '<span class="good">script ✓</span>';
+  const chips = takes.map((x, n) => `<span class="chip${x.id === cid ? ' chosen' : ''}${x.rejected ? ' rejected' : ''}${open.has(k) && x.id === s ? ' sel' : ''}"
+      onclick="event.stopPropagation(); pick(${k}, '${x.id}')" title="${esc(x.id)} · ${x.length.toFixed(1)} s${x.rejected ? ' · marked a mistake' : ''}">T${n + 1}</span>`).join('');
+  return `<div class="row${open.has(k) ? ' open' : ''}${k === curLine ? ' cur' : ''}" id="row${k}">
+  <div class="head" onclick="toggleRow(${k})"><span class="num">${k + 1}</span><span class="text">${esc(l[1])}</span>
+   <span class="side">${flag} ${chips || '<span class="dim">no take</span>'} <span class="dim mono">${ct ? ct.length.toFixed(1) + ' s' : ''}</span>
+    <button class="quiet" onclick="event.stopPropagation(); playLine(${k})" title="preview from here">▶</button>
+    <a class="btn" href="/${BUILD}/presenter/presenter.html#line=${k + 1}" target="_blank" onclick="event.stopPropagation()" title="record this line again">●</a></span></div>
+  <div class="detail">${t ? detailHtml(k, t, cid) : '<p class="dim">No take of this line yet. Press ● to record it: the presenter opens at this line.</p>'}</div></div>`; }
+
+function detailHtml(k, t, cid){
+  const e = t.edit, cuts = (e.cuts || []);
+  const inCut = (a, b) => cuts.some(([x, y]) => a >= x - 1e-3 && b <= y + 1e-3);
+  let words = '';
+  if (t.words){
+    const extra = new Set((t.check ? t.check.extra : []).map(x => x[1].toFixed(3)));
+    const changed = (t.check ? t.check.changed : []);
+    const isChanged = a => changed.some(c => a >= c[2] - 1e-3 && a <= c[3] + 1e-3);
+    const pauses = t.pauses.filter(p => p[1] - p[0] >= 0.8);
+    let pi = 0;
+    words = '<div class="words">' + t.words.heard.map(([w, a, b]) => {
+      let pre = ''; while (pi < pauses.length && pauses[pi][0] <= a){ pre += `<span class="pause">⏸${(pauses[pi][1] - pauses[pi][0]).toFixed(1)}s</span>`; pi++; }
+      return pre + `<span class="w${extra.has((+a).toFixed(3)) ? ' extra' : isChanged(a) ? ' changed' : ''}${inCut(a, b) ? ' cut' : ''}" title="${a.toFixed(2)}–${b.toFixed(2)} s · click to cut or keep"
+        onclick="cutWord('${t.id}', ${a}, ${b})">${esc(w)}</span>`; }).join(' ') + '</div>';
+    if (t.check && t.check.missing.length) words += `<p class="bad">Not heard: ${esc(t.check.missing.join(' · '))}</p>`;
+    if (changed.length) words += `<p class="warn">Heard differently (the recogniser may be wrong; listen): ${changed.map(c => esc(c[0]) + ' → ' + esc(c[1])).join(' · ')}</p>`;
+    if (t.check && t.check.weak.length) words += `<p class="warn">Unclear: ${esc(t.check.weak.join(' · '))}</p>`;
+  }
+  const job = D.jobs.find(j => j.kind === 'words' && (j.state === 'queued' || j.state === 'running'));
+  return `<div class="ctl">
+    <button onclick="playTake(D.takes[${k}].find(x => x.id === '${t.id}'))">▶ play this take</button>
+    ${t.id === cid ? '<span class="good">used in the video</span>' : `<button onclick="api('/api/choose?line=${k}&take=${encodeURIComponent(t.id)}')">use this take</button>`}
+    <button class="quiet" onclick="edit('${t.id}', {rejected: ${!t.rejected}})">${t.rejected ? 'not a mistake' : 'mark as a mistake'}</button>
+    <button class="quiet" onclick="if (confirm('Hide this take?')) edit('${t.id}', {deleted: true})">hide</button>
+    <span class="dim mono">${esc(t.id)} · ${t.raw_length.toFixed(1)} s recorded → ${t.length.toFixed(1)} s</span></div>
+  <div class="ctl">
+    <label>picture later / sooner than the voice</label>
+    <input type="range" min="-2" max="2" step="0.05" value="${e.nudge || 0}" oninput="this.nextElementSibling.value=this.value" onchange="edit('${t.id}', {nudge: +this.value})">
+    <input type="number" step="0.05" value="${e.nudge || 0}" onchange="edit('${t.id}', {nudge: +this.value})"> s
+    <label>trim start</label><input type="number" step="0.05" min="0" value="${e.trim_in || 0}" onchange="edit('${t.id}', {trim_in: +this.value})">
+    <label>trim end</label><input type="number" step="0.05" min="0" value="${e.trim_out || 0}" onchange="edit('${t.id}', {trim_out: +this.value})"></div>
+  <div class="ctl"><label>cuts</label>${cuts.map(([a, b], n) => `<span class="chip" onclick="dropCut('${t.id}', ${n})" title="click to remove">${a.toFixed(2)}–${b.toFixed(2)} s ✕</span>`).join(' ') || '<span class="dim">none</span>'}
+    <button onclick="api('/api/shrink?take=${encodeURIComponent(t.id)}')" ${t.proposed.length ? '' : 'disabled'}>shorten ${t.proposed.length} pause${t.proposed.length === 1 ? '' : 's'}</button>
+    ${cuts.length ? `<button class="quiet" onclick="edit('${t.id}', {cuts: []})">clear cuts</button>` : ''}</div>
+  <div class="ctl">${t.words ? `<button onclick="api('/api/cut-extras?take=${encodeURIComponent(t.id)}')" ${t.check && t.check.extra.length ? '' : 'disabled'}>cut the ${t.check ? t.check.extra.length : 0} extra word${t.check && t.check.extra.length === 1 ? '' : 's'}</button>` : ''}
+    <button class="quiet" onclick="api('/api/words?take=${encodeURIComponent(t.id)}')" ${job ? 'disabled' : ''}>${t.words ? 'transcribe again' : 'transcribe and check against the script'}</button></div>
+  ${words}`; }
+
+function toggleRow(k){ open.has(k) ? open.delete(k) : open.add(k); render(); }
+function pick(k, id){ sel[k] = id; open.add(k); render(); }
+function edit(id, changes){ return api('/api/edit?take=' + encodeURIComponent(id), changes); }
+function takeById(id){ return Object.values(D.takes).flat().find(t => t.id === id); }
+function dropCut(id, n){ const c = (takeById(id).edit.cuts || []).slice(); c.splice(n, 1); edit(id, {cuts: c}); }
+function cutWord(id, a, b){
+  const t = takeById(id), cuts = (t.edit.cuts || []).map(x => x.slice());
+  const hit = cuts.findIndex(([x, y]) => a >= x - 1e-3 && b <= y + 1e-3);
+  if (hit >= 0) cuts.splice(hit, 1); else cuts.push([Math.max(0, a - 0.03), b + 0.03]);
+  edit(id, {cuts}); }
+document.addEventListener('keydown', e => {
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (e.key === ' '){ e.preventDefault(); P.toggle(); }
+  else if (e.key === 'ArrowRight'){ e.preventDefault(); playLine(Math.min(curLine + 1, D.lines.length - 1)); }
+  else if (e.key === 'ArrowLeft'){ e.preventDefault(); playLine(Math.max(curLine - 1, 0)); }
+  else if (e.key === 'Enter'){ open.add(curLine); render(); document.getElementById('row' + curLine)?.scrollIntoView({block: 'center'}); }
+});
+refresh();
+</script></body></html>

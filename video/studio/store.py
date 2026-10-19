@@ -1,0 +1,96 @@
+"""The editor's tables, in the studio's SQLite file (out/studio.sqlite, beside the old `recordings` table).
+
+  sessions  one row per recording session: uploaded chunk count, state (recording -> recorded -> processing ->
+            ready | failed), the cleaning profile its audio was prepared with
+  edits     one row per take with an edit: {"cuts": [[a, b]], "trim_in", "trim_out", "nudge", "rejected"}
+  choices   the take chosen for each line (none: the newest take that is not rejected)
+  jobs      background work and its state, shown in the editor (process a session, transcribe a take, export)
+"""
+import json
+import sqlite3
+import time
+
+SCHEMA = """
+create table if not exists sessions (
+    build text, name text, created real, updated real, state text default 'recording',
+    chunks integer default 0, seconds real default 0, clean text default '', error text default '',
+    lines_hash text default '',                 -- the line list it was recorded against (a rebuilt video differs)
+    primary key (build, name));
+create table if not exists edits (build text, take text, edit text, primary key (build, take));
+create table if not exists choices (build text, line integer, take text, primary key (build, line));
+create table if not exists jobs (
+    build text, kind text, key text, state text, error text default '', updated real, detail text default '',
+    primary key (build, kind, key));
+"""
+
+
+def connect(path):
+    c = sqlite3.connect(path, timeout=10)
+    c.row_factory = sqlite3.Row
+    c.executescript(SCHEMA)
+    return c
+
+
+def session_seen(c, build, name, chunks=None, lines_hash=""):
+    now = time.time()
+    c.execute("insert or ignore into sessions (build, name, created, updated, lines_hash) values (?,?,?,?,?)",
+              (build, name, now, now, lines_hash))
+    if chunks is not None:
+        c.execute("update sessions set chunks=max(chunks, ?), updated=? where build=? and name=?",
+                  (chunks, now, build, name))
+
+
+def set_session(c, build, name, **kw):
+    kw["updated"] = time.time()
+    c.execute(f"update sessions set {', '.join(f'{k}=?' for k in kw)} where build=? and name=?",
+              (*kw.values(), build, name))
+
+
+def sessions(c, build):
+    return [dict(r) for r in c.execute("select * from sessions where build=? order by created", (build,))]
+
+
+def edit(c, build, take):
+    r = c.execute("select edit from edits where build=? and take=?", (build, take)).fetchone()
+    return json.loads(r["edit"]) if r else {}
+
+
+def edits(c, build):
+    return {r["take"]: json.loads(r["edit"]) for r in c.execute("select * from edits where build=?", (build,))}
+
+
+def set_edit(c, build, take, changes):
+    """Merge `changes` into the take's edit (a None value removes that key)."""
+    e = edit(c, build, take)
+    for k, v in changes.items():
+        if v is None:
+            e.pop(k, None)
+        else:
+            e[k] = v
+    c.execute("insert or replace into edits values (?,?,?)", (build, take, json.dumps(e)))
+    return e
+
+
+def choices(c, build):
+    return {r["line"]: r["take"] for r in c.execute("select * from choices where build=?", (build,))}
+
+
+def choose(c, build, line, take):
+    if take is None:
+        c.execute("delete from choices where build=? and line=?", (build, line))
+    else:
+        c.execute("insert or replace into choices values (?,?,?)", (build, line, take))
+
+
+def job(c, build, kind, key, state, error="", detail=""):
+    c.execute("insert or replace into jobs values (?,?,?,?,?,?,?)", (build, kind, key, state, error, time.time(), detail))
+
+
+def jobs(c, build):
+    return [dict(r) for r in c.execute("select * from jobs where build=? order by updated", (build,))]
+
+
+def reset_running(c):
+    """A server restart kills running jobs: mark them as interrupted, so they can be started again."""
+    c.execute("update jobs set state='failed', error='interrupted (server restarted)' where state in ('queued','running')")
+    c.execute("update sessions set state='recorded' where state='processing'")

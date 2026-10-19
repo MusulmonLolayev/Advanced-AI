@@ -88,21 +88,7 @@ def ff(*args):
     subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", *map(str, args)], check=True)
 
 
-def segments(events):
-    """[(kind, start position, end position or None, seconds, speed)]: 'play' runs the picture, 'hold' freezes a frame."""
-    out = []
-    for (t, kind, pos, *r), (t2, _, pos2, *_) in zip(events, events[1:]):
-        span, speed = t2 - t, (r[0] if r else 1)
-        if span <= 0.02:
-            continue
-        if kind == "play" and pos2 > pos:
-            run = min(pos2 - pos, span * speed)                    # video seconds shown in this span
-            out.append(("play", pos, pos + run, run / speed, speed))
-            if span - run / speed > 0.02:
-                out.append(("hold", pos + run, None, span - run / speed, 1))
-        else:
-            out.append(("hold", pos, None, span, 1))
-    return out
+from studio.timeline import segments   # noqa: E402  play/hold spans; ignores the editor's line/retake markers
 
 
 def main(build, name, clean="deepfilter"):

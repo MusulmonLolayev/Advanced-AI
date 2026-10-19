@@ -9,11 +9,18 @@ module (a panel on the left, /?m=7): a module's lectures are its builds (lecture
 mK_lectureNN_uz_navoiy for Module K), and its files are whatever is put in (or linked into) out/shared/mK/ -- a
 lecture PDF, say -- to open or download.
 
+The editor (/edit?build=…, studio/): the presenter sends each recording in one-second pieces as it is made, with
+its line starts and retakes; each session is processed once (joined, cleaned, a seekable preview copy, its pauses),
+cut into one take per line, and the editor picks, trims, cuts, nudges and transcribes takes, previews the result in
+the browser and exports it (video, subtitles, chapters). Its API is studio/api.py; heavy jobs share the one queue.
+
     ssh -L 8080:localhost:8080 musulmon@10.0.0.5            # on the instructor's computer
     uv run python serve_presenter.py 8080                    # here; then open http://localhost:8080/
 """
 import html
+import json
 import os
+import queue
 import re
 import sqlite3
 import subprocess
@@ -26,9 +33,12 @@ from pathlib import Path
 from urllib.parse import parse_qs, quote, urlparse
 
 from compose_recording import CLEAN
+from studio import api as A
+from studio import media as M
+from studio import store as S
 
 HERE = Path(__file__).parent
-ROOT = HERE / "out"
+ROOT = Path(os.environ.get("STUDIO_ROOT", HERE / "out"))     # tests point this at a scratch folder
 DB = ROOT / "studio.sqlite"
 BUILD = re.compile(r"(?:m(\d)_)?lecture(\d\d)_(uz_navoiy|en)")   # Module 0 has no prefix; Module K is mK_
 MODULES = {0: "Statistics for Advanced AI", 1: "Classical Machine Learning", 2: "Vision / Deep Neural Networks",
@@ -117,6 +127,89 @@ def delete(build, name):
         c.execute("delete from recordings where build=? and name=?", (build, name))
 
 
+# ─── the editor's background jobs: one at a time, sharing QUEUE with the builds above ─────────────────────────
+JOBS = queue.Queue()
+
+
+def dbc():
+    return S.connect(DB)
+
+
+def _worker():
+    while True:
+        JOBS.get()()
+
+
+def enqueue(build, kind, key, fn):
+    with dbc() as c:
+        S.job(c, build, kind, key, "queued")
+
+    def run():
+        with QUEUE:
+            with dbc() as c:
+                S.job(c, build, kind, key, "running")
+            try:
+                detail = fn()
+                with dbc() as c:
+                    S.job(c, build, kind, key, "done", detail=str(detail or ""))
+            except Exception as e:                            # shown in the editor; the queue carries on
+                with dbc() as c:
+                    S.job(c, build, kind, key, "failed", error=f"{type(e).__name__}: {e}"[-400:])
+    JOBS.put(run)
+
+
+PROFILE = os.environ.get("STUDIO_PROFILE", "deepfilter")      # how a new session's voice is cleaned (tests: off)
+
+
+def process(build, name, profile=None):
+    profile = profile or PROFILE
+    def fn():
+        with dbc() as c:
+            S.set_session(c, build, name, state="processing", error="")
+        try:
+            secs = M.process(ROOT / build, name, profile)
+        except Exception as e:
+            with dbc() as c:
+                S.set_session(c, build, name, state="failed", error=str(e)[-300:])
+            raise
+        with dbc() as c:
+            S.set_session(c, build, name, state="ready", seconds=secs, clean=profile)
+        sync()                                                # the old whole-recording build sees it too
+        return f"{secs / 60:.1f} min"
+    enqueue(build, "process", name, fn)
+
+
+def transcribe(build, take_ids):
+    def fn():
+        with dbc() as c:
+            ts = [A.find_take(ROOT, build, t, c) for t in take_ids]
+        ls = M.lines(ROOT / build)
+        with dbc() as c:
+            prof = {s["name"]: s["clean"] or PROFILE for s in S.sessions(c, build)}
+        M.words(ROOT / build, [(t, ls[t["line"]][1]) for t in ts], prof[ts[0]["session"]] if ts else "deepfilter",
+                "en" if build.endswith("_en") else "uz")
+        return f"{len(ts)} takes"
+    enqueue(build, "words", ",".join(take_ids)[:200] if len(take_ids) < 4 else f"{len(take_ids)} takes", fn)
+
+
+def export(build, profile):
+    def fn():
+        with dbc() as c:
+            sessions = A.usable(ROOT, build, S.sessions(c, build))
+            eds, ch = S.edits(c, build), S.choices(c, build)
+        paths = M.export(ROOT / build, sessions, eds, ch, profile)
+        return paths[0].name
+    enqueue(build, "export", "export", fn)
+
+
+def editor(build):
+    m = module_of(build)
+    page = (HERE / "studio" / "editor.html").read_text()
+    return (page.replace("__BUILD__", build).replace("__TITLE__", html.escape(lecture_title(build)))
+            .replace("__MODULE__", str(m)).replace("__CLEAN__", "".join(
+                f'<option value="{k}">{k}</option>' for k in sorted(CLEAN, key=lambda k: k != "deepfilter"))))
+
+
 SHARED = ROOT / "shared"
 
 
@@ -171,7 +264,8 @@ def studio(module):
             pres = f'<button onclick="post(\'/api/prepare?build={b}\')">Prepare presenter page</button>'
         if st.startswith("failed"):
             pres += f' <span class="bad">{html.escape(st)}</span>'
-        pres = f'<a class="btn" href="/lecture?build={b}">Watch video</a> ' + pres
+        pres = (f'<a class="btn" href="/lecture?build={b}">Watch video</a> '
+                + (f'<a class="btn" href="/edit?build={b}">Open editor</a> ' if ready else "") + pres)
         recs = []
         for r in (r for r in rows if r["build"] == b):
             n, s = r["name"], r["state"]
@@ -218,8 +312,9 @@ def watch(build, name):
 
 
 HELP = ("""<h2 class="sub">How it works</h2><p class="help">Present &amp; record: Space pause / play, → next line, ← back,
-N notes (below / right / off), M microphone, R starts and stops recording. Then press <b>Build video</b> here, and
-<b>Watch</b> when it is built.</p><p>Voice cleaning when building: <select id="clean">"""
+N notes (below / right / off), M microphone, R starts and stops recording, X marks a mistake (the line starts over).
+Then <b>Open editor</b>: pick each line's take, cut, preview, export. (<b>Build video</b> below still builds a whole
+recording as it was made.)</p><p>Voice cleaning when building: <select id="clean">"""
         + "".join(f'<option value="{k}">{k}</option>' for k in sorted(CLEAN, key=lambda k: k != "deepfilter"))
         + """</select> <span class="help">deepfilter (default): neural denoiser,
 the cleanest (DNSMOS 3.2 vs 2.2 for voice on your first recording; ~5 min per 30 min) · voice: tuned for speech · mild: lighter · strong: a noisy
@@ -307,6 +402,21 @@ class Studio(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def json(self, obj, code=200):
+        body = json.dumps(obj, ensure_ascii=False).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def body(self, limit=50_000_000):
+        size = int(self.headers.get("Content-Length", 0))
+        if size > limit:
+            raise ValueError("too large")
+        return self.rfile.read(size)
+
     def args(self):
         u = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
@@ -328,6 +438,19 @@ class Studio(SimpleHTTPRequestHandler):
             if not (b and n and (recdir(b) / f"{n}.mp4").exists()):
                 return self.send_error(404, "no such video")
             return self.html(watch(b, n))
+        if path == "/edit":
+            if not (b and (ROOT / b / "presenter" / "lines.json").exists()):
+                return self.send_error(404, "prepare the presenter page first")
+            return self.html(editor(b))
+        if path in ("/api/project", "/api/counts"):
+            if not b:
+                return self.send_error(404, "no such lecture")
+            with dbc() as c:
+                cut_off = A.abandoned(ROOT, b, c)             # cut off without a finish: process what came
+            for name in cut_off:
+                process(b, name)
+            with dbc() as c:
+                return self.json(A.project(ROOT, b, c) if path == "/api/project" else A.counts(ROOT, b, c))
         if path.endswith(".sqlite"):
             return self.send_error(404)
         super().do_GET()
@@ -341,6 +464,11 @@ class Studio(SimpleHTTPRequestHandler):
         path, q, b, n = self.args()
         if b is None:
             return self.send_error(400, "unknown lecture")
+        try:
+            if self.editor_post(path, q, b, n):
+                return
+        except (ValueError, KeyError) as e:
+            return self.send_error(400, str(e)[:200])
         if path == "/api/prepare":
             prepare(b)
             return self.ok()
@@ -372,6 +500,46 @@ class Studio(SimpleHTTPRequestHandler):
             return self.ok()
         self.send_error(400, "bad request")
 
+    def editor_post(self, path, q, b, n):
+        """The editor's API (studio/api.py). Returns True when the request was one of them. Jobs are queued only
+        after this request's changes are committed (queueing writes through its own connection)."""
+        later = []
+        with dbc() as c:
+            if path == "/api/chunk" and n is not None and q.get("seq", "").isdigit():
+                A.chunk(ROOT, b, n, int(q["seq"]), self.body(), c)
+            elif path == "/api/events" and n is not None:
+                A.events(ROOT, b, n, self.body(), c)
+            elif path == "/api/finish" and n is not None:
+                if A.finish(ROOT, b, n, c):
+                    later.append(lambda: process(b, n))
+            elif path == "/api/edit" and q.get("take"):
+                out = A.set_edit(ROOT, b, q["take"], json.loads(self.body() or b"{}"), c)
+                later.append(lambda: self.json(out))
+            elif path == "/api/choose" and q.get("line", "").isdigit():
+                A.choose(ROOT, b, q["line"], q.get("take"), c)
+            elif path == "/api/shrink":
+                ids = [q["take"]] if q.get("take") else A.chosen_ids(ROOT, b, c)
+                A.shrink(ROOT, b, ids, c)
+            elif path == "/api/cut-extras" and q.get("take"):
+                A.cut_extras(ROOT, b, q["take"], c)
+            elif path == "/api/words":
+                ids = [q["take"]] if q.get("take") else A.chosen_ids(ROOT, b, c)
+                later.append(lambda: transcribe(b, ids))
+            elif path == "/api/import":
+                names = A.import_old(ROOT, b, c)
+                later += [lambda name=name: process(b, name) for name in names]
+            elif path == "/api/process" and n is not None:
+                later.append(lambda: process(b, n, q.get("clean") if q.get("clean") in CLEAN else None))
+            elif path == "/api/export":
+                later.append(lambda: export(b, q.get("clean") if q.get("clean") in CLEAN else "deepfilter"))
+            else:
+                return False
+        for f in later:
+            f()
+        if not (path == "/api/edit"):
+            self.ok()
+        return True
+
     def end_headers(self):
         self.send_header("Accept-Ranges", "bytes")
         super().end_headers()
@@ -380,5 +548,8 @@ class Studio(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
     sync()
+    with dbc() as c:
+        S.reset_running(c)
+    threading.Thread(target=_worker, daemon=True).start()
     print(f"studio on port {port} (pid {os.getpid()}), recordings in {DB}", flush=True)
     ThreadingHTTPServer(("0.0.0.0", port), partial(Studio, directory=str(ROOT))).serve_forever()

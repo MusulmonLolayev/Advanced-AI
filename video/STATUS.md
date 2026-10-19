@@ -49,8 +49,9 @@ new lines per lecture: `out/review/l0N_add.txt`.
 - Voice server: `cd ~/navoiy-stack/CosyVoice && echo $$ > ~/navoiy-stack/work/tts_server.shellpid; exec
   .venv/bin/python ../work/tts_server.py 8765` (stop with `kill $(cat ~/navoiy-stack/work/tts_server.shellpid)`).
   Stopped 2026-10-14.
-- Recording studio: `nohup .venv/bin/python serve_presenter.py 8080 > out/serve_presenter.log 2>&1 & echo $! >
-  out/serve_presenter.pid` (stop with `kill $(cat out/serve_presenter.pid)`); reach it with `ssh -L 8081:localhost:8080
+- Recording studio: `nohup .venv/bin/python serve_presenter.py 8080 > out/serve_presenter.log 2>&1 &`, then save
+  the PID the log prints (`studio on port 8080 (pid N)`; `$!` is the wrapper shell, not the server) to
+  out/serve_presenter.pid (stop with `kill $(cat out/serve_presenter.pid)`); reach it with `ssh -L 8081:localhost:8080
   hometqqt` → http://localhost:8081/ (the instructor's laptop has its own 8080 taken). Presenter keys: Space pause /
   play, → next line, ← back, N notes below / right / off (words light up at the narration's pace), M microphone, R record;
   the video plays at 1/1.1 speed (logged per recording, the build slows the picture to match). Build cleans the voice: `deepfilter` (default; DeepFilterNet binary in `bin/`, git-ignored, from the
@@ -59,6 +60,17 @@ new lines per lecture: `out/review/l0N_add.txt`.
   deepfilter 3.16. Listening samples: `out/denoise_compare/` (served at /denoise_compare/). The studio page is split by module (a
   panel on the left, `/?m=7`): Module K's lectures are builds `mK_lectureNN_uz_navoiy` (Module 0: `lectureNN_uz_navoiy`),
   its files whatever is linked into `out/shared/mK/` (e.g. `m7/Module7_Lecture01.pdf` → `agents/lecture01.pdf`).
+- **Editor** (2026-10-19, `studio/`, "Open editor" on a lecture; `/edit?build=…#open=41`): the presenter uploads each
+  recording in one-second pieces (kept in the browser until the server has them; an unsent rest is sent on the next
+  visit; a session silent for 2 min is closed and processed anyway), logs each line start, and X marks a mistake (the
+  line starts over). Each session is processed once (joined, cleaned with deepfilter, a seekable preview copy, its
+  pauses) and cut into one take per line; the editor picks a take per line (default: the newest not marked a
+  mistake), trims, cuts (also by clicking words of the transcript), nudges picture against voice, shortens pauses
+  over a still picture, transcribes and checks against the approved text (rubaistt for Uzbek, whisper-large-v3-turbo
+  for English, MMS alignment: missing / extra / heard differently -- only extra words are offered for cutting), previews
+  in the browser with no rebuild, and exports `presenter/export/<build>_edited.{mp4,srt,chapters.txt}` from the same
+  edit list. A recording made against an earlier build of the video (another line list) is shown but not used.
+  Tests: `studio/run_tests.sh` (34; `fast` skips the server run and the GPU recognisers).
 
 ## Slide discrepancies found by the drafts (slides not edited)
 

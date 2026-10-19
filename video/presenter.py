@@ -9,7 +9,11 @@ recording logs the speed so the build matches. ← shows the
 start of the current line (again: the line before), N moves the notes (the line's text, and the next
 one): under the picture, at the right, hidden; the choice is remembered. While a line plays, its words light up at
 the pace of the original narration (the subtitle chunks' times, spread over the words), so you can keep up. F is full screen, M picks the microphone (with a level meter; the choice is remembered), R records your voice
-(press R again to stop; it is saved on the server, and compose_recording.py turns it into a video). Lines are found in each scene's subtitles: chunks of one line follow each other
+(press R again to stop). While recording, the page sends the recording to the server every second (and keeps each
+piece in the browser until the server has it, so a closed tab or a dropped tunnel loses nothing: the next visit
+sends what was left), logs where each line starts, and X marks a mistake: the take of the line on screen is
+rejected and the line starts over, so you say it again without stopping. The studio's editor (/edit) cuts the
+session into one take per line. presenter.html#line=41 opens at line 41 (to record just that line again). Lines are found in each scene's subtitles: chunks of one line follow each other
 0.1 s apart, a new line starts after a longer gap (>= 0.23 s).
 
     uv run python presenter.py out/agents_course_en        # then open out/agents_course_en/presenter/presenter.html
@@ -40,22 +44,23 @@ def cues(srt):
 
 
 def lines(build):
-    """[(start s, text, [(chunk start, chunk end, chunk text)])] for every narration line of the joined video."""
+    """[(start s, text, [(chunk start, chunk end, chunk text)], scene index)] for every narration line of the joined
+    video."""
     parts = [Path(r.split("'")[1]) for r in (build / "parts.txt").read_text().splitlines() if r.startswith("file")]
     joined = [Path(r.split("'")[1]) for r in (build / "joined.txt").read_text().splitlines() if r.startswith("file")]
     out, off = [], 0.0
-    for scene, j in zip(parts, joined):
+    for n, (scene, j) in enumerate(zip(parts, joined)):
         prev_end = None
         for a, b, text in cues(scene.with_suffix(".srt")) if scene.with_suffix(".srt").exists() else []:
             chunk = [round(off + a, 3), round(off + b, 3), text]
             if prev_end is None or a - prev_end > GAP:
-                out.append([off + a, text, [chunk]])
+                out.append([off + a, text, [chunk], n])
             else:
                 out[-1][1] += " " + text
                 out[-1][2].append(chunk)
             prev_end = b
         off += duration(j)
-    return [(round(t, 3), s, c) for t, s, c in out], off
+    return [(round(t, 3), s, c, n) for t, s, c, n in out], off
 
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Presenter</title>
@@ -91,20 +96,58 @@ body.hidden #notes{display:none}
 <div id="rec"></div>
 <div id="mic"><div class="lab" style="margin-top:0">microphone</div><select id="micsel"></select>
 <div id="lvl"><div></div></div><div class="lab">speak to test the level · M or Esc closes</div></div>
-<div id="bar">Space pause / play · → next line (while playing: jump to its end) · ← back · N notes: below / right / off · F full screen · M microphone · R record</div>
+<div id="bar">Space pause / play · → next line (while playing: jump to its end) · ← back · X mistake: retake this line · N notes: below / right / off · F full screen · M microphone · R record</div>
 <script>
 const L = LINES, BUILD = "BUILD", v = document.getElementById('v'), recEl = document.getElementById('rec');
 // recording: the microphone, and every moment the picture starts or stops, so the video can be rebuilt around the voice
-let rec = null, t0 = 0, ev = [], chunks = [];
-function log(kind){ if (rec && t0) ev.push([(performance.now() - t0) / 1000, kind, v.currentTime, v.playbackRate]); }
+let rec = null, t0 = 0, ev = [], session = null, seq = 0, sendQ = Promise.resolve(), waiting = 0, evTimer = null;
+function log(kind, k){ if (rec && t0){ const e = [(performance.now() - t0) / 1000, kind, v.currentTime, v.playbackRate];
+  if (k !== undefined) e.push(k); ev.push(e); } }
 v.addEventListener('playing', () => log('play'));
 v.defaultPlaybackRate = v.playbackRate = 1 / 1.1;                         // the narration's pace felt fast
 v.addEventListener('pause', () => log('hold'));
 v.addEventListener('waiting', () => log('hold'));
 v.addEventListener('seeked', () => { if (v.paused) log('hold'); });   // a jump while held: hold the new frame
-async function upload(name, kind, body){
-  const r = await fetch(`/upload?build=${BUILD}&name=${name}&kind=${kind}`, {method: 'POST', body});
-  if (!r.ok) throw new Error(await r.text()); }
+// every piece is kept in the browser (IndexedDB) until the server has it; sent in order, retried until it gets there
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function idb(){ return new Promise((ok, no) => { const r = indexedDB.open('presenterChunks', 1);
+  r.onupgradeneeded = () => r.result.createObjectStore('c'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }); }
+async function idbDo(mode, f){ try { const d = await idb(); return await new Promise((ok, no) => {
+  const tx = d.transaction('c', mode), out = f(tx.objectStore('c')); tx.oncomplete = () => ok(out && out.result);
+  tx.onerror = () => no(tx.error); }); } catch (e) { return null; } }
+const keep = (key, val) => idbDo('readwrite', s => s.put(val, key)), drop = key => idbDo('readwrite', s => s.delete(key));
+async function pending(){ const d = await idb().catch(() => null); if (!d) return [];
+  return new Promise(ok => { const out = [], tx = d.transaction('c', 'readonly'), cur = tx.objectStore('c').openCursor();
+    cur.onsuccess = () => { const c = cur.result; if (c){ out.push([c.key, c.value]); c.continue(); } else ok(out); };
+    cur.onerror = () => ok(out); }); }
+async function send(url, body){
+  for (let wait = 500;; wait = Math.min(wait * 2, 8000)){
+    let r = null;
+    try { r = await fetch(url, {method: 'POST', body}); } catch (e) {}       // offline: wait and try again
+    if (r && r.ok) return;
+    if (r && r.status === 400) throw new Error(await r.text());           // refused: retrying will not help
+    status(); await sleep(wait); } }
+function queue(key, url, body){ waiting++; status();
+  sendQ = sendQ.then(() => send(url, body)).then(() => drop(key)).catch(e => { recEl.textContent = 'NOT saved: ' + e; })
+               .finally(() => { waiting--; status(); }); return sendQ; }
+function status(){
+  if (!rec && !waiting) return;
+  recEl.style.display = 'block';
+  recEl.textContent = (rec ? '● REC' + (rec.micName ? ' — ' + rec.micName : '') : 'saving…') +
+    (waiting > 2 ? ' — ' + waiting + ' pieces waiting for the server' : ''); }
+function chunk(name, k, blob){ const key = `${BUILD}|${name}|${String(k).padStart(6, '0')}`;
+  keep(key, {build: BUILD, name, seq: k, blob}); queue(key, `/api/chunk?build=${BUILD}&name=${name}&seq=${k}`, blob); }
+function events(name){ const key = `${BUILD}|${name}|events`, body = JSON.stringify(ev);
+  keep(key, {build: BUILD, name, events: body}); queue(key, `/api/events?build=${BUILD}&name=${name}`, body); }
+async function recover(){                       // pieces a closed tab never sent: send them now, then close that session
+  const left = (await pending()).filter(([k, v]) => v.build === BUILD).sort((a, b) => a[0] < b[0] ? -1 : 1);
+  const names = [...new Set(left.map(([k, v]) => v.name))];
+  for (const [key, val] of left){
+    if (val.blob) queue(key, `/api/chunk?build=${BUILD}&name=${val.name}&seq=${val.seq}`, val.blob);
+    else queue(key, `/api/events?build=${BUILD}&name=${val.name}`, val.events); }
+  for (const n of names) queue(`${BUILD}|${n}|finish`, `/api/finish?build=${BUILD}&name=${n}`, '');
+  if (names.length){ await sendQ; recEl.style.display = 'block';
+    recEl.innerHTML = 'recovered an unsent recording: ' + names.join(', ') + ' — <a href="/edit?build=' + BUILD + '" style="color:#8fb8de">open the editor</a>'; } }
 // the microphone: the one chosen with M (remembered in this browser), else the default
 const micEl = document.getElementById('mic'), micSel = document.getElementById('micsel'),
       lvl = document.querySelector('#lvl div');
@@ -149,21 +192,30 @@ async function toggleRec(){
   let stream;
   try { stream = await openStream(); }
   catch (e){ alert('No microphone: open this page through http://localhost (see the ssh -L tunnel). ' + e); return; }
-  const micName = stream.getAudioTracks()[0].label;
-  chunks = []; ev = [];
+  ev = []; seq = 0;
+  session = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const name = session;
   rec = new MediaRecorder(stream, {mimeType: 'audio/webm;codecs=opus'});
-  rec.ondataavailable = e => chunks.push(e.data);
+  rec.micName = stream.getAudioTracks()[0].label;
+  rec.ondataavailable = e => { if (e.data.size) chunk(name, seq++, e.data); };
   rec.onstart = () => { t0 = performance.now(); ev.push([0, v.paused ? 'hold' : 'play', v.currentTime, v.playbackRate]);
-    recEl.style.display = 'block'; recEl.textContent = '● REC' + (micName ? ' — ' + micName : ''); };
-  rec.onstop = async () => { stream.getTracks().forEach(t => t.stop());
-    const name = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    recEl.textContent = 'saving…';
-    try { await upload(name, 'webm', new Blob(chunks, {type: 'audio/webm'}));
-          await upload(name, 'json', JSON.stringify(ev));
-          recEl.innerHTML = 'saved: ' + name + ' — <a href="/" style="color:#8fb8de">build it in the studio</a>'; }
-    catch (e){ recEl.textContent = 'NOT saved: ' + e; }
-    rec = null; t0 = 0; };
+    if (!v.paused || stopAt !== null) ev.push([0, 'line', L[i][0], v.playbackRate, i]);
+    evTimer = setInterval(() => events(name), 5000); status(); };
+  rec.onstop = async () => { stream.getTracks().forEach(t => t.stop()); clearInterval(evTimer);
+    rec = null; events(name); t0 = 0;
+    queue(`${BUILD}|${name}|finish`, `/api/finish?build=${BUILD}&name=${name}`, '');
+    await sendQ;
+    if (recEl.textContent.startsWith('NOT')) return;
+    recEl.style.display = 'block';
+    recEl.innerHTML = 'saved: ' + name + ' — <a href="/edit?build=' + BUILD + '" style="color:#8fb8de">open the editor</a>';
+    counts(); };
   rec.start(1000); }
+function retake(){                              // X: this line's take is a mistake; start the line over
+  if (!rec) return;
+  log('retake', i); v.pause(); stopAt = null; v.currentTime = L[i][0]; nxt = i; show();
+  recEl.textContent = '● REC — retake line ' + (i + 1); }
+let takeCount = {};
+async function counts(){ try { const r = await fetch(`/api/counts?build=${BUILD}`); if (r.ok){ takeCount = await r.json(); show(); } } catch (e) {} }
 let i = 0, stopAt = null;                       // i: the line on screen; stopAt: where playing stops
 // the line's words, each with the moment the original voice reached it (a chunk's time spread over its words by length)
 const cur = document.getElementById('cur');
@@ -181,11 +233,12 @@ let mode = 'below';
 try { mode = MODES.includes(localStorage.getItem('presenterNotes')) ? localStorage.getItem('presenterNotes') : 'below'; } catch (e) {}
 function place(m){ mode = m; document.body.classList.remove(...MODES); document.body.classList.add(m);
   try { localStorage.setItem('presenterNotes', m); } catch (e) {} }
-function show(){ document.getElementById('num').textContent = (i+1)+' / '+L.length;
+function show(){ const n = takeCount[i] || 0;
+  document.getElementById('num').textContent = (i+1)+' / '+L.length + (n ? ' · ' + n + (n > 1 ? ' takes' : ' take') : '');
   lineWords(i); said();
   document.getElementById('next').textContent = L[i+1] ? L[i+1][1] : '— end —'; }
 function play(k){ i = Math.max(0, Math.min(k, L.length-1)); nxt = i + 1; v.currentTime = L[i][0];
-  stopAt = L[i+1] ? L[i+1][0] - 0.04 : null; show(); v.play(); }
+  stopAt = L[i+1] ? L[i+1][0] - 0.04 : null; show(); log('line', i); v.play(); }
 let nxt = 0;                                    // the line the next press plays
 function next(){
   if (!v.paused){ v.pause(); if (stopAt !== null) v.currentTime = stopAt; stopAt = null; return; }  // finish this line now
@@ -210,10 +263,13 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); next(); }
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); back(); }
   else if (e.key === 'r' || e.key === 'R') toggleRec();
+  else if (e.key === 'x' || e.key === 'X') retake();
   else if (e.key === 'n' || e.key === 'N') place(MODES[(MODES.indexOf(mode) + 1) % MODES.length]);
   else if (e.key === 'f' || e.key === 'F'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
 });
-place(mode); show(); requestAnimationFrame(tick);
+const at = location.hash.match(/line=(\\d+)/);       // presenter.html#line=41: start at line 41
+if (at){ i = Math.max(0, Math.min(+at[1] - 1, L.length - 1)); nxt = i; v.currentTime = L[i][0]; }
+place(mode); show(); requestAnimationFrame(tick); counts(); recover();
 </script></body></html>"""
 
 

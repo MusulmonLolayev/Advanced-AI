@@ -131,6 +131,13 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 - **`Indicate` grows a mobject by 20 %**, which pushed a full-width bell curve onto the frame edge; use
   `scale_factor=1.04` on anything near full width.
 - **Nothing persistent may touch the frame edge.** `check_edges.py` flags bright pixels within 4 px of any border, so the brand mark is inset by `common.SAFE`. A full-width footer strip would flag every frame — branding lives in the opening bumper, the closing card, and that one inset mark.
+- **The editor's server must not queue a job while its request holds a write**: `with dbc() as c:` keeps an open
+  transaction, and `enqueue` writes through a second connection, so it waited 10 s on itself and failed with
+  "database is locked". `editor_post` collects jobs in `later` and runs them after the request's block commits.
+- **A recogniser's "different word" is not an extra word.** rubaistt heard «son emas balki» as «sonimiz va»; cutting
+  the mismatch would cut words the instructor said. `timeline.script_check` keeps inserts (cuttable), deletes
+  (missing) and replacements (shown, never cut) apart. It also splits «boʻladi» at the apostrophe; words_worker
+  joins a piece that starts with one back onto the word before.
 
 ## Rules carried over from the decks
 Uzbek narration follows **Uzbek translation rules** in the repo-root `CLAUDE.md` (berilganlar, tavsiflovchi, native "we" phrasing, approval before voicing).
