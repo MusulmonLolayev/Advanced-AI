@@ -279,12 +279,12 @@ def main(build):
     out = build / "presenter"
     out.mkdir(exist_ok=True)
     silent = out / f"{build.name}_silent.mp4"
-    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", str(final), "-map", "0:v", "-c", "copy", "-an",
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", str(final), "-map", "0:v", "-c", "copy", "-an", "-movflags", "+faststart",
                     str(silent)], check=True)
     ls, total = lines(build)
     if abs(total - duration(final)) > 0.5:
         sys.exit(f"scene lengths add up to {total:.1f} s but the video is {duration(final):.1f} s: rejoin first")
-    (out / "presenter.html").write_text(PAGE.replace("VIDEO", silent.name)
+    (out / "presenter.html").write_text(PAGE.replace("VIDEO", f"{silent.name}?v={int(silent.stat().st_mtime)}")
                                         .replace("LINES", json.dumps(ls, ensure_ascii=False)).replace("BUILD", build.name))
     (out / "lines.json").write_text(json.dumps(ls, ensure_ascii=False, indent=1))
     print(f"{len(ls)} lines; open {out / 'presenter.html'}")

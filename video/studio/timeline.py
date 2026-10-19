@@ -18,23 +18,27 @@ import re
 import unicodedata
 
 MARKERS = ("line", "retake")
-EPS = 0.02                                      # spans shorter than this are dropped
+EPS = 0.02                                      # spans shorter than this are not worth a play (held, never dropped)
 LINE_TOL = 0.08                                 # a "play" this close to a line's start began that line (old recordings)
 
 
 def segments(events):
     """[(kind, start position, end position or None, seconds, speed)] of the picture between successive events:
-    'play' runs it at its speed, 'hold' freezes a frame. Marker events (line, retake) do not change the picture."""
+    'play' runs it at its speed, 'hold' freezes a frame. Marker events (line, retake) do not change the picture.
+    No time is lost: the seconds add up to the last event minus the first (a span of EPS or less is held, not
+    dropped, or the picture would run short of the voice)."""
     evs = [e for e in events if e[1] not in MARKERS]
     out = []
     for (t, kind, pos, *r), (t2, _, pos2, *_) in zip(evs, evs[1:]):
         span, speed = t2 - t, (r[0] if r else 1)
-        if span <= EPS:
+        if span <= 0:
             continue
-        if kind == "play" and pos2 > pos:
+        if span <= EPS:
+            out.append(("hold", pos, None, span, 1))
+        elif kind == "play" and pos2 > pos:
             run = min(pos2 - pos, span * speed)                    # video seconds shown in this span
             out.append(("play", pos, pos + run, run / speed, speed))
-            if span - run / speed > EPS:
+            if span - run / speed > 1e-9:
                 out.append(("hold", pos + run, None, span - run / speed, 1))
         else:
             out.append(("hold", pos, None, span, 1))
@@ -132,7 +136,7 @@ def cut(track, spans, voice):
                 q = _split(q, u - a, voice)[1]
             if v < b:
                 q = _split(q, v - u, voice)[0]
-            if q[0] > EPS / 4:
+            if q[0] > 1e-9:                      # a sliver stays: dropping it from one track only would unsync them
                 out.append(q)
     return out
 
@@ -235,9 +239,17 @@ def edit_list(starts, video_end, chosen, speed=1 / 1.1, fallback="silent"):
             t += d
             continue
         d = length(tr["voice"])
-        assert abs(d - length(tr["picture"])) < 1e-6, (k, d, length(tr["picture"]))
-        voice += tr["voice"]
-        picture += tr["picture"]
+        v, p = list(tr["voice"]), list(tr["picture"])
+        gap = d - length(p)
+        if abs(gap) > 1e-6:                      # never take the page down over a mismatch: pad the shorter track
+            if gap < 0:
+                v.append((-gap, None, None))
+            else:
+                at = (p[-1][3] if p[-1][1] == "play" else p[-1][2]) if p else 0.0
+                p.append((gap, "hold", at, None, 1))
+        d = length(v)
+        voice += v
+        picture += p
         spans.append((k, t, t + d, tr.get("id")))
         t += d
     return {"voice": voice, "picture": picture, "lines": spans}

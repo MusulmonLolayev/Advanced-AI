@@ -46,6 +46,8 @@ class Pages(unittest.TestCase):
         for js in scripts(page):
             code, err = node_check(js)
             self.assertEqual(code, 0, err)
+        src = (HERE / "presenter.py").read_text()
+        self.assertIn('{silent.name}?v={int(silent.stat().st_mtime)}', src)        # the video is versioned: no stale cache
         self.assertIn("line=(\\d+)", page)                  # the #line=41 pattern reached the page intact
 
 

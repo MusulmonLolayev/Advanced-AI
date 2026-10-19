@@ -226,6 +226,78 @@ class Studio(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError):
             self.req(f"/api/settings?build={B}&key=missing&value=loud")
 
+    def test_6_the_wire(self):
+        """Over the slow tunnel: capped open ranges, gzip for text only, caching for media, errors as JSON."""
+        def fetch(path, **h):
+            r = urllib.request.Request(self.url + path, headers=h)
+            with urllib.request.urlopen(r, timeout=30) as f:
+                return f.status, dict(f.headers), f.read()
+        mp4 = f"/{B}/presenter/{B}_silent.mp4"
+        size = (self.root / B / "presenter" / f"{B}_silent.mp4").stat().st_size
+        self.sp.RANGE_CAP = 1000
+        try:
+            st, h, body = fetch(mp4, Range="bytes=0-")
+            self.assertEqual((st, len(body), h["Content-Range"]), (206, 1000, f"bytes 0-999/{size}"))
+            st, h, body = fetch(mp4 + "?v=1", Range="bytes=500-2999")                 # asked for: given
+            self.assertEqual((st, len(body)), (206, 2500))
+            st, h, body = fetch(mp4, Range=f"bytes={size - 10}-")
+            self.assertEqual(len(body), 10)
+        finally:
+            self.sp.RANGE_CAP = 4 << 20
+        self.assertEqual(h["Accept-Ranges"], "bytes")
+        h = fetch(mp4)[1]                                                   # no ?v=: the browser must ask each time
+        self.assertEqual(h["Cache-Control"], "no-cache")
+        self.assertNotIn("max-age", str(h))
+        h = fetch(mp4 + "?v=5", Range="bytes=0-9")[1]
+        self.assertEqual(h["Cache-Control"], "private, max-age=86400")
+        etag = fetch(mp4)[1]["ETag"]                                        # a validator on 200 and on 206
+        self.assertRegex(etag, r'^"[0-9a-f]+-[0-9a-f]+"$')
+        self.assertEqual(h["ETag"], etag)
+        for extra in ({}, {"Range": "bytes=0-9"}):
+            with self.assertRaises(urllib.error.HTTPError) as cm:
+                fetch(mp4, **{"If-None-Match": etag}, **extra)
+            self.assertEqual(cm.exception.code, 304)
+        st, h, body = fetch(mp4, Range="bytes=0-9", **{"If-Range": etag})            # unchanged: the range is honoured
+        self.assertEqual((st, len(body)), (206, 10))
+        st, h, body = fetch(mp4, Range="bytes=0-9", **{"If-Range": '"old-1"'})       # changed: the whole file, no cap
+        self.assertEqual((st, len(body)), (200, size))
+        self.assertIn(f"{B}.mp4?v=", self.get(f"/lecture?build={B}").decode())
+        with self.assertRaises(urllib.error.HTTPError) as cm:
+            fetch(mp4, Range=f"bytes={size}-")
+        self.assertEqual(cm.exception.code, 416)
+        import gzip
+        st, h, body = fetch(f"/api/project?build={B}", **{"Accept-Encoding": "gzip"})
+        self.assertEqual(h["Content-Encoding"], "gzip")
+        self.assertEqual(h["Cache-Control"], "no-store")
+        self.assertEqual(json.loads(gzip.decompress(body))["build"], B)
+        self.assertNotIn("Content-Encoding", fetch(f"/api/project?build={B}")[1])
+        lines = f"/{B}/presenter/lines.json"
+        st, h, body = fetch(lines, **{"Accept-Encoding": "gzip"})
+        self.assertEqual((h.get("Content-Encoding"), json.loads(gzip.decompress(body))), ("gzip", LINES))
+        self.assertNotIn("Content-Encoding", fetch(mp4, **{"Accept-Encoding": "gzip"})[1])     # media never
+        p = self.get(f"/api/project?build={B}")
+        for url in p["audio"].values():
+            self.assertRegex(url, r"\.m4a\?v=\d+$")
+        self.assertEqual(fetch(p["audio"][next(iter(p["audio"]))])[0], 200)           # the query string is ignored
+
+    def test_7_a_build_without_a_presenter_page_is_a_json_404(self):
+        b = "m7_lecture98_en"
+        (self.root / b).mkdir()
+        (self.root / b / f"{b}.mp4").write_bytes(b"x")
+        with self.assertRaises(urllib.error.HTTPError) as cm:
+            self.get(f"/api/project?build={b}")
+        self.assertEqual(cm.exception.code, 404)
+        self.assertEqual(json.loads(cm.exception.read()), {"error": "prepare the presenter page first"})
+
+    def test_8_deleting_a_recording_forgets_its_session(self):
+        name = "2026-10-19T12-00-00"
+        self.record(name, [e for e in EVENTS() if e[0] < 20])
+        self.wait(self.session_ready(name), "processing")
+        self.req(f"/api/delete?build={B}&name={name}")
+        p = self.get(f"/api/project?build={B}")
+        self.assertNotIn(name, [s["name"] for s in p["sessions"]])
+        self.assertFalse([f for f in (self.root / B / "presenter" / "recordings").iterdir() if f.name.startswith(name)])
+
     def test_4_pages(self):
         page = self.get(f"/edit?build={B}").decode()
         self.assertIn(f'const BUILD = "{B}"', page)

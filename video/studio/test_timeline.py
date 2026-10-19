@@ -2,6 +2,7 @@
 
     uv run python -m unittest discover -s studio -p 'test_timeline.py'        (from video/)
 """
+import random
 import unittest
 
 from studio import timeline as T
@@ -90,6 +91,49 @@ class Tracks(unittest.TestCase):
         e = T.edited(self.take, self.ev, {"trim_in": 0.5, "trim_out": 1.0, "cuts": [(12.0, 12.5)], "nudge": 0.2})
         self.assertAlmostEqual(T.length(e["voice"]), 14 - 0.5 - 1.0 - 0.5 + 0.2)
         self.assertAlmostEqual(T.length(e["picture"]), T.length(e["voice"]))
+
+
+class Conserved(unittest.TestCase):
+    """Spans of a few milliseconds (events a click apart) must not be dropped: the picture would run short of the voice."""
+    def test_the_recorded_take_that_broke_the_editor(self):
+        ev = [[0.0, "hold", 0, R], [1.3869, "line", 0, R, 0], [1.3947, "hold", 0, R], [1.3992, "play", 0.021396, R],
+              [2.5771, "hold", 1.091909, R], [2.7381, "play", 1.092119, R], [16.1276, "hold", 13.26, R],
+              [16.1545, "hold", 13.26, R], [17.4024, "line", 13.3, R, 1], [17.4114, "hold", 13.3, R]]
+        take = {"id": "s@1.39", "session": "s", "line": 0, "t_in": 1.3869, "t_out": 17.4024, "rejected": False}
+        tr = T.take_tracks(take, ev)
+        self.assertAlmostEqual(T.length(tr["voice"]), 16.0155, places=9)
+        self.assertAlmostEqual(T.length(tr["picture"]), T.length(tr["voice"]), places=9)
+
+    def test_segments_add_up_to_the_events_span(self):
+        ev = [[1.0, "hold", 0, R], [1.004, "play", 0.0, R], [1.009, "hold", 0.01, R], [3.0, "stop", 0.01, R]]
+        self.assertAlmostEqual(sum(s[3] for s in T.segments(ev)), 2.0, places=9)
+
+    def test_random_events_keep_both_tracks_one_length(self):
+        rnd = random.Random(7)
+        for _ in range(200):
+            t, pos, ev = 0.0, 0.0, []
+            for _ in range(rnd.randint(3, 25)):
+                t += rnd.choice([0.0005, 0.004, 0.0075, 0.02, 0.3, 2.0])
+                pos += rnd.choice([0.0, 0.0, 0.5, 3.0])
+                ev.append([t, rnd.choice(["play", "hold", "line", "retake"]), pos, R, 0])
+            ev[0][1] = "line"
+            ev.append([t + 0.01, "stop", pos, R])
+            take = {"id": "s@0", "session": "s", "line": 0, "t_in": ev[0][0], "t_out": t + 0.01, "rejected": False}
+            tr = T.take_tracks(take, ev)
+            self.assertAlmostEqual(T.length(tr["picture"]), T.length(tr["voice"]), places=9)
+            total = T.length(tr["voice"])
+            edit = {"cuts": [(total * 0.2, total * 0.2 + 0.003), (total * 0.5, total * 0.7)],
+                    "trim_in": 0.001, "nudge": rnd.choice([0, 0.4, -0.7])}
+            ed = T.edited(take, ev, edit)
+            self.assertAlmostEqual(T.length(ed["picture"]), T.length(ed["voice"]), places=9)
+
+    def test_edit_list_pads_a_mismatch_instead_of_failing(self):
+        tr = {"voice": [(5.0, "s", 0.0)], "picture": [(4.9, "play", 0.0, 4.0, R)]}
+        el = T.edit_list([0.0], 5.0, {0: tr})
+        self.assertAlmostEqual(T.length(el["voice"]), T.length(el["picture"]))
+        tr = {"voice": [(4.9, "s", 0.0)], "picture": [(5.0, "hold", 1.0, None, 1)]}
+        el = T.edit_list([0.0], 5.0, {0: tr})
+        self.assertAlmostEqual(T.length(el["voice"]), T.length(el["picture"]))
 
 
 class Silences(unittest.TestCase):

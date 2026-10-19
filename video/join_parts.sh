@@ -22,4 +22,4 @@ while IFS= read -r row; do
   fi
   printf "file '%s'\n" "$dst" >> "$OUT/joined.txt"
 done < "$OUT/parts.txt"
-ffmpeg -nostdin -v error -y -f concat -safe 0 -i "$OUT/joined.txt" -c copy "$FINAL"
+ffmpeg -nostdin -v error -y -f concat -safe 0 -i "$OUT/joined.txt" -c copy -movflags +faststart "$FINAL"

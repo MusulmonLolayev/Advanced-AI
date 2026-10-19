@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working mode: plan and check here, implement in a Sonnet subagent
+
+The instructor's rule, to save tokens. The main session plans and checks, and a subagent on Sonnet 5 does the
+implementing (`Agent` tool, `model: "sonnet"`).
+- **Main session:** reads only what it needs to decide, then writes the plan. The plan names the files, the changes,
+  the rules from this file that apply (terminology, the unit test for every number, the Uzbek approval rule) and the
+  check that proves the work is done: which tests, which build, which numbers.
+- **Subagent:** gets that plan as a self-contained prompt, since it does not see this conversation. It makes the
+  edits, runs the builds and tests, and reports back with the files it changed and the command output.
+- **Main session again:** checks the result. It reviews the diff (`git diff`), reruns the key test or build, and
+  spot-reads anything the subagent was unsure of. It sends fixes back to the same subagent (`SendMessage`) rather than
+  making large edits itself. Small one-line fixes, questions and quick lookups stay in the main session.
+- Independent pieces of work go to parallel subagents in one message. Nothing is committed or pushed until the main
+  session has checked it.
+
 ## Repository overview
 
 This is the authored course material for an "Advanced AI" course, split into one top-level directory per module's track:

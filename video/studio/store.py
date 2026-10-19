@@ -51,6 +51,14 @@ def sessions(c, build):
     return [dict(r) for r in c.execute("select * from sessions where build=? order by created", (build,))]
 
 
+def drop_session(c, build, name):
+    """Forget a session: its row, and the edits and choices of its takes (take ids start with `<name>@`)."""
+    mine = f"{name}@"
+    c.execute("delete from sessions where build=? and name=?", (build, name))
+    c.execute("delete from edits where build=? and substr(take, 1, ?)=?", (build, len(mine), mine))
+    c.execute("delete from choices where build=? and substr(take, 1, ?)=?", (build, len(mine), mine))
+
+
 def edit(c, build, take):
     r = c.execute("select edit from edits where build=? and take=?", (build, take)).fetchone()
     return json.loads(r["edit"]) if r else {}

@@ -13,8 +13,14 @@ button.on{background:#2c4a33;color:#bfe3c3;border-color:#3d6b47}
 button:disabled{opacity:.45;cursor:default}
 .dim{color:var(--dim)}.bad{color:var(--bad)}.warn{color:var(--warn)}.good{color:var(--good)}
 .mono{font-family:ui-monospace,monospace;font-size:13px}
-#top{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;padding:14px 16px}
-@media (max-width:900px){#top{grid-template-columns:1fr}}
+html,body{height:100%;overflow:hidden}
+body{display:flex;flex-direction:column;height:100dvh}
+#top{flex:1;min-height:0;display:grid;gap:12px;padding:12px 16px;grid-template-columns:min(var(--lw,520px),60vw) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"stage right" "side right"}
+#stage{grid-area:stage}aside{grid-area:side;min-height:0;overflow-y:auto}
+#right{grid-area:right;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+#sizes{display:inline-flex;gap:2px}#sizes button{padding:2px 7px;font-size:13px}
+@media (max-width:899px){#top{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"stage" "right" "side";gap:8px;padding:8px 12px}
+#stage video{max-height:28vh;margin:0 auto}#nowline{min-height:0;padding:4px 10px 6px;max-height:4.5em;overflow:hidden}aside{max-height:16vh}#sizes{display:none}}
 #stage{background:#000;border-radius:8px;overflow:hidden}
 #stage video{display:block;width:100%;aspect-ratio:16/9;background:#000}
 #transport{display:flex;gap:10px;align-items:center;padding:8px 10px;background:#0c0c0c}
@@ -33,7 +39,7 @@ aside{background:var(--panel);border:1px solid var(--line);border-radius:8px;pad
 aside h2{font-size:14px;margin:12px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
 aside h2:first-child{margin-top:0}
 aside ul{margin:0;padding-left:18px}aside li{margin:3px 0}
-#lines{padding:0 16px 40px}
+#lines{padding:0 8px 40px 0}
 .row{border:1px solid var(--line);border-radius:8px;margin:8px 0;background:var(--panel)}
 .row.cur{border-color:#4a6a8a}
 .head{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;padding:8px 10px;align-items:start;cursor:pointer}
@@ -80,6 +86,7 @@ input[type=range]{width:180px}
       <span class="mono" id="clock">0:00 / 0:00</span>
       <span class="dim" id="mode">whole lecture</span>
       <span style="flex:1"></span>
+      <span id="sizes" title="width of the video column">S M L</span>
       <button class="quiet" onclick="loadAll()">whole lecture</button>
     </div>
     <div id="tl"><div id="cursor"></div></div>
@@ -93,9 +100,13 @@ input[type=range]{width:180px}
     <h2>Exports</h2><ul id="exports"></ul>
     <h2>Keys</h2><p class="dim">Space play / pause · ← → previous / next line · Enter open the line · a link ending #open=41 opens line 41</p>
   </aside>
-</div>
+<div id="right" tabindex="-1">
 <div id="banner"></div>
+<div id="err" class="bad" style="margin:0 0 8px"></div>
+<p class="dim" style="margin:0 0 4px">Click a line to open it: play it, pick or trim a take, or rewrite its narration and re-voice it.</p>
 <div id="lines"></div>
+</div>
+</div>
 <div id="msg"></div>
 <script>
 const BUILD = "__BUILD__", v = document.getElementById('v');
@@ -149,7 +160,14 @@ const P = {
 function showNow(){
   document.getElementById('nowline').textContent = D && D.lines[curLine] ? (curLine + 1) + '. ' + D.lines[curLine][1] : '';
   document.querySelectorAll('.row.cur').forEach(r => r.classList.remove('cur'));
-  document.getElementById('row' + curLine)?.classList.add('cur'); }
+  const r = document.getElementById('row' + curLine); r?.classList.add('cur');
+  if (r && P.playing && Date.now() - handScroll > 4000) r.scrollIntoView({block: 'nearest'}); }
+let handScroll = 0;
+['wheel', 'touchmove', 'mousedown'].forEach(n => document.getElementById('right').addEventListener(n, () => handScroll = Date.now(), {passive: true}));
+function setSize(w){ document.documentElement.style.setProperty('--lw', w + 'px'); try { localStorage.setItem('studioSize', w); } catch (e) {}
+  document.querySelectorAll('#sizes button').forEach(b => b.classList.toggle('on', +b.dataset.w === w)); }
+document.getElementById('sizes').innerHTML = [['S', 380], ['M', 520], ['L', 720]].map(([n, w]) => `<button class="quiet" data-w="${w}" onclick="setSize(${w})">${n}</button>`).join('');
+{ let w = 520; try { w = +localStorage.getItem('studioSize') || 520; } catch (e) {} setSize(w); }
 
 function loadAll(at){
   const el = D.edit_list; P.load(el, el.lines, at || 0);
@@ -177,7 +195,12 @@ async function api(url, body){
   if (!r.ok){ say('failed: ' + (await r.text()).replace(/<[^>]+>/g, ' ').trim().slice(0, 160)); return null; }
   await refresh(); return r; }
 async function refresh(keepPlace = true){
-  const r = await fetch('/api/project?build=' + BUILD); if (!r.ok){ say('cannot load the project'); return; }
+  const err = document.getElementById('err');         // a failure stays on the page: a toast is gone in 2.5 s
+  let r;
+  try { r = await fetch('/api/project?build=' + BUILD); } catch (e) { err.textContent = 'Cannot load the project: the server did not answer (' + e.message + ').'; return; }
+  if (!r.ok){ let why = ''; try { why = (await r.json()).error; } catch (e) {}
+    err.textContent = 'Cannot load the project (HTTP ' + r.status + (why ? '): ' + why : ').'); return; }
+  err.textContent = '';
   const first = !D, oldVersion = D && D.video_version; D = await r.json();
   if (!first && D.video_version !== oldVersion){ v.src = D.video + '?v=' + D.video_version; loadAll(); say('the lecture video was rebuilt'); }
   document.getElementById('missing').value = D.settings.missing;
@@ -305,7 +328,7 @@ function cutWord(id, a, b){
   if (hit >= 0) cuts.splice(hit, 1); else cuts.push([Math.max(0, a - 0.03), b + 0.03]);
   edit(id, {cuts}); }
 document.addEventListener('keydown', e => {
-  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+  const a = document.activeElement; if (['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName) || a.isContentEditable) return;
   if (e.key === ' '){ e.preventDefault(); P.toggle(); }
   else if (e.key === 'ArrowRight'){ e.preventDefault(); playLine(Math.min(curLine + 1, D.lines.length - 1)); }
   else if (e.key === 'ArrowLeft'){ e.preventDefault(); playLine(Math.max(curLine - 1, 0)); }

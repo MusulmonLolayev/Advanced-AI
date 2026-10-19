@@ -177,9 +177,16 @@ def lines(build_dir):
     return json.loads((Path(build_dir) / "presenter" / "lines.json").read_text())
 
 
+_ENDS = {}                                       # (path, mtime) -> seconds: ffprobe once per version of the file
+
+
 def video_end(build_dir):
     b = Path(build_dir)
-    return duration(b / "presenter" / f"{b.name}_silent.mp4")
+    p = b / "presenter" / f"{b.name}_silent.mp4"
+    key = (str(p), p.stat().st_mtime)
+    if key not in _ENDS:
+        _ENDS[key] = duration(p)
+    return _ENDS[key]
 
 
 def session_events(build_dir, name):

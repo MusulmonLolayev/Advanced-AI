@@ -4,6 +4,7 @@ Every function takes the studio's output folder (`root`, out/), a build name, an
 """
 import hashlib
 import json
+import shutil
 import time
 from pathlib import Path
 
@@ -55,6 +56,19 @@ def finish(root, build, name, c):
         return False
     S.set_session(c, build, name, state="recorded")
     return True
+
+
+def forget(root, build, name, c):
+    """A deleted recording leaves nothing for the editor to list: the session and its edits go, and so do the files
+    made from it (pieces, joined audio, cleaned voices, preview, pauses, words). The `<name>.json.<hash>` backups stay:
+    they are the history of the remaps."""
+    rec = M.recdir(Path(root) / build)
+    S.drop_session(c, build, name)
+    for d in (rec / f"{name}.chunks", rec / f"{name}.words"):
+        shutil.rmtree(d, ignore_errors=True)
+    for f in [rec / f"{name}.{x}" for x in ("webm", "json", "mp4", "m4a", "silence.json", "words.json")] + \
+            list(rec.glob(f"{name}.*.f32")):
+        f.unlink(missing_ok=True)
 
 
 def abandoned(root, build, c, now=None):
@@ -149,8 +163,17 @@ def editable(build):
         return False
 
 
+def mtime(path):
+    """Whole seconds of a file's age marker, for ?v= (0 when it is not there yet)."""
+    try:
+        return int(Path(path).stat().st_mtime)
+    except OSError:
+        return 0
+
+
 def project(root, build, c):
     b = Path(root) / build
+    rec = M.recdir(b)
     ls = M.lines(b)
     sessions = S.sessions(c, build)
     good = usable(root, build, sessions)
@@ -181,8 +204,10 @@ def project(root, build, c):
         "video_version": int((b / "presenter" / f"{build}_silent.mp4").stat().st_mtime),
         "lines": [[l[0], l[1]] for l in ls],
         "sessions": [dict(s, stale=s["name"] in stale) for s in sessions],
-        "audio": {**{s["name"]: f"/{build}/presenter/recordings/{s['name']}.m4a" for s in good if s["state"] == "ready"},
-                  **({T.ORIGINAL: f"/{build}/presenter/original.m4a"} if st["missing"] == "original" else {})},
+        "audio": {**{s["name"]: f"/{build}/presenter/recordings/{s['name']}.m4a?v={mtime(rec / (s['name'] + '.m4a'))}"
+                     for s in good if s["state"] == "ready"},
+                  **({T.ORIGINAL: f"/{build}/presenter/original.m4a?v={mtime(b / 'presenter' / 'original.m4a')}"}
+                     if st["missing"] == "original" else {})},
         "settings": st, "voice": voice_marks(root, build), "editable": editable(build),
         "old_page": bool(ls) and len(ls[0]) < 4,      # prepared before lines knew their section: refresh it
         "engine": "navoiy" if navoiy else "edge",

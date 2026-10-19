@@ -17,7 +17,9 @@ the browser and exports it (video, subtitles, chapters). Its API is studio/api.p
     ssh -L 8080:localhost:8080 musulmon@10.0.0.5            # on the instructor's computer
     uv run python serve_presenter.py 8080                    # here; then open http://localhost:8080/
 """
+import gzip
 import html
+import io
 import json
 import os
 import queue
@@ -27,6 +29,7 @@ import subprocess
 import sys
 import threading
 import time
+import traceback
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -123,10 +126,13 @@ def prepare(build):
 
 
 def delete(build, name):
+    """Forget a recording: its files, its old `recordings` row, and (studio/api.py forget) its editor session."""
     for ext in ("webm", "json", "mp4"):
         (recdir(build) / f"{name}.{ext}").unlink(missing_ok=True)
     with db() as c:
         c.execute("delete from recordings where build=? and name=?", (build, name))
+    with dbc() as c:
+        A.forget(ROOT, build, name, c)
 
 
 # ─── the editor's background jobs: one at a time, sharing QUEUE with the builds above ─────────────────────────
@@ -311,10 +317,18 @@ def studio(module):
             .replace("BUSY", "true" if busy else "false").replace("MODULE", str(module)))
 
 
+def stamp(path):
+    """?v= for a video the pages play: its mtime, so a rebuilt file is never served from the browser's cache."""
+    try:
+        return int(Path(path).stat().st_mtime)
+    except OSError:
+        return 0
+
+
 def lecture(build):
     """The built lecture video itself (the narrated Manim video), to watch before presenting it."""
     m = module_of(build)
-    src = f"/{build}/{build}.mp4"
+    src = f"/{build}/{build}.mp4?v={stamp(ROOT / build / (build + '.mp4'))}"
     return (PAGE.replace("NAV", sidebar(m, builds()))
             .replace("BODY", f'<p><a href="/?m={m}">← Module {m}</a> · {lecture_title(build)} · the narrated video</p>'
                              f'<video src="{src}" controls autoplay style="width:100%;background:#000;border-radius:8px">'
@@ -323,7 +337,7 @@ def lecture(build):
 
 
 def watch(build, name):
-    src = f"/{build}/presenter/recordings/{quote(name)}.mp4"
+    src = f"/{build}/presenter/recordings/{quote(name)}.mp4?v={stamp(recdir(build) / (name + '.mp4'))}"
     m = module_of(build)
     return (PAGE.replace("NAV", sidebar(m, builds()))
             .replace("BODY", f'<p><a href="/?m={m}">← Module {m}</a> · {lecture_title(build)} · '
@@ -381,18 +395,91 @@ if (clean){ try { clean.value = localStorage.getItem('studioClean') || 'deepfilt
   clean.onchange = () => { try { localStorage.setItem('studioClean', clean.value); } catch (e) {} }; }
 function build(q){ post('/api/compose?' + q + '&clean=' + (clean ? clean.value : 'deepfilter')); }
 function del(q){ if (confirm('Delete this recording and its video?')) post('/api/delete?' + q); }
-if (BUSY) setTimeout(() => location.reload(), 3000);
+if (BUSY) setTimeout(() => location.reload(), 10000);
 </script></body></html>"""
 
 
+RANGE_CAP = 4 << 20                                    # an open-ended Range gets this much, not the rest of the file
+MEDIA = (".mp4", ".m4a")
+ZIPPED = (".json", ".html", ".js")                     # static files worth gzipping (media never is)
+
+
+class Counted:
+    """The response stream, counting the bytes written (for the log)."""
+    def __init__(self, f):
+        self.f, self.n = f, 0
+
+    def write(self, data):
+        self.n += len(data)
+        return self.f.write(data)
+
+    def __getattr__(self, name):
+        return getattr(self.f, name)
+
+
 class Studio(SimpleHTTPRequestHandler):
+    def setup(self):
+        super().setup()
+        self.wfile = Counted(self.wfile)
+        self._code, self._left = "-", None
+
+    def parse_request(self):
+        self._t0 = time.time()
+        return super().parse_request()
+
+    def handle_one_request(self):
+        try:
+            super().handle_one_request()
+        finally:
+            if getattr(self, "requestline", ""):
+                ms = (time.time() - getattr(self, "_t0", time.time())) * 1000
+                self.log_message('"%s" %s - %dms %dB', self.requestline, self._code, ms, self.wfile.n)
+                self.wfile.n = 0
+
+    def log_request(self, code="-", size="-"):
+        self._code = code                              # logged once, at the end of the request, with time and bytes
+
+    def gzips(self):
+        return "gzip" in self.headers.get("Accept-Encoding", "")
+
     def send_head(self):
+        self._left = self._etag = None
         m = re.match(r"bytes=(\d+)-(\d*)", self.headers.get("Range", ""))
         path = Path(self.translate_path(self.path))
-        if not m or not path.is_file():
+        if not path.is_file():
+            return super().send_head()
+        if path.suffix in MEDIA:
+            st = path.stat()
+            self._etag = f'"{st.st_mtime_ns:x}-{st.st_size:x}"'          # strong: a remux changes the size, not the mtime
+            if self.headers.get("If-None-Match") == self._etag:
+                self.send_response(304)
+                self.end_headers()
+                return None
+            if m and self.headers.get("If-Range", self._etag) != self._etag:
+                m = None                                                  # the file changed: the whole of it, no cap
+        if not m:
+            if path.suffix in MEDIA:
+                return super().send_head()
+            if path.suffix in ZIPPED and self.gzips():
+                body = gzip.compress(path.read_bytes(), 6)
+                self.send_response(200)
+                self.send_header("Content-Type", self.guess_type(str(path)))
+                self.send_header("Content-Encoding", "gzip")
+                self.send_header("Vary", "Accept-Encoding")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Last-Modified", self.date_time_string(path.stat().st_mtime))
+                self.end_headers()
+                return io.BytesIO(body)
             return super().send_head()
         size = path.stat().st_size
-        start, end = int(m[1]), min(int(m[2] or size - 1), size - 1)
+        start = int(m[1])
+        if start >= size:
+            self.send_response(416)
+            self.send_header("Content-Range", f"bytes */{size}")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return None
+        end = min(int(m[2]), size - 1) if m[2] else min(size - 1, start + RANGE_CAP - 1)
         f = open(path, "rb")
         f.seek(start)
         self.send_response(206)
@@ -404,7 +491,7 @@ class Studio(SimpleHTTPRequestHandler):
         return f
 
     def copyfile(self, src, dst):
-        left = getattr(self, "_left", None)
+        left = self._left
         if left is None:
             return super().copyfile(src, dst)
         while left > 0:
@@ -414,23 +501,28 @@ class Studio(SimpleHTTPRequestHandler):
             dst.write(chunk)
             left -= len(chunk)
 
-    def html(self, text):
-        body = text.encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
+    def send_text(self, body, ctype, code=200):
+        """A page or an API answer: never cached, gzipped when the browser takes it (the tunnel is the slow part)."""
+        if self.gzips() and len(body) > 1024:
+            body = gzip.compress(body, 6)
+            zipped = True
+        else:
+            zipped = False
+        self.send_response(code)
+        self.send_header("Content-Type", ctype)
+        if zipped:
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Vary", "Accept-Encoding")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
+    def html(self, text):
+        self.send_text(text.encode(), "text/html; charset=utf-8")
+
     def json(self, obj, code=200):
-        body = json.dumps(obj, ensure_ascii=False).encode()
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(body)
+        self.send_text(json.dumps(obj, ensure_ascii=False).encode(), "application/json; charset=utf-8", code)
 
     def body(self, limit=50_000_000):
         size = int(self.headers.get("Content-Length", 0))
@@ -466,12 +558,19 @@ class Studio(SimpleHTTPRequestHandler):
         if path in ("/api/project", "/api/counts"):
             if not b:
                 return self.send_error(404, "no such lecture")
-            with dbc() as c:
-                cut_off = A.abandoned(ROOT, b, c)             # cut off without a finish: process what came
-            for name in cut_off:
-                process(b, name)
-            with dbc() as c:
-                return self.json(A.project(ROOT, b, c) if path == "/api/project" else A.counts(ROOT, b, c))
+            if not (ROOT / b / "presenter" / "lines.json").exists():
+                return self.json({"error": "prepare the presenter page first"}, 404)
+            try:
+                with dbc() as c:
+                    cut_off = A.abandoned(ROOT, b, c)         # cut off without a finish: process what came
+                for name in cut_off:
+                    process(b, name)
+                with dbc() as c:
+                    out = A.project(ROOT, b, c) if path == "/api/project" else A.counts(ROOT, b, c)
+            except Exception as e:                            # say why, instead of dropping the connection
+                traceback.print_exc()
+                return self.json({"error": f"{type(e).__name__}: {e}"[:500]}, 500)
+            return self.json(out)
         if path.endswith(".sqlite"):
             return self.send_error(404)
         super().do_GET()
@@ -573,8 +672,16 @@ class Studio(SimpleHTTPRequestHandler):
             self.ok()
         return True
 
+    def send_response(self, code, message=None):
+        self._status = code
+        super().send_response(code, message)
+
     def end_headers(self):
         self.send_header("Accept-Ranges", "bytes")
+        if getattr(self, "_status", 0) in (200, 206, 304) and getattr(self, "_etag", None):
+            self.send_header("ETag", self._etag)
+            versioned = "v" in parse_qs(urlparse(self.path).query)          # ?v=<mtime> names one version of the file
+            self.send_header("Cache-Control", "private, max-age=86400" if versioned else "no-cache")
         super().end_headers()
 
 
