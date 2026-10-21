@@ -2,9 +2,12 @@
 
   sessions  one row per recording session: uploaded chunk count, state (recording -> recorded -> processing ->
             ready | failed), the cleaning profile its audio was prepared with
-  edits     one row per take with an edit: {"cuts": [[a, b]], "trim_in", "trim_out", "nudge", "rejected"}
+  edits     one row per take with an edit: {"cuts": [[a, b]], "trim_in", "trim_out", "nudge", "rejected", …};
+            "auto" names the trims the tightening tool set (undo takes back those, not a trim set by hand)
   choices   the take chosen for each line (none: the newest take that is not rejected)
   jobs      background work and its state, shown in the editor (process a session, transcribe a take, export)
+  versions  drafts of a rewritten scene (studio/versions.py): numbered per scene, built on an earlier version or on the
+            lecture, holding {line: text}; queued -> voicing -> rendering -> ready, then merged | stale | discarded
 """
 import json
 import sqlite3
@@ -22,6 +25,12 @@ create table if not exists settings (build text, key text, value text, primary k
 create table if not exists jobs (
     build text, kind text, key text, state text, error text default '', updated real, detail text default '',
     primary key (build, kind, key));
+create table if not exists versions (
+    build text, scene text, n integer, base integer,       -- base: the version it grew from (null: the lecture)
+    texts text default '{}',                               -- {line: text} this version says, its base's lines included
+    state text default 'queued', error text default '', created real, updated real,
+    report text default '{}',                              -- {line: the voice check's result}
+    primary key (build, scene, n));
 """
 
 
@@ -103,9 +112,48 @@ def reset_running(c):
     """A server restart kills running jobs: mark them as interrupted, so they can be started again."""
     c.execute("update jobs set state='failed', error='interrupted (server restarted)' where state in ('queued','running')")
     c.execute("update sessions set state='recorded' where state='processing'")
+    c.execute("update versions set state='failed', error='interrupted (server restarted)' "
+              "where state in ('queued','voicing','rendering')")
 
 
-DEFAULTS = {"missing": "original"}          # a line nobody recorded keeps the video's own narration
+# ─── versions of a rewritten scene ───
+def _version(r):
+    return dict(r, texts=json.loads(r["texts"]), report=json.loads(r["report"]))
+
+
+def version_add(c, build, scene, base, texts):
+    """A new version of `scene`, numbered after the last one (discarded ones keep their number). Returns n."""
+    n = (c.execute("select max(n) from versions where build=? and scene=?", (build, scene)).fetchone()[0] or 0) + 1
+    now = time.time()
+    c.execute("insert into versions (build, scene, n, base, texts, created, updated) values (?,?,?,?,?,?,?)",
+              (build, scene, n, base, json.dumps(texts, ensure_ascii=False), now, now))
+    return n
+
+
+def version(c, build, scene, n):
+    r = c.execute("select * from versions where build=? and scene=? and n=?", (build, scene, n)).fetchone()
+    return _version(r) if r else None
+
+
+def versions(c, build, scene=None):
+    """The build's versions (a scene's, if given), oldest first, without the discarded ones."""
+    q, a = "select * from versions where build=? and state!='discarded'", [build]
+    if scene:
+        q, a = q + " and scene=?", a + [scene]
+    return [_version(r) for r in c.execute(q + " order by scene, n", a)]
+
+
+def set_version(c, build, scene, n, **kw):
+    for k in ("texts", "report"):
+        if k in kw:
+            kw[k] = json.dumps(kw[k], ensure_ascii=False)
+    kw["updated"] = time.time()
+    c.execute(f"update versions set {', '.join(f'{k}=?' for k in kw)} where build=? and scene=? and n=?",
+              (*kw.values(), build, scene, n))
+
+
+DEFAULTS = {"missing": "original",         # a line nobody recorded keeps the video's own narration
+            "margin": "0.3"}              # seconds of silence kept before the first word and after the last
 
 
 def settings(c, build):

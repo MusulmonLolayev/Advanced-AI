@@ -29,9 +29,9 @@ LAW = class_agent.LAWS["uk" if UK else "uz"]
 ARTICLES = LAW.ARTICLES
 FETCH = LAW.FETCH                               # the fetch action's name: fetch / fetch_article
 if UK:
-    NARRATION, HEADS = parse((HERE / "narration" / "m7_lecture01_en.md").read_text(), single="en")
+    NARRATION, HEADS = parse((narration_dir() / "m7_lecture01_en.md").read_text(), single="en")
 else:
-    NARRATION, HEADS = parse((HERE / "narration" / "m7_lecture01.md").read_text())
+    NARRATION, HEADS = parse((narration_dir() / "m7_lecture01.md").read_text())
 assert len(HEADS) == 10 and "0.0" in NARRATION and "10.86" in NARRATION
 
 # What each law's scenes point at: a provision id, and the words of it to light (all asserted in test_class_agent.py)

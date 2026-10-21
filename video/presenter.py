@@ -43,6 +43,20 @@ def cues(srt):
     return out
 
 
+def scene_lines(srt):
+    """[[start, text, [[chunk start, chunk end, chunk text]]]] for the narration lines of one scene's subtitles
+    (seconds inside the scene). Empty when the scene has no subtitles."""
+    out, prev_end = [], None
+    for a, b, text in cues(srt) if Path(srt).exists() else []:
+        if prev_end is None or a - prev_end > GAP:
+            out.append([a, text, [[a, b, text]]])
+        else:
+            out[-1][1] += " " + text
+            out[-1][2].append([a, b, text])
+        prev_end = b
+    return out
+
+
 def lines(build):
     """[(start s, text, [(chunk start, chunk end, chunk text)], scene index)] for every narration line of the joined
     video."""
@@ -50,15 +64,8 @@ def lines(build):
     joined = [Path(r.split("'")[1]) for r in (build / "joined.txt").read_text().splitlines() if r.startswith("file")]
     out, off = [], 0.0
     for n, (scene, j) in enumerate(zip(parts, joined)):
-        prev_end = None
-        for a, b, text in cues(scene.with_suffix(".srt")) if scene.with_suffix(".srt").exists() else []:
-            chunk = [round(off + a, 3), round(off + b, 3), text]
-            if prev_end is None or a - prev_end > GAP:
-                out.append([off + a, text, [chunk], n])
-            else:
-                out[-1][1] += " " + text
-                out[-1][2].append(chunk)
-            prev_end = b
+        for a, text, chunks in scene_lines(scene.with_suffix(".srt")):
+            out.append([off + a, text, [[round(off + x, 3), round(off + y, 3), t] for x, y, t in chunks], n])
         off += duration(j)
     return [(round(t, 3), s, c, n) for t, s, c, n in out], off
 

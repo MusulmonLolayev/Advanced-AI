@@ -172,6 +172,60 @@ def source_f32(build_dir, src, profile):
     return original(build_dir)[0] if src == T.ORIGINAL else clean(build_dir, src, profile)
 
 
+# ─── the voice level, for the editor's strips ─────────────────────────────
+LEVEL_STEP = 0.02                                 # seconds per level value
+LEVEL_FLOOR = -80                                 # dB: digital silence reads as this
+
+
+def level_source(build_dir, src, profile):
+    """(the voice file to measure, where its levels are cached). A session: its voice cleaned with `profile`, else
+    any other cleaned copy (whatever the editor has to play); the lecture's own narration: presenter/original.f32."""
+    b = Path(build_dir)
+    if src == T.ORIGINAL:
+        return original(b)[0], b / "presenter" / "original.levels.json"
+    rec = recdir(b)
+    f32 = rec / f"{src}.{profile}.f32"
+    if not f32.exists():
+        found = sorted(rec.glob(f"{src}.*.f32"))
+        if not found:
+            raise KeyError(f"no voice for session {src}")
+        f32 = found[0]
+    return f32, f32.with_suffix(".levels.json")
+
+
+def level_db(f32, step=LEVEL_STEP, sr=SR, block=1 << 24):
+    """The level of a raw float32 file as whole dB, one value per `step` seconds: RMS over each window, 20 log10,
+    floored at LEVEL_FLOOR (a trailing part of a window is dropped). Read in blocks, so a 35-minute file stays
+    in a few tens of MB."""
+    n = round(step * sr)
+    x = np.memmap(f32, dtype=np.float32, mode="r")
+    out = []
+    for a in range(0, len(x) // n * n, block // n * n):
+        f = np.asarray(x[a: min(a + block // n * n, len(x) // n * n)]).reshape(-1, n)
+        ms = np.einsum("ij,ij->i", f, f, dtype=np.float64) / n
+        out.append(np.rint(np.maximum(10 * np.log10(ms + 1e-30), LEVEL_FLOOR)).astype(np.int16))
+    return np.concatenate(out) if out else np.zeros(0, np.int16)
+
+
+def levels(build_dir, src, profile):
+    """{step, db}: the level of a voice source, cached beside it as JSON keyed by the file's mtime (remade when the
+    source is newer)."""
+    f32, cache = level_source(build_dir, src, profile)
+    mtime = f32.stat().st_mtime
+    if cache.exists():
+        try:
+            c = json.loads(cache.read_text())
+            if c.get("mtime") == mtime and c.get("step") == LEVEL_STEP:
+                return {"step": c["step"], "db": c["db"]}
+        except ValueError:
+            pass
+    out = {"step": LEVEL_STEP, "db": level_db(f32).tolist()}
+    tmp = cache.with_suffix(".tmp")
+    tmp.write_text(json.dumps({**out, "mtime": mtime}, separators=(",", ":")))
+    tmp.replace(cache)
+    return out
+
+
 # ─── the project: lines, takes, the edit list ─────────────────────────────
 def lines(build_dir):
     return json.loads((Path(build_dir) / "presenter" / "lines.json").read_text())

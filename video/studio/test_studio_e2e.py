@@ -152,13 +152,22 @@ class Studio(unittest.TestCase):
         self.req(f"/api/edit?build={B}&take={t0}", {"nudge": 0.3})
         p = self.get(f"/api/project?build={B}")
         self.assertAlmostEqual(p["takes"]["0"][0]["length"], 14.3, places=3)
-        proposed = p["takes"]["0"][0]["proposed"]
-        self.assertTrue(proposed, "the 4 s tail pause over a still picture should be proposed")
-        self.req(f"/api/shrink?build={B}")
+        v0 = p["takes"]["0"][0]
+        tight = v0["tighten"]
+        self.assertAlmostEqual(v0["tail"], 4.0, delta=0.1)               # the voice stops 4 s before the take does
+        self.assertAlmostEqual(v0["lead"], 0.2, delta=0.05)            # the quiet before the voice, from the take start
+        self.assertEqual(v0["margin"], 0.3)
+        self.assertAlmostEqual(tight["trim_out"], v0["tail"] - 0.3, delta=0.01)      # leave the 0.3 s margin
+        self.assertIsNone(tight["trim_in"])
+        self.assertGreater(tight["gain"], 2.5)
+        self.assertEqual(self.req(f"/api/shrink?build={B}")["saved"] > 2.5, True)
         p = self.get(f"/api/project?build={B}")
         e0 = p["takes"]["0"][0]
-        self.assertEqual(e0["edit"]["cuts"], [list(x) for x in proposed])
-        self.assertEqual(e0["proposed"], [])                            # nothing left to propose
+        self.assertEqual(e0["edit"]["trim_out"], tight["trim_out"])      # the tool's own, apart from the manual cuts
+        self.assertEqual(e0["edit"]["auto"], ["trim_out"])
+        self.assertNotIn("cuts", e0["edit"])
+        self.assertNotIn("squeeze", e0["edit"])
+        self.assertEqual((e0["tighten"]["trim_out"], e0["tighten"]["gain"]), (None, 0))     # nothing left to add
         self.assertLess(e0["length"], 14.3 - 2.5)
         total = T.length(p["edit_list"]["voice"])
 
@@ -180,6 +189,89 @@ class Studio(unittest.TestCase):
         rms = lambda a, b: float(np.sqrt(np.mean(x[int(a * SR):int(b * SR)] ** 2)))   # noqa: E731
         self.assertGreater(rms(0.3 + 2, 0.3 + 9), 0.05)                # line 0's voice (after the 0.3 s nudge)
         self.assertLess(rms(0.3 + 10.2, 0.3 + 10.4), 0.02)             # the 0.25 s breath kept after it
+
+    def test_1b_tightening_can_be_taken_back_and_keeps_manual_cuts(self):
+        t0 = self.get(f"/api/project?build={B}")["takes"]["0"][0]["id"]
+        before = self.get(f"/api/project?build={B}")["takes"]["0"][0]["edit"]
+        self.req(f"/api/edit?build={B}&take={t0}", {"cuts": [[1.0, 1.2]]})        # the instructor's own cut
+        once = self.get(f"/api/project?build={B}")["takes"]["0"][0]["edit"]
+        self.req(f"/api/shrink?build={B}&take={t0}")                              # pressed again: nothing new
+        self.assertEqual(self.get(f"/api/project?build={B}")["takes"]["0"][0]["edit"], once)
+        self.req(f"/api/unshrink?build={B}&take={t0}")
+        gone = self.get(f"/api/project?build={B}")["takes"]["0"][0]
+        self.assertEqual(before["auto"], ["trim_out"])
+        self.assertEqual(gone["edit"], {"nudge": 0.3, "cuts": [[1.0, 1.2]]})        # the trim the tool set is gone
+        self.assertGreater(gone["tighten"]["gain"], 2.5)                           # and it can be done again
+        self.req(f"/api/shrink?build={B}&take={t0}")
+        again = self.get(f"/api/project?build={B}")["takes"]["0"][0]["edit"]
+        self.assertEqual((again["cuts"], again["trim_out"], again["auto"]), ([[1.0, 1.2]], once["trim_out"], ["trim_out"]))
+
+    def test_1c_fit_the_handles_and_undo(self):
+        """/api/fit sets the trims by the margin; a trim the handles set by hand survives undo, a tool-set one does not."""
+        view = lambda: self.get(f"/api/project?build={B}")["takes"]["0"][0]          # noqa: E731
+        t0 = view()["id"]
+        self.req(f"/api/unshrink?build={B}&take={t0}")
+        self.req(f"/api/edit?build={B}&take={t0}", {"nudge": None})
+        self.assertEqual(view()["edit"], {"cuts": [[1.0, 1.2]]})
+        self.req(f"/api/fit?build={B}&take={t0}&end=end")
+        e = view()["edit"]
+        self.assertAlmostEqual(e["trim_out"], view()["tail"] - 0.3, delta=0.01)
+        self.assertEqual((e["auto"], "trim_in" in e), (["trim_out"], False))
+        self.req(f"/api/fit?build={B}&take={t0}&end=start")                         # no silence before the voice: nothing
+        self.assertNotIn("trim_in", view()["edit"])
+        # the handle dragged by hand: a trim_in the tool did not set; undo takes back the tool's trim only
+        self.req(f"/api/edit?build={B}&take={t0}", {"trim_in": 0.15})
+        e = view()["edit"]
+        self.assertEqual((e["trim_in"], e["auto"]), (0.15, ["trim_out"]))
+        self.req(f"/api/unshrink?build={B}&take={t0}")
+        self.assertEqual(view()["edit"], {"cuts": [[1.0, 1.2]], "trim_in": 0.15})
+        # dragging the end handle over a tool-set trim makes it the instructor's
+        self.req(f"/api/fit?build={B}&take={t0}&end=both")
+        self.assertEqual(view()["edit"]["auto"], ["trim_out"])                      # (no voice-free start: trim_in cleared)
+        self.req(f"/api/edit?build={B}&take={t0}", {"trim_in": 0.15, "trim_out": 2.0})
+        e = view()["edit"]
+        self.assertEqual((e["trim_in"], e["trim_out"], e.get("auto")), (0.15, 2.0, None))
+        self.req(f"/api/shrink?build={B}&take={t0}")                                # tighten all respects it
+        self.assertEqual(view()["edit"]["trim_out"], 2.0)
+        self.req(f"/api/unshrink?build={B}&take={t0}")
+        self.assertEqual(view()["edit"], {"cuts": [[1.0, 1.2]], "trim_in": 0.15, "trim_out": 2.0})
+        self.req(f"/api/edit?build={B}&take={t0}", {"trim_in": None, "trim_out": None, "cuts": None, "nudge": 0.3})
+        with self.assertRaises(urllib.error.HTTPError) as cm:
+            self.req(f"/api/fit?build={B}&take={t0}&end=middle")
+        self.assertEqual(cm.exception.code, 400)
+
+    def test_1d_levels_of_a_session_and_of_the_original(self):
+        p = self.get(f"/api/project?build={B}")
+        name = p["sessions"][0]["name"]
+        lv = self.get(f"/api/levels?build={B}&src={name}")
+        self.assertEqual(lv["step"], 0.02)
+        self.assertAlmostEqual(len(lv["db"]) * 0.02, 43.5, delta=0.1)
+        db = lv["db"]
+        self.assertTrue(-18 <= np.median(db[int(3 / 0.02):int(9 / 0.02)]) <= -9)       # the 220 Hz voice, amp 0.3
+        self.assertLess(np.median(db[int(12 / 0.02):int(14 / 0.02)]), -40)             # the gap before line 1
+        og = self.get(f"/api/levels?build={B}&src=__original__")
+        self.assertAlmostEqual(len(og["db"]) * 0.02, 30.0, delta=0.1)
+        self.assertTrue(-26 <= np.median(og["db"]) <= -16)                              # the built video's 440 Hz sine
+        self.assertTrue((self.root / B / "presenter" / "original.levels.json").exists())
+        for bad in (f"/api/levels?build={B}&src=nope", f"/api/levels?build={B}&src=../../etc/passwd", f"/api/levels?build={B}"):
+            with self.assertRaises(urllib.error.HTTPError, msg=bad) as cm:
+                self.get(bad)
+            self.assertEqual(cm.exception.code, 404, bad)
+
+    def test_1e_the_margin_setting_round_trips_and_moves_the_fit(self):
+        self.assertEqual(self.get(f"/api/project?build={B}")["settings"]["margin"], "0.3")       # the default
+        t = lambda: self.get(f"/api/project?build={B}")["takes"]["0"][0]                          # noqa: E731
+        fit_at_03 = t()["fit"][1]
+        self.req(f"/api/settings?build={B}&key=margin&value=0.8")
+        p = self.get(f"/api/project?build={B}")
+        self.assertEqual((p["settings"]["margin"], p["takes"]["0"][0]["margin"]), ("0.8", 0.8))
+        self.assertAlmostEqual(p["takes"]["0"][0]["fit"][1], fit_at_03 - 0.5, delta=0.001)
+        for bad in ("abc", "-1", "9"):
+            with self.assertRaises(urllib.error.HTTPError, msg=bad) as cm:
+                self.req(f"/api/settings?build={B}&key=margin&value={bad}")
+            self.assertEqual(cm.exception.code, 400)
+        self.req(f"/api/settings?build={B}&key=margin&value=0.3")
+        self.assertEqual(self.get(f"/api/project?build={B}")["settings"]["margin"], "0.3")
 
     def test_2_a_session_cut_off_is_recovered(self):
         name = "2026-10-19T11-00-00"
@@ -297,6 +389,51 @@ class Studio(unittest.TestCase):
         p = self.get(f"/api/project?build={B}")
         self.assertNotIn(name, [s["name"] for s in p["sessions"]])
         self.assertFalse([f for f in (self.root / B / "presenter" / "recordings").iterdir() if f.name.startswith(name)])
+
+    def test_9_versions_are_created_listed_and_discarded_over_http(self):
+        queued, real = [], self.sp.make_version
+        self.sp.make_version = lambda build, scene, n: queued.append((build, scene, n))     # the job runner stubbed
+        try:
+            out = self.req(f"/api/version?build={B}&line=1", {"text": "Line two,  the   tools, rewritten."})
+            self.assertEqual(out, {"scene": "S01Why", "n": 1})
+            self.assertEqual(queued, [(B, "S01Why", 1)])
+            p = self.get(f"/api/project?build={B}")
+            self.assertEqual(p["scenes"], ["S00Opening", "S01Why", "S02Tools"])
+            v = p["versions"]["S01Why"][0]
+            self.assertEqual((v["n"], v["base"], v["state"], v["texts"], v["changed"], v["video"]),
+                             (1, None, "queued", {"1": "Line two, the tools, rewritten."}, ["1"], None))
+            for bad in (f"/api/version?build={B}&line=1", f"/api/version?build={B}&line=99"):    # one is still being made
+                with self.assertRaises(urllib.error.HTTPError) as cm:
+                    self.req(bad, {"text": "x"})
+                self.assertEqual(cm.exception.code, 400)
+            with self.assertRaises(urllib.error.HTTPError) as cm:                      # not ready: nothing to merge
+                self.req(f"/api/version/merge?build={B}&scene=S01Why&n=1")
+            self.assertEqual(cm.exception.code, 400)
+            self.req(f"/api/version/discard?build={B}&scene=S01Why&n=1")
+            self.assertEqual(self.get(f"/api/project?build={B}")["versions"], {})
+            self.assertFalse((self.root / B / "versions" / "S01Why" / "v1").exists())
+            self.req(f"/api/version?build={B}&line=1", {})                              # no text: re-voice as is
+            self.assertEqual(self.get(f"/api/project?build={B}")["versions"]["S01Why"][0]["texts"], {"1": LINES[1][1]})
+            self.req(f"/api/version/discard?build={B}&scene=S01Why&n=2")
+            self.assertEqual(len(queued), 2)
+        finally:
+            self.sp.make_version = real
+
+    def test_9b_static_files_are_served_with_revalidation_and_stay_inside_static(self):
+        r = urllib.request.urlopen(self.url + "/studio-static/editor/main.js")
+        self.assertIn("javascript", r.headers["Content-Type"])
+        self.assertEqual(r.headers["Cache-Control"], "no-cache")
+        self.assertEqual(r.read(), (HERE / "studio" / "static" / "editor" / "main.js").read_bytes())
+        self.assertIn("css", urllib.request.urlopen(self.url + "/studio-static/editor.css").headers["Content-Type"])
+        lm = r.headers["Last-Modified"]
+        with self.assertRaises(urllib.error.HTTPError) as cm:                          # unchanged: not sent again
+            urllib.request.urlopen(urllib.request.Request(self.url + "/studio-static/editor/main.js", headers={"If-Modified-Since": lm}))
+        self.assertEqual(cm.exception.code, 304)
+        for bad in ("/studio-static/../serve_presenter.py", "/studio-static/%2e%2e/serve_presenter.py",
+                    "/studio-static/editor/../../editor.html", "/studio-static/nothing.js", "/studio-static/editor"):
+            with self.assertRaises(urllib.error.HTTPError, msg=bad) as cm:
+                urllib.request.urlopen(self.url + bad)
+            self.assertEqual(cm.exception.code, 404, bad)
 
     def test_4_pages(self):
         page = self.get(f"/edit?build={B}").decode()

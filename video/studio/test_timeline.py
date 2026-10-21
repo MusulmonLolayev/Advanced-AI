@@ -2,8 +2,10 @@
 
     uv run python -m unittest discover -s studio -p 'test_timeline.py'        (from video/)
 """
+import json
 import random
 import unittest
+from pathlib import Path
 
 from studio import timeline as T
 
@@ -88,8 +90,10 @@ class Tracks(unittest.TestCase):
             self.assertAlmostEqual(T.length(x["voice"]), T.length(x["picture"]))
 
     def test_edited_applies_trim_cuts_and_nudge(self):
+        # the take: 0.05 s held, 11 s of animation (to local 11.05), then held. trim_in 0.5 reaches 0.45 s into the
+        # animation (squeezed to 0.15 s, its voice silent); trim_out 1.0 and the cut are over the held picture.
         e = T.edited(self.take, self.ev, {"trim_in": 0.5, "trim_out": 1.0, "cuts": [(12.0, 12.5)], "nudge": 0.2})
-        self.assertAlmostEqual(T.length(e["voice"]), 14 - 0.5 - 1.0 - 0.5 + 0.2)
+        self.assertAlmostEqual(T.length(e["voice"]), 14 - 0.05 - 0.45 + 0.15 - 1.0 - 0.5 + 0.2)
         self.assertAlmostEqual(T.length(e["picture"]), T.length(e["voice"]))
 
 
@@ -123,9 +127,15 @@ class Conserved(unittest.TestCase):
             self.assertAlmostEqual(T.length(tr["picture"]), T.length(tr["voice"]), places=9)
             total = T.length(tr["voice"])
             edit = {"cuts": [(total * 0.2, total * 0.2 + 0.003), (total * 0.5, total * 0.7)],
-                    "trim_in": 0.001, "nudge": rnd.choice([0, 0.4, -0.7])}
+                    "trim_in": rnd.choice([0, 0.001, total * 0.3]), "trim_out": rnd.choice([0, 0.002, total * 0.25, total * 0.9]),
+                    "nudge": rnd.choice([0, 0.4, -0.7])}
             ed = T.edited(take, ev, edit)
             self.assertAlmostEqual(T.length(ed["picture"]), T.length(ed["voice"]), places=9)
+            for _ in range(3):                                     # squeezes too, overlapping cuts and each other
+                sq = [[a, a + rnd.choice([0.0004, 0.5, 4.0]), rnd.choice([0.001, 0.15, 1.0])]
+                      for a in (rnd.uniform(0, total) for _ in range(rnd.randint(1, 4)))]
+                ed = T.edited(take, ev, dict(edit, squeeze=sq, auto_cuts=[(total * 0.1, total * 0.3)]))
+                self.assertAlmostEqual(T.length(ed["picture"]), T.length(ed["voice"]), places=9)
 
     def test_edit_list_pads_a_mismatch_instead_of_failing(self):
         tr = {"voice": [(5.0, "s", 0.0)], "picture": [(4.9, "play", 0.0, 4.0, R)]}
@@ -148,6 +158,191 @@ class Silences(unittest.TestCase):
 
     def test_short_pauses_stay(self):
         self.assertEqual(T.shrink_silences([(1.0, 1.6)], [(4.0, "hold", 0, None, 1)], total=4.0), [])
+
+
+class Squeeze(unittest.TestCase):
+    PIC = [(2.0, "hold", 0, None, 1), (4.0, "play", 0, 4, 1), (2.0, "hold", 4, None, 1), (2.0, "play", 4, 6, 0.5)]
+    VOICE = [(10.0, "s", 100.0)]
+
+    def both(self, cuts, sq):
+        return T.squeeze(self.VOICE, cuts, sq, True), T.squeeze(self.PIC, cuts, sq, False)
+
+    def test_both_tracks_get_the_new_length(self):
+        v, p = self.both([], [[1.0, 7.0, 1.5]])
+        self.assertAlmostEqual(T.length(v), 10 - 6 + 1.5, places=9)
+        self.assertAlmostEqual(T.length(p), T.length(v), places=9)
+
+    def test_play_speeds_are_multiplied_and_holds_shortened(self):
+        _, p = self.both([], [[1.0, 7.0, 1.5]])                    # f = 4 over: 1 s of hold, 4 s of play, 1 s of hold
+        self.assertEqual(p, [(1.0, "hold", 0, None, 1), (0.25, "hold", 0, None, 1), (1.0, "play", 0, 4, 4.0),
+                             (0.25, "hold", 4, None, 1), (1.0, "hold", 4, None, 1), (2.0, "play", 4, 6, 0.5)])
+        _, p = self.both([], [[6.0, 10.0, 1.0]])                   # a slow play: 0.5 x 4 = 2
+        self.assertEqual(p[-1], (0.5, "play", 4, 6, 2.0))
+
+    def test_a_squeeze_starting_inside_a_play_covers_the_same_picture(self):
+        _, p = self.both([], [[3.0, 5.0, 0.5]])                    # video seconds 1 .. 3 at 4 x
+        self.assertEqual([x for x in p if x[1] == "play"][:3],
+                         [(1.0, "play", 0, 1.0, 1), (0.5, "play", 1.0, 3.0, 4.0), (1.0, "play", 3.0, 4, 1)])
+
+    def test_the_voice_of_a_squeezed_span_is_silent(self):
+        v, _ = self.both([], [[2.0, 8.0, 1.5]])
+        self.assertEqual(v, [(2.0, "s", 100.0), (1.5, None, None), (2.0, "s", 108.0)])
+
+    def test_a_cut_wins_over_a_squeeze(self):
+        v, p = self.both([(3.0, 5.0)], [[2.0, 8.0, 1.5]])           # f = 4; the 2 s cut is gone, the other 4 s become 1
+        self.assertEqual(v, [(2.0, "s", 100.0), (0.25, None, None), (0.75, None, None), (2.0, "s", 108.0)])
+        self.assertAlmostEqual(T.length(p), 5.0, places=9)
+        self.assertEqual(p[1:3], [(0.25, "play", 0, 1.0, 4.0), (0.25, "play", 3.0, 4, 4.0)])
+        self.assertEqual(self.both([(0.0, 10.0)], [[2.0, 8.0, 1.5]]), ([], []))     # all cut: nothing squeezed is left
+
+    def test_edited_applies_auto_cuts_with_the_manual_ones(self):
+        ev = session()
+        take = T.takes("s1", ev, STARTS)[0]
+        a = T.edited(take, ev, {"cuts": [(12.0, 12.5)], "auto_cuts": [(13.0, 13.5)]})
+        b = T.edited(take, ev, {"cuts": [(12.0, 12.5), (13.0, 13.5)]})
+        self.assertEqual(a, b)
+        old = T.edited(take, ev, {"cuts": [(12.0, 12.5)]})          # an edit made before auto_cuts existed
+        self.assertAlmostEqual(T.length(old["voice"]), 13.5)
+
+
+class Trim(unittest.TestCase):
+    """trim_in / trim_out remove the take's ends like tightening does: cut where the picture is still, fast-forwarded
+    (up to 4 x, the voice silent) where it plays, so an animation is never cut."""
+    def events(self):
+        return [[0.0, "line", 0, 1, 0], [0.0, "play", 0, 1], [10.0, "hold", 10, 1], [12.0, "stop", 10, 1]]
+
+    def take(self):
+        return {"id": "s@0.00", "session": "s", "line": 0, "t_in": 0.0, "t_out": 12.0, "rejected": False}
+
+    def both(self, edit):
+        e = T.edited(self.take(), self.events(), edit)
+        self.assertAlmostEqual(T.length(e["voice"]), T.length(e["picture"]), places=9)
+        return e
+
+    def test_a_trim_over_a_still_picture_is_a_cut(self):
+        e = self.both({"trim_out": 1.5})                             # the picture holds from 10 s on
+        self.assertEqual(T.plan(T.take_tracks(self.take(), self.events())["picture"], 12.0, {"trim_out": 1.5}),
+                         ([(10.5, 12.0)], []))
+        self.assertAlmostEqual(T.length(e["voice"]), 10.5)
+        self.assertEqual(e["voice"], [(10.5, "s", 0.0)])
+        self.assertEqual([p[1] for p in e["picture"]], ["play", "hold"])
+        self.assertAlmostEqual(e["picture"][-1][0], 0.5)
+
+    def test_a_trim_over_a_playing_picture_is_a_squeeze_with_a_silent_voice(self):
+        e = self.both({"trim_out": 4.0})                             # 2 s of animation (8..10) and 2 s held
+        self.assertAlmostEqual(T.length(e["voice"]), 8.5)            # the animation in 0.5 s, the hold cut
+        self.assertEqual(e["voice"], [(8.0, "s", 0.0), (0.5, None, None)])
+        last = e["picture"][-1]
+        self.assertEqual(last[:4], (0.5, "play", 8.0, 10.0))
+        self.assertAlmostEqual(last[4], 4.0)                         # 4 x at the presenter's speed of 1
+        self.assertEqual(e["picture"][-1][3], 10.0)                  # it still ends where the animation ends
+
+    def test_the_start_is_squeezed_too_and_the_voice_there_is_silent(self):
+        e = self.both({"trim_in": 2.0})
+        self.assertEqual(e["voice"], [(0.5, None, None), (10.0, "s", 2.0)])
+        self.assertEqual(e["picture"][0][:4], (0.5, "play", 0.0, 2.0))
+
+    def test_a_short_animation_is_squeezed_to_at_least_0_15_s_and_a_tiny_one_is_left(self):
+        pic = T.take_tracks(self.take(), self.events())["picture"]
+        self.assertEqual(T.plan(pic, 12.0, {"trim_in": 0.4})[1], [(0.0, 0.4, 0.15)])
+        self.assertEqual(T.plan(pic, 12.0, {"trim_in": 0.1})[1], [])          # 0.15 s would be longer than 0.1 s
+
+    def test_a_trim_over_mixed_picture_does_both(self):
+        pic = [(3.0, "hold", 0, None, 1), (3.0, "play", 0, 3, 1), (2.0, "hold", 3, None, 1), (4.0, "play", 3, 7, 1),
+               (1.0, "hold", 7, None, 1)]
+        cuts, sq = T.plan(pic, 13.0, {"trim_out": 9.0})                # 4..13: animation 4..6, hold, animation 8..12, hold
+        self.assertEqual(cuts, [(6.0, 8.0), (12.0, 13.0)])
+        self.assertEqual(sq, [(4.0, 6.0, 0.5), (8.0, 12.0, 1.0)])
+        voice = [(13.0, "s", 0.0)]
+        v, p = T.squeeze(voice, cuts, sq, True), T.squeeze(pic, cuts, sq, False)
+        self.assertAlmostEqual(T.length(v), 13 - 9 + 0.5 + 1.0)
+        self.assertAlmostEqual(T.length(p), T.length(v))
+        self.assertEqual(v, [(4.0, "s", 0.0), (0.5, None, None), (1.0, None, None)])
+        self.assertTrue(all(x[4] <= 4.0 + 1e-9 for x in p if x[1] == "play"))
+        self.assertEqual([x[3] for x in p if x[1] == "play"], [1.0, 3, 7])      # each animation ends where it should
+
+    def test_squeezes_of_the_tools_have_a_silent_voice_too(self):
+        e = T.edited(self.take(), self.events(), {"squeeze": [[2.0, 6.0, 1.0]]})
+        self.assertEqual(e["voice"], [(2.0, "s", 0.0), (1.0, None, None), (6.0, "s", 6.0)])
+
+
+class Fit(unittest.TestCase):
+    def test_lead_and_tail_are_the_silences_touching_the_ends(self):
+        self.assertEqual(T.lead_tail([(0.0, 1.5), (4.0, 5.0), (8.0, 10.0)], 10.0), (1.5, 2.0))
+        lead, tail = T.lead_tail([(0.02, 1.5), (9.97, 10.0)], 10.0)                    # within the 0.05 s tolerance
+        self.assertEqual((lead, round(tail, 6)), (1.5, 0.03))
+        self.assertEqual(T.lead_tail([(4.0, 5.0)], 10.0), (0.0, 0.0))                    # a pause inside is not an end
+        self.assertEqual(T.lead_tail([(0.0, 10.0)], 10.0), (0.0, 0.0))                   # a take of nothing but silence
+
+    def test_fit_keeps_the_margin_around_the_voice(self):
+        sil = [(0.0, 1.5), (4.0, 5.0), (8.0, 10.0)]
+        a, b = T.fit(sil, 10.0, 0.3)
+        self.assertAlmostEqual(a, 1.2)
+        self.assertAlmostEqual(b, 1.7)
+        a, b = T.fit(sil, 10.0, 0.5)
+        self.assertAlmostEqual(a, 1.0)
+        self.assertAlmostEqual(b, 1.5)
+        self.assertEqual(T.fit(sil, 10.0, 3.0), (0.0, 0.0))                              # the margin is longer than both
+
+    def test_fit_does_nothing_for_a_gain_under_0_05_s(self):
+        self.assertEqual(T.fit([(0.0, 0.34), (9.66, 10.0)], 10.0, 0.3), (0.0, 0.0))     # 0.04 s each: left alone
+        a, b = T.fit([(0.0, 0.36), (9.0, 10.0)], 10.0, 0.3)
+        self.assertAlmostEqual(a, 0.06)
+        self.assertAlmostEqual(b, 0.7)
+
+    def test_fit_then_trim_leaves_the_margin_in_the_edited_take(self):
+        pic = [(10.0, "hold", 0, None, 1)]
+        sil = [(0.0, 1.5), (8.0, 10.0)]
+        tin, tout = T.fit(sil, 10.0, 0.3)
+        cuts, sq = T.plan(pic, 10.0, {"trim_in": tin, "trim_out": tout})
+        self.assertEqual((cuts, sq), ([(0.0, 1.2), (8.3, 10.0)], []))
+        self.assertAlmostEqual(T.length(T.squeeze([(10.0, "s", 0.0)], cuts, sq, True)), 10 - 1.2 - 1.7)
+
+
+class Pauses(unittest.TestCase):
+    def test_interior_pauses_are_not_ends(self):
+        sil = [(0.0, 3.0), (5.0, 8.0), (15.0, 20.0)]
+        self.assertEqual(T.interior(sil, 20.0), [(5.0, 8.0)])
+        picture = [(20.0, "hold", 0, None, 1)]
+        inner = T.shrink_silences(T.interior(sil, 20.0), picture, 20.0)
+        self.assertEqual(inner, [(5.25, 7.75)])
+        tin, tout = T.fit(sil, 20.0, 0.3)
+        cuts, _ = T.plan(picture, 20.0, {"trim_in": tin, "trim_out": tout})
+        for a, b in cuts:                                          # the ends and the pauses inside never overlap
+            self.assertTrue(all(b <= x or y <= a for x, y in inner))
+
+
+class RealSession(unittest.TestCase):
+    """The instructor's real recording of Lecture 1 (read only), when it is there."""
+    R = Path(__file__).resolve().parents[1] / "out" / "lecture01_uz_navoiy" / "presenter"
+    S = "2026-10-19T14-11-13"
+
+    @unittest.skipUnless((R / "recordings" / f"{S}.json").exists() and (R / "recordings" / f"{S}.silence.json").exists()
+                         and (R / "lines.json").exists(), "no such recording")
+    def test_fit_both_on_every_take_keeps_the_tracks_in_step_and_stops_at_the_margin(self):
+        ev = json.loads((self.R / "recordings" / f"{self.S}.json").read_text())
+        sil = json.loads((self.R / "recordings" / f"{self.S}.silence.json").read_text())
+        starts = [l[0] for l in json.loads((self.R / "lines.json").read_text())]
+        margin, saved, trimmed = 0.3, 0.0, 0
+        for t in T.takes(self.S, ev, starts):
+            raw = T.take_tracks(t, ev)
+            total = T.length(raw["voice"])
+            local = [(max(a, t["t_in"]) - t["t_in"], min(b, t["t_out"]) - t["t_in"]) for a, b in sil
+                     if b > t["t_in"] and a < t["t_out"]]
+            tin, tout = T.fit(local, total, margin)
+            lead, tail = T.lead_tail(local, total)
+            cuts = T.shrink_silences(T.interior(local, total), raw["picture"], total)
+            e = T.edited(t, ev, {"trim_in": tin, "trim_out": tout, "auto_cuts": cuts})
+            self.assertAlmostEqual(T.length(e["voice"]), T.length(e["picture"]), places=9)
+            # the trims stay inside the end silences, and leave `margin` seconds of them (or all of it, when shorter)
+            self.assertLessEqual(tin, max(lead - margin, 0.0) + 1e-9, t["id"])
+            self.assertLessEqual(tout, max(tail - margin, 0.0) + 1e-9, t["id"])
+            self.assertTrue(tin == 0 or any(a <= 0.05 and tin <= b - margin + 1e-9 for a, b in local), t["id"])
+            self.assertTrue(tout == 0 or any(b >= total - 0.05 and total - tout >= a + margin - 1e-9 for a, b in local), t["id"])
+            saved += total - T.length(e["voice"])
+            trimmed += (tin > 0) + (tout > 0)
+        self.assertGreater(trimmed, 10)
+        self.assertGreater(saved, 20)
 
 
 class EditList(unittest.TestCase):

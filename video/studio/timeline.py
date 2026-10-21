@@ -7,13 +7,14 @@ A recording session is one continuous microphone recording with a list of events
   retake               the instructor pressed X: the take of the line on screen is a mistake
 A take is one line's stretch of a session: from its "line" event to the next "line", "retake" or "stop".
 
-A take becomes two tracks of the same length, cut and nudged together:
+A take becomes two tracks of the same length, cut, squeezed and nudged together:
   voice    [(seconds, session or None, position in that session)]       None: silence
   picture  [(seconds, "play", from, to, speed) | (seconds, "hold", position, None, 1)]
 The lecture's edit list is every line's chosen take, in order; a line with no take shows its own picture with no
 voice. The browser preview plays these tracks; media.export renders exactly the same tracks.
 """
 import difflib
+import math
 import re
 import unicodedata
 
@@ -122,21 +123,60 @@ def _split(piece, at, voice):
 def cut(track, spans, voice):
     """The track with the local-time spans [(from, to)] removed (both tracks get the same spans, so they stay
     in step)."""
+    return squeeze(track, spans, [], voice)
+
+
+def valid_squeezes(squeezes):
+    """The squeezes squeeze() will honour, as [(from, to, new_len)] in order: only ever shorter (never a slow-down),
+    and of two that overlap the earlier wins."""
+    out, prev = [], 0.0
+    for x, y, n in sorted((min(a, b), max(a, b), n) for a, b, n in squeezes):
+        if 1e-9 < n < y - x - 1e-9 and x >= prev - 1e-9:
+            out.append((x, y, n))
+            prev = y
+    return out
+
+
+def squeeze(track, cuts, squeezes, voice):
+    """One pass over the raw track: the `cuts` [(from, to)] are removed, and each squeeze [from, to, new_len] is
+    made new_len long: the picture there runs f = (to - from) / new_len times faster (a hold is just shorter), and
+    the voice there is silent (None source; sound is never time-stretched, and a span fast-forwarded over a running
+    animation may well hold speech, such as a false start). Where a cut and a squeeze overlap, the cut wins; of
+    squeezes that overlap each other the earlier wins; a squeeze that would make its span longer is ignored."""
+    cuts = merge(cuts)
+    sq = [(x, y, (y - x) / n) for x, y, n in valid_squeezes(squeezes)]       # (from, to, f), in order, not overlapping
+    total = length(track)
+    pts = sorted({0.0, total, *[min(max(x, 0.0), total) for sp in cuts for x in sp],
+                  *[min(max(x, 0.0), total) for a, b, _ in sq for x in (a, b)]})
+    plan = []                                             # (from, to, f or None) of what stays, in order
+    for u, v in zip(pts, pts[1:]):
+        m = (u + v) / 2
+        if v - u <= 1e-9 or any(a < m < b for a, b in cuts):
+            continue
+        j = next((j for j, (a, b, _) in enumerate(sq) if a < m < b), None)
+        plan.append((u, v, j))
     out, t = [], 0.0
-    spans = merge(spans)
     for p in track:
         a, b = t, t + p[0]
         t = b
-        keep = [(a, b)]
-        for x, y in spans:
-            keep = [z for (u, v) in keep for z in ((u, min(v, x)), (max(u, y), v)) if z[1] - z[0] > 1e-9]
-        for u, v in keep:
+        for u, v, j in plan:
+            x, y = max(a, u), min(b, v)
+            if y - x <= 1e-9:
+                continue
             q = p
-            if u > a:
-                q = _split(q, u - a, voice)[1]
-            if v < b:
-                q = _split(q, v - u, voice)[0]
-            if q[0] > 1e-9:                      # a sliver stays: dropping it from one track only would unsync them
+            if x > a:
+                q = _split(q, x - a, voice)[1]
+            if y < b:
+                q = _split(q, y - x, voice)[0]
+            if j is not None:
+                f = sq[j][2]
+                if voice:
+                    q = (q[0] / f, None, None)
+                elif q[1] == "play":
+                    q = (q[0] / f, "play", q[2], q[3], q[4] * f)
+                else:
+                    q = (q[0] / f, "hold", q[2], None, 1)
+            if q[0] > 1e-12:                     # a sliver stays: dropping it from one track only would unsync them
                 out.append(q)
     return out
 
@@ -170,16 +210,44 @@ def nudge(tracks, d):
 
 
 def edited(take, events, edit, speed=1 / 1.1):
-    """A take's tracks with its edit applied: trim in/out, cuts (local seconds), then the nudge."""
+    """A take's tracks with its edit applied: trim in/out, cuts and auto_cuts (the tightening tool's own), squeezes
+    (all local seconds on the raw take), then the nudge."""
     tr = take_tracks(take, events, speed)
-    total = length(tr["voice"])
-    spans = list(edit.get("cuts", []))
-    if edit.get("trim_in"):
-        spans.append((0, edit["trim_in"]))
-    if edit.get("trim_out"):
-        spans.append((total - edit["trim_out"], total))
-    tr = {"voice": cut(tr["voice"], spans, True), "picture": cut(tr["picture"], spans, False)}
+    cuts, sq = plan(tr["picture"], length(tr["voice"]), edit)
+    tr = {"voice": squeeze(tr["voice"], cuts, sq, True), "picture": squeeze(tr["picture"], cuts, sq, False)}
     return nudge(tr, edit.get("nudge", 0))
+
+
+def plan(picture, total, edit):
+    """(cuts, squeezes) an edit comes to, in the raw take's seconds: its cuts and auto_cuts, its squeezes, and its two
+    trims, which are handled like tightening: cut where the picture is still, fast-forwarded where it plays."""
+    ends = []
+    if edit.get("trim_in"):
+        ends.append((0.0, min(edit["trim_in"], total)))
+    if edit.get("trim_out"):
+        ends.append((max(total - edit["trim_out"], 0.0), total))
+    cuts, sq = fast_forward(picture, ends)
+    cuts = merge(list(edit.get("cuts", [])) + list(edit.get("auto_cuts", [])) + cuts)
+    return cuts, valid_squeezes(list(edit.get("squeeze", [])) + sq)
+
+
+def fast_forward(picture, spans, max_speed=4.0, min_play=0.15):
+    """(cuts, squeezes) that remove the local-time `spans` without cutting an animation: where the picture holds
+    still the span is cut; where it plays, the stretch is squeezed to run up to `max_speed` times faster (never to
+    less than `min_play` s, and never longer than it was), so it still ends in its end state and never jumps."""
+    still = holds(picture)
+    cuts, sq = [], []
+    for lo, hi in spans:
+        t = lo
+        for x, y in still + [(hi, hi)]:
+            x, y = min(max(x, lo), hi), min(max(y, lo), hi)
+            p = x - t                                  # the playing stretch between two holds
+            if p > 1e-9 and max(p / max_speed, min_play) < p - 1e-9:
+                sq.append((t, x, max(p / max_speed, min_play)))
+            if y > x:
+                cuts.append((x, y))
+            t = max(t, y)
+    return merge(cuts), sq
 
 
 def holds(picture):
@@ -209,6 +277,27 @@ def shrink_silences(silences, picture, total, keep=0.5, keep_end=0.25, min_cut=0
             if hi - lo >= min_cut:
                 out.append((round(lo, 3), round(hi, 3)))
     return merge(out)
+
+
+def lead_tail(silences, total, touch=0.05):
+    """(lead, tail): seconds of silence before the first word and after the last (the silences touching the take's
+    start and end; 0 when none does). A silence covering the whole take is neither."""
+    first = [(a, b) for a, b in silences if a <= touch and b < total - touch]
+    last = [(a, b) for a, b in silences if b >= total - touch and a > touch]
+    return (first[0][1] if first else 0.0), (total - last[0][0] if last else 0.0)
+
+
+def fit(silences, total, margin, min_gain=0.05, touch=0.05):
+    """(trim_in, trim_out) that leave `margin` seconds of silence before the first word and after the last. An end
+    that would gain under `min_gain` seconds is left at 0."""
+    lead, tail = lead_tail(silences, total, touch)
+    tin, tout = (math.floor(max(0.0, x - margin) * 1000 + 1e-6) / 1000 for x in (lead, tail))     # whole ms, never into the margin
+    return (tin if tin >= min_gain else 0.0), (tout if tout >= min_gain else 0.0)
+
+
+def interior(silences, total, touch=0.05):
+    """The silences inside the take (not touching its start or end): the ones shrink_silences handles."""
+    return [(a, b) for a, b in silences if a > touch and b < total - touch]
 
 
 ORIGINAL = "__original__"                        # the lecture video's own narration, as a voice source

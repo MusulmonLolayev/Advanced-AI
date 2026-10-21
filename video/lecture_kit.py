@@ -5,6 +5,7 @@ its narration and numbers and binds them with `bind()`.
 The narration is read from narration/lectureNN.md, the draft the instructor approved, so the
 voice says exactly the approved words and nothing is retyped in Python.
 """
+import os
 import re
 from contextlib import contextmanager
 
@@ -68,8 +69,13 @@ def _parse_single(md, lang):
     return lines, heads
 
 
+def narration_dir():
+    """narration/, or $NARRATION_DIR: the editor renders a draft version of a scene from a changed copy of the file."""
+    return Path(os.environ.get("NARRATION_DIR", HERE / "narration"))
+
+
 def narration(n):
-    return parse((HERE / "narration" / f"lecture{n:02d}.md").read_text())
+    return parse((narration_dir() / f"lecture{n:02d}.md").read_text())
 
 
 def money(v, cents=False):

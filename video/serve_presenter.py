@@ -33,13 +33,13 @@ import traceback
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlparse
 
 from compose_recording import CLEAN
 from studio import api as A
 from studio import media as M
-from studio import rewrite as RW
 from studio import store as S
+from studio import versions as V
 from studio import voice_server
 
 HERE = Path(__file__).parent
@@ -210,14 +210,23 @@ def export(build, profile):
     enqueue(build, "export", "export", fn)
 
 
-def rewrite(build, line, text):
-    """Rewrite (text) or re-voice (None) one line: its scene is rendered again and the video joined again."""
-    key = f"line {line + 1}"
-
+def progress_to(build, kind, key):
     def progress(msg):
         with dbc() as c:
-            S.job(c, build, "rewrite", key, "running", detail=msg)
-    enqueue(build, "rewrite", key, lambda: RW.rewrite(ROOT, build, line, text, dbc, progress))
+            S.job(c, build, kind, key, "running", detail=msg)
+    return progress
+
+
+def make_version(build, scene, n):
+    """Build a draft version of a scene (voice the line, render the scene): the lecture is not touched."""
+    key = f"{scene}/v{n}"
+    enqueue(build, "version", key, lambda: V.build_version(ROOT, build, scene, n, dbc, progress_to(build, "version", key)))
+
+
+def merge_version(build, scene, n):
+    """Put a ready version into the lecture: narration, cache, scene, joined video, presenter page, recordings."""
+    key = f"{scene}/v{n}"
+    enqueue(build, "merge", key, lambda: V.merge(ROOT, build, scene, n, dbc, progress_to(build, "merge", key)))
 
 
 def voice_server_action(action):
@@ -237,6 +246,7 @@ def editor(build):
                 f'<option value="{k}">{k}</option>' for k in sorted(CLEAN, key=lambda k: k != "deepfilter"))))
 
 
+STATIC = HERE / "studio" / "static"                    # the editor's CSS and scripts, served at /studio-static/
 SHARED = ROOT / "shared"
 
 
@@ -401,7 +411,7 @@ if (BUSY) setTimeout(() => location.reload(), 10000);
 
 RANGE_CAP = 4 << 20                                    # an open-ended Range gets this much, not the rest of the file
 MEDIA = (".mp4", ".m4a")
-ZIPPED = (".json", ".html", ".js")                     # static files worth gzipping (media never is)
+ZIPPED = (".json", ".html", ".js", ".css")                     # static files worth gzipping (media never is)
 
 
 class Counted:
@@ -518,6 +528,33 @@ class Studio(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def static(self, rel):
+        """/studio-static/<path>: a file under studio/static/, revalidated on every load (no-cache + Last-Modified),
+        so an edit shows on refresh."""
+        p = (STATIC / unquote(rel)).resolve()
+        if not (p.is_relative_to(STATIC.resolve()) and p.is_file()):
+            return self.send_error(404)
+        mtime = self.date_time_string(p.stat().st_mtime)
+        body = p.read_bytes()
+        zipped = self.gzips() and len(body) > 1024
+        if self.headers.get("If-Modified-Since") == mtime:
+            self.send_response(304)
+            self.send_header("Last-Modified", mtime)
+            self.send_header("Cache-Control", "no-cache")
+            return self.end_headers()
+        if zipped:
+            body = gzip.compress(body, 6)
+        self.send_response(200)
+        self.send_header("Content-Type", self.guess_type(str(p)))
+        if zipped:
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Vary", "Accept-Encoding")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Last-Modified", mtime)
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+        self.wfile.write(body)
+
     def html(self, text):
         self.send_text(text.encode(), "text/html; charset=utf-8")
 
@@ -571,6 +608,19 @@ class Studio(SimpleHTTPRequestHandler):
                 traceback.print_exc()
                 return self.json({"error": f"{type(e).__name__}: {e}"[:500]}, 500)
             return self.json(out)
+        if path == "/api/levels":
+            if not b:
+                return self.send_error(404, "no such lecture")
+            try:
+                with dbc() as c:
+                    return self.json(A.levels(ROOT, b, q.get("src", ""), c))
+            except KeyError as e:
+                return self.json({"error": str(e.args[0])[:200]}, 404)
+            except Exception as e:
+                traceback.print_exc()
+                return self.json({"error": f"{type(e).__name__}: {e}"[:500]}, 500)
+        if path.startswith("/studio-static/"):
+            return self.static(path[len("/studio-static/"):])
         if path.endswith(".sqlite"):
             return self.send_error(404)
         super().do_GET()
@@ -639,7 +689,12 @@ class Studio(SimpleHTTPRequestHandler):
                 A.choose(ROOT, b, q["line"], q.get("take"), c)
             elif path == "/api/shrink":
                 ids = [q["take"]] if q.get("take") else A.chosen_ids(ROOT, b, c)
-                A.shrink(ROOT, b, ids, c)
+                out = A.shrink(ROOT, b, ids, c)
+                later.append(lambda: self.json({"saved": out["saved"]}))
+            elif path == "/api/fit" and q.get("take"):
+                A.fit(ROOT, b, q["take"], q.get("end", "both"), c)
+            elif path == "/api/unshrink" and q.get("take"):
+                A.unshrink(ROOT, b, q["take"], c)
             elif path == "/api/cut-extras" and q.get("take"):
                 A.cut_extras(ROOT, b, q["take"], c)
             elif path == "/api/words":
@@ -650,14 +705,18 @@ class Studio(SimpleHTTPRequestHandler):
                 later += [lambda name=name: process(b, name) for name in names]
             elif path == "/api/process" and n is not None:
                 later.append(lambda: process(b, n, q.get("clean") if q.get("clean") in CLEAN else None))
-            elif path in ("/api/rewrite", "/api/revoice") and q.get("line", "").isdigit():
-                line = int(q["line"])
-                if line >= len(M.lines(ROOT / b)):
-                    raise ValueError("no such line")
-                text = json.loads(self.body() or b"{}").get("text") if path == "/api/rewrite" else None
-                if path == "/api/rewrite" and not (text or "").strip():
-                    raise ValueError("the new text is empty")
-                later.append(lambda: rewrite(b, line, text))
+            elif path == "/api/version" and q.get("line", "").isdigit():
+                body = json.loads(self.body() or b"{}")
+                scene, num = V.create(ROOT, b, int(q["line"]), body.get("text"), q.get("base") or body.get("base"), c)
+                later.append(lambda: make_version(b, scene, num))
+                later.append(lambda: self.json({"scene": scene, "n": num}))
+            elif path in ("/api/version/merge", "/api/version/discard") and q.get("scene") and q.get("n", "").isdigit():
+                num = int(q["n"])
+                if path.endswith("merge"):
+                    V.check_merge(c, b, q["scene"], num)
+                    later.append(lambda: merge_version(b, q["scene"], num))
+                else:
+                    V.discard(ROOT, b, q["scene"], num, c)
             elif path == "/api/settings" and q.get("key"):
                 A.set_setting(ROOT, b, q["key"], q.get("value", ""), c)
             elif path == "/api/voice-server" and q.get("action") in ("start", "stop"):
@@ -668,7 +727,7 @@ class Studio(SimpleHTTPRequestHandler):
                 return False
         for f in later:
             f()
-        if not (path == "/api/edit"):
+        if path not in ("/api/edit", "/api/shrink", "/api/version"):
             self.ok()
         return True
 

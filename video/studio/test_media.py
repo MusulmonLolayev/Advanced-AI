@@ -47,6 +47,74 @@ class Pauses(unittest.TestCase):
         self.assertAlmostEqual(b2, 4.3, delta=0.03)
 
 
+class Levels(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.b = Path(self.tmp.name) / "m7_lecture99_en"
+        M.recdir(self.b).mkdir(parents=True)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_one_value_per_20_ms_in_whole_db(self):
+        x = np.concatenate([tone(1.0, f=250, amp=0.5), np.zeros(M.SR // 2, np.float32), tone(0.51, f=250, amp=0.05)])  # whole cycles per window
+        x.tofile(M.recdir(self.b) / "s.off.f32")
+        out = M.levels(self.b, "s", "off")
+        self.assertEqual(out["step"], 0.02)
+        db = out["db"]
+        self.assertEqual(len(db), 100)                                # 50 + 25 + 25 whole windows, a part-window dropped
+        self.assertTrue(all(v == -9 for v in db[:50]))                # 0.5 / sqrt 2 = 0.3536 -> -9.03 dB
+        self.assertTrue(all(v == M.LEVEL_FLOOR for v in db[50:75]))  # digital silence: the floor
+        self.assertTrue(all(v == -29 for v in db[75:]))            # 0.05 / sqrt 2 -> -29.03 dB
+        self.assertTrue(all(isinstance(v, int) for v in db))
+
+    def test_the_cache_is_reused_until_the_voice_is_newer(self):
+        f = M.recdir(self.b) / "s.off.f32"
+        tone(0.2, f=250, amp=0.5).tofile(f)
+        first = M.levels(self.b, "s", "off")
+        cache = M.recdir(self.b) / "s.off.levels.json"
+        self.assertTrue(cache.exists())
+        c = json.loads(cache.read_text())
+        c["db"][0] = -1                                                 # a marker only the cache holds
+        cache.write_text(json.dumps(c))
+        self.assertEqual(M.levels(self.b, "s", "off")["db"][0], -1)    # served from the cache
+        tone(0.2, f=250, amp=0.05).tofile(f)
+        import os
+        st = f.stat()
+        os.utime(f, (st.st_atime, st.st_mtime + 5))                    # the voice was made again
+        again = M.levels(self.b, "s", "off")
+        self.assertEqual(again["db"][0], -29)
+        self.assertNotEqual(again, first)
+
+    def test_a_session_falls_back_to_the_other_cleaned_copy_and_the_original_has_its_own_cache(self):
+        tone(0.2, f=250, amp=0.5).tofile(M.recdir(self.b) / "s.deepfilter.f32")
+        self.assertEqual(M.levels(self.b, "s", "off")["db"][0], -9)     # no "off" copy: the one there is
+        with self.assertRaises(KeyError):
+            M.levels(self.b, "nope", "off")
+        (self.b / "presenter").mkdir(exist_ok=True)
+        (self.b / f"{self.b.name}.mp4").write_bytes(b"x")
+        tone(0.2, f=250, amp=0.05).tofile(self.b / "presenter" / "original.f32")
+        (self.b / "presenter" / "original.m4a").write_bytes(b"x")
+        import os
+        os.utime(self.b / f"{self.b.name}.mp4", (0, 0))
+        self.assertEqual(M.levels(self.b, T.ORIGINAL, "")["db"][0], -29)
+        self.assertTrue((self.b / "presenter" / "original.levels.json").exists())
+
+    def test_a_35_minute_recording_takes_under_2_seconds(self):
+        import time
+        f = M.recdir(self.b) / "long.off.f32"
+        rng = np.random.default_rng(3)
+        with open(f, "wb") as out:
+            for _ in range(35):                                        # a minute at a time
+                (0.1 * rng.standard_normal(60 * M.SR, dtype=np.float32)).tofile(out)
+        t0 = time.time()
+        db = M.levels(self.b, "long", "off")["db"]
+        took = time.time() - t0
+        self.assertEqual(len(db), 35 * 60 * 50)
+        self.assertTrue(all(v == -20 for v in db[::1000]))             # sigma 0.1 -> -20 dB
+        self.assertLess(took, 2.0, f"{took:.2f} s")
+
+
 class VoiceTrack(unittest.TestCase):
     def test_pieces_are_sliced_sample_exact_and_silence_is_zero(self):
         with tempfile.TemporaryDirectory() as d:
@@ -85,6 +153,30 @@ class Loudness(unittest.TestCase):
             a, z = out[: 5 * M.SR], out[5 * M.SR:]
             rms = lambda x: float(np.sqrt(np.mean(x ** 2)))           # noqa: E731
             self.assertAlmostEqual(rms(a) / rms(z), 1.0, delta=0.05)   # one level, whichever source
+
+
+class Squeezed(unittest.TestCase):
+    """A squeezed span is a play piece at up to 4 x the presenter's speed; the export copes with it."""
+    def test_frames_and_pieces_of_a_fast_play(self):
+        picture = [(1.0, "play", 0.0, 3.6, 3.6), (0.2, "play", 3.6, 4.4, 4.0), (0.5, "hold", 4.4, None, 1)]
+        frames = T.frame_counts(picture, M.FPS)
+        self.assertEqual(frames, [60, 12, 30])
+        self.assertEqual(sum(frames), round(T.length(picture) * M.FPS))
+        calls = []
+        real, M.ff = M.ff, lambda *a: calls.append([str(x) for x in a])
+        try:
+            M.picture_piece("src.mp4", picture[1], frames[1], ["-c:v", "x"], "/tmp", 1)
+        finally:
+            M.ff = real
+        args = calls[0]
+        self.assertEqual(args[args.index("-vf") + 1], f"setpts=PTS/4.000000,fps={M.FPS}")     # 0.8 s of video in 0.2 s
+        self.assertEqual((args[args.index("-ss") + 1], args[args.index("-frames:v") + 1]), ("3.600", "12"))
+
+    def test_a_squeezed_take_exports_the_same_length_in_both_tracks(self):
+        tr = {"voice": [(10.0, "s", 0.0)], "picture": [(10.0, "play", 0.0, 9.09, 0.909)]}
+        v, p = T.squeeze(tr["voice"], [], [[2.0, 8.0, 1.5]], True), T.squeeze(tr["picture"], [], [[2.0, 8.0, 1.5]], False)
+        self.assertEqual(sum(T.frame_counts(T.merge_picture(p), M.FPS)), round(T.length(v) * M.FPS))
+        self.assertAlmostEqual(max(x[4] for x in p), 4 * 0.909)
 
 
 class Chapters(unittest.TestCase):

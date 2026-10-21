@@ -139,9 +139,13 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
   (missing) and replacements (shown, never cut) apart. It also splits «boʻladi» at the apostrophe; words_worker
   joins a piece that starts with one back onto the word before.
 - **Rewriting a line re-renders its whole scene**, so every later line of the video moves: recordings made against the
-  old line list would point at the wrong picture. `studio/rewrite.py` moves them (`timeline.remap_events`: each
-  position keeps its offset inside its line) and keeps the old events beside them; and if the render or join fails it
-  puts the old narration text (and video) back, so the narration never disagrees with the built video.
+  old line list would point at the wrong picture. Merging a version (`studio/versions.py`) moves them
+  (`timeline.remap_events`: each position keeps its offset inside its line) and keeps the old events beside them; a
+  failed merge puts back only what it changed (a `before_merge` backup left by an earlier merge is never restored),
+  then joins again, since presenter.py reads the line timings from the padded scenes in `joined/`.
+- **A picture shorter than its voice broke the whole editor** (2026-10-19): `segments()` dropped spans under 20 ms
+  (two presses 8 ms apart) from the picture but not from the voice. No span is dropped now, and `edit_list` pads a
+  mismatch instead of asserting.
 - **join_parts.sh prefixes `$PWD`** to its out-dir: call it with paths relative to video/.
 
 ## Rules carried over from the decks

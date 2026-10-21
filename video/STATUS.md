@@ -72,16 +72,35 @@ new lines per lecture: `out/review/l0N_add.txt`.
   edit list. A recording made against an earlier build of the video (another line list) is shown but not used.
   Unrecorded lines keep the video's own narration (the cloned or synthetic voice, as built; or silence, a switch in
   the header), every voice source brought to −19 LUFS, so a few recorded lines can replace just those lines.
-  **Rewrite a line** (each line's "narration" box; the instructor's edit there is their approval): the new text goes
-  into the narration file (Uzbek apostrophes normalised; the bilingual file's other language left as it was), the
-  cloned voice says it (several seeds per sentence, each judged like voice_check.py; the old clip stays if it scores
-  better), only that section is rendered again and the video rejoined (`<build>.before_rewrite.mp4` kept), the
-  presenter page prepared again and earlier recordings moved to the new timings. "Re-voice as is" does the same with
-  the text unchanged. Red / amber marks on lines and the timeline are voice_check.json's fails / listen list. The
-  voice server can be started and stopped from the editor (only the one started there, by its PID file). Tried on
-  lecture01's failing line 29 («…eks ikki…»): no seed fixed the letter names and the old clip was kept, as the rule
-  of 2026-10-14 predicts (say the term) -- such a line needs rewriting, not re-voicing.
-  Tests: `studio/run_tests.sh` (55; `fast` skips the server run and the GPU recognisers).
+  **Rewrite a line as a version** (each line's "narration" box, `studio/versions.py`): "save as new version" voices
+  the text (cloned voice: several seeds per sentence, each judged like voice_check.py) and renders that line's
+  section into `out/<build>/versions/<Scene>/v<N>/` (render.sh `OUT_DIR`, the kits' `NARRATION_DIR` pointing at a
+  draft copy of the narration, the section's voice cache copied in): the narration file and the lecture stay as
+  they are. Versions of one section build on each other (rewrite line 120, then 121: the new version has both); each
+  can be watched from its line, rewritten again, discarded, or **merged** (the instructor's merge is their approval):
+  the texts go into the narration file, the clips into the lecture's voice cache, the section replaces the old one
+  (`<Scene>.before_merge.mp4` kept), the lecture is rejoined (`<build>.before_merge.mp4` kept), the presenter page
+  prepared again and earlier recordings moved to the new timings; the section's other versions turn stale. A failed
+  merge undoes only what it did, joins the lecture again and rebuilds the presenter page. "Re-voice as is" is a
+  version with the same text. Red / amber marks on lines and the timeline are voice_check.json's fails / listen
+  list. The voice server can be started and stopped from the editor (only the one started there, by its PID file).
+  Lecture01's failing line 29 («…eks ikki…») did not improve with any seed (the rule of 2026-10-14: say the term),
+  so such a line needs rewriting, not re-voicing.
+  **Line ends** (2026-10-21): each open line shows a level strip of its take (voice level in dB over the take, silences of
+  0.5 s or more shaded with their length, the picture still/playing as a band, the words, removed spans hatched: red
+  cut, blue fast-forwarded) with two draggable handles that set `trim_in` / `trim_out` (snapped to 0.05 s, saved on
+  release) and say how much silence they keep ("0.4 s before the first word"). A trim is handled like tightening: cut
+  where the picture is still, fast-forwarded (up to 4x, at least 0.15 s, the voice silent there) where an animation
+  runs, so it is never cut. "fit start / end / both" set the trims to the lecture's margin ("keep 0.3 s at line ends"
+  in the header, `/api/settings?key=margin`); "reset ends" clears them. **Tighten all** (optional) shortens the pauses
+  inside each chosen take and fits the ends by the margin; a trim set by hand stays, and `edit["auto"]` names the
+  trims the tool set, so "undo tightening" takes back those, the pause cuts and any squeeze, not the hand trims, cuts
+  or nudge. Under the timeline a lecture strip shows the voice level of the whole edit list (`/api/levels`, cached as
+  `*.levels.json`) with every silence of "long silence >=" seconds (header, default 1.0, kept in the browser) in amber,
+  across line boundaries; click one, or use the transport's "next long silence" / back arrow, to jump there and open
+  its line. On lecture01_uz_navoiy: 61 silences of 1 s or more, 155 s in all (no recording edited).
+  The page is plain files, no build step: `studio/editor.html` + `studio/static/` (served at /studio-static/).
+  Tests: `studio/run_tests.sh` (125; `fast` skips the server run and the GPU recognisers).
 
 ## Slide discrepancies found by the drafts (slides not edited)
 
