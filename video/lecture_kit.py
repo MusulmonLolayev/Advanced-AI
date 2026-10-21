@@ -7,9 +7,13 @@ voice says exactly the approved words and nothing is retyped in Python.
 """
 import os
 import re
+import sys
 from contextlib import contextmanager
 
 from common import *
+import builds
+import drafts
+import yaml
 
 HERE = Path(__file__).parent
 RAW = HERE / "statistics" / "raw"
@@ -77,6 +81,37 @@ def narration(n):
     return parse((narration_dir() / f"lecture{n:02d}.md").read_text())
 
 
+def primary_language(stem):
+    """The language a lecture was written in (the cue reference): Uzbek for Module 0, English for the agent module."""
+    try:
+        return "uz" if builds.parse_stem(stem)[0] == 0 else "en"
+    except ValueError:                 # not a numbered lecture (the agent course): English
+        return "en"
+
+
+def add_language(lines, heads, stem, lang):
+    """Put the lecture's narration in `lang` (narration/<stem>_<lang>.md, one language, the primary language's line ids)
+    into lines / heads, in place. A line the file lacks or has empty is left out: saying it fails with a clear message
+    (check_lang.py lists them first). A line the lecture has no id for is an error. Returns whether the file was there."""
+    path = narration_dir() / f"{stem}_{lang}.md"
+    if not path.exists():
+        return False
+    new, new_heads = _parse_single(path.read_text(), lang)
+    unknown = sorted(set(new) - set(lines))
+    assert not unknown, f"{path.name}: lines {unknown[:5]} are not in the lecture"
+    for k, v in new.items():
+        lines[k][lang] = v[lang]
+    for n, v in new_heads.items():
+        heads.setdefault(n, {}).update(v)
+    return True
+
+
+def cue_overrides(stem, lang):
+    """{line key: {reference phrase: phrase in lang}} from narration/<stem>_<lang>.cues.yaml, or {}."""
+    path = narration_dir() / f"{stem}_{lang}.cues.yaml"
+    return {str(k): v for k, v in (yaml.safe_load(path.read_text()) or {}).items()} if path.exists() else {}
+
+
 def money(v, cents=False):
     return f"${v:,.2f}" if cents else f"${v:,.0f}"
 
@@ -86,21 +121,40 @@ class LectureScene(CourseScene):
     with NARRATION, HEADS, PARTS ({part: 'name · title'}) and PART_AT ({first section: part})."""
     NARRATION, HEADS, PARTS, PART_AT = {}, {}, {}, {}
     BRAND = True                       # the corner mark; a video presented elsewhere sets it False
+    PRIMARY, OVERRIDES = "uz", {}      # the language the lecture was written in; the build language's cue overrides
+    STEM, DRAFT_TAG = "", True         # the lecture; whether an unapproved build in a new language carries the corner tag
     CARD_HOLD, CLEAR_TIME = 0.35, 0.5  # section card's still time; the fade between scenes (seconds)
 
     def setup(self):
         super().setup()
         self.brand = brand_mark() if self.BRAND else VGroup()
+        if self.DRAFT_TAG and LANG not in ("uz", "en") and drafts.tagged(self.STEM, LANG):
+            # a build in a new language is a draft until every line and label is approved (drafts.py); uz and en
+            # keep what they always did (the Module 7 scenes tag themselves, with their own label)
+            self.brand.add(txt(languages.draft_word(LANG), size=16, color=RLRED).to_corner(DL, buff=SAFE))
         self.add(self.brand)
 
     def line(self, key):
+        if LANG not in self.NARRATION[key]:
+            raise NoForm(f"no {LANG} narration for line {key} (empty or missing in narration/*_{LANG}.md); "
+                         f"check_lang.py lists the lines")
         return self.NARRATION[key][LANG]
 
     @contextmanager
     def say(self, key):
         t = self.line(key)
+        self._key = key                # the cue mapping reads this line's text in the other languages
         with self.voiceover(t) as tr:
             yield tr, t
+
+    def cue_ref(self, text):
+        """The CueRef of the line being voiced: its key (from say, else the line with this text) and its texts."""
+        key = getattr(self, "_key", None)
+        if key is None or self.NARRATION.get(key, {}).get(LANG) != text:
+            key = next((k for k, v in self.NARRATION.items() if v.get(LANG) == text), None)
+        if key is None:
+            return None
+        return CueRef(key, self.NARRATION[key], self.PRIMARY, self.OVERRIDES.get(key, {}))
 
     def wait_for_voiceover(self):
         # a shorter breath than CourseScene's 0.3 s: the clips carry their own tail silence
@@ -146,16 +200,23 @@ class LectureScene(CourseScene):
         return txt(text, size=size, weight=BOLD, color=color).to_edge(UP, buff=SAFE + 0.3)
 
 
-def bind(scene_cls, narration_and_heads, parts, part_at):
-    """A lecture's LectureScene, and its line(key) for module-level use."""
+def bind(scene_cls, narration_and_heads, parts, part_at, merge=True):
+    """A lecture's LectureScene, and its line(key) for module-level use. The build language's narration file is
+    merged into the lines first (add_language), unless the kit does that itself (merge=False)."""
     lines, heads = narration_and_heads
+    stem = sys._getframe(1).f_globals["__name__"].removesuffix("_kit")      # the kit that calls: lecture01_kit
+    if merge:
+        add_language(lines, heads, stem, LANG)
 
     class Bound(scene_cls):
         NARRATION, HEADS, PARTS, PART_AT = lines, heads, parts, part_at
+        PRIMARY, OVERRIDES, STEM = primary_language(stem), cue_overrides(stem, LANG), stem
 
     Bound.__name__ = Bound.__qualname__ = "LectureScene"
 
     def line(key):
+        if LANG not in lines[key]:
+            raise NoForm(f"no {LANG} narration for line {key} (empty or missing in narration/{stem}_{LANG}.md)")
         return lines[key][LANG]
 
     return Bound, line

@@ -137,10 +137,40 @@ new lines per lecture: `out/review/l0N_add.txt`.
   above); idempotent, never overwrites a row. Run on `out/studio.sqlite` 2026-10-21: 1,752 rows (lines / labels: L1 212 / 295,
   L2 132 / 183, L3 144 / 162, L4 132 / 170, L5 128 / 194). English (Module 0's gloss, Module 7's draft 2) and Module 7's Uzbek (draft 1) are not approved. Lectures 6-7 are
   "approved as written" above but not built, so not seeded.
+  **Languages, phase 2: building a video in any language** (2026-10-21; scope per the instructor: the studio's language
+  choice works for any language, no module is translated yet, so no narration or label drafts were written).
+  `check_lang.py <lecture> <lang>` (e.g. `m7_lecture01 ru`) is the preflight: font installed (registry `font`, `fc-list`;
+  zh = AR PL UMing CN, ar = Noto Naskh Arabic, ko = Noto Serif KR, the Latin / Cyrillic languages use the default font),
+  narration lines empty or missing, label keys without the language's form (`labels.keys_for` + the lecture's draft labels
+  + `$LABEL_DRAFTS`), `{language: ...}` dicts that are words on screen rather than cues (none exist in Lectures 1-5 / M7 L1
+  today: all ~580 are cue phrases, asserted in `test_build_language`), cues that cannot be placed, cue overrides that do not
+  match. The lecture page's "can be built" line is its `summary`. **Narration:** `lecture_kit.bind()` merges
+  `narration/<stem>_<lang>.md` into the kit's lines by id (`add_language`; a line the file lacks says so when voiced:
+  `NoForm`); M7 treats every language but Uzbek as the English-law path (`UK = LANG != "uz"`). **Cues** (`cues.py`, light,
+  no manim): English and Uzbek read their own form exactly as before (asserted on every real cue pair of Lectures 1-5 and
+  M7 L1); any other language is placed from the line's text in the reference language (the lecture's primary, else
+  English, else the first the cue has): same sentence and share of it when both lines have as many sentences, else the same
+  share of the whole line; a bare index the line has works as written. `narration/<stem>_<lang>.cues.yaml`
+  (`{line: {reference phrase: phrase in lang}}`) overrides; a phrase not in the line fails the render and the preflight.
+  `common.by_lang(d, what)` and `forms()` raise `NoForm` naming the language: never another language's words.
+  **Voice:** the truncation guard is `languages.min_seconds` (words / 5 by default, characters / 6.5 for zh: edge-tts
+  reads Chinese at 4.65 characters a second); edge-tts answering nothing (`NoAudioReceived`, seen for ru) is retried.
+  **Watermark:** `drafts.py`: clean when every line and label of the language is approved; else a draft (M7 scenes tag
+  themselves with the label `m7_draft`; any other lecture in a language but uz / en gets the registry's `draft` word in the
+  corner); a hand render of uz still tags, but the studio's job refuses uz with unapproved items. **Studio:** a language row
+  with no video shows "Build video" (or "Build draft video") when `studio/buildlang.plan` says so; it queues one job
+  (`kind=build`, shown on the row with the step): `render.sh <lecture> h` with `LANG_CODE` (+ `VOICE_ENGINE=navoiy` for uz,
+  starting the voice server like a rewritten line does), `join_parts.sh`, `presenter.py`, then the voice check:
+  `voice_check.py` for Uzbek, `voice_check_lang.py <lang> <build>` otherwise (whisper-large-v3-turbo, CER, fails over 0.15,
+  same `voice_check.json` rows, so the editor's red / amber marks work). A build with a video is never rebuilt over.
+  Smoke build (scratch text, deleted): M7 L1 `S00Opening` in Russian at `-ql` rendered with Cyrillic on screen, the ru edge
+  voice (mean -23 dB), the draft tag, the cue on «Мы строим небольшого агента» and CER 0.000 on both clips. Arabic is shaped
+  and ordered right to left by Pango; `tagged()` (number and words split by index) and `aligned_edge=LEFT` layouts are not
+  mirrored, so an Arabic lecture needs its scenes looked at.
   The page is plain files, no build step: `studio/editor.html` + `studio/static/` (served at /studio-static/;
   `editor/player.js` is a `Player` class that drives any video element and audio map, `editor/levels.js` takes its
   take lookup, edit and play from `LV.host`; the presenter's panel is `presenter/takes.js` + `takes.css`).
-  Tests: `studio/run_tests.sh` (175; `fast` skips the server run, the browser run and the GPU recognisers). The browser
+  Tests: `studio/run_tests.sh` (220; `fast` skips the server run, the browser run and the GPU recognisers). The browser
   run (`test_presenter_browser.py` → `presenter_browser_check.py`) needs Playwright in the system `python3` (the venv has
   none) and drives headless Chromium with a fake microphone through keys, one-take recording, watching and choosing.
 

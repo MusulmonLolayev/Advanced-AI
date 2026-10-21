@@ -11,7 +11,8 @@ Narrated Manim videos built from the same material as the slide decks.
   (one language, same line ids as the primary language) or, for uz and en, the bilingual `<stem>.md`. New languages are
   added in the studio (**+ add language** writes an empty skeleton), drafted by Claude, approved line by line at
   `/narration?lecture=<stem>&lang=<code>`; `studio/linestatus.py` keeps who approved what and flags the same line in
-  the other languages "needs update" when one changes (`line_status` table, by hash). Studio-side details in `STATUS.md`.
+  the other languages "needs update" when one changes (`line_status` table, by hash). Studio-side details in `STATUS.md`. Phase 2: `check_lang.py` (preflight), `cues.py` (cue timing in any language),
+  `drafts.py` (watermark), `studio/buildlang.py` (the "Build video" job), `voice_check_lang.py` (whisper CER check).
 - **One video per lecture**, built like the slides: a lecture opening (one greeting), then Part 0, Part 1 … each with a
   part card, and inside each part one section per concept with a short section card. Sections say "keyingi/avvalgi
   boʻlim", never "video"; only the lecture's end points to the next lecture. Narration drafts live in
@@ -154,6 +155,16 @@ Figures are generated separately by the `adv_ai` conda env — the two never mix
 - **A picture shorter than its voice broke the whole editor** (2026-10-19): `segments()` dropped spans under 20 ms
   (two presses 8 ms apart) from the picture but not from the voice. No span is dropped now, and `edit_list` pads a
   mismatch instead of asserting.
+- **A cue has no word for a new language.** `cues.py` places it from the line's reference-language text (same sentence and
+  share, else the same share of the line); en and uz still read their own form, asserted on every real (line, cue) pair
+  (`studio/test_cues.py`). A cue that maps badly gets `narration/<stem>_<lang>.cues.yaml`. Run `check_lang.py <lecture> <lang>`
+  before a build: it lists labels without the language's form, empty lines, words-on-screen dicts and cues a render would stop on.
+- **`label()` / `by_lang()` never fall back to another language** (`NoForm` names the missing one). A `LABEL_DRAFTS` file may add
+  a language to an existing key; a form both files hold must match.
+- **edge-tts sometimes answers nothing** (`NoAudioReceived`, ru, 2026-10-21: the same text worked a minute later), so
+  `EdgeTTSService` retries it; its truncation guard counts words (5 a second) or, for zh, characters (`languages.yaml` `guard`).
+- **A draft build is tagged until every line and label of its language is approved** (`drafts.py`); Uzbek is refused by the
+  studio's build job instead (the instructor approves every Uzbek line before it is built).
 - **join_parts.sh prefixes `$PWD`** to its out-dir: call it with paths relative to video/.
 
 ## Rules carried over from the decks

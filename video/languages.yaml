@@ -9,34 +9,44 @@
 #   rate / trim     edge-tts speaking rate, and the seconds of silence kept before / after a clip (Korean only so far:
 #                   InJoon reads ~40 % slower than Andrew and pads each clip by ~1.2 s); the other languages' voices
 #                   are untried, so they have none yet
+#   whisper         the language's name for whisper-large-v3-turbo (voice_check_lang.py)
+#   draft           the corner tag of a draft build (any language but uz and en, whose tag is a label)
 #   section         the section card and the narration file's heading, {n} the section number
 #   opening         the chapter title of the lecture opening (export)
-#   font            a font that has the script's letters, for the video's text (a hint: not used until phase 2)
-#   rtl             written right to left
+#   font            the installed family common.TEXT_FONT sets for the video's text. Absent: the default font, which
+#                   has Latin and Cyrillic (checked in the ru smoke build). Present: the language is buildable only
+#                   while `fc-list` shows the family (languages.build_problem)
+#   guard           how fast the voice can read, for the truncation guard (a clip shorter than the text divided by
+#                   this is cut off): {words: 5} by default; a language written without spaces counts characters
+#                   ({chars: 6.5}, measured with edge-tts on 2026-10-21)
+#   rtl             written right to left (Pango shapes and orders Arabic by itself; checked in the studio notes)
 uz:
   name: Uzbek
   native: "Oʻzbekcha"
   script: latin
   voice: {edge: uz-UZ-SardorNeural, navoiy: musulmon-ft-llm1-flow12-phone}   # uz-UZ-MadinaNeural is the female option
+  whisper: uzbek
+  draft: "QORALAMA — matn hali tasdiqlanmagan"
   section: "{n}-boʻlim"
   opening: Kirish
-  font: Noto Sans
 en:
   name: English
   native: English
   script: latin
   voice: {edge: en-US-AndrewNeural}
+  whisper: english
+  draft: "DRAFT — narration not yet approved"
   section: "Section {n}"
   opening: Opening
-  font: Noto Sans
 ru:
   name: Russian
   native: "Русский"
   script: cyrillic
   voice: {edge: ru-RU-DmitryNeural}
+  whisper: russian
+  draft: "ЧЕРНОВИК — текст ещё не утверждён"
   section: "Раздел {n}"
   opening: "Введение"
-  font: Noto Sans
 ko:
   name: Korean
   native: "한국어"
@@ -44,46 +54,54 @@ ko:
   voice: {edge: ko-KR-InJoonNeural}      # male, like Andrew (the agent course's Korean track)
   rate: "+20%"
   trim: [0.15, 0.35]
+  whisper: korean
+  draft: "초안 — 내레이션이 아직 승인되지 않았습니다"
   section: "섹션 {n}"
   opening: "시작"
-  font: Noto Serif KR      # what common.TEXT_FONT uses for Korean today
+  font: Noto Serif KR      # installed in ~/.local/share/fonts/noto-kr
 tr:
   name: Turkish
   native: "Türkçe"
   script: latin
   voice: {edge: tr-TR-AhmetNeural}
+  whisper: turkish
+  draft: "TASLAK — anlatım henüz onaylanmadı"
   section: "Bölüm {n}"
   opening: "Giriş"
-  font: Noto Sans
 de:
   name: German
   native: Deutsch
   script: latin
   voice: {edge: de-DE-ConradNeural}
+  whisper: german
+  draft: "ENTWURF — Text noch nicht freigegeben"
   section: "Abschnitt {n}"
   opening: "Einleitung"
-  font: Noto Sans
 fr:
   name: French
   native: "Français"
   script: latin
   voice: {edge: fr-FR-HenriNeural}
+  whisper: french
+  draft: "BROUILLON — texte pas encore approuvé"
   section: "Section {n}"
   opening: "Introduction"
-  font: Noto Sans
 es:
   name: Spanish
   native: "Español"
   script: latin
   voice: {edge: es-ES-AlvaroNeural}
+  whisper: spanish
+  draft: "BORRADOR — texto aún sin aprobar"
   section: "Sección {n}"
   opening: "Introducción"
-  font: Noto Sans
 ar:
   name: Arabic
   native: "العربية"
   script: arabic
   voice: {edge: ar-SA-HamedNeural}
+  whisper: arabic
+  draft: "مسودة — النص لم يعتمد بعد"
   section: "القسم {n}"
   opening: "مقدمة"
   font: Noto Naskh Arabic
@@ -93,6 +111,9 @@ zh:
   native: "中文"
   script: han
   voice: {edge: zh-CN-YunjianNeural}
+  whisper: chinese
+  draft: "草稿 — 解说词尚未批准"
   section: "第{n}节"
   opening: "开场"
-  font: Noto Sans CJK SC
+  font: AR PL UMing CN     # the CJK font installed here (Noto Sans CJK is not)
+  guard: {chars: 6.5}

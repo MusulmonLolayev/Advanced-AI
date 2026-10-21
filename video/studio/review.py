@@ -1,12 +1,13 @@
 """What the narration review page (/narration), the lecture page's language rows and the editor's language box show:
 each language's lines and labels with their status, the checks run on their texts, whether a build is out of date with
-its narration, and whether a language could be built yet (phase 2 decides how; this only says what is missing).
+its narration, and whether a language can be built (studio/buildlang.py plans it: check_lang's preflight, approval).
 """
 import re
 from pathlib import Path
 
 import builds as B
 import languages as LG
+from studio import buildlang as BL
 from studio import linestatus as LS
 from studio import media as M
 from studio import narration_edit as N
@@ -152,24 +153,6 @@ def stale_lines(root, build, by_line, lang, sts):
     return [k for k, st in sts.items() if st["state"] in ("approved", "needs_update") and N.norm(by_line[lang][k]) not in spoken]
 
 
-def readiness(lines, labels, lang):
-    """(can be built, [what is missing]). Rendering in a new language is phase 2; this is what it would wait for."""
-    why = []
-    if lines["total"] == 0:
-        why.append(f"there is no {LG.name(lang)} narration yet")
-    else:
-        if lines["empty"]:
-            why.append(f"{lines['empty']} narration lines are not drafted")
-        rest = lines["total"] - lines["approved"] - lines["empty"]
-        if rest:
-            why.append(f"the narration is not approved ({lines['approved']} of {lines['total']} lines)")
-    if labels["missing"]:
-        why.append(f"{labels['missing']} labels have no {LG.name(lang)} form")
-    elif labels["total"] and labels["approved"] < labels["total"]:
-        why.append(f"{labels['total'] - labels['approved']} labels are not approved")
-    return not why, why
-
-
 def summary(c, root, stem, lang, narration_dir=None):
     """One language's row on the lecture page."""
     by_line = LS.line_texts(stem, narration_dir)
@@ -177,7 +160,7 @@ def summary(c, root, stem, lang, narration_dir=None):
     _, _, lab = LS.label_statuses(c, stem, lang)
     lines, labels = LS.counts(sts), LS.counts(lab)
     labels["missing"] = labels["empty"]
-    ready, why = readiness(lines, labels, lang)
+    p = BL.plan(c, root, stem, lang, narration_dir)
     rows = []
     for b in builds_of(root, stem).get(lang, []):
         mp4 = Path(root) / b / f"{b}.mp4"
@@ -187,7 +170,15 @@ def summary(c, root, stem, lang, narration_dir=None):
                      "prepared": (Path(root) / b / "presenter" / "lines.json").exists(),
                      "stale": stale, "sessions": n_sessions, "has_page": (Path(root) / b / "presenter" / "presenter.html").exists()})
     return {"lang": lang, **{k: _info(lang)[k] for k in ("name", "native")}, "has_narration": lang in by_line,
-            "lines": lines, "labels": labels, "builds": rows, "ready": ready, "missing": why}
+            "lines": lines, "labels": labels, "builds": rows, "ready": not p["reasons"], "missing": p["reasons"],
+            "plan": p, "job": job(c, p["build"])}
+
+
+def job(c, build):
+    """The newest "build video" job of a build ({state, detail, error, updated}), or None."""
+    r = c.execute("select state, detail, error, updated from jobs where build=? and kind='build' order by updated desc",
+                  (build,)).fetchone()
+    return dict(r) if r else None
 
 
 # ─── the editor ───

@@ -212,7 +212,7 @@ if KO_MD.exists():
 elif LANG == "ko":
     raise FileNotFoundError(KO_MD)
 
-_Bound, line = bind(_BaseScene, (NARRATION, HEADS), {}, {})
+_Bound, line = bind(_BaseScene, (NARRATION, HEADS), {}, {}, merge=False)
 
 
 class LectureScene(_Bound):
@@ -220,6 +220,7 @@ class LectureScene(_Bound):
     is timed at the same character share of the line as the English phrase sits in the English line, so the
     nine section files keep their English cues; an explicit {"ko": phrase} still wins."""
     BRAND = False                      # presented to other audiences: no tqqt.uz corner mark
+    DRAFT_TAG = False                  # not a numbered lecture: no approval record to tag by
     CARD_HOLD, CLEAR_TIME = 0.2, 0.35       # joins keep their real silence (join_parts.sh): keeps a section start < 2 s
 
     @contextmanager

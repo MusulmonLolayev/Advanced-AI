@@ -7,6 +7,7 @@ import asyncio
 import os
 import re
 import subprocess
+import time
 from pathlib import Path
 
 import edge_tts
@@ -18,6 +19,7 @@ from manim_voiceover.services.base import SpeechService, initialize_speech_servi
 import yaml
 
 import languages
+from cues import CueRef, cue_offset, local_offset, sentences, spans  # noqa: F401  (the cue timing, no manim in it)
 
 # ─── identity ─────────────────────────────────────────────────────────────
 # One voice per language, from languages.yaml. LANG picks it; render with LANG=uz ./render.sh ...
@@ -45,15 +47,37 @@ for _k, _v in (yaml.safe_load(_AC.read_text()) or {}).items() if _AC.exists() el
     LABELS[_k] = _v
 # While sections are written in parallel, each keeps its new labels in its own file in
 # $LABEL_DRAFTS; they are merged into labels.yaml before the lecture is built.
+# A draft may add a language's forms to a key that exists (a new language drafted on the side); a form both files
+# hold must be the same.
 for _f in sorted(Path(os.environ["LABEL_DRAFTS"]).glob("*.yaml")) if os.environ.get("LABEL_DRAFTS") else []:
     for _k, _v in (yaml.safe_load(_f.read_text()) or {}).items():
-        assert LABELS.get(_k, _v) == _v, f"{_f.name}: label {_k!r} is already in labels.yaml with other words"
-        LABELS[_k] = _v
+        assert all(LABELS.get(_k, _v)[_l] == _f for _l, _f in _v.items() if _l in LABELS.get(_k, _v)), \
+            f"{_f.name}: label {_k!r} is already in labels.yaml with other words"
+        LABELS[_k] = {**LABELS.get(_k, {}), **_v}
+
+
+class NoForm(KeyError):
+    """A word or choice the video needs has no form in the build's language. Raised instead of showing another language."""
+    def __str__(self):
+        return str(self.args[0])
+
+
+def by_lang(d, what="a per-language choice"):
+    """d[LANG] for a {language: value} dict that is not a cue (words on screen, a layout choice). A language it lacks
+    stops the render with a clear message: never the English words in a Russian video. check_lang.py lists these first."""
+    if LANG not in d:
+        raise NoForm(f"no {LANG} form for {what} (it has {', '.join(d) or 'none'}); add one before building in {LANG}")
+    return d[LANG]
 
 
 def forms(key, lang=None):
     """A label's interchangeable forms in one language, the default first."""
-    f = LABELS[key][lang or LANG]
+    lang = lang or LANG
+    if key not in LABELS:
+        raise NoForm(f"label {key!r} is not in narration/labels.yaml")
+    if lang not in LABELS[key]:
+        raise NoForm(f"label {key!r} has no {lang} form (has {', '.join(LABELS[key])}); draft it in the studio's Labels tab")
+    f = LABELS[key][lang]
     return [f] if isinstance(f, str) else f
 
 
@@ -61,8 +85,6 @@ def label(key, i=0):
     """On-screen label `key` from narration/labels.yaml in the current language: form i (a language
     with fewer forms gives its first). A label is words only; numbers come from the data and are
     set beside it (tagged()) or as math, never inside it."""
-    if key not in LABELS:
-        raise KeyError(f"label {key!r} is not in narration/labels.yaml")
     f = forms(key)
     return f[i] if i < len(f) else f[0]
 
@@ -103,12 +125,16 @@ class EdgeTTSService(SpeechService):
             return cached
         audio_path = str(path) if path else self.get_audio_basename(input_data) + ".mp3"
         target = str(Path(cache_dir) / audio_path)
-        # edge-tts occasionally returns a truncated clip; check against word count. Five words a second: Andrew
+        # edge-tts occasionally returns a truncated clip; check against the text's length. Five words a second: Andrew
         # reads a short plain line at ~4.5 (m7 L1, 16 words in 3.55 s failed a 4.5 limit), and a cut clip loses
-        # whole words, so it stays well under this.
-        min_seconds = len(input_text.split()) / 5.0
+        # whole words, so it stays well under this. A language written without spaces counts characters (languages.yaml).
+        min_seconds = languages.min_seconds(LANG, input_text)
         for _ in range(3):
-            asyncio.run(edge_tts.Communicate(input_text, self.voice, **({"rate": rate} if rate else {})).save(target))
+            try:
+                asyncio.run(edge_tts.Communicate(input_text, self.voice, **({"rate": rate} if rate else {})).save(target))
+            except edge_tts.exceptions.NoAudioReceived:       # the service answers nothing now and then (ru, 2026-10-21)
+                time.sleep(2)
+                continue
             if MP3(target).info.length >= min_seconds:
                 break
         else:
@@ -178,26 +204,13 @@ class NavoiyService(SpeechService):
         return {"input_text": text, "input_data": input_data, "original_audio": audio_path}
 
 
-def at(tracker, text, k):
+def at(tracker, text, k, ref=None):
     """Seconds into a clip where cue k starts, by character share.
     Neither voice reports word timings, so this keeps visuals on the words they
     illustrate in every language. k is a sentence index (0-based), a phrase that
-    occurs in the text, or a {lang: index-or-phrase} dict when the two languages
-    split their sentences differently."""
-    import re
-    if isinstance(k, dict):
-        k = k[LANG]
-    if isinstance(k, str):
-        i = text.find(k)
-        if i < 0:
-            raise ValueError(f"cue {k!r} not in narration: {text[:60]!r}")
-        before = i
-    else:
-        parts = [x for x in re.split(r"(?<=[.?!:])\s+", text.strip()) if x]
-        if k > len(parts) - 1:
-            raise ValueError(f"cue {k} past the last sentence ({len(parts)}) of {text[:60]!r}")
-        before = sum(len(x) + 1 for x in parts[:k])
-    return tracker.duration * before / max(len(text), 1)
+    occurs in the text, or a {lang: index-or-phrase} dict when the languages
+    split their sentences differently; `ref` (a CueRef) places a cue the language has no form of."""
+    return tracker.duration * cue_offset(text, k, ref, LANG) / max(len(text), 1)
 
 
 class CourseScene(VoiceoverScene):
@@ -215,9 +228,13 @@ class CourseScene(VoiceoverScene):
         if had:
             self.wait(PAUSE_AFTER_VOICEOVER)
 
+    def cue_ref(self, text):
+        """The CueRef of the line being voiced (a lecture's scene knows its narration); None here."""
+        return None
+
     def until(self, tracker, text, k):
         """Wait until sentence k of the current clip has started."""
-        target = at(tracker, text, k) - self.voice_t(tracker)
+        target = at(tracker, text, k, self.cue_ref(text)) - self.voice_t(tracker)
         if target > 0.05:
             self.wait(target)
 
@@ -230,9 +247,9 @@ class CourseScene(VoiceoverScene):
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────
-# A language whose script the default font lacks gets its own family (Hangul via Noto Serif KR, SIL OFL, installed
-# in ~/.local/share/fonts/noto-kr; its Latin letters match the default serif). Other languages keep the default.
-TEXT_FONT = {"ko": "Noto Serif KR"}.get(LANG)
+# A language whose script the default font lacks gets its own family, named in languages.yaml (Hangul: Noto Serif KR,
+# SIL OFL, installed in ~/.local/share/fonts/noto-kr; its Latin letters match the default serif). The others keep the default.
+TEXT_FONT = languages.font(LANG)
 _FONT = {"font": TEXT_FONT} if TEXT_FONT else {}
 
 

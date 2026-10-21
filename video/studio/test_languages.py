@@ -97,7 +97,7 @@ class Registry(unittest.TestCase):
     def test_every_language_is_complete(self):
         for code, e in LG.LANGS.items():
             self.assertRegex(code, r"^[a-z]{2,3}$")
-            self.assertTrue({"name", "native", "script", "voice", "section", "opening", "font"} <= set(e), code)
+            self.assertTrue({"name", "native", "script", "voice", "section", "opening", "whisper", "draft"} <= set(e), code)
             self.assertRegex(e["voice"]["edge"], r"^[a-z]{2}-[A-Z]{2}-\w+Neural$", code)
             self.assertIn(e["script"], ("latin", "cyrillic", "hangul", "arabic", "han"))
             self.assertIn("{n}", e["section"])
@@ -488,15 +488,22 @@ class Lectures(Scratch):
         self.assertEqual((ru["lines"]["empty"], ru["builds"], ru["ready"]), (5, [], False))
         self.assertIn("5 narration lines are not drafted", ru["missing"])
 
-    def test_readiness_counts_the_missing_label_forms(self):
-        lines = {"approved": 91, "needs_update": 0, "draft": 0, "empty": 0, "total": 91}
-        labels = {"approved": 68, "needs_update": 0, "draft": 0, "empty": 34, "total": 102, "missing": 34}
-        ok, why = R.readiness(lines, labels, "ru")
-        self.assertFalse(ok)
-        self.assertEqual(why, ["34 labels have no Russian form"])
-        self.assertEqual(R.readiness(dict(lines, approved=90, draft=1), labels, "ru")[1],
-                         ["the narration is not approved (90 of 91 lines)", "34 labels have no Russian form"])
-        self.assertEqual(R.readiness(lines, dict(labels, empty=0, missing=0, approved=102), "ru"), (True, []))
+    def test_can_be_built_follows_the_preflight_and_the_approval(self):
+        root = Path(self.tmp.name) / "out"
+        N.create_skeleton("lecture98", "ru", self.nar)
+        ru = R.summary(self.c, root, "lecture98", "ru", self.nar)
+        self.assertEqual(ru["missing"][0], "5 narration lines are not drafted")
+        self.assertTrue(re.fullmatch(r"\d+ labels? ha[sv]e? no Russian form", ru["missing"][1]), ru["missing"])   # the shared cards
+        self.assertFalse(ru["plan"]["can"])
+        # drafted but not approved: a draft build (any language but Uzbek)
+        (self.nar / "lecture98_ru.md").write_text(re.sub(r"\*\*\*\*", "**текст**", (self.nar / "lecture98_ru.md").read_text()))
+        ru = R.summary(self.c, root, "lecture98", "ru", self.nar)
+        self.assertEqual(len(ru["missing"]), 1)                                                # only the shared cards' labels
+        self.assertEqual((ru["plan"]["can"], ru["plan"]["draft"]), (False, True))
+        uz = R.summary(self.c, root, "lecture98", "uz", self.nar)                              # Uzbek: refused
+        self.assertEqual((uz["ready"], uz["plan"]["can"], uz["plan"]["approval"]), (False, False, "refused"))
+        self.assertEqual(uz["plan"]["unapproved"]["lines"], 5)
+        self.assertRegex(uz["missing"][-1], r"^Uzbek is built only when every line and label is approved \(\d+ left\)$")
 
     def test_a_build_whose_video_lacks_an_approved_line_is_out_of_date(self):
         root = Path(self.tmp.name) / "out"

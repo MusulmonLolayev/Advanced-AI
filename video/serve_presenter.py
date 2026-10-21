@@ -40,6 +40,7 @@ import languages as LG
 import presenter
 from compose_recording import CLEAN
 from studio import api as A
+from studio import buildlang as BL
 from studio import media as M
 from studio import review as R
 from studio import store as S
@@ -243,6 +244,17 @@ def voice_server_action(action):
     threading.Thread(target=go, daemon=True).start()
 
 
+def build_language(stem, lang):
+    """Queue a lecture video in a language (studio/buildlang.py). Refused with a message when it cannot be built."""
+    with dbc() as c:
+        p = BL.plan(c, ROOT, stem, lang)
+    if not p["can"]:
+        raise ValueError("cannot build: " + "; ".join(p["reasons"] or ["it is already built"]))
+    build = p["build"]
+    enqueue(build, "build", "video", lambda: BL.build_language(ROOT, stem, lang, dbc, progress_to(build, "build", "video")))
+    return build
+
+
 def lang_switch(build):
     """The editor header's links to the lecture's other languages: their editor when it is built, else their review page."""
     stem = B.stem(build)
@@ -393,9 +405,21 @@ def lang_row(stem, s, rows):
         busy |= bb
         out.append(f'<p class="stat">build {b["build"]}: built {when(b["when"])} · {state} · '
                    f'recorded sessions: {b["sessions"]}</p>{btns}')
+    p, job = s["plan"], s["job"]
     if not built:
         out.append('<p class="stat">' + ('can be built: <span class="good">yes</span>' if s["ready"] else
                    f'can be built: <span class="bad">no</span> <span class="dim">— {html.escape("; ".join(s["missing"]))}</span>') + '</p>')
+        if p["can"]:
+            word = "Build draft video" if p["draft"] else "Build video"
+            note = (f'<span class="dim">{p["unapproved"]["lines"]} lines and {p["unapproved"]["labels"]} labels are not approved: '
+                    f'the frames carry a draft tag</span>') if p["draft"] else ""
+            out.append(f'<p><button onclick="buildLang(\'{stem}\', \'{lang}\')">{word}</button> {note}</p>')
+    if job and job["state"] in ("queued", "running"):
+        busy = True
+    if job:
+        cls = {"failed": "bad", "done": "good"}.get(job["state"], "dim")
+        out.append(f'<p class="stat">build job: <span class="{cls}">{job["state"]}</span> '
+                   f'<span class="dim">{html.escape((job["error"] or job["detail"] or "")[:300])}</span></p>')
     out.append("</div>")
     return "".join(out), busy
 
@@ -511,6 +535,8 @@ if (clean){ try { clean.value = localStorage.getItem('studioClean') || 'deepfilt
 async function addLang(stem){ const l = document.getElementById('add-' + stem).value; if (!l) return;
   const r = await fetch('/api/narration/add?lecture=' + stem + '&lang=' + l, {method:'POST'});
   if (!r.ok) alert(await r.text()); location.reload(); }
+async function buildLang(stem, lang){ const r = await fetch('/api/narration/build?lecture=' + stem + '&lang=' + lang, {method:'POST'});
+  if (!r.ok) alert((await r.json()).error); location.reload(); }
 function build(q){ post('/api/compose?' + q + '&clean=' + (clean ? clean.value : 'deepfilter')); }
 function del(q){ if (confirm('Delete this recording and its video?')) post('/api/delete?' + q); }
 if (BUSY) setTimeout(() => location.reload(), 10000);
@@ -712,6 +738,8 @@ class Studio(SimpleHTTPRequestHandler):
         try:
             if action == "add":
                 return self.json({"file": R.add_language(a[0], a[1])})
+            if action == "build":
+                return self.json({"build": build_language(*a)})
             if action not in ("approve", "save", "fine"):
                 return self.send_error(404)
             text = json.loads(self.body() or b"{}").get("text") if action == "save" else None

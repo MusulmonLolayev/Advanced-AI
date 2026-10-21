@@ -11,6 +11,7 @@ import re
 import sys
 import textwrap
 
+import drafts
 from lecture_kit import *
 from lecture_kit import LectureScene as _BaseScene
 
@@ -24,11 +25,11 @@ AGENT = REPO / "agents" / "class_agent"
 sys.path.insert(0, str(AGENT))
 import agent as class_agent                     # noqa: E402  the real loop's act(): failure replies, search lists
 
-UK = LANG == "en"
+UK = LANG != "uz"                               # a language drafted from the English narration runs on its law too
 LAW = class_agent.LAWS["uk" if UK else "uz"]
 ARTICLES = LAW.ARTICLES
 FETCH = LAW.FETCH                               # the fetch action's name: fetch / fetch_article
-if UK:
+if UK:                                          # the other languages are merged in by bind(), by line id
     NARRATION, HEADS = parse((narration_dir() / "m7_lecture01_en.md").read_text(), single="en")
 else:
     NARRATION, HEADS = parse((narration_dir() / "m7_lecture01.md").read_text())
@@ -187,9 +188,11 @@ LIMIT_X, LIMIT_TOP, LIMIT_BOTTOM = 6.95, 3.85, -3.28
 
 
 class Scene7(LectureScene):
-    """The lecture scene with the draft tag on every frame (removed once the narration is approved), and a check
+    """The lecture scene with the draft tag on every frame (gone once every line and label of the language is approved:
+    drafts.py), and a check
     after every animation that nothing left on screen runs off the frame or into the bottom strip."""
-    DRAFT = True
+    DRAFT_TAG = False                                # the base scene's registry tag would double this one
+    DRAFT = drafts.tagged("m7_lecture01", LANG)      # until every line and label of this language is approved
 
     def setup(self):
         super().setup()

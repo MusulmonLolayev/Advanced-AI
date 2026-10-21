@@ -12,13 +12,19 @@
 #   test_languages   the language registry (voices as the renders use them), build names, narration per language and its empty
 #                     skeleton, line and label status (empty / draft / approved / needs update), the seed, the review page's
 #                     actions and script (run on fake elements), the lecture page's rows and the editor's language box
+#   test_cues         cue timing in every language: English and Uzbek give the old seconds on every real (line, cue) pair of the
+#                     scene files; other languages are placed by sentence and share, overrides win, a bad one fails; label and
+#                     per-language dict errors name the language
+#   test_build_language  building a language (phase 2): a single-language narration merged by line id, check_lang's preflight on a
+#                     fake lecture, the registry's fonts and truncation guard, the draft watermark (Uzbek strict), the build job's
+#                     steps with the tools stubbed, the language row's Build button
 #   test_studio_e2e   the real server on a free port: record over HTTP, retake, crash recovery, edits, export
 #   test_presenter_browser  the presenter page's takes panel in headless Chromium with a fake microphone (needs Playwright in the
 #                     system python3; skipped without it): keys, one-take recording with L, watching, choosing, marking; the editor still plays
 #   test_words        words_worker.py on a real English and a real Uzbek clip (needs the Navoiy env and GPU)
 set -uo pipefail
 cd "$(dirname "$0")/.."
-TESTS=(test_timeline test_store test_media test_pages test_narration_edit test_rewrite test_versions test_languages)
+TESTS=(test_timeline test_store test_media test_pages test_narration_edit test_rewrite test_versions test_languages test_cues test_build_language)
 [ "${1:-}" = fast ] || TESTS+=(test_studio_e2e test_presenter_browser test_words)
 fail=0
 for t in "${TESTS[@]}"; do
