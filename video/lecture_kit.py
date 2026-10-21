@@ -46,22 +46,21 @@ def parse(md, single=None):
     return lines, heads
 
 
-SECTION_WORD = {"en": "Section", "ko": "섹션"}       # the section card's "Section N" in each single-language track
-
-
 def _parse_single(md, lang):
+    """A one-language narration: "### Section N — Title" (whatever word the language puts before N, see languages.yaml),
+    "N. **text**" lines and "- sNx **text**" depth lines. A line with no text yet (a skeleton's) is left out."""
     lines, heads, sec = {}, {}, None
     for row in md.splitlines():
-        if row.startswith("## Lecture opening") or row.startswith("## 강의 시작"):
+        if row.startswith(("## Lecture opening", "## 강의 시작")):
             sec = 0
             continue
-        # "### Section N — Title" (a translation may keep the English word or write 섹션 N)
-        m = re.match(r"### (?:Section|섹션)\s*(\d+)\s*[—–-]\s*(.+?)\s*$", row)
+        m = re.match(r"### [^\d\n]*(\d+)[^\d\n—–-]*[—–-]\s*(.*?)\s*$", row)
         if m:
             sec = int(m[1])
-            heads[sec] = {lang: f"{SECTION_WORD[lang]} {sec} · {m[2]}"}
+            heads[sec] = {lang: f"{languages.section(lang, sec)} · {m[2]}"}
             continue
-        m = re.match(r"\s*(\d+[a-z]?)\.\s+(?:⏸\s*)?\*\*(.+)\*\*\s*$", row)
+        m = re.match(r"\s*(\d+[a-z]?)\.\s+(?:⏸\s*)?\*\*(.+)\*\*\s*$", row) or \
+            re.match(r"- (s\d\w*)\s+\*\*(.+?)\*\*(?:\s+▸.*)?\s*$", row)
         if m and sec is not None:
             key = f"{sec}.{m[1]}"
             assert key not in lines, f"line {key} twice"

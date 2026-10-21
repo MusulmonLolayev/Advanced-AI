@@ -34,14 +34,16 @@ function rowHtml(k, l){
     : odd ? `<span class="warn" title="extra, heard differently or unclear words: open the line">${odd} to check</span>` : '<span class="good">script ✓</span>';
   const chips = takes.map((x, n) => `<span class="chip${x.id === cid ? ' chosen' : ''}${x.rejected ? ' rejected' : ''}${open.has(k) && x.id === s ? ' sel' : ''}"
       onclick="event.stopPropagation(); pick(${k}, '${x.id}')" title="${esc(x.id)} · ${x.length.toFixed(1)} s${x.rejected ? ' · marked a mistake' : ''}">T${n + 1}</span>`).join('');
+  const li = langInfo(k), lflag = li && li.state === 'needs_update' ? langChip(li.state) : '';
   const vm = D.voice[k], vflag = !vm ? '' : !vm.ok ? `<span class="bad" title="the voice check heard: ${esc(vm.heard)}">voice: ${esc(vm.fails.join(', '))}</span>`
     : vm.listen ? '<span class="warn" title="the voice check put this line on the listen list">listen</span>' : '';
   return `<div class="row${open.has(k) ? ' open' : ''}${k === curLine ? ' cur' : ''}" id="row${k}">
   <div class="head" onclick="toggleRow(${k})"><span class="num">${k + 1}</span><span class="text">${esc(l[1])}</span>
-   <span class="side">${vdot(k)} ${vflag} ${flag} ${chips || `<span class="dim">${D.settings.missing === 'original' ? 'original voice' : 'no take'}</span>`} <span class="dim mono">${ct ? ct.length.toFixed(1) + ' s' : ''}</span>
+   <span class="side">${vdot(k)} ${lflag} ${vflag} ${flag} ${chips || `<span class="dim">${D.settings.missing === 'original' ? 'original voice' : 'no take'}</span>`} <span class="dim mono">${ct ? ct.length.toFixed(1) + ' s' : ''}</span>
     <button class="quiet" onclick="event.stopPropagation(); playLine(${k})" title="preview from here">▶</button>
     <a class="btn" href="/${BUILD}/presenter/presenter.html#line=${k + 1}" target="_blank" onclick="event.stopPropagation()" title="record this line again">●</a></span></div>
-  <div class="detail">${t ? detailHtml(k, t, cid) : '<p class="dim">No take of this line yet. Press ● to record it: the presenter opens at this line.</p>'}${narrHtml(k)}</div></div>`; }
+  ${langBanner(k)}
+  <div class="detail">${t ? detailHtml(k, t, cid) : '<p class="dim">No take of this line yet. Press ● to record it: the presenter opens at this line.</p>'}${narrHtml(k)}${langBox(k)}</div></div>`; }
 
 
 function detailHtml(k, t, cid){
@@ -75,7 +77,7 @@ function detailHtml(k, t, cid){
     <span class="dim">start ${(e.trim_in || 0).toFixed(2)} s${hand('trim_in') ? ' (by hand)' : ''} · end ${(e.trim_out || 0).toFixed(2)} s${hand('trim_out') ? ' (by hand)' : ''}</span></div>
   <div class="ctl">
     <button onclick="playTake(D.takes[${k}].find(x => x.id === '${t.id}'))">▶ play this take</button>
-    ${t.id === cid ? '<span class="good">used in the video</span>' : `<button onclick="api('/api/choose?line=${k}&take=${encodeURIComponent(t.id)}')">use this take</button>`}
+    ${t.id === cid ? '<span class="good" title="your recording is used for this line in the editor preview and in the export; the lecture video itself keeps the cloned or synthetic voice">used in your edit</span>' : `<button onclick="api('/api/choose?line=${k}&take=${encodeURIComponent(t.id)}')" title="use this recording for the line in your edit (preview and export)">use this take</button>`}
     <button class="quiet" onclick="edit('${t.id}', {rejected: ${!t.rejected}})">${t.rejected ? 'not a mistake' : 'mark as a mistake'}</button>
     <button class="quiet" onclick="if (confirm('Hide this take?')) edit('${t.id}', {deleted: true})">hide</button>
     <span class="dim mono">${esc(t.id)} · ${t.raw_length.toFixed(1)} s recorded → ${t.length.toFixed(1)} s</span></div>
@@ -112,3 +114,27 @@ function cutWord(id, a, b){
   const hit = cuts.findIndex(([x, y]) => a >= x - 1e-3 && b <= y + 1e-3);
   if (hit >= 0) cuts.splice(hit, 1); else cuts.push([Math.max(0, a - 0.03), b + 0.03]);
   edit(id, {cuts}); }
+
+// Languages: the same line in the lecture's other languages (status, text, a link to its review page), and the banner
+// of a line another language changed under (studio/review.py editor_langs; the review page is /narration).
+let LANGS = null;
+const STATE_WORD = {approved: 'approved', needs_update: 'needs update', draft: 'draft', empty: 'empty'};
+async function loadLangs(){
+  try { const r = await fetch('/api/editor-langs?build=' + BUILD); if (r.ok){ LANGS = await r.json(); if (D) render(); } } catch (e) {} }
+const langInfo = k => LANGS && LANGS.lines[k];
+const langChip = (state, more = '') => `<span class="lchip ${state}">${STATE_WORD[state]}${more}</span>`;
+function langBanner(k){
+  const i = langInfo(k); if (!i || i.state !== 'needs_update') return '';
+  return `<div class="lbanner"><b>needs update</b> ${Object.entries(i.changed).map(([l, x]) =>
+      `<span class="dim">${esc(l)} changed:</span> <span class="vdiff">${wordDiff(x.old, x.new)}</span>`).join(' ')}
+    <button onclick="event.stopPropagation(); stillFine('${esc(i.key)}')" title="this line is still right: approve it again against the other languages as they are now">still fine</button>
+    <a class="btn" href="/narration?lecture=${LANGS.lecture}&lang=${LANGS.lang}#line=${encodeURIComponent(i.key)}" target="_blank" onclick="event.stopPropagation()">edit in the review</a></div>`; }
+function langBox(k){
+  const i = langInfo(k); if (!i || !i.others.length) return '';
+  return `<div class="narr langbox"><div class="dim">Other languages</div>${i.others.map(o =>
+    `<div class="lrow"><b>${esc(o.lang)}</b> ${langChip(o.state)} <a href="${o.review}" target="_blank">review</a><div>${esc(o.text)}</div></div>`).join('')}</div>`; }
+async function stillFine(key){
+  const r = await fetch(`/api/narration/fine?lecture=${LANGS.lecture}&lang=${LANGS.lang}&kind=line&key=${encodeURIComponent(key)}`, {method: 'POST'});
+  if (!r.ok) say('failed: ' + ((await r.json().catch(() => ({}))).error || r.status));
+  await loadLangs(); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadLangs(); });

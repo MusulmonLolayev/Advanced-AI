@@ -8,6 +8,7 @@ import shutil
 import time
 from pathlib import Path
 
+import builds as B
 from studio import media as M
 from studio import narration_edit as N
 from studio import rewrite as RW
@@ -227,6 +228,16 @@ def mtime(path):
         return 0
 
 
+def audio_urls(root, build, good, st):
+    """{voice source: URL of its audio}: every ready session, and the lecture's own narration when that is the fallback."""
+    b = Path(root) / build
+    rec = M.recdir(b)
+    return {**{s["name"]: f"/{build}/presenter/recordings/{s['name']}.m4a?v={mtime(rec / (s['name'] + '.m4a'))}"
+               for s in good if s["state"] == "ready"},
+            **({T.ORIGINAL: f"/{build}/presenter/original.m4a?v={mtime(b / 'presenter' / 'original.m4a')}"}
+               if st["missing"] == "original" else {})}
+
+
 def project(root, build, c):
     b = Path(root) / build
     rec = M.recdir(b)
@@ -240,7 +251,7 @@ def project(root, build, c):
         except Exception:                          # a video without a soundtrack: nothing to fall back on
             st["missing"] = "silent"
     el, tk = M.project_edit_list(b, good, eds, ch, fallback=st["missing"])
-    navoiy = build.endswith("_uz_navoiy")
+    navoiy = B.engine(build) == "navoiy"
     takes = {}
     for k, lst in tk.items():
         views = []
@@ -260,10 +271,7 @@ def project(root, build, c):
         "video_version": int((b / "presenter" / f"{build}_silent.mp4").stat().st_mtime),
         "lines": [[l[0], l[1]] for l in ls],
         "sessions": [dict(s, stale=s["name"] in stale) for s in sessions],
-        "audio": {**{s["name"]: f"/{build}/presenter/recordings/{s['name']}.m4a?v={mtime(rec / (s['name'] + '.m4a'))}"
-                     for s in good if s["state"] == "ready"},
-                  **({T.ORIGINAL: f"/{build}/presenter/original.m4a?v={mtime(b / 'presenter' / 'original.m4a')}"}
-                     if st["missing"] == "original" else {})},
+        "audio": audio_urls(root, build, good, st),
         "settings": st, "voice": voice_marks(root, build), "editable": editable(build),
         "old_page": bool(ls) and len(ls[0]) < 4,      # prepared before lines knew their section: refresh it
         "engine": "navoiy" if navoiy else "edge",
@@ -275,6 +283,49 @@ def project(root, build, c):
         "versions": V.view(root, build, c),
         "exports": exports(root, build),
     }
+
+
+def line_view(root, build, k, c):
+    """One line (k counts from 0, like every line in the API) for the presenter page's takes panel: its text, its takes (the same views the editor gets), the
+    take the video uses and the one it would use by default, the audio of every ready session, the margin, the video,
+    the neighbours' joins (the last 2 s of the line before, the first 2 s of the line after, as tracks), and the
+    recordings of this line that are not processed yet ("pending": recording, waiting, processing or failed)."""
+    b = Path(root) / build
+    ls = M.lines(b)
+    if not 0 <= k < len(ls):
+        raise KeyError(f"no line {k}")
+    sessions = S.sessions(c, build)
+    good = usable(root, build, sessions)
+    eds, ch, st = S.edits(c, build), S.choices(c, build), S.settings(c, build)
+    if st["missing"] == "original":
+        try:
+            M.original(b)
+        except Exception:                          # a video without a soundtrack: nothing to fall back on
+            st["missing"] = "silent"
+    tk = M.all_takes(b, good, eds)
+    mine = [t for t in tk.get(k, []) if not t["edit"].get("deleted")]
+    views = []
+    for t in mine:
+        sil_p = M.recdir(b) / f"{t['session']}.silence.json"
+        sil = json.loads(sil_p.read_text()) if sil_p.exists() else []
+        views.append(take_view(root, build, t, ls[k][1], M.session_events(b, t["session"]), sil, margin_of(st)))
+    used = M.chosen_take(mine, ch.get(k))
+    starts = [l[0] for l in ls]
+    pending = []
+    for s in good:
+        if s["state"] != "ready":
+            for t in T.takes(s["name"], M.session_events(b, s["name"]), starts):
+                if t["line"] == k:
+                    pending.append({"id": t["id"], "session": s["name"], "state": s["state"], "error": s["error"],
+                                    "seconds": round(t["t_out"] - t["t_in"], 2)})
+    return {"build": build, "line": k, "lines": len(ls), "text": ls[k][1], "starts": [ls[k][0], ls[k + 1][0] if k + 1 < len(ls) else None],
+            "video": f"/{build}/presenter/{build}_silent.mp4",
+            "video_version": mtime(b / "presenter" / f"{build}_silent.mp4"),
+            "takes": views, "chosen": used["id"] if used else None, "picked": ch.get(k),
+            "audio": audio_urls(root, build, good, st), "margin": margin_of(st), "settings": st,
+            "context": M.neighbourhood(b, k, tk, ch, fallback=st["missing"]), "pending": pending,
+            "sessions": [{"name": s["name"], "state": s["state"], "error": s["error"]} for s in good],
+            "busy": any(s["state"] in ("recording", "recorded", "processing") for s in good)}
 
 
 def scene_names(b, ls):

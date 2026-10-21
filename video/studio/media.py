@@ -27,12 +27,14 @@ import numpy as np
 HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE))
 from compose_recording import CLEAN, PEAK, TARGET, deepfilter, video_encoder   # noqa: E402
+import builds as B                                                              # noqa: E402
+import languages as LG                                                          # noqa: E402
+from studio import narration_edit as N                                        # noqa: E402
 from studio import timeline as T                                                # noqa: E402
 
 SR = 48000
 FPS = 60
 NAVOIY_PY = Path.home() / "navoiy-stack/CosyVoice/.venv/bin/python"
-BUILD = re.compile(r"(?:m(\d)_)?lecture(\d\d)_(uz_navoiy|en)")
 
 
 def ff(*args):
@@ -284,27 +286,41 @@ def project_edit_list(build_dir, sessions, edits, choices, speed=1 / 1.1, fallba
     return T.edit_list([l[0] for l in ls], video_end(build_dir), chosen, speed, fallback), tk
 
 
+def neighbourhood(build_dir, k, tk, choices, fallback="silent", speed=1 / 1.1, secs=2.0):
+    """What surrounds line k in the lecture, for judging a take's joins: {"before": the last `secs` of the line before,
+    "after": the first `secs` of the line after} as tracks (each {"voice", "picture"}, empty at the lecture's ends),
+    with the take each plays ("prev", "next": its id or None). Only lines k-1..k+1 are laid out."""
+    ls = lines(build_dir)
+    lo, hi = max(k - 1, 0), min(k + 1, len(ls) - 1)
+    chosen = {k - lo: {"voice": [], "picture": [], "id": None}}      # this line is the take being judged: not laid out
+    for j in (k - 1, k + 1):
+        t = chosen_take(tk.get(j, []), choices.get(j)) if lo <= j <= hi else None
+        if t is not None:
+            chosen[j - lo] = dict(T.edited(t, session_events(build_dir, t["session"]), t["edit"], speed), id=t["id"])
+    end = ls[hi + 1][0] if hi + 1 < len(ls) else video_end(build_dir)
+    el = T.edit_list([ls[j][0] for j in range(lo, hi + 1)], end, chosen, speed, fallback)
+    spans = {lo + j: (a, b, tid) for j, a, b, tid in el["lines"]}
+    out = {"before": {"voice": [], "picture": []}, "after": {"voice": [], "picture": []}, "prev": None, "next": None}
+    for side, j, pick in (("before", k - 1, lambda a, b: (max(a, b - secs), b)),
+                          ("after", k + 1, lambda a, b: (a, min(b, a + secs)))):
+        if j in spans:
+            a, b, tid = spans[j]
+            out[side] = T.window(el, *pick(a, b))
+            out["prev" if side == "before" else "next"] = tid
+    return out
+
+
 # ─── chapters ─────────────────────────────────────────────────────────────
 def section_titles(build_name, narration_dir=HERE / "narration"):
     """{section number: title} from the build's narration headings, in the build's language."""
-    m = BUILD.fullmatch(build_name)
-    if not m:
+    if not B.is_build(build_name):
         return {}
-    stem = (f"m{m[1]}_" if m[1] else "") + f"lecture{m[2]}"
-    en = m[3] == "en"
-    single = narration_dir / f"{stem}_en.md"
-    path = single if en and single.exists() else narration_dir / f"{stem}.md"
-    if not path.exists():
+    lang = B.lang(build_name)
+    found = N.resolve(B.stem(build_name), lang, narration_dir)
+    if not found:
         return {}
-    out = {}
-    for row in path.read_text().splitlines():
-        a = re.match(r"### (\d+)-boʻlim · Section \d+ — (.+?) · (.+?)(?:\s+\*\(.*)?$", row)
-        b = re.match(r"### Section\s*(\d+)\s*[—–-]\s*(.+?)\s*$", row)
-        if a:
-            out[int(a[1])] = f"Section {a[1]} · {a[3]}" if en else f"{a[1]}-boʻlim · {a[2]}"
-        elif b:
-            out[int(b[1])] = f"Section {b[1]} · {b[2]}"
-    return out
+    path, single = found
+    return {n: f"{LG.section(lang, n)} · {t}" for n, t in N.titles(path, single, lang).items()}
 
 
 def line_sections(build_dir):
@@ -388,8 +404,8 @@ def export(build_dir, sessions, edits, choices, profile="deepfilter", out=None, 
            out.with_suffix(".mp4"))
     texts = [l[1] for l in lines(b)]
     out.with_suffix(".srt").write_text(T.srt(el["lines"], texts))
-    titles, opening = section_titles(b.name), "Opening" if b.name.endswith("_en") else "Kirish"
-    secs = {k: opening if s == 0 else titles.get(s, f"Section {s}") for k, s in line_sections(b).items()}
+    titles, opening = section_titles(b.name), LG.opening(B.lang(b.name))
+    secs = {k: opening if s == 0 else titles.get(s, LG.section(B.lang(b.name), s)) for k, s in line_sections(b).items()}
     (out.parent / f"{out.name}.chapters.txt").write_text(T.chapters(el["lines"], secs) + "\n")
     return [out.with_suffix(".mp4"), out.with_suffix(".srt"), out.parent / f"{out.name}.chapters.txt"]
 

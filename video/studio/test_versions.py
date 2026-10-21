@@ -337,6 +337,37 @@ class Merge(Fixture):
         self.assertIn("2 lines changed", out)
         self.assertIn("1 recording moved", out)
 
+    def test_a_merge_approves_the_changed_lines_in_its_language_and_flags_the_same_lines_in_the_others(self):
+        """The instructor's merge is their approval. English (the italic gloss here) approved the old Uzbek: now it needs an update."""
+        from studio import linestatus as LS
+        stem = "m7_lecture99"
+        with self.connect() as c:
+            by = LS.line_texts(stem)
+            for lang in ("uz", "en"):
+                for key in ("0.0", "1.1", "1.2"):
+                    LS.approve(c, stem, lang, "line", key, by)
+        self.make(1, NEW_TEXT)
+        self.merge(1)
+        with self.connect() as c:
+            by = LS.line_texts(stem)
+            uz = LS.statuses(c, stem, "uz", "line", by)
+            en = LS.statuses(c, stem, "en", "line", by)
+            self.assertEqual({k: v["state"] for k, v in uz.items()}, {"0.0": "approved", "1.1": "approved", "1.2": "approved"})
+            self.assertEqual(S.approvals(c, stem, "uz", "line")["1.1"]["text_hash"], LS.digest(NEW_TEXT))
+            self.assertEqual({k: v["state"] for k, v in en.items()}, {"0.0": "approved", "1.1": "needs_update", "1.2": "approved"})
+            self.assertEqual(en["1.1"]["changed"], {"uz": {"old": OLD_TEXT, "new": NEW_TEXT}})      # the diff the editor shows
+            LS.still_fine(c, stem, "en", "line", "1.1", by)
+            self.assertEqual(LS.statuses(c, stem, "en", "line", by)["1.1"]["state"], "approved")
+
+    def test_a_merge_that_failed_approves_nothing(self):
+        from studio import linestatus as LS
+        self.make(1, NEW_TEXT)
+        self.fail_on = "join"
+        with self.assertRaises(RuntimeError):
+            self.merge(1)
+        with self.connect() as c:
+            self.assertEqual(c.execute("select count(*) from line_status").fetchone()[0], 0)
+
     def test_recordings_follow_the_new_timings(self):
         self.make(1, NEW_TEXT)
         self.merge(1)

@@ -20,6 +20,7 @@ never with text of their own. This script
 """
 import ast
 import json
+import os
 import re
 import sys
 from collections import defaultdict
@@ -27,17 +28,23 @@ from pathlib import Path
 
 import yaml
 
+import languages
+
 HERE = Path(__file__).parent
-YAML = HERE / "narration" / "labels.yaml"
+NARRATION = Path(os.environ.get("STUDIO_NARRATION", HERE / "narration"))      # the studio's tests point this at a scratch copy
+YAML = NARRATION / "labels.yaml"
 FILE = re.compile(r"lecture(\d\d)_(kit|s(\d\d))\.py$")
 LANGS = ("en", "uz")
-AC_YAML = HERE / "narration" / "labels_agents_course.yaml"
+AC_YAML = NARRATION / "labels_agents_course.yaml"
 AC_FILE = re.compile(r"agents_course_(kit|s(\d\d))\.py$")
 # The course's languages: Korean joins as soon as its forms are merged (then every course label needs one, and so
 # does every shared labels.yaml key the course shows, e.g. the pause card).
 _ac = yaml.safe_load(AC_YAML.read_text()) if AC_YAML.exists() else {}
 AC_LANGS = ("en", "ko") if any("ko" in v for v in (_ac or {}).values()) else ("en",)
-EXTRA = ("ko",)                                   # a labels.yaml key may also carry these (shared cards the course uses)
+# a labels.yaml key may also carry a form in any other language of languages.yaml (Korean: the shared cards the agent
+# course shows; the others as lectures are drafted in them)
+EXTRA = tuple(c for c in languages.CODES if c not in LANGS)
+DRAFTS = NARRATION / "drafts"            # one folder of draft labels per lecture being written (m7_l01/, l06/)
 
 HEADER = """\
 # On-screen labels for every lecture video. Each label has a key, which the scenes use, and its
@@ -180,6 +187,113 @@ AC_HEADER = """\
 # interchangeable forms per language (the default first), words only. Its languages are labels.py's AC_LANGS.
 # Shared cards (pause, …) stay in labels.yaml. `uv run python labels.py` checks and tidies both files.
 """
+
+
+# ─── one lecture's labels, and writing a label's forms back (the studio's review page) ───
+_SCANNED = {}
+
+
+def use(narration_dir):
+    """Read and write the label files of another narration folder (the studio's tests use a scratch copy)."""
+    global NARRATION, YAML, AC_YAML, DRAFTS
+    NARRATION = Path(narration_dir)
+    YAML, AC_YAML, DRAFTS = NARRATION / "labels.yaml", NARRATION / "labels_agents_course.yaml", NARRATION / "drafts"
+
+
+def _calls(path):
+    """[(key, form index)] of the label() calls in a file, cached by its mtime."""
+    stamp = path.stat().st_mtime
+    if _SCANNED.get(path, (None,))[0] != stamp:
+        found = []
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "label" and node.args \
+                    and isinstance(node.args[0], ast.Constant):
+                found.append((node.args[0].value, node.lineno))
+        _SCANNED[path] = (stamp, [k for k, _ in sorted(found, key=lambda x: x[1])])
+    return _SCANNED[path][1]
+
+
+def keys_for(stem):
+    """[(key, where shown)] for every label a lecture (`lecture03`, `m7_lecture01`) shows, in first-use order: its kit,
+    its sections, then the cards every lecture shows (common.py)."""
+    out = {}
+    own = sorted(HERE.glob(f"{stem}_*.py"), key=lambda p: (not p.stem.endswith("_kit"), p.name))
+    for path in own:
+        m = re.fullmatch(rf"{stem}_(kit|s(\d\d))", path.stem)
+        if not m:
+            continue
+        where = "all sections" if m[1] == "kit" else "opening" if m[2] == "00" else f"§{int(m[2])}"
+        for key in _calls(path):
+            out.setdefault(key, set()).add(where)
+    for name in SHARED:
+        for key in _calls(HERE / name):
+            out.setdefault(key, set()).add("every lecture")
+    return [(k, ", ".join(sorted(w))) for k, w in out.items()]
+
+
+def draft_file(stem):
+    """The lecture's draft labels (narration/drafts/<m7_l01 | l06>/labels.yaml), whether or not the file exists."""
+    m = re.fullmatch(r"(?:m(\d)_)?lecture(\d\d)", stem)
+    return DRAFTS / ((f"m{m[1]}_l{m[2]}" if m[1] else f"l{m[2]}")) / "labels.yaml"
+
+
+_LOADED = {}
+
+
+def _load(path):
+    """A label file's contents, read again only when the file changed (the lecture page asks for it often). Do not edit it."""
+    stamp = (path.stat().st_mtime_ns, path.stat().st_size)
+    if _LOADED.get(path, (None,))[0] != stamp:
+        _LOADED[path] = (stamp, yaml.safe_load(path.read_text()) or {})
+    return _LOADED[path][1]
+
+
+def book(stem=None):
+    """{key: {language: forms}} of everything a lecture can show: labels.yaml plus the lecture's draft labels (a key
+    in both is an error common.py stops on, so no key here is shadowed). Read-only."""
+    out = dict(_load(YAML))
+    d = draft_file(stem) if stem else None
+    if d and d.exists():
+        out.update(_load(d))
+    return out
+
+
+def write_draft(path, labels):
+    """A draft labels file, its leading comments kept and its keys in their order."""
+    head = []
+    for row in Path(path).read_text().splitlines():
+        if row.strip() and not row.startswith("#"):
+            break
+        head.append(row)
+    out = ["\n".join(head).rstrip("\n") + "\n\n"]
+    for key, v in labels.items():
+        k = key if re.fullmatch(r"[a-z][a-z0-9_]*", key) and yaml.safe_load(f"{key}: 0") == {key: 0} else json.dumps(key)
+        out.append(f"{k}:\n" + "".join(f"  {l}: {scalar(v[l])}\n" for l in LANGS + EXTRA if l in v))
+    Path(path).write_text("".join(out))
+
+
+def set_forms(stem, key, lang, forms):
+    """Write a label's forms in one language back where the label lives: labels.yaml (rewritten in lecture order with
+    its "where shown" comments, as `python labels.py` does) or the lecture's draft labels. [] removes the language's forms."""
+    forms = [f for f in forms if f.strip()]
+    for f in forms:
+        if re.search(r"\{[^}]*\}", f):
+            raise ValueError(f"a label holds words only, not a {{placeholder}}: {f!r}")
+    main = yaml.safe_load(YAML.read_text())
+    d = draft_file(stem)
+    drafts = (yaml.safe_load(d.read_text()) or {}) if d.exists() else {}
+    where, data = (YAML, main) if key in main else (d, drafts) if key in drafts else (None, None)
+    if where is None:
+        raise KeyError(f"no label {key!r} in labels.yaml or the draft labels of {stem}")
+    if forms:
+        data[key][lang] = forms[0] if len(forms) == 1 else list(forms)
+    else:
+        data[key].pop(lang, None)
+    if where == YAML:
+        used = uses()
+        write(main, used + [u for u in uses(ac_files()) if u[0] in main])
+    else:
+        write_draft(d, data)
 
 
 def main():

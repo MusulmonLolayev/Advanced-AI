@@ -47,7 +47,7 @@ class Pages(unittest.TestCase):
         static = HERE / "studio" / "static"
         listed = re.findall(r'<script src="/studio-static/([^"]+)"', page)
         self.assertEqual(listed, ["editor/player.js", "editor/levels.js", "editor/lines.js", "editor/versions.js", "editor/main.js"])
-        self.assertEqual(sorted(listed), sorted(str(f.relative_to(static)) for f in static.rglob("*.js")))
+        self.assertEqual(sorted(listed), sorted(str(f.relative_to(static)) for f in (static / "editor").rglob("*.js")))
         self.assertIn('href="/studio-static/editor.css"', page)
         for hook in ('id="margin"', 'id="longsil"', 'id="lvc"', 'gotoSilence(1)', 'gotoSilence(-1)', 'id="silcount"'):
             self.assertIn(hook, page)                                  # the header settings, the lecture strip, the buttons
@@ -106,17 +106,98 @@ process.exit(bad.length ? 1 : 0);
                                 str(Path(d) / "cases.json")], capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stdout[:1500] + r.stderr[:1500])
 
+    def test_the_player_seeks_only_when_it_must(self):
+        """player.js's seek decision, on fake elements: a voice piece that continues the one before it never seeks, an
+        element that is seeking or buffering is never seeked again (the clock runs ahead of it; seeking each frame
+        replayed fragments on a slow link), and a jump or a forced seek lands exactly, once."""
+        driver = """
+const vm = require('vm'), fs = require('fs'), assert = require('assert');
+class El { constructor(u){ this.src = u; this.paused = true; this.seeking = false; this.readyState = 4; this.n = 0; this._t = 0; }
+  set currentTime(x){ this._t = x; this.n++; } get currentTime(){ return this._t; }
+  play(){ this.paused = false; return Promise.resolve(); } pause(){ this.paused = true; } }
+const ctx = {performance, Audio: El, Math}; vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(process.argv[2], 'utf8') + '; this.Player = Player;', ctx);
+const mk = voice => { const v = new El('v'); v.playbackRate = 1;
+  const p = new ctx.Player(v, () => ({s: 's.m4a'}), {}); p.audios = {};
+  p.load({voice, picture: [[voice.reduce((a, x) => a + x[0], 0), 'hold', 0, null, 1]]}, [], 0); p.playing = true; return p; };
+const at = (p, T) => { p.T = T; p.sync(false); };
+const run = (name, f) => { try { f(); } catch (e) { console.log(name, e.message); process.exit(1); } };
+run('contiguous', () => {                       // before, take, after of one session: one seek (the start), then none
+  const p = mk([[2, 's', 100], [20, 's', 102], [2, 's', 122]]), el = p.audios.s.el;
+  assert.strictEqual(el.n, 1);
+  for (let T = 0; T < 24; T += 0.05){ el._t = 100 + T; at(p, T); }      // the element plays on exactly with the clock
+  assert.strictEqual(el.n, 1);
+  const q = mk([[2, 's', 100], [20, 's', 102]]), e2 = q.audios.s.el;
+  e2._t = 101.8; at(q, 1.9); e2._t = 101.95; at(q, 2.1);     // lagging 0.15-0.2 s across the boundary: within the tolerance
+  assert.strictEqual(e2.n, 1); });
+run('seeking', () => {                          // behind the clock but still seeking or buffering: never another seek
+  const p = mk([[30, 's', 100]]), el = p.audios.s.el;
+  el._t = 100; el.seeking = true; for (let T = 1; T < 5; T += 0.1) at(p, T);
+  el.seeking = false; el.readyState = 1; for (let T = 5; T < 8; T += 0.1) at(p, T);
+  assert.strictEqual(el.n, 1);                  // only the start
+  el.readyState = 4; at(p, 8);                  // ready: one exact seek
+  assert.strictEqual(el.n, 2); assert.ok(Math.abs(el.currentTime - 108) < 1e-9); });
+run('jump', () => {                             // a piece that does not continue seeks once, exactly
+  const p = mk([[2, 's', 100], [2, 's', 150]]), el = p.audios.s.el;
+  el._t = 100; for (let T = 0; T < 2; T += 0.1){ el._t = 100 + T; at(p, T); }
+  const n = el.n; el.seeking = false; at(p, 2.0); assert.strictEqual(el.n, n + 1); assert.ok(Math.abs(el.currentTime - 150) < 1e-9);
+  el.seeking = true; at(p, 2.1); at(p, 2.2); assert.strictEqual(el.n, n + 1); });
+run('forced', () => {                           // the user moves: seek even if it is seeking
+  const p = mk([[30, 's', 100]]), el = p.audios.s.el; el.seeking = true; const n = el.n; p.seek(10);
+  assert.strictEqual(el.n, n + 1); });
+console.log('ok');
+"""
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "run.js").write_text(driver)
+            r = subprocess.run([NODE, str(Path(d) / "run.js"), str(HERE / "studio" / "static" / "editor" / "player.js")],
+                               capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout[:1500] + r.stderr[:1500])
+
+    def test_the_editor_has_the_language_switch_and_the_narration_page_its_files(self):
+        page = (HERE / "studio" / "editor.html").read_text()
+        self.assertIn('id="langsw"', page)
+        self.assertIn("__LANGS__", page)
+        lines = (HERE / "studio" / "static" / "editor" / "lines.js").read_text()
+        for hook in ("function langBanner", "function langBox", "function stillFine", "/api/editor-langs", "/api/narration/fine"):
+            self.assertIn(hook, lines)
+        review = (HERE / "studio" / "static" / "narration" / "review.js").read_text()
+        for hook in ("/api/narration/", "'approve'", "'save'", "'fine'", "#(line|label)="):
+            self.assertIn(hook, review)
+
     def test_presenter_script_parses(self):
         import presenter
         lines = [[0.0, "One.", [[0.0, 1.0, "One."]], 0], [2.0, "Two.", [[2.0, 3.0, "Two."]], 1]]
-        page = presenter.PAGE.replace("VIDEO", "x.mp4").replace("LINES", json.dumps(lines)).replace("BUILD", "b")
+        with tempfile.TemporaryDirectory() as d:
+            silent = Path(d) / "b_silent.mp4"
+            silent.write_bytes(b"x")
+            page = presenter.render(lines, "b", silent)
+        self.assertNotIn("__", "".join(scripts(page)).replace("__proto__", ""))      # every placeholder filled
         for js in scripts(page):
             code, err = node_check(js)
             self.assertEqual(code, 0, err)
         src = (HERE / "presenter.py").read_text()
         self.assertIn('{silent.name}?v={int(silent.stat().st_mtime)}', src)        # the video is versioned: no stale cache
+        self.assertRegex(page, r'src="b_silent\.mp4\?v=\d+"')
+        self.assertIn('const L = ' + json.dumps(lines, ensure_ascii=False), page)
         self.assertIn("line=(\\d+)", page)                  # the #line=41 pattern reached the page intact
 
+    def test_presenter_loads_the_panel_scripts(self):
+        """The presenter page loads the editor's player and level strip, then its own script after the page's: and every
+        file it names is there, and parses."""
+        import presenter
+        page = presenter.PAGE
+        static = HERE / "studio" / "static"
+        srcs = re.findall(r'<script src="/studio-static/([^"]+)"', page)
+        self.assertEqual(srcs, ["editor/player.js", "editor/levels.js", "presenter/takes.js"])
+        self.assertLess(page.index("editor/levels.js"), page.index("<script>"))        # the panel's tools first, takes.js last
+        self.assertLess(page.index("<script>"), page.index("presenter/takes.js"))
+        self.assertIn('href="/studio-static/presenter/takes.css"', page)
+        for f in srcs + ["presenter/takes.css"]:
+            self.assertTrue((static / f).is_file(), f)
+        for k in ("T takes of this line", "L record a take of this line"):          # the help bar lists the new keys
+            self.assertIn(k, page)
+        self.assertIn("X marks a mistake while recording. Press R to record, or L to record a take of just this line.", page)
+        self.assertNotIn("setCursor", (static / "editor" / "player.js").read_text())     # the player knows no page of its own
 
 if __name__ == "__main__":
     unittest.main()

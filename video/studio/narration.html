@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Narration review</title>
+<link rel="stylesheet" href="/studio-static/narration/review.css">
+</head><body>
+<header>
+  <a href="/?m=__MODULE__">← Module __MODULE__</a>
+  <h1>__TITLE__ · narration review</h1>
+  <span id="langs" title="the lecture's other languages"></span>
+  <span style="flex:1"></span>
+  <label class="dim">reference language <select id="ref"></select></label>
+</header>
+<div id="bar">
+  <span id="tabs"><button id="tab-lines" onclick="setTab('lines')">Narration</button><button id="tab-labels" onclick="setTab('labels')">Labels</button></span>
+  <span id="filters"></span>
+  <span id="counts" class="dim"></span>
+</div>
+<main id="list"></main>
+<div id="msg"></div>
+<script>const LECTURE = "__LECTURE__", LANG = "__LANG__";</script>
+<script src="/studio-static/narration/review.js"></script>
+</body></html>

@@ -24,8 +24,10 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import builds as B
 import presenter
 from studio import media as M
+from studio import linestatus as LS
 from studio import narration_edit as N
 from studio import rewrite as RW
 from studio import store as S
@@ -47,7 +49,7 @@ def scene_mp4(root, build, scene, n):
 
 def clean_text(build, text):
     """A line's text as the narration file will hold it (Uzbek apostrophes fixed)."""
-    t = N.uz_text(text) if build.endswith("_uz_navoiy") else N.norm(text)
+    t = N.uz_text(text) if B.lang(build) == "uz" else N.norm(text)
     if not t:
         raise ValueError("the new text is empty")
     if "**" in t:
@@ -181,7 +183,7 @@ def build_version(root, build, scene, n, connect, progress=print, python=M.NAVOI
         if (bd / "voice_check.json").exists():
             shutil.copy2(bd / "voice_check.json", d / "voice_check.json")
         report = dict(base["report"]) if base else {}
-        if build.endswith("_uz_navoiy"):
+        if B.engine(build) == "navoiy":
             state("voicing")
             if not voice_server.up():
                 progress("starting the voice server (about a minute)")
@@ -240,10 +242,11 @@ def merge(root, build, scene, n, connect, progress=print):
     video_back = b / f"{build}.before_merge.mp4"
     changed = [k for k, t in row["texts"].items() if N.norm(ls[int(k)][1]) != N.norm(t)]
     backed, video_saved, presenting = [], False, False       # what THIS run backed up or started: only that is undone
+    written = []                                              # (narration key, text) of the lines this merge changed
     try:
         progress("saving the new texts to the narration file")
         for k in sorted(changed, key=int):
-            N.rewrite(path, lang, single, ls[int(k)][1], row["texts"][k])
+            written.append(N.rewrite(path, lang, single, ls[int(k)][1], row["texts"][k]))
         progress("adding the voice clips to the lecture's cache")
         merge_cache(d / "media" / "voiceovers" / scene, cache)
         merge_voice_check(b, d, scene)
@@ -298,8 +301,14 @@ def merge(root, build, scene, n, connect, progress=print):
         for r in S.versions(c, build, scene):
             if r["n"] != n and r["state"] in ("queued", "ready", "failed"):
                 S.set_version(c, build, scene, r["n"], state="stale")
+    approval = ""
+    try:                                   # the merge is the instructor's approval; the same lines in the other languages now "need update"
+        with connect() as c:
+            LS.approve_written(c, build, written)
+    except Exception as e:                 # the lecture is merged either way: say that the record is missing
+        approval = f"; the approval was not recorded ({type(e).__name__}: {e})"
     return (f"v{n} of {scene} merged: {len(changed)} line{'s' * (len(changed) != 1)} changed" +
-            (f"; {moved} recording{'s' * (moved != 1)} moved to the new timings" if moved else ""))
+            (f"; {moved} recording{'s' * (moved != 1)} moved to the new timings" if moved else "") + approval)
 
 
 def _hash(b):

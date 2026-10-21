@@ -8,6 +8,9 @@
   jobs      background work and its state, shown in the editor (process a session, transcribe a take, export)
   versions  drafts of a rewritten scene (studio/versions.py): numbered per scene, built on an earlier version or on the
             lecture, holding {line: text}; queued -> voicing -> rendering -> ready, then merged | stale | discarded
+  line_status  the instructor's approval of one narration line or screen label in one language (studio/linestatus.py):
+            the hash of the text approved, when, and the other languages' texts at that moment (so a change in one
+            of them shows as "needs update"). Keyed by lecture stem (m7_lecture01), not by build.
 """
 import json
 import sqlite3
@@ -31,6 +34,11 @@ create table if not exists versions (
     state text default 'queued', error text default '', created real, updated real,
     report text default '{}',                              -- {line: the voice check's result}
     primary key (build, scene, n));
+create table if not exists line_status (
+    lecture text, lang text, kind text,                     -- kind: line | label
+    key text, text_hash text, approved_at real,
+    sources text default '{}',                              -- {language: its text when this was approved}
+    primary key (lecture, lang, kind, key));
 """
 
 
@@ -164,3 +172,15 @@ def settings(c, build):
 
 def set_setting(c, build, key, value):
     c.execute("insert or replace into settings values (?,?,?)", (build, key, value))
+
+
+# ─── approvals of narration lines and labels ───
+def approvals(c, lecture, lang, kind):
+    """{key: {"text_hash", "approved_at", "sources"}} for one language of a lecture."""
+    return {r["key"]: {"text_hash": r["text_hash"], "approved_at": r["approved_at"], "sources": json.loads(r["sources"])}
+            for r in c.execute("select * from line_status where lecture=? and lang=? and kind=?", (lecture, lang, kind))}
+
+
+def approve(c, lecture, lang, kind, key, text_hash, sources):
+    c.execute("insert or replace into line_status values (?,?,?,?,?,?,?)",
+              (lecture, lang, kind, key, text_hash, time.time(), json.dumps(sources, ensure_ascii=False)))

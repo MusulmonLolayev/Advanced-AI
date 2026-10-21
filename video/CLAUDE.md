@@ -4,6 +4,14 @@ Narrated Manim videos built from the same material as the slide decks.
 
 ## Layout
 - `common.py` — speech service, `CourseScene`, style helpers, brand marks.
+- **Languages.** `languages.yaml` (loader `languages.py`) is the one list of the course's languages: names, script, edge
+  voices / rate / trim (`common.py` reads them from it), section-card word, opening chapter title. `builds.py` is the one
+  place that parses a build name (`[mK_]lectureNN_<lang>[_<engine>]`: `lecture01_uz_navoiy`, `m7_lecture01_ru`); never
+  test `endswith("_uz_navoiy")` or repeat the regex. A lecture's narration in a language is `narration/<stem>_<lang>.md`
+  (one language, same line ids as the primary language) or, for uz and en, the bilingual `<stem>.md`. New languages are
+  added in the studio (**+ add language** writes an empty skeleton), drafted by Claude, approved line by line at
+  `/narration?lecture=<stem>&lang=<code>`; `studio/linestatus.py` keeps who approved what and flags the same line in
+  the other languages "needs update" when one changes (`line_status` table, by hash). Studio-side details in `STATUS.md`.
 - **One video per lecture**, built like the slides: a lecture opening (one greeting), then Part 0, Part 1 … each with a
   part card, and inside each part one section per concept with a short section card. Sections say "keyingi/avvalgi
   boʻlim", never "video"; only the lecture's end points to the next lecture. Narration drafts live in

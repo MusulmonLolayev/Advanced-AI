@@ -17,24 +17,22 @@ from manim_voiceover.helper import remove_bookmarks
 from manim_voiceover.services.base import SpeechService, initialize_speech_service
 import yaml
 
+import languages
+
 # ─── identity ─────────────────────────────────────────────────────────────
-# One voice per language. LANG picks it; render with LANG=uz ./render.sh ...
-VOICES = {
-    "en": "en-US-AndrewNeural",
-    "uz": "uz-UZ-SardorNeural",     # male; uz-UZ-MadinaNeural is the female option
-    "ko": "ko-KR-InJoonNeural",     # male, like Andrew (the agent course's Korean track)
-}
+# One voice per language, from languages.yaml. LANG picks it; render with LANG=uz ./render.sh ...
+VOICES = languages.voices("edge")
 LANG = os.environ.get("LANG_CODE", "en")
 VOICE = VOICES[LANG]
 # Korean: InJoon reads ~40% slower than Andrew and pads each clip with ~1.2 s of silence at the end
 # (agent course: 38 min against 27). Spoken faster, and its clips trimmed to English-like edges.
-VOICE_RATES = {"ko": "+20%"}
-EDGE_TRIM = {"ko": (0.15, 0.35)}               # seconds of silence kept before / after the voice
+VOICE_RATES = languages.rates()
+EDGE_TRIM = languages.trims()                  # seconds of silence kept before / after the voice
 # VOICE_ENGINE=navoiy narrates in the instructor's own fine-tuned voice (Uzbek only),
 # served by ~/navoiy-stack/work/tts_server.py. Default stays edge-tts.
 ENGINE = os.environ.get("VOICE_ENGINE", "edge")
 NAVOIY_URL = os.environ.get("NAVOIY_URL", "http://127.0.0.1:8765/tts")
-NAVOIY_VOICE_ID = "musulmon-ft-llm1-flow12-phone"
+NAVOIY_VOICE_ID = languages.voices("navoiy")["uz"]
 PAUSE_AFTER_VOICEOVER = 0.3
 
 # ─── on-screen labels ──────────────────────────────────────────────────────

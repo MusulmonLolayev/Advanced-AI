@@ -99,8 +99,50 @@ new lines per lecture: `out/review/l0N_add.txt`.
   `*.levels.json`) with every silence of "long silence >=" seconds (header, default 1.0, kept in the browser) in amber,
   across line boundaries; click one, or use the transport's "next long silence" / back arrow, to jump there and open
   its line. On lecture01_uz_navoiy: 61 silences of 1 s or more, 155 s in all (no recording edited).
-  The page is plain files, no build step: `studio/editor.html` + `studio/static/` (served at /studio-static/).
-  Tests: `studio/run_tests.sh` (125; `fast` skips the server run and the GPU recognisers).
+  **Takes on the presenter page** (2026-10-21): `presenter.html#line=7` opens with a takes panel (a drawer at the right,
+  T shows or hides it, gone while a recording runs) for the line on screen; it follows ← / →. It lists every take of the
+  line from every usable session (T1, T2 …, length, time, "used in the video", struck through when a mistake) with ▶ watch
+  (the take as the video will have it, on the page's own video with the editor's two-track player, nothing logged),
+  ▶ in context (the last 2 s of the line before, the take, the first 2 s of the line after: the edit list's neighbours),
+  use this one, mistake, delete, and the editor's level strip with both handles and fit start / end / both. **L** (or
+  "● record a take") records one take of that line: new session, the line event, the picture plays the line, and the
+  recording stops itself 1 s after the line ends (or at → / L), finishes the session and processes it; the panel shows
+  "processing…" and then the take, and L again adds another. The newest take that is not a mistake is the used one unless
+  one was picked by hand (a hand pick stays). One call per line: `GET /api/line?build&line=K` (K from 0 like every `line`
+  in the API: text, takes as the editor's views, chosen / picked, audio, margin, video, the joins, pending sessions);
+  the panel polls it every 3 s while something is processing. X outside a recording now says what it does. The page itself
+  is rendered by serve_presenter.py from `presenter.PAGE` (`presenter.render`) with the build's lines.json and the silent
+  video's `?v=`, so a change to it reaches every lecture without `presenter.py` (which re-encodes the video); the file
+  presenter.py writes is the same page for offline use (no panel there: it needs /studio-static/).
+  **Languages** (2026-10-21, phase 1: management, review, approval; rendering a video in a new language is phase 2).
+  `languages.yaml` (+ `languages.py`) lists the course's languages (uz, en, ru, ko, tr, de, fr, es, ar, zh): names, script,
+  edge voices (all found in `edge_tts --list-voices` on 2026-10-21), rate / trim (Korean only), section-card word,
+  opening chapter title; `common.py` takes VOICES / VOICE_RATES / EDGE_TRIM from it (same values for en, uz, ko, asserted).
+  `builds.py` parses and makes build names (`[mK_]lectureNN_<lang>[_<engine>]`); no other file holds the pattern. A
+  lecture's narration in language L is `narration/<stem>_<L>.md` (one language, bold, the primary language's line ids)
+  if it exists, else the bilingual `<stem>.md` (uz bold, en italic). The primary language is Uzbek for Module 0, English for
+  Module 7. **+ add language** on the lecture page writes an empty skeleton (`3a. ⏸ ****`; an empty line is "not
+  drafted"); Claude drafts it in a coding session, the instructor approves it line by line at
+  `/narration?lecture=<stem>&lang=<code>` (a reference language beside the text, checks shown inline and never blocking:
+  Cyrillic in a Latin-script text, Uzbek ʻ/ʼ, Latin words in a Cyrillic text, digits; a Labels tab for the screen words,
+  written back through `labels.py` to `labels.yaml` or the lecture's draft labels). Table `line_status` (lecture, lang, line
+  or label, hash of the approved text, the other languages' texts at that moment): a line is empty / draft / approved /
+  **needs update** ("uz changed", old and new side by side) by comparing hashes, so nothing changes by itself; actions are
+  approve, save edit (writes the file through `narration_edit`, approves), still fine. A merged version approves its lines
+  (the merge is the approval), which flags the same lines in the other languages. The lecture page groups every language of
+  a lecture in one block (narration and label counts, build date, "narration changed since the build" = an approved line the
+  video's `lines.json` lacks, sessions, "can be built: no — 34 labels have no Russian form; …"); the editor header links to the
+  other languages (their editor if built, else their review) and each open line lists the line in the other languages.
+  **Seed:** `python -m studio.languages_seed` approves the Uzbek lines and labels of Module 0 Lectures 1-5 (approved and built,
+  above); idempotent, never overwrites a row. Run on `out/studio.sqlite` 2026-10-21: 1,752 rows (lines / labels: L1 212 / 295,
+  L2 132 / 183, L3 144 / 162, L4 132 / 170, L5 128 / 194). English (Module 0's gloss, Module 7's draft 2) and Module 7's Uzbek (draft 1) are not approved. Lectures 6-7 are
+  "approved as written" above but not built, so not seeded.
+  The page is plain files, no build step: `studio/editor.html` + `studio/static/` (served at /studio-static/;
+  `editor/player.js` is a `Player` class that drives any video element and audio map, `editor/levels.js` takes its
+  take lookup, edit and play from `LV.host`; the presenter's panel is `presenter/takes.js` + `takes.css`).
+  Tests: `studio/run_tests.sh` (175; `fast` skips the server run, the browser run and the GPU recognisers). The browser
+  run (`test_presenter_browser.py` → `presenter_browser_check.py`) needs Playwright in the system `python3` (the venv has
+  none) and drives headless Chromium with a fake microphone through keys, one-take recording, watching and choosing.
 
 ## Slide discrepancies found by the drafts (slides not edited)
 

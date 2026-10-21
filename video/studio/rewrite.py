@@ -10,8 +10,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import builds as B
 from studio import media as M
-from studio import narration_edit as N
 from studio import store as S
 from studio import timeline as T
 
@@ -20,18 +20,18 @@ HERE = Path(__file__).resolve().parents[1]
 
 def module_of(build):
     """The video module a build renders: lecture01_uz_navoiy -> lecture01, m7_lecture01_en -> m7_lecture01."""
-    return build.rsplit("_uz_navoiy", 1)[0] if build.endswith("_uz_navoiy") else build.rsplit("_en", 1)[0]
+    return B.stem(build)
 
 
 def render_env(build):
     env = dict(os.environ, JOBS="1")
-    m = N.BUILD.fullmatch(build)
-    if build.endswith("_uz_navoiy"):
-        env.update(LANG_CODE="uz", VOICE_ENGINE="navoiy")
+    module, lecture, lang, engine = B.parse(build)
+    env["LANG_CODE"] = lang
+    if engine == "navoiy":
+        env["VOICE_ENGINE"] = "navoiy"
     else:
-        env["LANG_CODE"] = "en"
         env.pop("VOICE_ENGINE", None)
-    drafts = HERE / "narration" / "drafts" / (f"m{m[1]}_l{m[2]}" if m[1] else f"l{m[2]}")
+    drafts = HERE / "narration" / "drafts" / (f"m{module}_l{lecture:02d}" if module else f"l{lecture:02d}")
     if drafts.is_dir():
         env["LABEL_DRAFTS"] = str(drafts.relative_to(HERE))
     return env

@@ -35,9 +35,13 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
+import builds as B
+import languages as LG
+import presenter
 from compose_recording import CLEAN
 from studio import api as A
 from studio import media as M
+from studio import review as R
 from studio import store as S
 from studio import versions as V
 from studio import voice_server
@@ -45,19 +49,20 @@ from studio import voice_server
 HERE = Path(__file__).parent
 ROOT = Path(os.environ.get("STUDIO_ROOT", HERE / "out"))     # tests point this at a scratch folder
 DB = ROOT / "studio.sqlite"
-BUILD = re.compile(r"(?:m(\d)_)?lecture(\d\d)_(uz_navoiy|en)")   # Module 0 has no prefix; Module K is mK_
 MODULES = {0: "Statistics for Advanced AI", 1: "Classical Machine Learning", 2: "Vision / Deep Neural Networks",
            3: "Natural Language Processing", 4: "Graph Neural Networks", 5: "Reinforcement Learning & Alignment",
            6: "Efficient AI & Deployment", 7: "AI Agents, Tool Use & Retrieval"}      # course-map.md
 
 
 def module_of(build):
-    return int(BUILD.fullmatch(build).group(1) or 0)
+    return B.module(build)
 
 
 def lecture_title(build):
-    m = BUILD.fullmatch(build)
-    return f"Lecture {m.group(2)} · {'Uzbek' if m.group(3) == 'uz_navoiy' else 'English'}"
+    _, lecture, lang, _ = B.parse(build)
+    return f"Lecture {lecture:02d} · {LG.name(lang)}"
+
+
 NAME = re.compile(r"[0-9T-]+")                         # a recording's name: its start time
 QUEUE = threading.Semaphore(1)                         # one heavy job at a time
 PREPARING = {}                                         # build -> "running" | "failed: …"
@@ -195,7 +200,7 @@ def transcribe(build, take_ids):
         with dbc() as c:
             prof = {s["name"]: s["clean"] or PROFILE for s in S.sessions(c, build)}
         M.words(ROOT / build, [(t, ls[t["line"]][1]) for t in ts], prof[ts[0]["session"]] if ts else "deepfilter",
-                "en" if build.endswith("_en") else "uz")
+                B.lang(build))
         return f"{len(ts)} takes"
     enqueue(build, "words", ",".join(take_ids)[:200] if len(take_ids) < 4 else f"{len(take_ids)} takes", fn)
 
@@ -238,12 +243,39 @@ def voice_server_action(action):
     threading.Thread(target=go, daemon=True).start()
 
 
+def lang_switch(build):
+    """The editor header's links to the lecture's other languages: their editor when it is built, else their review page."""
+    stem = B.stem(build)
+    with dbc() as c:
+        others = R.editor_langs(c, ROOT, build)["others"]
+    return "".join(f'<a class="btn" href="{html.escape("/edit?build=" + o["build"] if o["build"] else o["review"])}" '
+                   f'title="{html.escape(o["name"])}: {"the editor" if o["build"] else "narration review (no build yet)"}">'
+                   f'{html.escape(o["native"])}{"" if o["build"] else " (review)"}</a> ' for o in others)
+
+
+def narration_page(stem, lang):
+    page = (HERE / "studio" / "narration.html").read_text()
+    m = B.parse_stem(stem)
+    return (page.replace("__LECTURE__", stem).replace("__LANG__", lang).replace("__MODULE__", str(m[0]))
+            .replace("__TITLE__", html.escape(f"Lecture {m[1]:02d} · {LG.name(lang)}")))
+
+
 def editor(build):
     m = module_of(build)
     page = (HERE / "studio" / "editor.html").read_text()
     return (page.replace("__BUILD__", build).replace("__TITLE__", html.escape(lecture_title(build)))
-            .replace("__MODULE__", str(m)).replace("__CLEAN__", "".join(
+            .replace("__MODULE__", str(m)).replace("__LANGS__", lang_switch(build)).replace("__CLEAN__", "".join(
                 f'<option value="{k}">{k}</option>' for k in sorted(CLEAN, key=lambda k: k != "deepfilter"))))
+
+
+def presenter_page(build):
+    """The build's presenter page, rendered now from presenter.PAGE with its lines.json and silent video (None until
+    the page has been prepared once)."""
+    d = ROOT / build / "presenter"
+    silent = d / f"{build}_silent.mp4"
+    if not (d / "lines.json").exists() or not silent.exists():
+        return None
+    return presenter.render(json.loads((d / "lines.json").read_text()), build, silent)
 
 
 STATIC = HERE / "studio" / "static"                    # the editor's CSS and scripts, served at /studio-static/
@@ -267,10 +299,10 @@ def files(module):
     return f"<section><h2>Files</h2><ul>{''.join(rows) or '<li class=dim>nothing shared yet</li>'}</ul></section>"
 
 
-def sidebar(module, all_builds):
+def sidebar(module):
     items = []
     for k, title in MODULES.items():
-        n_lec = sum(module_of(b) == k for b in all_builds)
+        n_lec = len(R.stems(ROOT, k))
         n_files = len(shared(k))
         count = " · ".join(x for x in (f"{n_lec} lecture{'s' * (n_lec != 1)}" if n_lec else "",
                                         f"{n_files} file{'s' * (n_files != 1)}" if n_files else "") if x)
@@ -280,49 +312,119 @@ def sidebar(module, all_builds):
 
 
 def builds():
-    return [d.name for d in sorted(ROOT.iterdir()) if d.is_dir() and BUILD.fullmatch(d.name)
+    return [d.name for d in sorted(ROOT.iterdir()) if d.is_dir() and B.is_build(d.name)
             and (d / f"{d.name}.mp4").exists() and (d / "joined.txt").exists()]
+
+
+def when(t):
+    return time.strftime("%d %b %H:%M", time.localtime(t))
+
+
+def counts_line(c, kind):
+    """"approved 87 / 91 · 3 need update · 1 empty" for a narration or label count (the parts that are zero are left out)."""
+    parts = [f"approved {c['approved']} / {c['total']}"]
+    for k, word in (("needs_update", "need update"), ("draft", "draft"), ("empty", "empty")):
+        if c[k]:
+            parts.append(f'<span class="{"warn" if k == "needs_update" else "dim"}">{c[k]} {word}</span>')
+    return f'{kind}: ' + " · ".join(parts)
+
+
+def build_buttons(b, rows):
+    """A built lecture's buttons and its recordings (the studio's original per-build block). Returns (html, busy)."""
+    ready = (ROOT / b / "presenter" / "presenter.html").exists()
+    st = PREPARING.get(b, "")
+    if st == "running":
+        pres = '<span class="busy">preparing the presenter page…</span>'
+    elif ready:
+        pres = (f'<a class="btn" href="/{b}/presenter/presenter.html">Present &amp; record</a> '
+                f'<button class="quiet" onclick="post(\'/api/prepare?build={b}\')">Refresh page</button>')
+    else:
+        pres = f'<button onclick="post(\'/api/prepare?build={b}\')">Prepare presenter page</button>'
+    if st.startswith("failed"):
+        pres += f' <span class="bad">{html.escape(st)}</span>'
+    pres = (f'<a class="btn" href="/lecture?build={b}">Watch video</a> '
+            + (f'<a class="btn" href="/edit?build={b}">Open editor</a> ' if ready else "") + pres)
+    recs, busy = [], st == "running"
+    for r in (r for r in rows if r["build"] == b):
+        n, s = r["name"], r["state"]
+        busy |= s in ("queued", "building")
+        q = f"build={b}&name={n}"
+        act = {"queued": '<span class="busy">queued…</span>', "building": '<span class="busy">building…</span>'}.get(s)
+        if act is None:
+            act = (f'<a class="btn" href="/watch?{q}">Watch</a> <span class=dim>voice: {html.escape(r["clean"] or "?")}</span> '
+                   if s == "built" else "") + \
+                  f'<button onclick="build(\'{q}\')">{"Rebuild" if s == "built" else "Build video"}</button> '
+            if s == "failed":
+                act += f'<span class="bad">failed: {html.escape(r["error"])}</span> '
+        act += f'<button class="quiet" onclick="del(\'{q}\')">Delete</button>'
+        recs.append(f"<li><span class=mono>{when(r['created'])}</span> · {r['seconds'] / 60:.1f} min · {act}</li>")
+    return (f"<p>{pres}</p><ul>{''.join(recs) or '<li class=dim>no recordings yet</li>'}</ul>"), busy
+
+
+def lang_row(stem, s, rows):
+    """One language of a lecture on the lecture page: narration and label counts, the build, its buttons. (html, busy)"""
+    lang, busy = s["lang"], False
+    review = f'<a class="btn" href="/narration?lecture={stem}&amp;lang={lang}">Review narration</a>'
+    native = f' <span class="dim">· {html.escape(s["native"])}</span>' if s["native"] != s["name"] else ""
+    out = [f'<div class="lang"><h3>{html.escape(s["name"])}{native}</h3>']
+    if s["has_narration"]:
+        out.append(f'<p class="stat">{counts_line(s["lines"], "narration")}<br>{counts_line(s["labels"], "labels")}</p>')
+    else:
+        out.append('<p class="stat dim">no narration yet</p>')
+    if s["has_narration"] and s["lines"]["total"] and s["lines"]["empty"] == s["lines"]["total"]:
+        out.append(f'<p class="note">skeleton created: ask Claude to draft {html.escape(s["name"])} for this lecture '
+                   f'(<span class="mono">narration/{stem}_{lang}.md</span>), then approve it line by line here.</p>')
+    out.append(f'<p>{review}</p>')
+    built = [b for b in s["builds"] if b["built"] and (ROOT / b["build"] / "joined.txt").exists()]
+    for b in s["builds"]:
+        if b not in built:
+            out.append(f'<p class="stat dim">build {b["build"]}: not built yet</p>')
+    for b in built:
+        if b["stale"]:
+            state = (f'<span class="warn">narration changed since the build</span> '
+                     f'<span class="dim">({len(b["stale"])} approved line{"s" * (len(b["stale"]) != 1)} differ from the video)</span>')
+        elif b["stale"] is None:
+            state = '<span class="dim">(no presenter page to compare the narration with)</span>'
+        elif not s["lines"]["approved"] + s["lines"]["needs_update"]:
+            state = '<span class="dim">no approved lines to compare with the video yet</span>'
+        else:
+            state = '<span class="good">narration matches the video</span>'
+        btns, bb = build_buttons(b["build"], rows)
+        busy |= bb
+        out.append(f'<p class="stat">build {b["build"]}: built {when(b["when"])} · {state} · '
+                   f'recorded sessions: {b["sessions"]}</p>{btns}')
+    if not built:
+        out.append('<p class="stat">' + ('can be built: <span class="good">yes</span>' if s["ready"] else
+                   f'can be built: <span class="bad">no</span> <span class="dim">— {html.escape("; ".join(s["missing"]))}</span>') + '</p>')
+    out.append("</div>")
+    return "".join(out), busy
+
+
+def add_language_form(stem, have):
+    opts = "".join(f'<option value="{c}">{html.escape(LG.name(c))} · {html.escape(LG.native(c))}</option>'
+                   for c in LG.CODES if c not in have)
+    return (f'<p class="addlang"><select id="add-{stem}">{opts}</select> '
+            f'<button onclick="addLang(\'{stem}\')">+ add language</button> '
+            f'<span class="dim">creates an empty narration to be drafted by Claude</span></p>')
 
 
 def studio(module):
     with db() as c:
         rows = c.execute("select * from recordings order by created desc").fetchall()
     out, busy = [], bool(PREPARING) and any(v == "running" for v in PREPARING.values())
-    all_builds = builds()
-    for b in (b for b in all_builds if module_of(b) == module):
-        ready = (ROOT / b / "presenter" / "presenter.html").exists()
-        st = PREPARING.get(b, "")
-        if st == "running":
-            pres = '<span class="busy">preparing the presenter page…</span>'
-        elif ready:
-            pres = (f'<a class="btn" href="/{b}/presenter/presenter.html">Present &amp; record</a> '
-                    f'<button class="quiet" onclick="post(\'/api/prepare?build={b}\')">Refresh page</button>')
-        else:
-            pres = f'<button onclick="post(\'/api/prepare?build={b}\')">Prepare presenter page</button>'
-        if st.startswith("failed"):
-            pres += f' <span class="bad">{html.escape(st)}</span>'
-        pres = (f'<a class="btn" href="/lecture?build={b}">Watch video</a> '
-                + (f'<a class="btn" href="/edit?build={b}">Open editor</a> ' if ready else "") + pres)
-        recs = []
-        for r in (r for r in rows if r["build"] == b):
-            n, s = r["name"], r["state"]
-            busy |= s in ("queued", "building")
-            when = time.strftime("%d %b %H:%M", time.localtime(r["created"]))
-            q = f"build={b}&name={n}"
-            act = {"queued": '<span class="busy">queued…</span>', "building": '<span class="busy">building…</span>'}.get(s)
-            if act is None:
-                act = (f'<a class="btn" href="/watch?{q}">Watch</a> <span class=dim>voice: {html.escape(r["clean"] or "?")}</span> '
-                       if s == "built" else "") + \
-                      f'<button onclick="build(\'{q}\')">{"Rebuild" if s == "built" else "Build video"}</button> '
-                if s == "failed":
-                    act += f'<span class="bad">failed: {html.escape(r["error"])}</span> '
-            act += f'<button class="quiet" onclick="del(\'{q}\')">Delete</button>'
-            recs.append(f"<li><span class=mono>{when}</span> · {r['seconds'] / 60:.1f} min · {act}</li>")
-        out.append(f"<section><h2>{lecture_title(b)}</h2><p>{pres}</p>"
-                   f"<ul>{''.join(recs) or '<li class=dim>no recordings yet</li>'}</ul></section>")
+    with dbc() as c:
+        for stem in R.stems(ROOT, module):
+            langs = R.lecture_langs(ROOT, stem)
+            body = []
+            for lang in langs:
+                html_, bb = lang_row(stem, R.summary(c, ROOT, stem, lang), rows)
+                body.append(html_)
+                busy |= bb
+            out.append(f'<section><h2>Lecture {B.parse_stem(stem)[1]:02d}</h2>{"".join(body)}'
+                       f'{add_language_form(stem, set(langs))}</section>')
     head = f'<h1>Module {module} · {html.escape(MODULES[module])}</h1>'
-    lectures = "".join(out) or '<section><h2>Lectures</h2><p class=dim>no lecture video built yet</p></section>'
-    return (PAGE.replace("NAV", sidebar(module, all_builds))
+    lectures = "".join(out) or '<section><h2>Lectures</h2><p class=dim>no lecture narration or video yet</p></section>'
+    return (PAGE.replace("NAV", sidebar(module))
             .replace("BODY", head + files(module) + lectures + HELP)
             .replace("BUSY", "true" if busy else "false").replace("MODULE", str(module)))
 
@@ -339,7 +441,7 @@ def lecture(build):
     """The built lecture video itself (the narrated Manim video), to watch before presenting it."""
     m = module_of(build)
     src = f"/{build}/{build}.mp4?v={stamp(ROOT / build / (build + '.mp4'))}"
-    return (PAGE.replace("NAV", sidebar(m, builds()))
+    return (PAGE.replace("NAV", sidebar(m))
             .replace("BODY", f'<p><a href="/?m={m}">← Module {m}</a> · {lecture_title(build)} · the narrated video</p>'
                              f'<video src="{src}" controls autoplay style="width:100%;background:#000;border-radius:8px">'
                              f'</video>')
@@ -349,7 +451,7 @@ def lecture(build):
 def watch(build, name):
     src = f"/{build}/presenter/recordings/{quote(name)}.mp4?v={stamp(recdir(build) / (name + '.mp4'))}"
     m = module_of(build)
-    return (PAGE.replace("NAV", sidebar(m, builds()))
+    return (PAGE.replace("NAV", sidebar(m))
             .replace("BODY", f'<p><a href="/?m={m}">← Module {m}</a> · {lecture_title(build)} · '
                              f'<span class=mono>{name}</span></p><video src="{src}" controls autoplay '
                              f'style="width:100%;background:#000;border-radius:8px"></video>')
@@ -391,7 +493,10 @@ button,.btn{background:#1f2a36;color:var(--acc);border:1px solid #2f4256;border-
 font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
 button.quiet{background:none;color:var(--dim);border-color:#333}
 .mono{font-family:ui-monospace,monospace;font-size:14px}.dim{color:var(--dim)}.busy{color:#d7b46a}.bad{color:var(--bad)}
-.help{color:var(--dim);font-size:14px}
+.help{color:var(--dim);font-size:14px}.good{color:#5fa0a4}.warn{color:#d7b46a}
+.lang{border-top:1px solid #2a2a2a;margin-top:10px;padding-top:6px}.lang:first-of-type{border-top:0;margin-top:0}
+.lang h3{font-size:16px;margin:4px 0}.stat{margin:4px 0;font-size:14px}.note{margin:4px 0;font-size:14px;color:#d7b46a}
+.addlang{margin:12px 0 0;padding-top:8px;border-top:1px dashed #2a2a2a}select{background:#1f2a36;color:var(--acc);border:1px solid #2f4256;border-radius:6px;padding:4px 8px;font:inherit;font-size:14px}
 </style></head><body><div class="wrap">NAV<main>BODY</main></div><script>
 // the module last opened is remembered: "/" without ?m= goes back to it
 const MOD = "MODULE", asked = new URLSearchParams(location.search).get('m');
@@ -403,6 +508,9 @@ async function post(u){ const r = await fetch(u, {method:'POST'}); if (!r.ok) al
 const clean = document.getElementById('clean');
 if (clean){ try { clean.value = localStorage.getItem('studioClean') || 'deepfilter'; } catch (e) { clean.value = 'deepfilter'; }
   clean.onchange = () => { try { localStorage.setItem('studioClean', clean.value); } catch (e) {} }; }
+async function addLang(stem){ const l = document.getElementById('add-' + stem).value; if (!l) return;
+  const r = await fetch('/api/narration/add?lecture=' + stem + '&lang=' + l, {method:'POST'});
+  if (!r.ok) alert(await r.text()); location.reload(); }
 function build(q){ post('/api/compose?' + q + '&clean=' + (clean ? clean.value : 'deepfilter')); }
 function del(q){ if (confirm('Delete this recording and its video?')) post('/api/delete?' + q); }
 if (BUSY) setTimeout(() => location.reload(), 10000);
@@ -571,12 +679,60 @@ class Studio(SimpleHTTPRequestHandler):
         u = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
         b, n = q.get("build", ""), q.get("name", "")
-        ok_b = BUILD.fullmatch(b) and (ROOT / b / f"{b}.mp4").exists()
+        ok_b = B.is_build(b) and (ROOT / b / f"{b}.mp4").exists()
         ok_n = NAME.fullmatch(n) is not None
         return u.path, q, b if ok_b else None, n if ok_n else None
 
+    def narration_args(self, q):
+        """(lecture stem, language) of a narration request, or None: the lecture must have narration or a build."""
+        stem, lang = q.get("lecture", ""), q.get("lang", "")
+        if not B.STEM.fullmatch(stem) or lang not in LG.LANGS or stem not in R.stems(ROOT, B.parse_stem(stem)[0]):
+            return None
+        return stem, lang
+
+    def narration_get(self, path, q):
+        a = self.narration_args(q)
+        if a is None:
+            return self.send_error(404, "no such lecture or language")
+        if path == "/narration":
+            return self.html(narration_page(*a))
+        try:
+            with dbc() as c:
+                return self.json(R.review(c, *a))
+        except Exception as e:
+            traceback.print_exc()
+            return self.json({"error": f"{type(e).__name__}: {e}"[:500]}, 500)
+
+    def narration_post(self, path, q):
+        """/api/narration/{approve,save,fine}?lecture&lang&kind&key (save: {"text"} in the body) and /add?lecture&lang."""
+        a = self.narration_args(q)
+        if a is None:
+            return self.send_error(404, "no such lecture or language")
+        action = path.rsplit("/", 1)[1]
+        try:
+            if action == "add":
+                return self.json({"file": R.add_language(a[0], a[1])})
+            if action not in ("approve", "save", "fine"):
+                return self.send_error(404)
+            text = json.loads(self.body() or b"{}").get("text") if action == "save" else None
+            with dbc() as c:
+                return self.json(R.act(c, *a, action, q.get("kind", "line"), q.get("key", ""), text))
+        except (ValueError, KeyError, FileNotFoundError) as e:
+            return self.json({"error": str(e.args[0] if e.args else e)[:300]}, 400)
+
     def do_GET(self):
         path, q, b, n = self.args()
+        if path in ("/narration", "/api/narration"):
+            return self.narration_get(path, q)
+        if path == "/api/editor-langs":
+            if not b or not (ROOT / b / "presenter" / "lines.json").exists():
+                return self.send_error(404, "no such lecture")
+            try:
+                with dbc() as c:
+                    return self.json(R.editor_langs(c, ROOT, b))
+            except Exception as e:
+                traceback.print_exc()
+                return self.json({"error": f"{type(e).__name__}: {e}"[:500]}, 500)
         if path in ("/", "/index.html"):
             m = q.get("m", "0")
             return self.html(studio(int(m) if m.isdigit() and int(m) in MODULES else 0))
@@ -592,6 +748,28 @@ class Studio(SimpleHTTPRequestHandler):
             if not (b and (ROOT / b / "presenter" / "lines.json").exists()):
                 return self.send_error(404, "prepare the presenter page first")
             return self.html(editor(b))
+        m = re.fullmatch(r"/([\w-]+)/presenter/presenter\.html", path)
+        if m and B.is_build(m[1]):                         # rendered from presenter.PAGE: a page fix reaches every lecture
+            page = presenter_page(m[1])
+            if page:
+                return self.html(page)
+        if path == "/api/line":
+            if not b:
+                return self.send_error(404, "no such lecture")
+            if not (ROOT / b / "presenter" / "lines.json").exists():
+                return self.json({"error": "prepare the presenter page first"}, 404)
+            try:
+                with dbc() as c:
+                    cut_off = A.abandoned(ROOT, b, c)
+                for name in cut_off:
+                    process(b, name)
+                with dbc() as c:
+                    return self.json(A.line_view(ROOT, b, int(q["line"]) if q.get("line", "").isdigit() else -1, c))
+            except KeyError as e:
+                return self.json({"error": str(e.args[0])[:200]}, 404)
+            except Exception as e:
+                traceback.print_exc()
+                return self.json({"error": f"{type(e).__name__}: {e}"[:500]}, 500)
         if path in ("/api/project", "/api/counts"):
             if not b:
                 return self.send_error(404, "no such lecture")
@@ -632,6 +810,8 @@ class Studio(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path, q, b, n = self.args()
+        if path.startswith("/api/narration/"):
+            return self.narration_post(path, q)
         if b is None:
             return self.send_error(400, "unknown lecture")
         try:

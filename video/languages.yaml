@@ -1,0 +1,98 @@
+# The course's languages, one entry each. common.py takes its edge-tts voices, rates and clip trims from here, the
+# studio (narration review, lecture page, editor) takes names, scripts and section words.
+#
+#   name / native   the language in English and in its own words
+#   script          latin | cyrillic | hangul | arabic | han -- what its narration and labels are written in (the
+#                   review page flags letters of the wrong script)
+#   voice.edge      an edge-tts voice (checked with `python -m edge_tts --list-voices` on 2026-10-21, all exist);
+#                   voice.navoiy is the instructor's cloned voice (Uzbek only, VOICE_ENGINE=navoiy)
+#   rate / trim     edge-tts speaking rate, and the seconds of silence kept before / after a clip (Korean only so far:
+#                   InJoon reads ~40 % slower than Andrew and pads each clip by ~1.2 s); the other languages' voices
+#                   are untried, so they have none yet
+#   section         the section card and the narration file's heading, {n} the section number
+#   opening         the chapter title of the lecture opening (export)
+#   font            a font that has the script's letters, for the video's text (a hint: not used until phase 2)
+#   rtl             written right to left
+uz:
+  name: Uzbek
+  native: "Oʻzbekcha"
+  script: latin
+  voice: {edge: uz-UZ-SardorNeural, navoiy: musulmon-ft-llm1-flow12-phone}   # uz-UZ-MadinaNeural is the female option
+  section: "{n}-boʻlim"
+  opening: Kirish
+  font: Noto Sans
+en:
+  name: English
+  native: English
+  script: latin
+  voice: {edge: en-US-AndrewNeural}
+  section: "Section {n}"
+  opening: Opening
+  font: Noto Sans
+ru:
+  name: Russian
+  native: "Русский"
+  script: cyrillic
+  voice: {edge: ru-RU-DmitryNeural}
+  section: "Раздел {n}"
+  opening: "Введение"
+  font: Noto Sans
+ko:
+  name: Korean
+  native: "한국어"
+  script: hangul
+  voice: {edge: ko-KR-InJoonNeural}      # male, like Andrew (the agent course's Korean track)
+  rate: "+20%"
+  trim: [0.15, 0.35]
+  section: "섹션 {n}"
+  opening: "시작"
+  font: Noto Serif KR      # what common.TEXT_FONT uses for Korean today
+tr:
+  name: Turkish
+  native: "Türkçe"
+  script: latin
+  voice: {edge: tr-TR-AhmetNeural}
+  section: "Bölüm {n}"
+  opening: "Giriş"
+  font: Noto Sans
+de:
+  name: German
+  native: Deutsch
+  script: latin
+  voice: {edge: de-DE-ConradNeural}
+  section: "Abschnitt {n}"
+  opening: "Einleitung"
+  font: Noto Sans
+fr:
+  name: French
+  native: "Français"
+  script: latin
+  voice: {edge: fr-FR-HenriNeural}
+  section: "Section {n}"
+  opening: "Introduction"
+  font: Noto Sans
+es:
+  name: Spanish
+  native: "Español"
+  script: latin
+  voice: {edge: es-ES-AlvaroNeural}
+  section: "Sección {n}"
+  opening: "Introducción"
+  font: Noto Sans
+ar:
+  name: Arabic
+  native: "العربية"
+  script: arabic
+  voice: {edge: ar-SA-HamedNeural}
+  section: "القسم {n}"
+  opening: "مقدمة"
+  font: Noto Naskh Arabic
+  rtl: true
+zh:
+  name: Chinese
+  native: "中文"
+  script: han
+  voice: {edge: zh-CN-YunjianNeural}
+  section: "第{n}节"
+  opening: "开场"
+  font: Noto Sans CJK SC

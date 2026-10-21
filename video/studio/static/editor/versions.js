@@ -26,14 +26,14 @@ function versionHtml(k, x, scene){
     : rep.some(r => r.listen) ? '<span class="warn">voice check passes, listen</span>' : 'voice check passes';
   const state = merging ? '<span class="warn">merging…</span>' : {queued: '<span class="warn">waiting…</span>', voicing: '<span class="warn">voicing…</span>',
     rendering: '<span class="warn">rendering…</span>', ready: '<span class="good">ready</span>', failed: '<span class="bad">failed</span>',
-    merged: '<span class="dim">merged</span>', stale: '<span class="warn">made before the last merge</span>'}[x.state];
+    merged: '<span class="dim" title="its voice is now the own narration of the lecture video for this scene; your recordings are not affected">merged into the lecture video</span>', stale: '<span class="warn">made before the last merge</span>'}[x.state];
   const when = new Date(x.created * 1000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false});
   const btn = (label, js, tip, quiet = true) => `<button ${quiet ? 'class="quiet"' : ''} onclick="${js}" title="${tip}">${label}</button>`;
   const ready = x.state === 'ready' && !merging;
   return `<div class="ver${x.state === 'stale' || x.state === 'merged' ? ' old' : ''}">
-    <div><b>v${x.n}</b> · ${n ? n + ' line' + (n === 1 ? '' : 's') + ' changed' : 'same words, new takes'}${vc ? ' · ' + vc : ''} · ${when} · ${state}
+    <div><b>v${x.n}</b> · ${n ? n + ' line' + (n === 1 ? '' : 's') + ' changed' : (D.engine === 'navoiy' ? 'same words, a new cloned-voice take' : 'same words, voiced again')}${vc ? ' · ' + vc : ''} · ${when} · ${state}
       ${x.base ? `<span class="dim">(grew from v${x.base})</span>` : ''}</div>
-    <div class="ctl">${x.video ? btn('▶ watch', `watchVersion('${scene}', ${x.n}, ${k})`, 'the whole scene, from this line, with its own sound', false) : ''}
+    <div class="ctl">${x.video ? btn('▶ watch', `watchVersion('${scene}', ${x.n}, ${k})`, 'the whole scene, from this line, in the ' + (D.engine === 'navoiy' ? 'cloned' : 'synthetic') + ' voice (not your recording)', false) : ''}
       ${ready ? btn('rewrite again', `rewriteAgain(${k}, '${scene}', ${x.n})`, 'load this version\'s text of the line into the box; the next version grows from it') : ''}
       ${ready ? btn('merge', `mergeVersion('${scene}', ${x.n})`, 'put it in the lecture', false) : ''}
       ${x.state === 'merged' || ['voicing', 'rendering'].includes(x.state) || merging ? '' : btn('discard', `discardVersion('${scene}', ${x.n})`, 'delete this version')}</div>
@@ -47,10 +47,10 @@ function narrHtml(k){
     ${vm ? `<p class="${vm.ok ? (vm.listen ? 'warn' : 'dim') : 'bad'}">Voice check: ${vm.ok ? (vm.listen ? 'passes, but listen' : 'passes') : 'fails (' + esc(vm.fails.join(', ')) + ')'} · heard: “${esc(vm.heard)}”</p>` : ''}
     <textarea id="nar${k}">${esc(D.lines[k][1])}</textarea>
     <div class="ctl"><button ${busy ? 'disabled' : ''} onclick="saveVersion(${k})" title="${busy ? 'a version of this scene is still being made' : 'the lecture is not changed until you merge'}">save as new version</button>
-    ${D.engine === 'navoiy' ? `<button class="quiet" ${busy ? 'disabled' : ''} onclick="revoiceAsIs(${k})" title="same words, new takes; the old clip stays if it scores better">re-voice as is</button>` : ''}
+    ${D.engine === 'navoiy' ? `<button class="quiet" ${busy ? 'disabled' : ''} onclick="revoiceAsIs(${k})" title="the cloned voice says the same words again; the old clip stays if it scores better">new cloned-voice take</button>` : ''}
     ${base ? `<span class="warn">grows from ${esc(base.split('/')[1])} <a href="#" onclick="event.preventDefault(); delete baseFor[${k}]; render()">(from the lecture instead)</a></span>` : ''}
     <span class="dim">Uzbek apostrophes are fixed for you (o'n → oʻn). In the bilingual file the English line is left as it was.</span></div>
-    ${vs.length ? `<div class="ctl"><label>Versions of ${esc(scene)}</label></div>${vs.slice().reverse().map(x => versionHtml(k, x, scene)).join('')}` : ''}</div>`; }
+    ${vs.length ? `<div class="ctl"><label>${D.engine === 'navoiy' ? 'Cloned' : 'Synthetic'}-voice versions of ${esc(scene)}: the narration of the lecture video itself (your recordings are separate)</label></div>${vs.slice().reverse().map(x => versionHtml(k, x, scene)).join('')}` : ''}</div>`; }
 
 function currentText(k){            // what the next version would start from for this line
   const b = baseFor[k] && sceneVersions(k).find(x => 'v' + x.n === baseFor[k].split('/')[1]);
@@ -60,7 +60,7 @@ function newVersion(k, body){
   return api(q, body).then(r => { if (r){ delete baseFor[k]; say('queued: a new version of ' + D.scenes[k]); } }); }
 function saveVersion(k){
   const text = document.getElementById('nar' + k).value.trim();
-  if (text === currentText(k).trim()) return say('the text is unchanged' + (D.engine === 'navoiy' ? ': use “re-voice as is”' : ''));
+  if (text === currentText(k).trim()) return say('the text is unchanged' + (D.engine === 'navoiy' ? ': use “new cloned-voice take”' : ''));
   newVersion(k, {text}); }
 function revoiceAsIs(k){ newVersion(k); }
 function rewriteAgain(k, scene, n){

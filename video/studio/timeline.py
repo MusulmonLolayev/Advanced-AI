@@ -181,6 +181,15 @@ def squeeze(track, cuts, squeezes, voice):
     return out
 
 
+def window(tracks, a, b):
+    """The two tracks cut down to the seconds a to b (both tracks keep one length)."""
+    out = {}
+    for name in ("voice", "picture"):
+        total = length(tracks[name])
+        out[name] = cut(tracks[name], [(0.0, a), (b, total)], name == "voice")
+    return out
+
+
 def merge(spans):
     out = []
     for a, b in sorted((min(a, b), max(a, b)) for a, b in spans):

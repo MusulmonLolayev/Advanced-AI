@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# studio/run_tests.sh [fast]   every studio test, from video/. "fast" skips the two that take a minute (the end-to-end
-#                              server run, and speech recognition on the GPU).
+# studio/run_tests.sh [fast]   every studio test, from video/. "fast" skips the three that take a minute (the end-to-end
+#                              server run, the browser run, and speech recognition on the GPU).
 #   test_timeline     takes, tracks, cuts, squeezes, trims, fit by the margin, nudges, pause proposals, the edit list, subtitles, chapters, script check
 #   test_store        a deleted recording's session, edits and derived files are forgotten
 #   test_media        pieces joined in order, pauses found, voice levels (and their speed), voice sliced sample-exact, chapter titles
@@ -9,12 +9,17 @@
 #   test_rewrite      the helpers a rewritten scene needs (render environment, scene of a line, running a tool)
 #   test_versions     drafts of a rewritten scene: base choice, draft narration, voice cache, merge order and rollback,
 #                     stale, discard; render.sh OUT_DIR and the kits' NARRATION_DIR (outside tools stubbed)
+#   test_languages   the language registry (voices as the renders use them), build names, narration per language and its empty
+#                     skeleton, line and label status (empty / draft / approved / needs update), the seed, the review page's
+#                     actions and script (run on fake elements), the lecture page's rows and the editor's language box
 #   test_studio_e2e   the real server on a free port: record over HTTP, retake, crash recovery, edits, export
+#   test_presenter_browser  the presenter page's takes panel in headless Chromium with a fake microphone (needs Playwright in the
+#                     system python3; skipped without it): keys, one-take recording with L, watching, choosing, marking; the editor still plays
 #   test_words        words_worker.py on a real English and a real Uzbek clip (needs the Navoiy env and GPU)
 set -uo pipefail
 cd "$(dirname "$0")/.."
-TESTS=(test_timeline test_store test_media test_pages test_narration_edit test_rewrite test_versions)
-[ "${1:-}" = fast ] || TESTS+=(test_studio_e2e test_words)
+TESTS=(test_timeline test_store test_media test_pages test_narration_edit test_rewrite test_versions test_languages)
+[ "${1:-}" = fast ] || TESTS+=(test_studio_e2e test_presenter_browser test_words)
 fail=0
 for t in "${TESTS[@]}"; do
   printf '%-18s ' "$t"

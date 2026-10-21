@@ -1,7 +1,9 @@
 // Voice level: the strip of one take (envelope, silences, picture, removed spans, draggable trim handles) and the
 // lecture strip under the timeline (the whole edit list's level, long silences in amber).
-// Classic script: shares D, open, curLine, P, edit, takeById, playTake, render … with the other editor scripts.
-const LV = {step: 0.02, cache: {}, thr: {}, bad: {}, pending: {}, lec: null, version: null, drag: null, paint: 0};
+// Classic script, used by two pages. It needs BUILD, and a host that knows the takes: the editor's globals (takeById,
+// edit, playTake) by default, or the presenter page's takes panel, which sets LV.host before it draws a strip.
+const LV = {step: 0.02, cache: {}, thr: {}, bad: {}, pending: {}, lec: null, version: null, drag: null, paint: 0,
+  host: {take: id => takeById(id), edit: (id, ch) => edit(id, ch), play: (t, at) => playTake(t, at)}};
 const FLOOR = -80, SHOW_LO = -60, SHOW_HI = -10;           // dB: what digital silence reads as; the range drawn
 const STRIP_H = 72, PAD = 8, SNAP = 0.05, MIN_PAUSE = 0.5, ORIGINAL_SRC = '__original__';
 const COL = {};                                             // colours, read from the page's CSS variables once
@@ -73,7 +75,7 @@ function editedTime(plan, total, tt){          // where raw take time tt lands i
   return out; }
 
 // ─── the strip of one take ───
-function stripOf(cv){ return takeById(cv.dataset.take); }
+function stripOf(cv){ return LV.host.take(cv.dataset.take); }
 function liveTrims(t){
   const d = LV.drag;
   return d && d.id === t.id ? [d.tin, d.tout] : [t.edit.trim_in || 0, t.edit.trim_out || 0]; }
@@ -130,7 +132,7 @@ function drawStrip(cv){
   const cap = cv.parentElement.querySelectorAll('.lvcap span');
   if (cap.length){ cap[0].textContent = '▏' + s1; cap[0].className = bad1 ? 'bad' : ''; cap[1].textContent = s2 + '▕'; cap[1].className = bad2 ? 'bad' : ''; }
   cv._geo = {X, TT, hx, total, W}; }
-function drawStrips(){ document.querySelectorAll('.row.open canvas.lvc').forEach(drawStrip); }
+function drawStrips(){ document.querySelectorAll('.row.open canvas.lvc, #takes canvas.lvc').forEach(drawStrip); }
 
 // dragging a handle sets trim_in / trim_out (snapped to 0.05 s); saved on release, through the same edit() as everything
 document.addEventListener('pointerdown', e => {
@@ -157,13 +159,13 @@ document.addEventListener('pointerup', async e => {
   if (d.moved && t){
     if (r6(d.tin) !== r6(t.edit.trim_in || 0)) ch.trim_in = r6(d.tin) || null;
     if (r6(d.tout) !== r6(t.edit.trim_out || 0)) ch.trim_out = r6(d.tout) || null; }
-  if (Object.keys(ch).length) await edit(d.id, ch);
+  if (Object.keys(ch).length) await LV.host.edit(d.id, ch);
   LV.drag = null; LV.justDragged = d.moved; setTimeout(() => LV.justDragged = false, 0); redrawLevels(); });
 document.addEventListener('click', e => {                                 // a click on the strip plays the take from there
   const cv = e.target.closest && e.target.closest('canvas.lvc'); if (!cv || !cv._geo || LV.justDragged) return;
   const t = stripOf(cv), geo = cv._geo, tt = Math.min(Math.max(geo.TT(e.clientX - cv.getBoundingClientRect().left), 0), geo.total);
   const at = editedTime(planOf(t.edit, t.raw_picture, geo.total), geo.total, tt) + Math.max(-(t.edit.nudge || 0), 0);
-  playTake(t, at); });
+  LV.host.play(t, at); });
 
 // ─── the lecture strip: the level of the whole edit list; silences of the chosen length or more in amber ───
 function longSilence(){ let v = 1; try { v = parseFloat(localStorage.getItem('studioLongSilence')) || 1; } catch (e) {} return v; }
@@ -227,7 +229,7 @@ function gotoSilence(dir){
   const T = P.T, hit = dir > 0 ? sil.find(s => s.a > T + 0.05) : sil.slice().reverse().find(s => s.a < T - 0.05);
   if (!hit){ say(dir > 0 ? 'no more long silences after this' : 'no long silence before this'); return; }
   showSilence(hit); }
-document.getElementById('lvc').addEventListener('click', e => {
+document.getElementById('lvc')?.addEventListener('click', e => {
   const r = e.currentTarget.getBoundingClientRect(), lec = LV.lec; if (!lec) return;
   const T = lec.total * (e.clientX - r.left) / r.width, s = silenceNear(T);
   if (s) return showSilence(s);

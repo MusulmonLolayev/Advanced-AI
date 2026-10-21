@@ -30,6 +30,15 @@ B = "m7_lecture99_en"
 SR = 48000
 LINES = [[0.0, "Line one is about agents.", [], 0], [10.0, "Line two, the tools.", [], 1],
          [20.0, "Line three ends it.", [], 2]]
+NARRATION = """## Lecture opening
+0. **Birinchi qator agentlar haqida.**
+   *Line one is about agents.*
+### 1-boʻlim · Section 1 — Nega agent? · Why an agent?
+1. **Ikkinchi qator, vositalar.**
+   *Line two, the tools.*
+2. **Uchinchi qator tugatadi.**
+   *Line three ends it.*
+"""
 TALK = [(1.2, 11.0), (15.2, 16.8), (18.2, 28.0), (31.2, 40.0)]      # where the synthetic voice speaks
 
 
@@ -62,6 +71,14 @@ class Studio(unittest.TestCase):
         cls.tmp = tempfile.TemporaryDirectory()
         root = Path(cls.tmp.name)
         os.environ["STUDIO_ROOT"], os.environ["STUDIO_PROFILE"] = str(root), "off"
+        import labels                                                   # the languages test writes narration and labels: scratch copies
+        nar = root / "narration"
+        nar.mkdir()
+        (nar / "m7_lecture99.md").write_text(NARRATION)
+        (nar / "labels.yaml").write_text("{}\n")
+        cls.old_nar, cls.labels, cls.old_labels = os.environ.get("STUDIO_NARRATION"), labels, labels.NARRATION
+        os.environ["STUDIO_NARRATION"] = str(nar)
+        labels.use(nar)
         b = root / B
         (b / "presenter").mkdir(parents=True)
         ff("-f", "lavfi", "-i", "testsrc2=s=320x180:r=60:d=30", "-c:v", "libx264", "-preset", "ultrafast",
@@ -85,6 +102,11 @@ class Studio(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.labels.use(cls.old_labels)
+        if cls.old_nar is None:
+            os.environ.pop("STUDIO_NARRATION", None)
+        else:
+            os.environ["STUDIO_NARRATION"] = cls.old_nar
         cls.srv.shutdown()
         cls.tmp.cleanup()
 
@@ -285,6 +307,104 @@ class Studio(unittest.TestCase):
         last = max((t for k in p["takes"] for t in p["takes"][k] if t["session"] == name), key=lambda t: t["t_in"])
         self.assertAlmostEqual(last["t_out"], 43.5, delta=0.1)
 
+    def test_2b_one_line_with_takes_from_two_sessions(self):
+        """/api/line: the takes of one line from every usable session, the take the video uses, the audio, the joins;
+        choose, mistake and delete change it; a recording not yet processed is listed as pending."""
+        line = lambda k=1: self.get(f"/api/line?build={B}&line={k}")                 # noqa: E731
+        a, b = "2026-10-19T10-00-00", "2026-10-19T11-00-00"
+        d = line()
+        self.assertEqual((d["line"], d["text"], d["lines"]), (1, LINES[1][1], 3))
+        ids = [t["id"] for t in d["takes"]]
+        self.assertEqual(ids, [f"{a}@15.00", f"{a}@18.00", f"{b}@15.00", f"{b}@18.00"])     # both sessions, oldest first
+        self.assertEqual([t["rejected"] for t in d["takes"]], [True, False, True, False])
+        self.assertEqual(d["chosen"], f"{b}@18.00")                                  # the newest that is not a mistake
+        self.assertIsNone(d["picked"])
+        proj = self.get(f"/api/project?build={B}")
+        self.assertEqual(d["chosen"], proj["edit_list"]["lines"][1][3])              # the same one the video uses
+        for t in d["takes"]:                                                        # what the editor gets for a take
+            self.assertEqual(t, next(x for x in proj["takes"]["1"] if x["id"] == t["id"]))
+            self.assertTrue(t["tracks"]["voice"] and t["tracks"]["picture"])
+            self.assertIn("raw_picture", t)
+            self.assertIn("fit", t)
+        self.assertEqual(set(d["audio"]), {a, b, "__original__"})
+        self.assertEqual(d["audio"], proj["audio"])
+        self.assertEqual((d["margin"], d["video"]), (0.3, f"/{B}/presenter/{B}_silent.mp4"))
+        self.assertEqual(d["video_version"], proj["video_version"])
+        self.assertEqual((d["pending"], d["busy"]), ([], False))
+        # the joins: the last 2 s of line 0 and the first 2 s of line 2, as the video plays them
+        c = d["context"]
+        self.assertEqual((c["prev"], c["next"]), (proj["edit_list"]["lines"][0][3], proj["edit_list"]["lines"][2][3]))
+        for side in ("before", "after"):
+            self.assertAlmostEqual(T.length(c[side]["voice"]), 2.0, places=6)
+            self.assertAlmostEqual(T.length(c[side]["picture"]), 2.0, places=6)
+        el = proj["edit_list"]
+        end0 = el["lines"][0][2]
+        want = T.window(el, end0 - 2, end0)                                          # cut from the whole lecture's edit list
+        got = c["before"]
+        self.assertEqual([list(x) for x in got["voice"]], [list(x) for x in want["voice"]])
+        self.assertEqual([list(x) for x in got["picture"]], [list(x) for x in want["picture"]])
+        a2 = el["lines"][2][1]
+        self.assertEqual([list(x) for x in c["after"]["voice"]], [list(x) for x in T.window(el, a2, a2 + 2)["voice"]])
+        # the first line has nothing before it; a line that does not exist is a JSON 404
+        self.assertEqual(line(0)["context"]["before"], {"voice": [], "picture": []})
+        for bad in (f"/api/line?build={B}&line=9", f"/api/line?build={B}&line=x", f"/api/line?build={B}"):
+            with self.assertRaises(urllib.error.HTTPError, msg=bad) as cm:
+                self.get(bad)
+            self.assertEqual(cm.exception.code, 404, bad)
+            self.assertIn("error", json.loads(cm.exception.read()))
+        # choose, mistake and delete go through the editor's own endpoints and show in the line
+        pick = f"{a}@18.00"
+        self.req(f"/api/choose?build={B}&line=1&take={pick}")
+        self.assertEqual((line()["chosen"], line()["picked"]), (pick, pick))
+        self.req(f"/api/edit?build={B}&take={pick}", {"rejected": True})
+        self.assertTrue(next(t for t in line()["takes"] if t["id"] == pick)["rejected"])
+        self.assertEqual(line()["chosen"], pick)                                      # picked by hand: still used
+        self.req(f"/api/choose?build={B}&line=1&take=")
+        self.req(f"/api/edit?build={B}&take={pick}", {"rejected": None})
+        self.assertEqual(line()["chosen"], f"{b}@18.00")
+        self.req(f"/api/edit?build={B}&take={b}@18.00", {"rejected": True})          # the newest is a mistake: the one before
+        self.assertEqual(line()["chosen"], f"{a}@18.00")
+        self.req(f"/api/edit?build={B}&take={b}@18.00", {"rejected": None})
+        self.req(f"/api/edit?build={B}&take={b}@18.00", {"deleted": True})
+        d = line()
+        self.assertNotIn(f"{b}@18.00", [t["id"] for t in d["takes"]])
+        self.assertEqual(d["chosen"], pick)
+        self.req(f"/api/edit?build={B}&take={b}@18.00", {"deleted": None})
+        self.assertEqual(line()["chosen"], f"{b}@18.00")
+        # a recording still going is listed, with the take it will make
+        c_name = "2026-10-19T11-30-00"
+        self.record(c_name, [e for e in EVENTS() if e[0] < 20], finish=False)
+        pend = line()["pending"]
+        self.assertEqual([(p["session"], p["state"]) for p in pend], [(c_name, "recording")] * 2)
+        self.assertTrue(line()["busy"])
+        self.assertEqual(len(line(0)["pending"]), 1)
+        self.req(f"/api/finish?build={B}&name={c_name}", b"")
+        self.wait(self.session_ready(c_name), "processing")
+        d = line()
+        self.assertEqual((d["pending"], d["busy"], len(d["takes"])), ([], False, 6))
+        self.assertEqual(d["chosen"], f"{c_name}@18.00")                              # the newest take is the used one
+        self.req(f"/api/delete?build={B}&name={c_name}")
+        self.assertEqual(len(line()["takes"]), 4)
+
+    def test_2c_the_presenter_page_is_rendered_by_the_server(self):
+        """presenter.html is made from presenter.PAGE with the build's lines and silent video, whatever the file says."""
+        page = self.get(f"/{B}/presenter/presenter.html").decode()
+        mtime = int((self.root / B / "presenter" / f"{B}_silent.mp4").stat().st_mtime)
+        self.assertIn(f'src="{B}_silent.mp4?v={mtime}"', page)
+        self.assertIn("const L = " + json.dumps(LINES, ensure_ascii=False), page)
+        self.assertIn(f'BUILD = "{B}"', page)
+        self.assertNotIn("__LINES__", page)
+        self.assertIn("/studio-static/presenter/takes.js", page)
+        import presenter
+        self.assertEqual(page, presenter.render(LINES, B, self.root / B / "presenter" / f"{B}_silent.mp4"))
+        for name in ("takes.js", "takes.css"):
+            self.assertEqual(self.get(f"/studio-static/presenter/{name}"), (HERE / "studio" / "static" / "presenter" / name).read_bytes())
+        b = "m7_lecture97_en"                                                          # not prepared: the file on disk, if any
+        (self.root / b / "presenter").mkdir(parents=True)
+        (self.root / b / f"{b}.mp4").write_bytes(b"x")
+        (self.root / b / "presenter" / "presenter.html").write_text("<html>static</html>")
+        self.assertEqual(self.get(f"/{b}/presenter/presenter.html"), b"<html>static</html>")
+
     def test_3_requests_that_are_refused(self):
         for path, body in [(f"/api/edit?build={B}&take=x", {"volume": 3}),          # not an edit field
                            (f"/api/edit?build={B}&take=x", {"nudge": 9}),           # out of range
@@ -434,6 +554,60 @@ class Studio(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError, msg=bad) as cm:
                 urllib.request.urlopen(self.url + bad)
             self.assertEqual(cm.exception.code, 404, bad)
+
+    def test_9c_languages_are_added_drafted_approved_and_flagged_over_http(self):
+        def narr(lang, **q):
+            return self.get(f"/api/narration?lecture=m7_lecture99&lang={lang}")
+
+        def post(action, lang, key, body=None, kind="line"):
+            return self.req(f"/api/narration/{action}?lecture=m7_lecture99&lang={lang}&kind={kind}&key={key}", body)
+
+        def refused(f, code=400):
+            with self.assertRaises(urllib.error.HTTPError) as cm:
+                f()
+            self.assertEqual(cm.exception.code, code)
+            body = cm.exception.read()
+            return json.loads(body) if body[:1] == b"{" else {}
+        studio = self.get("/?m=7").decode()
+        self.assertIn("Lecture 99", studio)
+        self.assertIn("+ add language", studio)
+        self.assertNotIn("Russian</h3>", studio)
+        self.assertEqual(self.req("/api/narration/add?lecture=m7_lecture99&lang=ru"), {"file": "m7_lecture99_ru.md"})
+        self.assertIn("ask Claude to draft Russian for this lecture", self.get("/?m=7").decode())
+        ru = narr("ru")
+        self.assertEqual([(l["key"], l["state"]) for l in ru["lines"]], [("0.0", "empty"), ("1.1", "empty"), ("1.2", "empty")])
+        self.assertEqual((ru["primary"], ru["have"]), ("en", ["uz", "en", "ru"]))
+        refused(lambda: self.req("/api/narration/add?lecture=m7_lecture99&lang=ru"))                  # a second skeleton
+        refused(lambda: post("approve", "ru", "1.1"))                                                 # an empty line
+        # draft a line: save writes the file and approves it
+        out = post("save", "ru", "1.1", {"text": "Строка вторая, инструменты."})
+        self.assertEqual((out["item"]["state"], out["counts"]["approved"], out["counts"]["empty"]), ("approved", 1, 2))
+        self.assertIn("1. **Строка вторая, инструменты.**", (self.root / "narration" / "m7_lecture99_ru.md").read_text())
+        # the Uzbek line changes (the instructor's edit): the Russian one needs an update, with the diff
+        bi = (self.root / "narration" / "m7_lecture99.md").read_text()
+        post("save", "uz", "1.1", {"text": "Ikkinchi qator, asboblar."})
+        after = (self.root / "narration" / "m7_lecture99.md").read_text()
+        self.assertEqual(after, bi.replace("Ikkinchi qator, vositalar.", "Ikkinchi qator, asboblar."))   # the English gloss is as it was
+        line = next(l for l in narr("ru")["lines"] if l["key"] == "1.1")
+        self.assertEqual(line["state"], "needs_update")
+        self.assertEqual(line["changed"], {"uz": {"old": "Ikkinchi qator, vositalar.", "new": "Ikkinchi qator, asboblar."}})
+        self.assertIn("1 need update", self.get("/?m=7").decode())
+        # the editor knows: its header links to the review page of a language with no build, and the line carries the flag
+        page = self.get(f"/edit?build={B}").decode()
+        self.assertIn("/narration?lecture=m7_lecture99&amp;lang=ru", page)
+        el = self.get(f"/api/editor-langs?build={B}")
+        self.assertEqual([(o["lang"], o["build"]) for o in el["others"]], [("uz", None), ("ru", None)])
+        self.assertEqual(el["lines"]["1"]["key"], "1.1")
+        self.assertEqual({o["lang"] for o in el["lines"]["1"]["others"]}, {"uz", "ru"})
+        # still fine clears it; an unknown key or kind is refused, and a lecture that is not there is a 404
+        out = post("fine", "ru", "1.1")
+        self.assertEqual(out["item"]["state"], "approved")
+        refused(lambda: post("fine", "ru", "1.1"))
+        refused(lambda: post("approve", "ru", "9.9"))
+        refused(lambda: post("approve", "ru", "1.1", kind="thing"))
+        refused(lambda: self.req("/api/narration/add?lecture=m7_lecture12&lang=ru"), 404)
+        refused(lambda: self.get("/api/narration?lecture=m7_lecture99&lang=xx"), 404)
+        self.assertIn("narration review", self.get("/narration?lecture=m7_lecture99&lang=ru").decode())
 
     def test_4_pages(self):
         page = self.get(f"/edit?build={B}").decode()
