@@ -1,0 +1,63 @@
+/* Design tokens of the studio. Everything else reads these; no component hard-codes a colour, size or font. */
+:root {
+  /* surfaces, darkest first */
+  --bg: #0e1013;
+  --panel: #15181c;
+  --panel-2: #1b1f24;
+  --raised: #242930;
+  --line: #2a2f36;
+  --line-strong: #3a414a;
+
+  /* text */
+  --text: #e7eaee;
+  --dim: #9099a4; /* 6:1 on --panel */
+  --faint: #66707c;
+
+  /* the one accent, and the signal colours */
+  --accent: #4da3ff;
+  --accent-ink: #06182b;
+  --accent-soft: rgba(77, 163, 255, 0.16);
+  --record: #ee3b3b;
+  --record-soft: rgba(238, 59, 59, 0.18);
+  --good: #4cc98a;
+  --warn: #e9b44c;
+  --bad: #f2615e;
+
+  /* track colours */
+  --track-picture: #6a86e0;
+  --track-you: #3dc4a6;
+  --track-clone: #a98ae9;
+
+  /* 8 px spacing scale (4 px for tight gaps) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 16px;
+  --sp-4: 24px;
+  --sp-5: 32px;
+  --hit: 28px; /* smallest hit target */
+
+  /* radii */
+  --r-1: 3px;
+  --r-2: 6px;
+  --r-3: 10px;
+
+  /* type scale */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --fs-2xl: 24px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+
+  /* layout */
+  --topbar-h: 48px;
+  --statusbar-h: 26px;
+  --browser-w: 252px;
+  --rail-w: 44px;
+  color-scheme: dark;
+}

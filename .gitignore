@@ -49,3 +49,6 @@ video/__pycache__/
 
 # Local secrets (API keys)
 .env
+
+# studio React app build output (video/studio/app -> npm run build)
+video/studio/static/app/

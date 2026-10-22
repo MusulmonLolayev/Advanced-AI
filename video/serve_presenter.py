@@ -752,6 +752,20 @@ class Studio(SimpleHTTPRequestHandler):
         path, q, b, n = self.args()
         if path in ("/narration", "/api/narration"):
             return self.narration_get(path, q)
+        if path == "/api/lecture-langs":                   # the lecture page's language rows as JSON (the React app's Script and Export)
+            stem = q.get("lecture", "")
+            if not B.STEM.fullmatch(stem) or stem not in R.stems(ROOT, B.parse_stem(stem)[0]):
+                return self.send_error(404, "no such lecture")
+            try:
+                with dbc() as c:
+                    langs = R.lecture_langs(ROOT, stem)
+                    out = {"lecture": stem, "primary": langs[0] if langs else None,
+                           "langs": [R.summary(c, ROOT, stem, l) for l in langs],
+                           "addable": [{"code": l, "name": LG.name(l), "native": LG.native(l)} for l in LG.CODES if l not in langs]}
+                return self.json(out)
+            except Exception as e:
+                traceback.print_exc()
+                return self.json({"error": f"{type(e).__name__}: {e}"[:500]}, 500)
         if path == "/api/editor-langs":
             if not b or not (ROOT / b / "presenter" / "lines.json").exists():
                 return self.send_error(404, "no such lecture")

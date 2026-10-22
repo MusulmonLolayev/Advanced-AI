@@ -21,6 +21,8 @@
 #   test_studio_e2e   the real server on a free port: record over HTTP, retake, crash recovery, edits, export
 #   test_presenter_browser  the presenter page's takes panel in headless Chromium with a fake microphone (needs Playwright in the
 #                     system python3; skipped without it): keys, one-take recording with L, watching, choosing, marking; the editor still plays
+#   app (react)      (fast only) studio/app: npm run typecheck (tsc --noEmit), npm run build -> static/app/, npm run check (the Export
+#                     summary equals the counts the server's fields give)
 #   test_words        words_worker.py on a real English and a real Uzbek clip (needs the Navoiy env and GPU)
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -33,4 +35,11 @@ for t in "${TESTS[@]}"; do
   if [ $? -eq 0 ]; then echo "$out" | grep -E "^(Ran|OK)" | tr '\n' ' '; echo
   else echo "FAILED"; echo "$out" | tail -30; fail=1; fi
 done
+if [ "${1:-}" = fast ]; then
+  printf '%-18s ' "app (react)"
+  if [ -d studio/app/node_modules ] || (cd studio/app && npm ci --silent >/dev/null 2>&1); then
+    out=$(cd studio/app && npm run typecheck 2>&1 && npm run build 2>&1 && npm run check 2>&1)
+    if [ $? -eq 0 ]; then echo "typecheck + build + export numbers check OK"; else echo "FAILED"; echo "$out" | tail -30; fail=1; fi
+  else echo "FAILED (npm ci)"; fail=1; fi
+fi
 exit $fail

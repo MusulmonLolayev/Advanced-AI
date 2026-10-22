@@ -39,6 +39,8 @@ class Pages(unittest.TestCase):
             code, err = node_check(js)
             self.assertEqual(code, 0, err)
         for f in sorted((HERE / "studio" / "static").rglob("*.js")):         # the split-out scripts
+            if "app" in f.relative_to(HERE / "studio" / "static").parts[:1]:     # static/app/ is the React build (ES modules), checked by tsc
+                continue
             code, err = node_check(f.read_text())
             self.assertEqual(code, 0, f"{f.name}: {err}")
 
