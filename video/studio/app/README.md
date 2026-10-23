@@ -34,9 +34,9 @@ The app follows the address when it changes (`hashchange`). `studio/run_tests.sh
     src/model.ts                line states, sections, edit-list <-> video time, composite levels, long silences
     src/playhead.ts             the playhead as an external store (only Playhead / Timecode / Monitor re-render)
     src/components/             Button IconButton Icon Tabs Chip Panel Meter Track Clip Marker Playhead Timecode
-                                Inspector(Section) Toast Dialog (useDialog().confirm) Waveform(useViewportCanvas, drawEnvelope)
+                                InspectorSection ContextMenu PanelDialog Toast Dialog (useDialog().confirm) Waveform(useViewportCanvas, drawEnvelope)
     src/shell/                  TopBar ProjectBrowser StatusBar
-    src/modes/                  Edit (+ edit/: ScriptList Monitor Inspector TakeWave Timeline) Record Script Export
+    src/modes/                  Edit (+ edit/: ScriptList Monitor Timeline clipMenu panels TakeWave TakeEditor) Record Script Export
 
 ## Tokens
 
@@ -72,14 +72,14 @@ idle (`busy` in `model.ts`); the status bar names what is running. `src/player.t
 TypeScript with the same sync rules (`Player.seekNow`: no re-seek while the element is seeking or buffering; contiguous
 pieces of one source never seek). `modes/edit/usePlayer.ts` owns it: the whole edit list, one take (alone or in
 context) or a version's scene clip; the playhead store follows the player clock. Keys: Space play / pause, arrows play
-the next / previous line, L opens Record on the line. Panel borders (script | monitor | inspector, monitor | timeline)
+the next / previous line, L opens Record on the line. Panel borders (script | monitor, monitor | timeline)
 drag, arrow-key and double-click to reset; sizes are kept in `localStorage` (`studioPanels`). The margin ("keep … s at
 line ends") is a timeline-bar field saved through `/api/settings`; recordings are listed, and deleted, in the
-inspector's Recordings section. Left out on purpose: "Prepare presenter page" and per-recording `/api/compose`; not
+timeline bar's Recordings… dialog. Left out on purpose: "Prepare presenter page" and per-recording `/api/compose`; not
 ported from the old page: click on a level strip to play from there, the unrecorded-lines select and cleaning select
 (they belong to Export).
 
-Recordings (inspector): each shows its voice profile; one not made with `cloned` has **convert to cloned voice**
+Recordings (Recordings… in the timeline bar): each shows its voice profile; one not made with `cloned` has **convert to cloned voice**
 (`POST /api/process?build&name&clean=cloned`, "converting…" while its `process` job runs) and a cloned one has **your voice /
 cloned voice** buttons that play the whole recording before and after conversion (`audio_alt` and `audio` of `/api/project`;
 per recording, not per take). `cloned` is also the default in Export's voice cleaning.
@@ -126,3 +126,7 @@ inline (`/<build>/<build>.mp4`, as `/lecture?build=` shows it). The "your takes 
 server's own fields give. Not placed: per-recording `/api/compose` (the old module page's "Build video" of one recording; its `Watch` is
 `watch=<recording>` in Export). A build with no presenter page shows "Prepare presenter page" in Edit and Record
 (`POST /api/prepare`, polled until `lines.json` exists).
+
+## Edit layout
+
+No inspector column: the script list and the monitor (16:9 picture as large as its stage allows, the line's text under it, a one-line strip) sit above the timeline. Takes live on the timeline's YOU lane; a right-click (or the ⋯ button, the menu key, Shift+F10) on a YOU, PICTURE or CLONE clip opens its menu (`edit/clipMenu.ts`), whose "…" items open dialogs (`PanelDialog`, `TakeEditor`) hosting the panels in `edit/panels.tsx`. The project browser starts as the icon rail (`studioBrowser` in localStorage).

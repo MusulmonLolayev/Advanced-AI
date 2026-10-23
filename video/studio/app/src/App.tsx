@@ -60,7 +60,25 @@ function AppInner() {
   const [lang, setLang] = useState(init.lang)
   const [line, setLine] = useState(init.line)
   const [watch, setWatch] = useState(init.watch)
-  const [collapsed, setCollapsed] = useState(window.innerWidth < 1500)
+  // the project browser starts as the icon rail; the last choice is kept in this browser
+  const [collapsed, setCollapsedNow] = useState(() => {
+    try {
+      return localStorage.getItem('studioBrowser') !== 'open'
+    } catch {
+      return true
+    }
+  })
+  const setCollapsed = useCallback((f: boolean | ((c: boolean) => boolean)) => {
+    setCollapsedNow((c) => {
+      const n = typeof f === 'function' ? f(c) : f
+      try {
+        localStorage.setItem('studioBrowser', n ? 'closed' : 'open')
+      } catch {
+        /* private window: the choice lasts until the page closes */
+      }
+      return n
+    })
+  }, [])
   const [recording, setRecording] = useState(false)
   const [recSeconds, setRecSeconds] = useState(0)
   const recRef = useRef(false)

@@ -145,3 +145,22 @@ kbd { font: 600 var(--fs-xs) var(--mono); background: var(--raised); border: 1px
 .dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-4); }
 .dialog-ok.danger { background: var(--bad); border-color: var(--bad); color: var(--bg); font-weight: 600; }
 .dialog-ok.danger:hover:not(:disabled) { background: var(--bad); filter: brightness(1.12); }
+
+/* Context menu (portal, fixed) */
+.ctxmenu { position: fixed; z-index: 1000; min-width: 220px; max-width: 340px; max-height: calc(100vh - 8px); overflow: auto; padding: var(--sp-1) 0; background: var(--panel-2); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--r-2); box-shadow: var(--shadow); font-size: var(--fs-sm); outline: none; }
+.ctx-slot { position: relative; }
+.ctx-sep { border: 0; border-top: 1px solid var(--line); margin: var(--sp-1) 0; }
+.ctx-item { display: flex; align-items: center; gap: var(--sp-2); width: 100%; min-height: var(--hit); padding: 0 var(--sp-2); background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ctx-item.active, .ctx-item:hover:not(.disabled) { background: var(--accent-soft); }
+.ctx-item.danger { color: var(--bad); }
+.ctx-item.disabled { color: var(--faint); cursor: default; }
+.ctx-check { width: 14px; flex: none; color: var(--accent); }
+.ctx-label { flex: 1; white-space: nowrap; }
+.ctx-hint { color: var(--dim); font-size: var(--fs-xs); }
+.ctx-arrow { color: var(--dim); }
+/* Panel dialog */
+.panel-dialog { width: min(640px, calc(100vw - 2 * var(--sp-3))); }
+.panel-dialog.wide { width: min(900px, calc(100vw - 2 * var(--sp-3))); }
+.pd-head { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
+.pd-head .dialog-title { margin: 0 0 var(--sp-2); }
+.pd-body .insp-body { padding: 0; }

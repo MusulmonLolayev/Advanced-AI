@@ -36,6 +36,11 @@ export class Player {
     this.v = v
     this.urls = urls
     this.ui = ui
+    // a paused picture shows the frame at the playhead: when the video's data arrives after a load or a seek, put it there
+    const repaint = () => {
+      if (!this.off && !this.playing && this.vp.length) this.sync(true)
+    }
+    for (const ev of ['loadedmetadata', 'loadeddata', 'canplay']) v.addEventListener(ev, repaint)
   }
 
   load(tr: Tracks, spans: LineSpan[], at = 0) {

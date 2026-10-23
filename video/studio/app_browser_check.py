@@ -71,7 +71,7 @@ class App(unittest.TestCase):
 
     def ask(self, button=None, key=None):
         """The in-app dialog: wait for it, return its title, then press a button (by its label) or a key."""
-        d = self.page.locator("dialog.dialog[open]")
+        d = self.page.locator("dialog.dialog:not(.panel-dialog):not(.take-editor)[open]")
         d.wait_for(timeout=6000)
         title = d.locator(".dialog-title").inner_text()
         if button:
@@ -99,8 +99,18 @@ class App(unittest.TestCase):
     def test_1_the_front_door_and_the_address(self):
         p = self.page
         p.goto(self.url + "/")
+        p.wait_for_selector(".browser.rail")                                      # the project browser starts as the icon rail
+        self.assertEqual(p.locator(".browser .tree-row").count(), 0)
+        self.assertIn("Lecture 99", p.inner_text(".topbar") if p.locator(".topbar").count() else p.inner_text("body"))
+        p.click('button[aria-label="Show or hide the project browser"]')         # the toggle opens it, and the choice is remembered
         p.wait_for_selector(".browser .tree-row.lec")                            # the project browser is live (/api/lectures)
         self.assertIn("Lecture 99", p.inner_text(".browser"))
+        self.assertEqual(p.evaluate("localStorage.getItem('studioBrowser')"), "open")
+        p.reload()
+        p.wait_for_selector(".browser .tree-row.lec")
+        p.click('button[aria-label="Show or hide the project browser"]')
+        p.wait_for_selector(".browser.rail")
+        self.assertEqual(p.evaluate("localStorage.getItem('studioBrowser')"), "closed")
         p.goto(f"{self.url}/edit?build={B}")                                      # an old address: redirected to its screen
         p.wait_for_selector(".edit")
         self.assertRegex(p.evaluate("location.hash"), rf"mode=edit&lecture={STEM}&lang=en")
@@ -165,7 +175,7 @@ class App(unittest.TestCase):
         p.wait_for_timeout(1500)
         n_finish = len(self.posts("/api/finish"))
         p.keyboard.press("2")
-        d = p.locator("dialog.dialog[open]")
+        d = p.locator("dialog.dialog:not(.panel-dialog):not(.take-editor)[open]")
         d.wait_for(timeout=6000)
         self.assertEqual(d.locator(".dialog-title").inner_text(), "Leave and stop recording?")
         self.assertEqual(p.evaluate("document.activeElement.textContent"), "Leave")   # focus on the confirm button
@@ -181,18 +191,169 @@ class App(unittest.TestCase):
         self.assertEqual(self.dialogs, [])
         self.wait(lambda: len(self.project()["sessions"]) == 3 and all(s["state"] == "ready" for s in self.project()["sessions"]), "three sessions")
 
+    def video_fits(self):
+        """The monitor's picture is 16:9, as large as its stage allows (it touches the stage on one axis), the line's text is under it,
+        and a paused seek paints the frame at the playhead (the pixels are not black)."""
+        p = self.page
+        sc, st = p.locator("[data-testid=screen]").bounding_box(), p.locator(".stage").bounding_box()
+        self.assertAlmostEqual(sc["width"] / sc["height"], 16 / 9, delta=16 / 9 * 0.01, msg=str((sc, st)))
+        self.assertTrue(abs(sc["width"] - st["width"]) <= 2 or abs(sc["height"] - st["height"]) <= 2, (sc, st))
+        self.assertLessEqual(sc["width"], st["width"] + 1)
+        self.assertLessEqual(sc["height"], st["height"] + 1)
+        self.assertAlmostEqual(sc["x"] + sc["width"] / 2, st["x"] + st["width"] / 2, delta=2)             # centred
+        sub = p.locator("[data-testid=subtitle]").bounding_box()
+        self.assertGreaterEqual(sub["y"], sc["y"] + sc["height"] - 1)                                     # under the picture, not over it
+        # a paused seek (a click on the ruler) paints the frame there
+        r = p.locator(".ruler-hit").bounding_box()
+        p.mouse.click(r["x"] + r["width"] * 0.15, r["y"] + r["height"] / 2)
+        paint = lambda: p.evaluate("""() => {
+            const v = document.querySelector('.screen video')
+            if (v.readyState < 2 || !v.videoWidth) return -1
+            const c = document.createElement('canvas'); c.width = 32; c.height = 18
+            const g = c.getContext('2d'); g.drawImage(v, 0, 0, 32, 18)
+            const d = g.getImageData(0, 0, 32, 18).data
+            let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2]
+            return s / (32 * 18 * 3)
+        }""")
+        self.wait(lambda: paint() > 20, "the frame at the playhead to be painted (not black) after a paused seek", timeout=8)
+        p.click("#line-1")                                                                       # the seek moved the selection: back to line 2
+
+    def layout_and_menus(self):
+        """Edit at 1366x768: no inspector column, the strip under the transport, and the clips' context menus."""
+        p = self.page
+        shotdir = SHOTS
+        self.assertEqual(p.locator(".inspector").count(), 0)
+        self.assertEqual(p.locator(".edit-top > *").count(), 2)                                 # the script list and the monitor
+        self.assertGreater(p.locator(".monitor").bounding_box()["width"], 700)                  # the monitor took the room
+        self.video_fits()
+        strip = p.inner_text("[data-testid=line-strip]")
+        self.assertRegex(strip, r"(?s)line 2\b.*T1 \d+\.\d s.*used in your edit")
+        self.assertEqual(p.locator("[data-testid=line-strip] button").count(), 0)               # no buttons: the clips have them
+        self.assertIn("Right-click a clip for its actions", p.inner_text(".tl-bar"))
+        if shotdir:
+            p.screenshot(path=str(shotdir / "layout_no_inspector.png"))
+        clip = p.locator('.clip[data-lane=you][data-line="1"]')
+        # a right-click opens the menu AT the pointer (and the browser's own menu is not what opens)
+        cb = clip.bounding_box()
+        px, py = cb["x"] + 12, cb["y"] + cb["height"] / 2
+        p.mouse.click(px, py, button="right")
+        menu = p.locator(".ctxmenu").first
+        menu.wait_for(timeout=3000)
+        mb = menu.bounding_box()
+        self.assertLess(abs(mb["x"] - px), 6)
+        self.assertTrue(abs(mb["y"] - py) < 6 or mb["y"] + mb["height"] <= 768)
+        names = [x.strip() for x in menu.locator("> .ctx-slot > .ctx-item .ctx-label").all_inner_texts()]
+        for want in ("Play take", "Play in context", "Edit parts…", "Trim silence", "Undo trims", "Takes", "Mark as mistake", "Hide take", "Transcribe and check…", "Tighten and nudge…"):
+            self.assertIn(want, names)
+        self.assertTrue(any(x.startswith("Recording ") for x in names), names)
+        menu.get_by_role("menuitem", name="Takes").hover()                                       # Takes ▸: T1 .. Tn, the used one checked
+        sub = menu.locator(".ctxmenu")
+        sub.wait_for(timeout=3000)
+        self.assertEqual(sub.get_by_role("menuitemradio", checked=True).count(), 1)
+        if shotdir:
+            p.screenshot(path=str(shotdir / "ctx_take.png"))
+        p.keyboard.press("Escape")
+        p.keyboard.press("Escape")
+        p.locator(".ctxmenu").wait_for(state="detached", timeout=3000)
+        # the menu stays inside the screen near the right and bottom edges
+        clip.evaluate("e => e.dispatchEvent(new MouseEvent('contextmenu', { clientX: 1362, clientY: 740, bubbles: true, cancelable: true }))")
+        menu = p.locator(".ctxmenu").first
+        menu.wait_for(timeout=3000)
+        p.wait_for_timeout(150)
+        mb = menu.bounding_box()
+        self.assertLessEqual(mb["x"] + mb["width"], 1366)
+        self.assertLessEqual(mb["y"] + mb["height"], 768)
+        self.assertGreaterEqual(mb["x"], 0)
+        p.mouse.click(300, 300)                                                                  # an outside click closes it
+        p.locator(".ctxmenu").wait_for(state="detached", timeout=3000)
+        # Takes ▸ choose posts /api/choose (a second take is stubbed in; the server is not asked to choose it)
+        def stub(route):
+            body = route.fetch().json()
+            t0 = body["takes"]["1"][0]
+            body["takes"]["1"].append(dict(t0, id="dup@0.00"))
+            route.fulfill(json=body)
+        p.route("**/api/project?*", stub)
+        p.route("**/api/choose*", lambda r: r.fulfill(status=200, body=""))
+        p.reload()
+        clip.wait_for(timeout=8000)
+        clip.click(button="right")
+        menu = p.locator(".ctxmenu").first
+        menu.wait_for(timeout=3000)
+        self.assertIn("2 takes", clip.text_content())                                              # the badge on a line with several takes
+        menu.get_by_role("menuitem", name="Takes").hover()
+        self.reqs.clear()
+        menu.locator(".ctxmenu").get_by_role("menuitemradio", name=re.compile("^T2")).click()
+        self.wait(lambda: self.posts("/api/choose"), "the choice to be posted")
+        ch = self.posts("/api/choose")[-1][1]
+        self.assertIn("take=dup", ch)
+        self.assertIn("line=1", ch)
+        p.unroute("**/api/project?*")
+        p.unroute("**/api/choose*")
+        p.reload()
+        clip.wait_for(timeout=8000)
+        # the keyboard: Shift+F10 opens the menu on the selected clip, Down + Enter runs the first item, Esc closes
+        clip.click()
+        p.mouse.move(5, 400)                                                                     # the pointer is not over the menu: the keys decide
+        p.keyboard.press("Shift+F10")
+        p.locator(".ctxmenu").first.wait_for(timeout=3000)
+        p.keyboard.press("ArrowDown")
+        p.keyboard.press("Enter")
+        p.locator(".ctxmenu").wait_for(state="detached", timeout=3000)
+        p.wait_for_timeout(500)
+        self.assertIn("YOUR VOICE", p.inner_text(".screen-tag"))                                 # "Play take" ran
+        p.click("button:has-text('back to the lecture')")
+        p.keyboard.press("Shift+F10")
+        p.locator(".ctxmenu").first.wait_for(timeout=3000)
+        p.keyboard.press("Escape")
+        p.locator(".ctxmenu").wait_for(state="detached", timeout=3000)
+        # the ⋯ button on the selected clip, for a trackpad
+        p.locator(".clip-more").click()
+        p.locator(".ctxmenu").first.wait_for(timeout=3000)
+        p.keyboard.press("Escape")
+        # a line's menu (PICTURE clip): Rewrite line in the cloned voice… shows the versions dialog
+        pic = p.locator('.clip[data-lane=picture][data-line="1"]')
+        pic.click(button="right")
+        menu = p.locator(".ctxmenu").first
+        menu.wait_for(timeout=3000)
+        names = [x.strip() for x in menu.locator("> .ctx-slot > .ctx-item .ctx-label").all_inner_texts()]
+        for want in ("Play line", "Record this line", "Rewrite line in the cloned voice…", "Script check…", "Other languages…", "Copy text"):
+            self.assertIn(want, names)
+        if shotdir:
+            p.screenshot(path=str(shotdir / "ctx_line.png"))
+        menu.get_by_role("menuitem", name="Rewrite line in the cloned voice…").click()
+        d = p.locator("dialog.panel-dialog[open]")
+        d.wait_for(timeout=6000)
+        self.assertEqual(d.locator('textarea[aria-label="narration of this line"]').count(), 1)
+        self.assertIn("voice versions", d.inner_text().lower() + " voice versions")
+        d.get_by_role("button", name="Close").click()
+        d.wait_for(state="detached", timeout=6000)
+        # the empty YOU lane (line 1 has no take): its menu offers "Record this line"
+        lane = p.locator(".track:has(.lane-hit) .lane-hit")
+        lb = lane.bounding_box()
+        p.mouse.click(lb["x"] + 4, lb["y"] + lb["height"] / 2, button="right")
+        menu = p.locator(".ctxmenu").first
+        menu.wait_for(timeout=3000)
+        self.assertEqual([x.strip() for x in menu.locator(".ctx-label").all_inner_texts()], ["Record this line"])
+        p.keyboard.press("Escape")
+        p.locator(".ctxmenu").wait_for(state="detached", timeout=3000)
+        # Esc and the clips only: the page's own menu is not blocked elsewhere
+        self.assertEqual(p.locator("dialog[open]").count(), 0)
+
     def cut_a_part_by_hand(self):
         """Part of test 3 (it needs the take test 3 later deletes with its recording): drag, Delete, drawn and shorter, restore."""
         p = self.page
-        p.set_viewport_size({"width": 1366, "height": 768})                                   # the size the instructor works at
-        p.wait_for_selector(".take .takewave")
-        p.locator(".take .takewave").first.scroll_into_view_if_needed()
-        p.wait_for_timeout(300)
-        tid = p.locator(".take").first.get_attribute("data-take")
-        take = p.locator(".take").first
-        self.assertIn("Drag on the wave to select a part, then ✂ or Delete to cut it.", p.inner_text(".inspector"))
+        tid = next(l[3] for l in self.project()["edit_list"]["lines"] if l[0] == 1)             # the chosen take of line 2
+        clip = p.locator('.clip[data-lane=you][data-line="1"]')
+        clip.scroll_into_view_if_needed()
+        clip.click(button="right")                                                              # right-click the YOU clip: its menu
+        menu = p.locator(".ctxmenu").first
+        menu.wait_for(timeout=3000)
+        menu.get_by_role("menuitem", name="Edit parts…").click()                                # ... Edit parts… opens the take editor
+        take = p.locator("dialog.take-editor[open]")
+        take.wait_for(timeout=6000)
+        self.assertIn("Drag on the wave to select a part, then ✂ or Delete to cut it.", take.inner_text())
         row = lambda: next(t for ts in self.project()["takes"].values() for t in ts if t["id"] == tid)
-        shown = lambda: float(take.locator(".take-head .mono").first.inner_text().replace(" s", ""))
+        shown = lambda: float(re.search(r"→ (\d+\.\d+) s", take.locator(".te-head .mono").first.inner_text()).group(1))
         wave = take.locator(".takewave")
         box = wave.bounding_box()
         y = box["y"] + box["height"] / 2
@@ -211,14 +372,13 @@ class App(unittest.TestCase):
         before = row()
         self.assertEqual(before["edit"].get("cuts", []), [])
         len0 = before["length"]
-        self.assertAlmostEqual(shown(), len0, delta=0.06)
+        self.assertAlmostEqual(shown(), len0, delta=0.02)
         self.reqs.clear()
         # a click without a drag keeps playing from there and selects nothing
         p.mouse.click(at(0.5), y)
         p.wait_for_timeout(500)
         self.assertEqual(take.locator(".wave-sel").count(), 0)
         self.assertIn("YOUR VOICE", p.inner_text(".screen-tag"))
-        p.click("button:has-text('back to the lecture')")
         # a drag shorter than 0.05 s selects nothing
         tiny = 0.04 / before["raw_length"]
         drag(0.4, 0.4 + tiny * 0.9)
@@ -260,7 +420,7 @@ class App(unittest.TestCase):
         self.assertIn("1 part cut", take.locator("[data-bar=cuts]").inner_text())
         self.wait(lambda: abs(row()["length"] - (len0 - (cb - ca))) <= 0.02, "the take to be shorter by the cut")
         self.assertEqual(row()["edit"]["cuts"], [[ca, cb]])
-        self.wait(lambda: abs(shown() - row()["length"]) <= 0.06, "the displayed length to follow")
+        self.wait(lambda: abs(shown() - row()["length"]) <= 0.02, "the displayed length to follow")
         self.assertEqual(take.locator(".wave-sel").count(), 0)
         # a second selection next to the cut (for the picture), then Esc
         drag(0.75, 0.9)
@@ -277,7 +437,6 @@ class App(unittest.TestCase):
         self.wait(lambda: row()["edit"].get("cuts", []) == [] and abs(row()["length"] - len0) <= 0.02, "the take to be whole again")
         self.wait(lambda: take.locator(".cut-hand").count() == 0, "the cut to disappear from the wave")
         self.cut_in_the_wide_editor(take, row, len0)
-        p.set_viewport_size({"width": 1920, "height": 1080})
 
     def uncovered(self, loc):
         """The element is wholly inside the viewport and is what the pointer would hit at its centre."""
@@ -291,21 +450,19 @@ class App(unittest.TestCase):
     def cut_in_the_wide_editor(self, take, row, len0):
         """"edit parts" opens the big editor: a wide wave, zoom, the same select / Delete / restore, and the cuts list."""
         p = self.page
-        small = take.locator(".takewave").bounding_box()["width"]
         # one trim button, not three: "trim silence" (tooltip says what it does) and "undo trims"; no "fit start / end / both"
         self.assertEqual(take.get_by_role("button", name="trim silence").count(), 1)
         self.assertIn("first and last word, keeping", take.get_by_role("button", name="trim silence").get_attribute("title"))
         self.assertEqual(take.get_by_role("button", name=re.compile("^fit ")).count(), 0)
         self.assertEqual(take.get_by_role("button", name="undo trims").count(), 1)
         self.assertEqual(take.get_by_text("line ends").count(), 0)
-        take.get_by_role("button", name="edit parts").click()
-        d = p.locator("dialog.take-editor[open]")
-        d.wait_for(timeout=6000)
+        self.assertEqual(p.locator(".inspector").count(), 0)
+        d = take
         self.assertEqual(d.get_by_role("button", name="trim silence").count(), 1)
         self.assertEqual(d.get_by_role("button", name="undo trims").count(), 1)
         wave = d.locator(".takewave")
         wb = wave.bounding_box()
-        self.assertGreater(wb["width"], max(2.5 * small, 900))
+        self.assertGreater(wb["width"], 900)                                                  # about 1100 px at 1366
         y = wb["y"] + wb["height"] / 2
         at = lambda f: wb["x"] + wb["width"] * f
         loaded = lambda: [[round(x[0], 2), x[1], None if x[2] is None else round(x[2], 2)] for x in json.loads(d.get_attribute("data-loaded-voice"))]
@@ -413,29 +570,14 @@ class App(unittest.TestCase):
         self.assertGreater(t1 - t0, 2.2)
         self.assertGreater(v1 - v0, 2.2)
         self.assertTrue(p.eval_on_selector("video", "v => v.paused"))
-        # a take: trim its start handle
+        self.video_fits()                                                                     # 1920x1080
+        p.set_viewport_size({"width": 1366, "height": 768})                                   # the size the instructor works at
+        p.wait_for_timeout(400)
         p.click("#line-1")
-        p.wait_for_selector(".take .trim-handle.in")
-        h = p.locator(".take .trim-handle.in").first.bounding_box()
-        self.reqs.clear()
-        p.mouse.move(h["x"] + 1, h["y"] + h["height"] / 2)
-        p.mouse.down()
-        p.mouse.move(h["x"] + 40, h["y"] + h["height"] / 2, steps=5)
-        p.mouse.up()
-        p.wait_for_timeout(1200)
-        edits = self.posts("/api/edit")
-        self.assertEqual(len(edits), 1)
-        self.assertEqual(set(json.loads(edits[0][2])), {"trim_in"})
-        # a click on the level strip plays the take from there
-        box = p.locator(".take .takewave").first.bounding_box()
-        p.mouse.click(box["x"] + box["width"] * 0.6, box["y"] + box["height"] / 2)
-        p.wait_for_timeout(600)
-        self.assertIn("YOUR VOICE", p.inner_text(".screen-tag"))
-        p.click("button:has-text('back to the lecture')")
-        p.click(".take button:has-text('undo trims')")
-        p.wait_for_timeout(800)
+        p.wait_for_selector('.clip[data-lane=you][data-line="1"]')
+        self.layout_and_menus()
         self.cut_a_part_by_hand()
-        # the margin
+        p.set_viewport_size({"width": 1920, "height": 1080})        # the margin
         inp = p.locator('input[aria-label="margin at line ends, seconds"]')
         inp.fill("0.5")
         inp.press("Enter")
@@ -444,14 +586,15 @@ class App(unittest.TestCase):
         self.assertTrue(st and "key=margin" in st[-1][1] and "value=0.5" in st[-1][1], st)
         self.assertEqual(inp.input_value(), "0.5")
         # delete a recording after the confirm
-        p.click("summary:has-text('Recordings')")
+        p.click("button:has-text('Recordings…')")
+        p.locator("dialog.panel-dialog[open]").wait_for(timeout=6000)
         n = p.locator(".session").count()
         victim = p.locator('.session button[aria-label^="Delete recording"]').first.get_attribute("aria-label").replace("Delete recording ", "")
         btn = p.locator('.session button[aria-label^="Delete recording"]').first
         # Esc cancels: the dialog shows its title, focus is on Cancel (danger), and nothing is sent
         n_del = len([r for r in self.reqs if "/api/delete" in r[1]])
         btn.click()
-        d = p.locator("dialog.dialog[open]")
+        d = p.locator("dialog.dialog:not(.panel-dialog):not(.take-editor)[open]")
         d.wait_for(timeout=6000)
         self.assertEqual(d.locator(".dialog-title").inner_text(), f"Delete recording {victim}?")
         self.assertIn("cannot be undone", d.locator(".dialog-body").inner_text())
@@ -477,6 +620,7 @@ class App(unittest.TestCase):
         pr = self.posts("/api/process")
         self.assertTrue(pr and "clean=cloned" in pr[-1][1] and f"name={who}" in pr[-1][1] and f"build={B}" in pr[-1][1], pr)
         p.unroute("**/api/process*")
+        p.locator("dialog.panel-dialog[open]").get_by_role("button", name="Close").click()
         # merge: a stubbed ready version (no real one exists in the scratch project); Esc cancels, nothing is posted
         def stub(route):
             body = route.fetch().json()
@@ -485,12 +629,12 @@ class App(unittest.TestCase):
             route.fulfill(json=body)
         p.route("**/api/project?*", stub)
         p.reload()
-        mb = p.locator('button[title="put it in the lecture"]').first
-        mb.wait_for(state="attached", timeout=8000)
-        if not mb.is_visible():
-            p.click("summary:has-text('-voice versions')")
+        p.locator('.clip[data-lane=picture]').first.click(button="right")                       # a line's menu: Rewrite line in the cloned voice…
+        p.locator(".ctxmenu").get_by_role("menuitem", name="Rewrite line in the cloned voice…").click()
+        mb = p.locator('dialog.panel-dialog[open] button[title="put it in the lecture"]').first
+        mb.wait_for(timeout=8000)
         mb.click()
-        d = p.locator("dialog.dialog[open]")
+        d = p.locator("dialog.dialog:not(.panel-dialog):not(.take-editor)[open]")
         d.wait_for(timeout=6000)
         self.assertEqual(d.locator(".dialog-title").inner_text(), "Merge v1 into the lecture?")
         self.assertEqual(p.evaluate("document.activeElement.textContent"), "Merge")
@@ -499,6 +643,7 @@ class App(unittest.TestCase):
         d.wait_for(state="detached", timeout=6000)
         p.wait_for_timeout(500)
         self.assertEqual(self.posts("/api/merge"), [])
+        p.locator("dialog.panel-dialog[open]").get_by_role("button", name="Close").click()
         p.unroute("**/api/project?*")
         self.shot("edit")
 

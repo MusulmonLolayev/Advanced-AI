@@ -1,21 +1,18 @@
+// The panels the old inspector showed, moved here unchanged: each is the body of a dialog opened from a clip's context menu
+// (Edit.tsx) or the timeline bar. They read and change the project through the same actions as before.
 import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { useActions } from '../../actions'
-import { Button, Chip, Icon, InspectorSection, Panel, useDialog, useToast } from '../../components'
-import { ORIGINAL, type LineState } from '../../model'
-import type { EditorLangs, Levels, Project, Session, Take, VersionRow } from '../../types'
-import { secs, timecode } from '../../util'
-import { LineMarks } from './ScriptList'
-import { TakeEditor, takeWaveProps } from './TakeEditor'
-import { TakeWave } from './TakeWave'
+import { Button, Chip, Icon, useDialog, useToast } from '../../components'
+import type { EditorLangs, Project, Session, Take, VersionRow } from '../../types'
 import type { Transport } from './usePlayer'
 
-type Act = ReturnType<typeof useActions>
+export type Act = ReturnType<typeof useActions>
 
-const sessionLabel = (s: string) => {
+export const sessionLabel = (s: string) => {
   const m = /^\d+-(\d+)-(\d+)T(\d+)-(\d+)/.exec(s)
   return m ? `${m[2]}.${m[1]} ${m[3]}:${m[4]}` : s
 }
-const mmss = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.round(s % 60) % 60).padStart(2, '0')}`
+export const mmss = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.round(s % 60) % 60).padStart(2, '0')}`
 
 /** `now` with the words not in `old` marked, and the words it lost struck out (versions.js wordDiff) */
 function wordDiff(old: string, now: string): ReactNode {
@@ -42,53 +39,13 @@ function wordDiff(old: string, now: string): ReactNode {
   return out
 }
 
-function tightenLabel(tg: Take['tighten']): string {
+export function tightenLabel(tg: Take['tighten']): string {
   if (tg.gain <= 0) return 'tightened: nothing more to gain'
   const parts: string[] = []
   if (tg.pauses) parts.push(`${tg.pauses} pause${tg.pauses === 1 ? '' : 's'}`)
   if (tg.start) parts.push(`start ${tg.start.toFixed(1)} s`)
   if (tg.end) parts.push(`end ${tg.end.toFixed(1)} s`)
   return 'tighten: ' + (parts.join(', ') || `${tg.gain.toFixed(1)} s`)
-}
-
-function TakeCard({ t, n, k, used, levels, act, tr }: { t: Take; n: number; k: number; used: boolean; levels: Levels | undefined; act: Act; tr: Transport }) {
-  const { confirm } = useDialog()
-  const [editing, setEditing] = useState(false)
-  const e = t.edit
-  const off = (a: number, b: number) => Math.abs(a - b) > 1e-3
-  const ck = t.check
-  return (
-    <div className={'take' + (used ? ' used' : '') + (t.rejected ? ' bad' : '')} data-take={t.id}>
-      <div className="take-head">
-        <b className="take-name">T{n}</b>
-        <span className="mono">{secs(t.length)}</span>
-        <span className="mono dim" title={t.id}>{sessionLabel(t.session)}</span>
-        <span className="grow" />
-        {used && <Chip tone="you" title="your recording is used for this line in the preview and the export; the lecture video keeps its own narration">used in your edit</Chip>}
-        {t.rejected && <Chip tone="bad">mistake</Chip>}
-        {ck && (ck.missing.length ? <Chip tone="bad">{ck.missing.length} missed</Chip> : <Chip tone="good">script ✓</Chip>)}
-      </div>
-      <TakeWave levels={levels} {...takeWaveProps(t, n, act, tr)} />
-      <div className="take-trim mono dim">
-        <span>in {(e.trim_in ?? 0).toFixed(2)}</span>
-        <span>{secs(t.raw_length)} → {secs(t.length)}</span>
-        <span>out {(e.trim_out ?? 0).toFixed(2)}</span>
-      </div>
-      <div className="btn-row">
-        <Button small icon="play" onClick={() => tr.playTake(t, n)} title="play this take alone">watch</Button>
-        <Button small onClick={() => setEditing(true)} title="a wide editor for this take: select a part, cut it, restore it, zoom">edit parts</Button>
-        <Button small onClick={() => void tr.playContext(t, n)} title="the end of the line before, this take, the start of the line after">in context</Button>
-        {!used && <Button small variant="primary" onClick={() => void act.choose(k, t.id)} title="use this recording for the line in your edit (preview and export)">use this one</Button>}
-        <Button small variant="ghost" onClick={() => void act.edit(t.id, { rejected: !t.rejected })}>{t.rejected ? 'not a mistake' : 'mistake'}</Button>
-        <Button small variant="ghost" icon="trash" onClick={async () => { if (await confirm({ title: 'Hide this take?', body: 'The take is hidden from the lecture.', confirmLabel: 'Hide take', tone: 'danger' })) void act.edit(t.id, { deleted: true }) }}>hide</Button>
-      </div>
-      <div className="btn-row fit">
-        <Button small disabled={!off(t.fit[0], e.trim_in ?? 0) && !off(t.fit[1], e.trim_out ?? 0)} onClick={() => void act.fit(t.id, 'both')} title={`set the start and end to your first and last word, keeping ${t.margin} s`}>trim silence</Button>
-        <Button small variant="ghost" disabled={!e.trim_in && !e.trim_out} onClick={() => void act.edit(t.id, { trim_in: null, trim_out: null })} title="put both ends back to the recording's own">undo trims</Button>
-      </div>
-      {editing && <TakeEditor t={t} n={n} levels={levels} tr={tr} onClose={() => setEditing(false)} />}
-    </div>
-  )
 }
 
 /** picture later / sooner than the voice: the slider and the number agree; saved when the slider is let go or the number is left */
@@ -157,55 +114,45 @@ function SessionRow({ s, act, p }: { s: Session; act: Act; p: Project }) {
   )
 }
 
-export function Inspector({
-  p, k, st, langs, levels, tr, onGotoLang, onRecord,
-}: {
-  p: Project
-  k: number
-  st: LineState
-  langs: EditorLangs | null
-  levels: Record<string, Levels>
-  tr: Transport
-  onGotoLang: (lang: string, key: string) => void
-  onRecord: () => void
-}) {
-  const act = useActions()
-  const toast = useToast()
-  const { confirm } = useDialog()
-  const takes = p.takes[String(k)] ?? []
-  const text = p.lines[k][1]
-  const scene = p.scenes[k]
-  const versions = p.versions[scene] ?? []
-  const vm = p.voice[String(k)]
-  const li = langs?.lines[String(k)]
-  const orig = levels[ORIGINAL]
-  const vStart = p.lines[k][0]
-  const vEnd = p.lines[k + 1]?.[0] ?? vStart + (st.b - st.a)
-  const chosen = st.take
-  const wordsTake = chosen ?? takes[takes.length - 1]
-  const words = wordsTake?.words
-  const clone = p.engine === 'navoiy' ? 'cloned' : 'synthetic'
-  const making = versions.some((x) => ['queued', 'voicing', 'rendering'].includes(x.state))
+
+/** Tighten & nudge: the picture against the voice, the hand cuts, what the tightening tool did, tighten / undo */
+export function TightenPanel({ chosen, act }: { chosen: Take; act: Act }) {
+  const e = chosen.edit
+  const tools = !!e && ((e.auto_cuts ?? []).length || (e.squeeze ?? []).length || (e.auto ?? []).length)
+  const cuts = e?.cuts ?? []
+  return (
+    <div className="insp-body">
+          <Nudge key={chosen.id} value={e.nudge ?? 0} onSave={(v) => void act.edit(chosen.id, { nudge: v })} />
+          <div className="field">
+            <label>cuts</label>
+            <span className="chips">
+              {cuts.map(([a, b], n) => (
+                <button key={n} type="button" className="chip chip-btn" title="click to remove" onClick={() => void act.edit(chosen.id, { cuts: cuts.filter((_, i) => i !== n) })}>
+                  {a.toFixed(2)}–{b.toFixed(2)} s ✕
+                </button>
+              ))}
+              {!cuts.length && <span className="dim">none</span>}
+            </span>
+          </div>
+          {((e.auto_cuts ?? []).length > 0 || (e.squeeze ?? []).length > 0) && (
+            <p className="dim sub">
+              tightened: {(e.auto_cuts ?? []).reduce((a, [x, y]) => a + y - x, 0).toFixed(1)} s of pauses cut
+              {(e.squeeze ?? []).length > 0 && `, ${(e.squeeze ?? []).reduce((a, [x, y, n]) => a + y - x - n, 0).toFixed(1)} s squeezed`}
+            </p>
+          )}
+          <div className="btn-row">
+            <Button small onClick={() => void act.shrink(chosen.id)} disabled={chosen.tighten.gain <= 0} title={`shorten the pauses inside the take, and trim the ends to keep ${chosen.margin} s around the voice (a trim you set by hand stays)`}>{tightenLabel(chosen.tighten)}</Button>
+            {tools && <Button small variant="ghost" onClick={() => void act.unshrink(chosen.id)} title="takes back the pause cuts and the trims the tool set; your own cuts, hand-set trims and nudge stay">undo tightening</Button>}
+            {cuts.length > 0 && <Button small variant="ghost" onClick={() => void act.edit(chosen.id, { cuts: [] })}>clear cuts</Button>}
+          </div>
+    </div>
+  )
+}
+
+/** Script check: the words heard against the approved text; a click on a word cuts or keeps it; transcribe */
+export function ScriptCheckPanel({ p, wordsTake, act }: { p: Project; wordsTake: Take; act: Act }) {
+  const words = wordsTake.words
   const wordsBusy = p.jobs.some((j) => j.kind === 'words' && (j.state === 'queued' || j.state === 'running'))
-
-  // the narration box: what is typed stays per line; `bases` is the version the next one grows from ("Scene/vN")
-  const [drafts, setDrafts] = useState<Record<number, string>>({})
-  const [bases, setBases] = useState<Record<number, string>>({})
-  const box = useRef<HTMLTextAreaElement>(null)
-  const base = bases[k]
-  const baseText = (base && versions.find((x) => 'v' + x.n === base.split('/')[1])?.texts[String(k)]) || text
-  const typed = drafts[k] ?? text
-  const dropBase = () => setBases((b) => Object.fromEntries(Object.entries(b).filter(([i]) => +i !== k)))
-  const saveVersion = async (asIs: boolean) => {
-    if (!asIs && typed.trim() === baseText.trim()) return toast('The text is unchanged' + (p.engine === 'navoiy' ? ': use “new cloned-voice take”' : ''))
-    if (await act.version(k, asIs ? undefined : typed.trim(), base)) dropBase()
-  }
-  const rewriteAgain = (x: VersionRow) => {
-    setBases((b) => ({ ...b, [k]: `${scene}/v${x.n}` }))
-    setDrafts((d) => ({ ...d, [k]: x.texts[String(k)] ?? text }))
-    box.current?.focus()
-  }
-
   const wordsOf = (t: Take) => {
     const e = t.edit
     const cuts = e.cuts ?? []
@@ -240,78 +187,9 @@ export function Inspector({
     })
   }
 
-  const e = chosen?.edit
-  const tools = !!e && ((e.auto_cuts ?? []).length || (e.squeeze ?? []).length || (e.auto ?? []).length)
-  const cuts = e?.cuts ?? []
-  const wordsGrid = wordsTake?.words ? wordsOf(wordsTake) : null
+  const wordsGrid = wordsTake.words ? wordsOf(wordsTake) : null
   return (
-    <Panel
-      title={
-        <>
-          Inspector · line <b className="mono">{k + 1}</b>
-        </>
-      }
-      actions={<span className="mono dim">{timecode(st.a)}–{timecode(st.b)}</span>}
-      className="inspector"
-    >
-      <div className="insp-head">
-        <p className="insp-text">{text}</p>
-        <div className="chips">
-          <LineMarks s={st} k={k} p={p} />
-          <Chip tone="empty" plain className="mono" title="the scene this line belongs to">{scene}</Chip>
-        </div>
-        <div className="btn-row">
-          <Button variant="record" small icon="rec" onClick={onRecord} title="open the booth on this line (L)">record this line</Button>
-          <Button small icon="play" onClick={() => tr.playLine(k)}>play</Button>
-        </div>
-      </div>
-
-      <InspectorSection title="Takes" count={takes.length ? `${takes.length}` : 'none'}>
-        {takes.length === 0 && (
-          <div className="empty-note">
-            <p>
-              <b>No take of this line.</b> {p.settings.missing === 'original' ? 'The lecture video’s own narration (the cloned voice) plays here.' : 'This line is silent in the export.'}
-            </p>
-            <div className="dim label">the lecture video's own voice for this line</div>
-            <TakeWave levels={orig} from={vStart} to={vEnd} color="--track-clone" handles={false} height={52} />
-          </div>
-        )}
-        {takes.length > 0 && <p className="dim sub cut-hint">Drag on the wave to select a part, then ✂ or Delete to cut it.</p>}
-        {takes.map((t, i) => (
-          <TakeCard key={t.id} t={t} n={i + 1} k={k} used={t.id === chosen?.id} levels={levels[t.session]} act={act} tr={tr} />
-        ))}
-      </InspectorSection>
-
-      {chosen && e && (
-        <InspectorSection title="Tighten & nudge" open={false}>
-          <Nudge key={chosen.id} value={e.nudge ?? 0} onSave={(v) => void act.edit(chosen.id, { nudge: v })} />
-          <div className="field">
-            <label>cuts</label>
-            <span className="chips">
-              {cuts.map(([a, b], n) => (
-                <button key={n} type="button" className="chip chip-btn" title="click to remove" onClick={() => void act.edit(chosen.id, { cuts: cuts.filter((_, i) => i !== n) })}>
-                  {a.toFixed(2)}–{b.toFixed(2)} s ✕
-                </button>
-              ))}
-              {!cuts.length && <span className="dim">none</span>}
-            </span>
-          </div>
-          {((e.auto_cuts ?? []).length > 0 || (e.squeeze ?? []).length > 0) && (
-            <p className="dim sub">
-              tightened: {(e.auto_cuts ?? []).reduce((a, [x, y]) => a + y - x, 0).toFixed(1)} s of pauses cut
-              {(e.squeeze ?? []).length > 0 && `, ${(e.squeeze ?? []).reduce((a, [x, y, n]) => a + y - x - n, 0).toFixed(1)} s squeezed`}
-            </p>
-          )}
-          <div className="btn-row">
-            <Button small onClick={() => void act.shrink(chosen.id)} disabled={chosen.tighten.gain <= 0} title={`shorten the pauses inside the take, and trim the ends to keep ${chosen.margin} s around the voice (a trim you set by hand stays)`}>{tightenLabel(chosen.tighten)}</Button>
-            {tools && <Button small variant="ghost" onClick={() => void act.unshrink(chosen.id)} title="takes back the pause cuts and the trims the tool set; your own cuts, hand-set trims and nudge stay">undo tightening</Button>}
-            {cuts.length > 0 && <Button small variant="ghost" onClick={() => void act.edit(chosen.id, { cuts: [] })}>clear cuts</Button>}
-          </div>
-        </InspectorSection>
-      )}
-
-      {wordsTake && (
-        <InspectorSection title="Script check" count={words ? `${words.heard.length} words heard` : 'not transcribed'} open={false}>
+    <div className="insp-body">
           {words ? (
             <p className="words">{wordsGrid}</p>
           ) : (
@@ -330,10 +208,40 @@ export function Inspector({
             )}
             <Button small disabled={wordsBusy} onClick={() => void act.words(wordsTake.id)}>{words ? 'transcribe again' : 'transcribe and check'}</Button>
           </div>
-        </InspectorSection>
-      )}
+    </div>
+  )
+}
 
-      <InspectorSection title={`${clone === 'cloned' ? 'Cloned' : 'Synthetic'}-voice versions`} count={versions.length ? `${versions.length} for ${scene}` : undefined}>
+/** The cloned-voice versions of this line's scene: the text box, save as new version, the version list, the voice check */
+export function VersionsPanel({ p, k, tr, act }: { p: Project; k: number; tr: Transport; act: Act }) {
+  const toast = useToast()
+  const { confirm } = useDialog()
+  const text = p.lines[k][1]
+  const scene = p.scenes[k]
+  const versions = p.versions[scene] ?? []
+  const vm = p.voice[String(k)]
+  const clone = p.engine === 'navoiy' ? 'cloned' : 'synthetic'
+  const making = versions.some((x) => ['queued', 'voicing', 'rendering'].includes(x.state))
+  // the narration box: what is typed stays per line; `bases` is the version the next one grows from ("Scene/vN")
+  const [drafts, setDrafts] = useState<Record<number, string>>({})
+  const [bases, setBases] = useState<Record<number, string>>({})
+  const box = useRef<HTMLTextAreaElement>(null)
+  const base = bases[k]
+  const baseText = (base && versions.find((x) => 'v' + x.n === base.split('/')[1])?.texts[String(k)]) || text
+  const typed = drafts[k] ?? text
+  const dropBase = () => setBases((b) => Object.fromEntries(Object.entries(b).filter(([i]) => +i !== k)))
+  const saveVersion = async (asIs: boolean) => {
+    if (!asIs && typed.trim() === baseText.trim()) return toast('The text is unchanged' + (p.engine === 'navoiy' ? ': use “new cloned-voice take”' : ''))
+    if (await act.version(k, asIs ? undefined : typed.trim(), base)) dropBase()
+  }
+  const rewriteAgain = (x: VersionRow) => {
+    setBases((b) => ({ ...b, [k]: `${scene}/v${x.n}` }))
+    setDrafts((d) => ({ ...d, [k]: x.texts[String(k)] ?? text }))
+    box.current?.focus()
+  }
+
+  return (
+    <div className="insp-body">
         <p className="dim sub">The lecture video’s own narration. Rewriting a line voices it again and renders only its scene; a merge replaces the scene in the video. Your recordings are not affected.</p>
         {vm && (
           <div className="vcheck">
@@ -396,9 +304,15 @@ export function Inspector({
             </div>
           </>
         )}
-      </InspectorSection>
+    </div>
+  )
+}
 
-      <InspectorSection title="Other languages" count={li?.others.length ? li.others.map((o) => o.lang).join(' ') : undefined}>
+/** The line in the other languages, with "review" and "still fine" */
+export function LanguagesPanel({ k, langs, onGotoLang, act }: { k: number; langs: EditorLangs | null; onGotoLang: (lang: string, key: string) => void; act: Act }) {
+  const li = langs?.lines[String(k)]
+  return (
+    <div className="insp-body">
         {!li?.others.length && <p className="dim">This lecture has no other language yet.</p>}
         {li?.others.map((o) => (
           <div key={o.lang} className="lrow">
@@ -422,14 +336,18 @@ export function Inspector({
             <Button small onClick={() => void act.lineFine(li.key)} title="this line is still right: approve it again against the other languages as they are now">still fine</Button>
           </div>
         )}
-      </InspectorSection>
+    </div>
+  )
+}
 
-      <InspectorSection title="Recordings" count={p.sessions.length || 'none'} open={false}>
+/** The recordings of the lecture: state, compare your voice with the cloned one, convert, delete */
+export function RecordingsPanel({ p, act }: { p: Project; act: Act }) {
+  return (
+    <div className="insp-body">
         <ul className="plain sessions">
           {p.sessions.map((s) => <SessionRow key={s.name} s={s} act={act} p={p} />)}
           {!p.sessions.length && <li className="dim">none yet: press Record</li>}
         </ul>
-      </InspectorSection>
-    </Panel>
+    </div>
   )
 }

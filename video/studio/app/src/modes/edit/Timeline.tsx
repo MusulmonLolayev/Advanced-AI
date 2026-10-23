@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Button, Clip, Icon, IconButton, Marker, Playhead, Track, drawEnvelope, useViewportCanvas } from '../../components'
 import { useActions } from '../../actions'
-import type { Composite, LineState, Section } from '../../model'
+import { editedTime, lineAt, planOf, type Composite, type LineState, type Section } from '../../model'
 import type { Project } from '../../types'
 import { clamp, timecode } from '../../util'
+import type { ClipKind } from './clipMenu'
 
 /** "keep … s at line ends": the margin, saved with the lecture. Saved when the field is left, on Enter, or 0.6 s after the last keystroke. */
 function MarginField({ value, onSave }: { value: string; onSave: (v: number) => void }) {
@@ -39,12 +40,34 @@ function MarginField({ value, onSave }: { value: string; onSave: (v: number) => 
   )
 }
 
+/** On a YOU clip: where the hand cuts (hatched) and the tightening tool's cuts (amber) were made, the trimmed ends (dim), and which
+ *  take of how many it is. The clip is the edited take, so a cut has no width left: it is a seam, drawn at the point where it joined. */
+function TakeMarks({ p, k, t, pps }: { p: Project; k: number; t: NonNullable<LineState['take']>; pps: number }) {
+  const takes = p.takes[String(k)] ?? []
+  const e = t.edit
+  const plan = planOf(e, t.raw_picture, t.raw_length)
+  const lead = Math.max(-(e.nudge ?? 0), 0)
+  const x = (a: number) => (editedTime(plan, t.raw_length, a) + lead) * pps
+  const seam = (cls: string, [a, b]: [number, number], i: number) => (
+    <i key={cls + i} className={'seam ' + cls} style={{ left: x(a) }} title={`${cls === 'hand' ? 'cut by hand' : 'cut by the tightening tool'}: ${a.toFixed(2)}–${b.toFixed(2)} s (${(b - a).toFixed(2)} s removed)`} />
+  )
+  return (
+    <>
+      {(e.trim_in ?? 0) > 0 && <i className="trimmed in" title={`start trimmed ${(e.trim_in ?? 0).toFixed(2)} s`} />}
+      {(e.trim_out ?? 0) > 0 && <i className="trimmed out" title={`end trimmed ${(e.trim_out ?? 0).toFixed(2)} s`} />}
+      {(e.cuts ?? []).map((c, i) => seam('hand', c, i))}
+      {(e.auto_cuts ?? []).map((c, i) => seam('auto', c, i))}
+      {takes.length > 1 && <b className="take-badge mono">T{takes.findIndex((q) => q.id === t.id) + 1} · {takes.length} takes</b>}
+    </>
+  )
+}
+
 const HEAD = 100
 const H = { ruler: 24, markers: 24, picture: 52, you: 58, clone: 58 }
 const STEPS = [0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600]
 
 export function Timeline({
-  p, states, sections, comp, total, line, onPick, onSeek, silences, longSil, setLongSil,
+  p, states, sections, comp, total, line, onPick, onSeek, silences, longSil, setLongSil, onMenu, onRecordings,
 }: {
   p: Project
   states: LineState[]
@@ -57,6 +80,9 @@ export function Timeline({
   silences: { a: number; b: number }[]
   longSil: number
   setLongSil: (x: number) => void
+  /** a right-click (or the ⋯ button) on a clip: the menu for it at this point of the screen */
+  onMenu: (kind: ClipKind, k: number, x: number, y: number) => void
+  onRecordings: () => void
 }) {
   const act = useActions()
   const scroller = useRef<HTMLDivElement>(null)
@@ -157,6 +183,32 @@ export function Timeline({
   const showText = pps >= 5
   const showNums = pps >= 12
   const marks = useMemo(() => states.map((s, k) => ({ s, k })).filter(({ s }) => s.voice || s.lang === 'needs_update'), [states])
+  const ctx = (e: React.MouseEvent, kind: ClipKind, k: number) => {
+    e.preventDefault() // the browser's own menu only on the clips
+    e.stopPropagation()
+    if (k !== line) onPick(k)
+    onMenu(kind, k, e.clientX, e.clientY)
+  }
+  /** the "⋯" button on the selected clip, for a trackpad or a touch screen: the same menu, under the button */
+  const more = (lane: 'you' | 'clone', mine: (s: LineState) => boolean) => {
+    const s = states[line]
+    if (!s || !mine(s)) return null
+    return (
+      <button
+        type="button"
+        className="clip-more"
+        aria-label={`Actions for line ${line + 1}`}
+        title="actions for this clip (or right-click it)"
+        style={{ left: Math.max(pxl(s.a) + 1, pxl(s.b) - 24) }}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect()
+          onMenu(lane === 'you' ? 'take' : 'line', line, r.left, r.bottom + 2)
+        }}
+      >
+        ⋯
+      </button>
+    )
+  }
   const lanes = H.ruler + H.markers + H.picture + H.you + H.clone
 
   return (
@@ -173,7 +225,9 @@ export function Timeline({
         <MarginField value={p.settings.margin} onSave={(v) => void act.setting('margin', v)} />
         <Button small onClick={() => void act.shrinkAll()} icon="scissors" title="Optional. Shortens the long pauses inside each chosen take and trims the line ends to the margin (a trim you set by hand stays). Each take can be put back, or fitted by itself.">Tighten all</Button>
         <Button small onClick={() => void act.words()} title="Transcribe the chosen takes and compare them with the approved text">Check all against the script</Button>
+        <Button small onClick={onRecordings} title="the recordings of this lecture: compare, convert, delete">Recordings…</Button>
         <span className="grow" />
+        <span className="dim tl-hint">Right-click a clip for its actions</span>
         <span className="legend">
           <i style={{ background: 'var(--track-you)' }} /> your voice
           <i style={{ background: 'var(--track-clone)' }} /> cloned voice
@@ -230,6 +284,9 @@ export function Timeline({
                 selected={k === line}
                 title={`${k + 1}. ${p.lines[k][1].slice(0, 90)}`}
                 onClick={() => onPick(k)}
+                onContextMenu={(e) => ctx(e, 'line', k)}
+                lane="picture"
+                line={k}
               >
                 <span className="mono">{k + 1}</span>
                 {showText && <span className="clip-text">{p.lines[k][1]}</span>}
@@ -237,20 +294,31 @@ export function Timeline({
             ))}
           </Track>
           <Track label="YOU" sub="recorded" color="var(--track-you)" height={H.you} width={W}>
+            <div
+              className="lane-hit"
+              onContextMenu={(e) => {
+                const r = e.currentTarget.getBoundingClientRect()
+                const k = lineAt(states, (e.clientX - r.left) / pps)
+                if (states[k]?.kind !== 'take') ctx(e, 'empty', k)
+              }}
+            />
             {states.map((s, k) =>
-              s.kind === 'take' ? (
-                <Clip key={k} left={pxl(s.a)} width={pxl(s.b - s.a) - 1} color="var(--track-you)" selected={k === line} onClick={() => onPick(k)} title={`line ${k + 1}: your take, ${(s.b - s.a).toFixed(1)} s`} muted>
+              s.kind === 'take' && s.take ? (
+                <Clip key={k} left={pxl(s.a)} width={pxl(s.b - s.a) - 1} color="var(--track-you)" selected={k === line} onClick={() => onPick(k)} onContextMenu={(e) => ctx(e, 'take', k)} lane="you" line={k} title={`line ${k + 1}: your take, ${(s.b - s.a).toFixed(1)} s${(p.takes[String(k)] ?? []).length > 1 ? ' (right-click for the other takes)' : ''}`} muted>
+                  <TakeMarks p={p} k={k} t={s.take} pps={pps} />
                 </Clip>
               ) : null,
             )}
+            {more('you', (s) => s.kind === 'take')}
             <canvas ref={youCv} className="vcanvas wavecv" style={{ width: viewW, height: H.you }} />
           </Track>
           <Track label="CLONE" sub="own voice" color="var(--track-clone)" height={H.clone} width={W}>
             {states.map((s, k) =>
               s.kind === 'clone' ? (
-                <Clip key={k} left={pxl(s.a)} width={pxl(s.b - s.a) - 1} color="var(--track-clone)" selected={k === line} onClick={() => onPick(k)} title={`line ${k + 1}: cloned voice`} muted />
+                <Clip key={k} left={pxl(s.a)} width={pxl(s.b - s.a) - 1} color="var(--track-clone)" selected={k === line} onClick={() => onPick(k)} onContextMenu={(e) => ctx(e, 'line', k)} lane="clone" line={k} title={`line ${k + 1}: cloned voice`} muted />
               ) : null,
             )}
+            {more('clone', (s) => s.kind === 'clone')}
             <canvas ref={cloneCv} className="vcanvas wavecv" style={{ width: viewW, height: H.clone }} />
           </Track>
           <Playhead pps={pps} offset={HEAD} />

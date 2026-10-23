@@ -1,11 +1,11 @@
-import type { RefObject } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import { Button, IconButton, PlayheadTimecode, Timecode } from '../../components'
 import type { Project } from '../../types'
 import type { Transport } from './usePlayer'
 
-/** The video monitor (the silent picture) with the transport under it. The voice comes from the player's audio elements. */
+/** The video monitor: the silent picture at 16:9, as large as the panel allows, with the line's text under it and the transport below. The voice comes from the player's audio elements. */
 export function Monitor({
-  p, total, videoRef, tr, line, onSeekLine, silences, onSilence,
+  p, total, videoRef, tr, line, onSeekLine, silences, onSilence, strip,
 }: {
   p: Project
   total: number
@@ -15,18 +15,22 @@ export function Monitor({
   onSeekLine: (k: number) => void
   silences: { a: number; b: number }[]
   onSilence: (dir: 1 | -1) => void
+  /** a one-line summary of the selected line under the transport */
+  strip?: ReactNode
 }) {
   const own = tr.what.kind !== 'lecture'
   return (
     <div className="monitor">
-      <div className="screen">
-        <video ref={videoRef} muted playsInline preload="auto" />
-        <div className="screen-tag">{tr.what.kind === 'version' ? `VERSION · ${tr.what.label}` : tr.what.kind === 'take' ? `YOUR VOICE · ${tr.what.label}` : 'PICTURE · silent video + edit list'}</div>
-        <div className="screen-line">
-          <span className="clamp">
-            <span className="mono">{line + 1}</span> {p.lines[line]?.[1]}
-          </span>
+      <div className="stage">
+        <div className="screen" data-testid="screen">
+          <video ref={videoRef} muted playsInline preload="auto" />
+          <div className="screen-tag">{tr.what.kind === 'version' ? `VERSION · ${tr.what.label}` : tr.what.kind === 'take' ? `YOUR VOICE · ${tr.what.label}` : 'PICTURE · silent video + edit list'}</div>
         </div>
+      </div>
+      <div className="subtitle" data-testid="subtitle">
+        <span className="clamp">
+          <span className="mono">{line + 1}</span> {p.lines[line]?.[1]}
+        </span>
       </div>
       <div className="transport">
         {own ? (
@@ -52,6 +56,7 @@ export function Monitor({
           {own ? 'back to the lecture' : 'whole lecture'}
         </Button>
       </div>
+      {strip && <div className="line-strip" data-testid="line-strip">{strip}</div>}
     </div>
   )
 }
