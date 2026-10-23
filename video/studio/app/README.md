@@ -1,7 +1,8 @@
 # Studio app (React): every screen is live
 
-The recording studio: one window, a project browser on the left (Module, Lecture, Language) and four mode tabs on top:
-**Record, Edit, Script & languages, Export**. It is the studio's only front end: the old HTML pages (the editor, the
+The recording studio: one window and one workspace (no mode tabs): the script list, the monitor (or the recording booth while
+**Record** is on) and the timeline. Two buttons in the top bar open the rest: **Script & languages** (a drawer from the right) and
+**Export** (a large dialog). The project browser (Module, Lecture, Language) starts as an icon rail. It is the studio's only front end: the old HTML pages (the editor, the
 presenter page with its takes panel, the narration review page, the module and lecture pages) are gone, and their addresses
 redirect here. Every screen reads and changes the real server and does what the old page it replaced did.
 
@@ -14,9 +15,10 @@ redirect here. Every screen reads and changes the real server and does what the 
 
 The server (`serve_presenter.py`, 8080) serves the build at `/` (no restart after a build; `Cache-Control: no-cache` on the
 page, the hashed assets cached for good); through the tunnel: **`http://localhost:8081/`**. Deep links:
-`/#mode=edit&lecture=lecture01&lang=uz&line=14` (`mode` = record | edit | script | export; `lecture` e.g. `m7_lecture01`;
-`line` counts from 1; `watch=lecture` or a recording's name plays it inline in Export). The same names work in the query
-(`/?mode=edit&lecture=…`), which is what the old addresses redirect to (`serve_presenter.old_route`): `/?m=N`,
+`/#lecture=m7_lecture01&lang=uz&line=14&rec=1&panel=export&watch=lecture` (`rec=1` the booth is on; `panel` = script | export;
+`line` counts from 1; `watch=lecture` or a recording's name plays it inline in the Export dialog). The old `mode=` names still
+work: `mode=record` is `rec=1`, `mode=edit` the plain workspace, `mode=script` and `mode=export` the panels. The same names work in
+the query (`/?mode=script&lecture=…`), which is what the old addresses redirect to (`serve_presenter.old_route`): `/?m=N`,
 `/lecture?build=`, `/edit?build=`, `/watch?build=&name=`, `/narration?lecture=&lang=`, `<build>/presenter/presenter.html`.
 The app follows the address when it changes (`hashchange`). `studio/run_tests.sh` builds and checks it, and
 `test_app_browser` drives it in headless Chromium.
@@ -26,7 +28,7 @@ The app follows the address when it changes (`hashchange`). `studio/run_tests.sh
     src/styles/tokens.css       colours, 8 px spacing, radii, type scale, fonts: the only place values live
     src/styles/components.css   component styles (class = component name)
     src/styles/shell.css        top bar, project browser, status bar
-    src/styles/modes.css        the four modes
+    src/styles/modes.css        the workspace, the booth, the Script and Export screens
     src/api.ts, types.ts        typed fetchers (GET) and actions (POST) and the response shapes
     src/actions.ts              every action: post, fetch the project again, toast the server's message on failure
     src/booth.ts, upload.ts     the recording engine and its chunk queue (Record)
@@ -36,7 +38,7 @@ The app follows the address when it changes (`hashchange`). `studio/run_tests.sh
     src/components/             Button IconButton Icon Tabs Chip Panel Meter Track Clip Marker Playhead Timecode
                                 InspectorSection ContextMenu PanelDialog Toast Dialog (useDialog().confirm) Waveform(useViewportCanvas, drawEnvelope)
     src/shell/                  TopBar ProjectBrowser StatusBar
-    src/modes/                  Edit (+ edit/: ScriptList Monitor Timeline clipMenu panels TakeWave TakeEditor) Record Script Export
+    src/modes/                  Workspace (+ edit/: ScriptList Monitor Timeline clipMenu panels TakeWave TakeEditor) BoothPanel Script Export
 
 ## Tokens
 
@@ -63,7 +65,7 @@ Playhead, Timecode (monospace), InspectorSection (collapsible), Toast (`useToast
 | Script & languages | `/narration?lecture=&lang=` | `/api/narration` (lines, labels, counts, checks, refs), `/api/lecture-langs` |
 | Export | the editor header (Export, cleaning, unrecorded lines), the module page (Build video) | `/api/project` (`settings`, `jobs`, `exports`), `/api/lecture-langs` |
 
-## Edit mode (live)
+## The workspace (live)
 
 `src/api.ts` has a typed POST helper per route of the old editor (the same routes, parameters and bodies the old editor sent);
 `src/actions.ts` wraps them: post, then fetch `/api/project` again; a failure is a toast with the server's message and
@@ -84,7 +86,36 @@ Recordings (Recordings… in the timeline bar): each shows its voice profile; on
 cloned voice** buttons that play the whole recording before and after conversion (`audio_alt` and `audio` of `/api/project`;
 per recording, not per take). `cloned` is also the default in Export's voice cleaning.
 
-## Record mode (live)
+## Keys
+
+One map for the whole studio (Alt, Ctrl and Meta combinations are left to the browser; nothing fires while a field has the focus or a
+dialog is open; the buttons show their key only in the tooltip):
+
+| Where | Key | Does |
+|---|---|---|
+| anywhere | **B** | Record on / off (off while recording asks "Leave and stop recording?") |
+| anywhere | **S** | the Script & languages drawer, on / off |
+| anywhere | **E** | the Export dialog, on / off |
+| drawers, dialogs, menus | Esc | close |
+| workspace (Record off) | Space | play / pause the lecture's edit list |
+| workspace | → ← | play the next / previous line |
+| workspace | **L** | Record turns on and records one take of the selected line, after the count-in |
+| workspace | menu key, Shift+F10 | the context menu of the selected clip (↑ ↓ Enter, → opens a submenu, ← / Esc back) |
+| booth (Record on) | Space, P | pause / play the line; starts the next line |
+| booth | → PgDn / ← PgUp | next line (playing: jump to its end) / back to the line start, then the line before |
+| booth | **L** | record one take of this line (stops 1 s after the line, or at → / L) |
+| booth | **R** | start / stop recording the session |
+| booth | **X** | mistake while recording: the line starts over |
+| booth | **T** | show / hide the takes of this line |
+| booth | **M** | microphone select |
+| booth | **N** | notes (the teleprompter): below / right / hidden |
+| booth | **F** | full screen |
+| booth | Esc | stop watching a take, cancel the count-in |
+
+B, S and E are the only keys the studio added for the panels; the booth uses Space P → ← PgUp PgDn L R X T M N F Esc and the
+workspace Space → ← L, so none of the three clashes with them.
+
+## The booth (Record on; was the Record mode)
 
 The old presenter page as components (it lives on only as the offline copy `presenter.py` writes). `src/booth.ts` is its engine:
 the silent video plays line by line (Space, →, ←), the microphone is recorded with `getUserMedia` (same constraints) and
@@ -118,7 +149,7 @@ plan) and is reloaded after an approval, an added language or a build.
 
 ## Export (live)
 
-Voice cleaning (remembered in `localStorage` `studioClean`, the old editor's key), "lines you have not recorded"
+Voice cleaning (defaults to the profile the lecture's recordings use, "cloned" if any is; not kept in the browser; the exports list shows each file's time and profile; links carry `?v=<mtime>`), "lines you have not recorded"
 (`/api/settings?key=missing`), Export (`POST /api/export?build&clean=`), the queue (`/api/project` jobs) and the exports
 list (each file linked for download, `watch` plays an exported mp4 inline), and "Watch the lecture video": the built video
 inline (`/<build>/<build>.mp4`, as `/lecture?build=` shows it). The "your takes vs the cloned voice" summary is

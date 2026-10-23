@@ -3,7 +3,7 @@ scratch server on a free port: a synthetic lecture (30 s of test picture, three 
 folder built from fixtures, never the real out/. The browser is driven by app_browser_check.py in the system Python (the
 one with Playwright; the project's venv has none). One project is shared by its numbered tests, in this order:
 
-  1  the front door: / is the app; an old address (/edit?build=) lands on its screen; the address is followed when it changes
+  1  the front door: / is the workspace (no tab bar), the project browser starts as the rail; an old address (/edit?build=) lands on its screen; the address is followed when it changes
   2  Record: the meter moves with the microphone; one take of a line (L) goes over HTTP as chunks 0..n, then events, then
      finish, and the take shows up; a whole session with one X mark logs the old page's event shapes; leaving while
      recording asks first
@@ -12,7 +12,9 @@ one with Playwright; the project's venv has none). One project is shared by its 
      shorter, restore puts it back; the margin is saved; a recording is deleted after the confirm
   4  Script & languages: approve, save an edit (only that line of the narration file changes), still fine (needs update ->
      approved), the Uzbek rule (an unapproved Uzbek is refused, with the reason)
-  5  Export: cleaning, the unrecorded-lines setting, an export (the job is stubbed) shows in the queue, the lecture video plays
+  6  one workspace: no tabs; Record toggles the monitor into the booth (microphone only while on); L from the plain workspace records a
+     take; Script & languages is a drawer (Esc, focus trapped), Export a dialog; old mode= links land on the same things
+  5  Export (a dialog): cleaning, the unrecorded-lines setting, an export (the job is stubbed) shows in the queue, the lecture video plays
 
 Skipped without Playwright (in the system python3), without its Chromium, or when studio/static/app has not been built
 (cd studio/app && npm run build).

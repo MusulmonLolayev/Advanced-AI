@@ -10,13 +10,15 @@ import { EmptyState, NoPresenter } from './EmptyState'
 import { menuItems, type ClipKind, type Dlg } from './edit/clipMenu'
 import { LanguagesPanel, RecordingsPanel, ScriptCheckPanel, TightenPanel, VersionsPanel } from './edit/panels'
 import { TakeEditor } from './edit/TakeEditor'
+import { BoothPanel } from './BoothPanel'
 import { Monitor } from './edit/Monitor'
 import { ScriptList } from './edit/ScriptList'
 import { Timeline } from './edit/Timeline'
 import { usePlayer } from './edit/usePlayer'
 import { useLevels } from './edit/useLevels'
 
-export function EditMode() {
+/** The one workspace: the script list and the monitor (or the booth, while Record is on) above the timeline. */
+export function Workspace() {
   const { project, projectLoading } = useStudio()
   if (projectLoading) return <EmptyState title="Loading the project…" />
   if (!project) return <NoPresenter what="editor" />
@@ -68,7 +70,7 @@ function Splitter({ cls: c, label, onDrag, onKey, onReset }: { cls: string; labe
 }
 
 function EditBody({ p }: { p: Project }) {
-  const { line, setLine, langs, setMode, build, setRecording } = useStudio()
+  const { line, setLine, langs, setPanel, build, setRecording, boothOn, setBoothOn, rewriteLine, setRewriteLine } = useStudio()
   const videoRef = useRef<HTMLVideoElement>(null)
   const root = useRef<HTMLDivElement>(null)
   const [longSil, setLongSil] = useState(1)
@@ -89,13 +91,24 @@ function EditBody({ p }: { p: Project }) {
   const toast = useToast()
   const [menu, setMenu] = useState<{ kind: ClipKind; k: number; x: number; y: number } | null>(null)
   const [dlg, setDlg] = useState<Dlg | null>(null)
+  // Export's "Open" on an unmerged version: the Rewrite dialog of that line
+  useEffect(() => {
+    if (rewriteLine === null) return
+    setDlg({ kind: 'versions', k: rewriteLine })
+    setRewriteLine(null)
+  }, [rewriteLine, setRewriteLine])
   const closeMenu = useCallback(() => setMenu(null), [])
 
   const pick = useCallback((k: number) => seek(states[k].a), [seek, states])
   const record = useCallback(() => {
-    setMode('record')
+    setBoothOn(true)
     setRecording(false)
-  }, [setMode, setRecording])
+  }, [setBoothOn, setRecording])
+  // the monitor and the booth share the area; the editor's player is quiet while the booth is up
+  useEffect(() => {
+    if (boothOn && tr.playing) tr.toggle()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boothOn])
 
   // put the playhead on the selected line when the mode opens
   useEffect(() => {
@@ -133,7 +146,7 @@ function EditBody({ p }: { p: Project }) {
     const wordsTake = s.take ?? ts[ts.length - 1]
     if (d.kind === 'recordings') return <PanelDialog title="Recordings" sub={`${p.sessions.length || 'none'}`} wide onClose={closeDlg}><RecordingsPanel p={p} act={act} /></PanelDialog>
     if (d.kind === 'versions') return <PanelDialog title={title('Rewrite in the cloned voice')} wide onClose={closeDlg}><VersionsPanel p={p} k={d.k} tr={tr} act={act} /></PanelDialog>
-    if (d.kind === 'langs') return <PanelDialog title={title('Other languages')} onClose={closeDlg}><LanguagesPanel k={d.k} langs={langs} act={act} onGotoLang={() => { closeDlg(); setMode('script') }} /></PanelDialog>
+    if (d.kind === 'langs') return <PanelDialog title={title('Other languages')} onClose={closeDlg}><LanguagesPanel k={d.k} langs={langs} act={act} onGotoLang={() => { closeDlg(); setPanel('script') }} /></PanelDialog>
     if (d.kind === 'check' && wordsTake) return <PanelDialog title={title('Script check')} sub={wordsTake.words ? `${wordsTake.words.heard.length} words heard` : 'not transcribed'} wide onClose={closeDlg}><ScriptCheckPanel p={p} wordsTake={wordsTake} act={act} /></PanelDialog>
     if (d.kind === 'tighten' && s.take) return <PanelDialog title={title('Tighten & nudge')} onClose={closeDlg}><TightenPanel chosen={s.take} act={act} /></PanelDialog>
     if (d.kind === 'parts' && s.take) return <TakeEditor t={s.take} n={ts.findIndex((t) => t.id === s.take?.id) + 1} levels={levels[s.take.session]} tr={tr} onClose={closeDlg} />
@@ -148,6 +161,7 @@ function EditBody({ p }: { p: Project }) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (boothOn) return // the booth has its own keys
       const a = document.activeElement as HTMLElement | null
       if (a && (['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName) || a.isContentEditable)) return
       if (e.ctrlKey || e.metaKey || e.altKey) return
@@ -169,11 +183,11 @@ function EditBody({ p }: { p: Project }) {
         if (a?.getAttribute('role') === 'slider' || a?.getAttribute('role') === 'separator') return
         e.preventDefault()
         tr.playLine(Math.max(0, line - 1))
-      } else if (e.key.toLowerCase() === 'l') record()
+      } else if (e.key.toLowerCase() === 'l') setBoothOn(true, { take: true }) // the booth opens and records one take of this line
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [line, p.lines.length, tr, record, states])
+  }, [line, p.lines.length, tr, setBoothOn, states, boothOn])
 
   // panel borders: script | monitor, and monitor | timeline; remembered in this browser
   const setSize = (k: keyof Sizes, v: number) =>
@@ -199,7 +213,10 @@ function EditBody({ p }: { p: Project }) {
       <div className="edit-top">
         <ScriptList p={p} states={states} line={line} onPick={pick} />
         <div className="edit-center">
+          {boothOn && <BoothPanel />}
+          <div className="monitor-slot" hidden={boothOn}>
           <Monitor p={p} total={total} videoRef={videoRef} tr={tr} line={line} onSeekLine={tr.playLine} silences={silences} onSilence={jump} strip={strip} />
+          </div>
         </div>
       </div>
       <Timeline p={p} states={states} sections={sects} comp={comp} total={total} line={line} onPick={pick} onSeek={seek} silences={silences} longSil={longSil} setLongSil={setLongSil} onMenu={(kind, k, x, y) => setMenu({ kind, k, x, y })} onRecordings={() => setDlg({ kind: 'recordings', k: line })} />

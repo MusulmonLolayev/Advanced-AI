@@ -1,5 +1,6 @@
-// Record mode: the old presenter page and its takes panel (removed 2026-10-22) as components. The engine is booth.ts
-// (playing, recording, event log) and upload.ts (the chunk queue); this file is the screen.
+// The booth: what the monitor area becomes while Record is on (the old presenter page and its takes panel as components). The
+// engine is booth.ts (playing, recording, event log) and upload.ts (the chunk queue); this file is the screen: the picture with the
+// teleprompter under it, and a compact column at the right (input, the record buttons, the takes of this line).
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useActions } from '../actions'
 import { fetchLine } from '../api'
@@ -14,19 +15,6 @@ import { EmptyState, NoPresenter } from './EmptyState'
 
 const NOTES = ['below', 'right', 'hidden'] as const
 type Notes = (typeof NOTES)[number]
-const KEYS: [string, string][] = [
-  ['Space  P', 'pause / play; starts the next line'],
-  ['→', 'next line (playing: jump to its end)'],
-  ['←', 'back to the line start, then the line before'],
-  ['L', 'record one take of this line'],
-  ['R', 'start / stop recording the session'],
-  ['X', 'mistake while recording: the line starts over'],
-  ['T', 'show or hide the takes'],
-  ['M', 'microphone'],
-  ['N', 'notes: below / right / off'],
-  ['F', 'full screen'],
-  ['Esc', 'stop watching a take, cancel the count-in'],
-]
 const NOMIC = 'Recording needs https or the ssh tunnel (http://localhost:8081)'
 const DB_LO = -60 // the meter's bottom, dBFS
 const pos = (db: number) => Math.min(1, Math.max(0, (db - DB_LO) / -DB_LO))
@@ -42,7 +30,7 @@ const HIDE_TAKE = {
   tone: 'danger',
 } as const
 
-export function RecordMode() {
+export function BoothPanel() {
   const { project, projectLoading, build } = useStudio()
   const lines = useAsync<Line[]>(project ? () => fetch(`/${build}/presenter/lines.json`).then((r) => (r.ok ? r.json() : Promise.reject(new Error('no lines.json'))) as Promise<Line[]>) : null, project ? build : '')
   const L = useMemo<Line[]>(() => lines.data ?? (project ? project.lines.map(([t, s]) => [t, s, []] as Line) : []), [lines.data, project])
@@ -54,7 +42,7 @@ export function RecordMode() {
 }
 
 function BoothView({ p, L }: { p: Project; L: Line[] }) {
-  const { line, setLine, setRecording, recSeconds, build, reload } = useStudio()
+  const { line, setLine, setRecording, recSeconds, build, reload, takeOnOpen } = useStudio()
   const toast = useToast()
   const { confirm } = useDialog()
   const act = useActions()
@@ -123,7 +111,16 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
     )
     boothRef.current = b
     setSnap(b.snap)
-    if (secure) void b.openMic().then(() => Booth.devices().then(setDevices))
+    if (secure) {
+      void b.openMic().then(() => {
+        void Booth.devices().then(setDevices)
+        if (takeOnOpen.current) {
+          // L from the plain workspace: the booth opened for one take of the selected line (after the count-in)
+          takeOnOpen.current = false
+          b.recordTake()
+        }
+      })
+    } else takeOnOpen.current = false
     void recover(build).then((names) => names.length && (setRecovered(names), void cur.current.reload()))
     return () => {
       b.dispose()
@@ -254,11 +251,13 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
   return (
     <div className="booth">
       <div className={`booth-stage notes-${notes}`}>
+        <div className="stage">
         <div className="screen booth-screen">
           <video ref={videoRef} src={`${p.video}?v=${p.video_version}`} muted playsInline preload="auto" />
           <div className="screen-tag">{watching ? `WATCHING A TAKE · ${snap?.watchClock ?? ''}` : 'PICTURE · the line plays here while you speak'}</div>
           {!!snap?.count && <div className="countin" aria-live="assertive">{snap.count}</div>}
           {rec && <div className="rec-badge"><span className="dot" /> REC <span className="mono">{secs(recSeconds, 0)}</span></div>}
+        </div>
         </div>
         <div className="prompter" aria-label="Teleprompter" ref={prompterRef}>
           <div className="prompter-bar">
@@ -409,25 +408,6 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
           </Panel>
         )}
 
-        <Panel title="Recordings of this lecture" className="sessions-panel">
-          <ul className="plain pad">
-            {p.sessions.map((s) => (
-              <li key={s.name}>
-                <span className="mono">{s.name}</span>{' '}
-                <span className="dim">{s.stale ? 'earlier build of the video: not used' : s.state === 'ready' ? `${(s.seconds / 60).toFixed(1)} min · ${s.clean}` : s.state === 'processing' ? 'cleaning the voice, converting it to the cloned voice…' : s.state === 'recorded' ? 'waiting…' : s.state === 'failed' ? 'failed ' + s.error : `recording… ${s.chunks} s`}</span>
-              </li>
-            ))}
-            {!p.sessions.length && <li className="dim">none yet</li>}
-          </ul>
-        </Panel>
-
-        <Panel title="Keys" className="keys-panel">
-          <dl className="keys">
-            {KEYS.map(([k, d]) => (
-              <div key={k}><dt><kbd>{k}</kbd></dt><dd>{d}</dd></div>
-            ))}
-          </dl>
-        </Panel>
       </aside>
     </div>
   )

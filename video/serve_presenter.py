@@ -202,6 +202,7 @@ def export(build, profile):
             sessions = A.usable(ROOT, build, S.sessions(c, build))
             eds, ch, st = S.edits(c, build), S.choices(c, build), S.settings(c, build)
         paths = M.export(ROOT / build, sessions, eds, ch, profile, fallback=st["missing"])
+        A.note_export_profile(ROOT, build, [p.name for p in paths], profile)
         return paths[0].name
     enqueue(build, "export", "export", fn)
 

@@ -101,8 +101,9 @@ def create(root, build, line, text, base, c):
 
 
 # ─── what a draft is made of ───
-def draft_narration(build, texts, lines, narration_dir):
-    """Copy the build's narration file into `narration_dir` and put the version's texts there. Returns the copy."""
+def draft_narration(build, texts, lines, narration_dir, written=None):
+    """Copy the build's narration file into `narration_dir` and put the version's texts there. Returns the copy.
+    `written`, if given, collects (narration key, text) of every line the version rewrote."""
     src, lang, single = N.source(build)
     narration_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, narration_dir / src.name)
@@ -110,7 +111,9 @@ def draft_narration(build, texts, lines, narration_dir):
     for k, text in sorted(texts.items(), key=lambda x: int(x[0])):
         old = lines[int(k)][1]
         if N.norm(old) != N.norm(text):
-            N.rewrite(path, lang, single, old, text)
+            pair = N.rewrite(path, lang, single, old, text)
+            if written is not None:
+                written.append(pair)
     return path
 
 
@@ -177,7 +180,8 @@ def build_version(root, build, scene, n, connect, progress=print, python=M.NAVOI
         line = json.loads((d / "meta.json").read_text())["line"]
         ls = M.lines(b)
         progress("preparing the draft narration")
-        draft_narration(build, row["texts"], ls, d / "narration")
+        own = []                                   # (key, text) of the lines this version rewrote
+        draft_narration(build, row["texts"], ls, d / "narration", own)
         bd = vdir(root, build, scene, base["n"]) if base else b
         copy_cache(bd / "media" / "voiceovers" / scene, d / "media" / "voiceovers" / scene)
         if (bd / "voice_check.json").exists():
@@ -200,7 +204,8 @@ def build_version(root, build, scene, n, connect, progress=print, python=M.NAVOI
         state("rendering", report=report)
         progress(f"rendering {scene}")
         RW.run(["./render.sh", RW.module_of(build), "h"],
-               env=dict(RW.render_env(build), ONLY=scene, OUT_DIR=str(d), NARRATION_DIR=str(d / "narration")),
+               env=dict(RW.render_env(build), ONLY=scene, OUT_DIR=str(d), NARRATION_DIR=str(d / "narration"),
+                        DRAFT_OWN_LINES=json.dumps(dict(own), ensure_ascii=False)),   # the instructor's own text: no draft tag
                what=f"render {scene}")
         if not scene_mp4(root, build, scene, n).exists():
             raise RuntimeError(f"the render left no {scene}.mp4")

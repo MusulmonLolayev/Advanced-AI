@@ -1,12 +1,22 @@
-// The app's shared state: which mode, lecture and language are open, the selected line, and the loaded project.
+// The app's shared state: the lecture and language that are open, the selected line, the loaded project, whether the booth
+// (Record) is on and which panel (Script & languages drawer, Export dialog) is open.
 import { createContext, useContext } from 'react'
 import type { EditorLangs, LectureLangs, ModuleRow, Project } from './types'
 
-export type Mode = 'record' | 'edit' | 'script' | 'export'
+export type Panel = 'script' | 'export' | null
 
 export type Studio = {
-  mode: Mode
-  setMode: (m: Mode) => void
+  /** Record is on: the monitor area is the booth. Turning it off while a recording runs asks first. */
+  boothOn: boolean
+  setBoothOn: (on: boolean, opts?: { take?: boolean }) => void
+  /** the booth was opened with L: it records one take of the selected line as soon as it is up (read once) */
+  takeOnOpen: { current: boolean }
+  /** a line whose Rewrite… dialog the workspace should open (set by Export's "Open", read once) */
+  rewriteLine: number | null
+  setRewriteLine: (k: number | null) => void
+  /** the Script & languages drawer, or the Export dialog */
+  panel: Panel
+  setPanel: (p: Panel) => void
   stem: string
   lang: string
   open: (stem: string, lang: string) => void

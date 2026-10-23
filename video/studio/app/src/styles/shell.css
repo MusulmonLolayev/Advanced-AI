@@ -11,7 +11,7 @@
 .crumbs svg { color: var(--faint); }
 .lang-switch { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); }
 .lang-switch select { min-height: 26px; background: var(--raised); color: var(--text); font-weight: 600; }
-.topbar .tabs .tab { min-height: 47px; }
+
 .rec-state { display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 14px; color: var(--dim); font-size: var(--fs-sm); }
 .rec-state .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); }
 .rec-state.on { color: #fff; background: var(--record-soft); border-color: var(--record); }
@@ -62,3 +62,9 @@
 .tree-row.files { padding-left: 24px; cursor: default; font-size: var(--fs-xs); min-height: 24px; }
 .tree-row.files:hover { background: transparent; }
 .tree-row.files .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top-btn { display: inline-flex; align-items: center; gap: var(--sp-2); min-height: var(--hit); padding: 0 var(--sp-3); background: var(--panel-2); color: var(--text); border: 1px solid var(--line-strong); border-radius: var(--r-2); font: inherit; font-size: var(--fs-sm); cursor: pointer; white-space: nowrap; }
+.top-btn:hover { background: var(--raised); }
+.top-btn.on { border-color: var(--accent); background: var(--accent-soft); }
+.top-btn .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--record); }
+.top-btn.rec-toggle.on { background: var(--record); border-color: #ff6b6b; color: #fff; font-weight: 600; }
+.top-btn.rec-toggle.on .dot { background: #fff; }

@@ -27,6 +27,14 @@ class App(unittest.TestCase):
         cls.browser = cls.pw.chromium.launch(executable_path=CHROME, args=[
             "--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", "--autoplay-policy=no-user-gesture-required"])
         cls.ctx = cls.browser.new_context(viewport={"width": 1920, "height": 1080}, permissions=["microphone"])
+        # every microphone stream the page opens, so a test can see that one is released when Record goes off
+        cls.ctx.add_init_script("""(() => {
+            const md = navigator.mediaDevices
+            if (!md) return
+            const gum = md.getUserMedia.bind(md)
+            window.__streams = []
+            md.getUserMedia = async (c) => { const s = await gum(c); window.__streams.push(s); return s }
+        })()""")
         cls.page = cls.ctx.new_page()
         cls.errors, cls.reqs, cls.dialogs = [], [], []
         cls.page.on("console", lambda m: cls.errors.append(m.text) if m.type == "error" else None)
@@ -71,7 +79,7 @@ class App(unittest.TestCase):
 
     def ask(self, button=None, key=None):
         """The in-app dialog: wait for it, return its title, then press a button (by its label) or a key."""
-        d = self.page.locator("dialog.dialog:not(.panel-dialog):not(.take-editor)[open]")
+        d = self.page.locator("dialog.dialog:not(.panel-dialog):not(.take-editor):not(.export-dialog)[open]")
         d.wait_for(timeout=6000)
         title = d.locator(".dialog-title").inner_text()
         if button:
@@ -113,12 +121,17 @@ class App(unittest.TestCase):
         self.assertEqual(p.evaluate("localStorage.getItem('studioBrowser')"), "closed")
         p.goto(f"{self.url}/edit?build={B}")                                      # an old address: redirected to its screen
         p.wait_for_selector(".edit")
-        self.assertRegex(p.evaluate("location.hash"), rf"mode=edit&lecture={STEM}&lang=en")
-        p.evaluate(f"location.hash = '#mode=script&lecture={STEM}&lang=en'")         # the address changes under the app: it follows
-        p.wait_for_selector(".mgrid .mg-row")
-        p.evaluate(f"location.hash = '#mode=record&lecture={STEM}&lang=en&line=2'")
+        self.assertRegex(p.evaluate("location.hash"), rf"lecture={STEM}&lang=en")
+        self.assertNotRegex(p.evaluate("location.hash"), r"rec=1|panel=")                 # the plain workspace
+        p.evaluate(f"location.hash = '#mode=script&lecture={STEM}&lang=en'")         # the address changes under the app: it follows (old mode= names)
+        p.wait_for_selector("dialog.drawer[open] .mgrid .mg-row")
+        self.assertIn("panel=script", p.evaluate("location.hash"))
+        p.evaluate(f"location.hash = '#rec=1&lecture={STEM}&lang=en&line=2'")             # the new names: rec=1, panel=
         p.wait_for_selector(".booth video")
+        self.assertEqual(p.locator("dialog[open]").count(), 0)
         self.assertIn("line 2 /", p.inner_text(".prompter-bar"))
+        p.evaluate(f"location.hash = '#lecture={STEM}&lang=en&line=2'")
+        p.wait_for_selector(".booth", state="detached")
 
     # ─── 2 ───
     def test_2_record_a_take_and_a_session(self):
@@ -174,20 +187,21 @@ class App(unittest.TestCase):
         p.wait_for_selector(".rec-badge", timeout=6000)
         p.wait_for_timeout(1500)
         n_finish = len(self.posts("/api/finish"))
-        p.keyboard.press("2")
-        d = p.locator("dialog.dialog:not(.panel-dialog):not(.take-editor)[open]")
+        p.keyboard.press("b")                                                       # B: Record off while recording asks first
+        d = p.locator("dialog.dialog:not(.panel-dialog):not(.take-editor):not(.export-dialog)[open]")
         d.wait_for(timeout=6000)
         self.assertEqual(d.locator(".dialog-title").inner_text(), "Leave and stop recording?")
         self.assertEqual(p.evaluate("document.activeElement.textContent"), "Leave")   # focus on the confirm button
         p.keyboard.press("Escape")                                                  # Esc cancels: still in the booth, still recording
         d.wait_for(state="detached", timeout=6000)
         p.wait_for_timeout(800)
-        self.assertEqual(p.locator(".edit").count(), 0)
+        self.assertEqual(p.locator(".booth").count(), 1)
         self.assertEqual(p.locator(".rec-badge").count(), 1)
         self.assertEqual(len(self.posts("/api/finish")), n_finish)
-        p.keyboard.press("2")
+        p.keyboard.press("b")
         self.assertEqual(self.ask(button="Leave"), "Leave and stop recording?")
-        p.wait_for_selector(".edit", timeout=8000)
+        p.wait_for_selector(".booth", state="detached", timeout=8000)
+        p.wait_for_selector(".edit")
         self.assertEqual(self.dialogs, [])
         self.wait(lambda: len(self.project()["sessions"]) == 3 and all(s["state"] == "ready" for s in self.project()["sessions"]), "three sessions")
 
@@ -594,7 +608,7 @@ class App(unittest.TestCase):
         # Esc cancels: the dialog shows its title, focus is on Cancel (danger), and nothing is sent
         n_del = len([r for r in self.reqs if "/api/delete" in r[1]])
         btn.click()
-        d = p.locator("dialog.dialog:not(.panel-dialog):not(.take-editor)[open]")
+        d = p.locator("dialog.dialog:not(.panel-dialog):not(.take-editor):not(.export-dialog)[open]")
         d.wait_for(timeout=6000)
         self.assertEqual(d.locator(".dialog-title").inner_text(), f"Delete recording {victim}?")
         self.assertIn("cannot be undone", d.locator(".dialog-body").inner_text())
@@ -634,7 +648,7 @@ class App(unittest.TestCase):
         mb = p.locator('dialog.panel-dialog[open] button[title="put it in the lecture"]').first
         mb.wait_for(timeout=8000)
         mb.click()
-        d = p.locator("dialog.dialog:not(.panel-dialog):not(.take-editor)[open]")
+        d = p.locator("dialog.dialog:not(.panel-dialog):not(.take-editor):not(.export-dialog)[open]")
         d.wait_for(timeout=6000)
         self.assertEqual(d.locator(".dialog-title").inner_text(), "Merge v1 into the lecture?")
         self.assertEqual(p.evaluate("document.activeElement.textContent"), "Merge")
@@ -655,20 +669,53 @@ class App(unittest.TestCase):
         key = p.locator(".mg-row").first.get_attribute("data-key")
         cell = lambda k, lang: p.locator(f'.mg-row[data-key="{k}"] .mg-cell[data-lang="{lang}"]')
         state = lambda lang, k: next(x["state"] for x in self.get(f"/api/narration?lecture={STEM}&lang={lang}")["lines"] if x["key"] == k)
+        blk = lambda lang: p.locator(f'.rv-block[data-lang="{lang}"]')
         self.assertEqual(cell(key, "en").get_attribute("data-state"), "draft")
-        cell(key, "en").click()
-        p.click('button:text-is("approve")')
+        cell(key, "en").click()                                          # one click on a row: every language of the line, stacked
+        self.assertEqual(blk("en").count() + blk("uz").count(), 2)
+        self.assertEqual(p.locator(".review select").count(), 0)         # no reference select
+        posts = []
+        p.on("request", lambda rq: posts.append(rq.url) if "/api/narration/" in rq.url and rq.method == "POST" else None)
+        blk("en").locator('button:text-is("approve")').click()           # without clicking another cell
         self.wait(lambda: state("en", key) == "approved", "the approval")
+        self.assertTrue(any("approve" in u and "lang=en" in u for u in posts), posts)
+        self.assertFalse(any("lang=uz" in u for u in posts), posts)
+        # approve the Uzbek block of the same line: the other language's block, no second cell click
+        if state("uz", key) == "draft":
+            blk("uz").locator('button:text-is("approve")').click()
+            self.wait(lambda: state("uz", key) == "approved", "the Uzbek approval")
+            self.assertTrue(any("approve" in u and "lang=uz" in u for u in posts), posts)
+        keys3 = [r.get_attribute("data-key") for r in p.locator(".mg-row").all()]
+        k2, k3 = keys3[1], keys3[2]
+        # Ctrl+Enter in a block approves a draft; Alt+Down moves to the next line
+        cell(k2, "en").click()
+        self.assertEqual(state("en", k2), "draft")
+        blk("en").locator("textarea").click()
+        p.keyboard.press("Control+Enter")
+        self.wait(lambda: state("en", k2) == "approved", "Ctrl+Enter to approve")
+        p.keyboard.press("Alt+ArrowDown")
+        self.wait(lambda: p.locator(".mg-row.sel").get_attribute("data-key") == k3, "Alt+Down to the next line")
+        # approve all: only the drafts of the line, nothing else
+        before = {l: state(l, k3) for l in ("en", "uz")}
+        self.assertIn("draft", before.values())
+        p.click('button:text-is("approve all")')
+        self.wait(lambda: all(state(l, k3) == ("approved" if before[l] == "draft" else before[l]) for l in before), "approve all")
+        # Ctrl+Enter saves an edit
+        ta3 = blk("en").locator("textarea")
+        ta3.click()
+        ta3.press("End")
+        ta3.type(" (ctrl)")
+        p.keyboard.press("Control+Enter")
+        self.wait(lambda: "(ctrl)" in next(x["text"] for x in self.get(f"/api/narration?lecture={STEM}&lang=en")["lines"] if x["key"] == k3), "Ctrl+Enter to save")
         # an edit: only that line of the narration file changes
-        keys = [r.get_attribute("data-key") for r in p.locator(".mg-row").all()]
-        k2 = keys[1]
+        keys = keys3
         path = self.nar / f"{STEM}.md"
         before = path.read_text()
         cell(k2, "en").click()
-        ta = p.locator('textarea[aria-label="text"]')
+        ta = blk("en").locator('textarea[aria-label="text"]')
         ta.fill(ta.input_value() + " (edited in the test)")
-        self.assertTrue(p.locator('button:text-is("approve")').is_disabled())
-        p.click('button:has-text("save edit")')
+        self.assertTrue(blk("en").locator('button:text-is("approve")').is_disabled())
+        blk("en").locator('button:has-text("save edit")').click()
         self.wait(lambda: path.read_text() != before, "the file to change")
         diff = [l for l in difflib.unified_diff(before.splitlines(), path.read_text().splitlines(), lineterm="", n=0) if l[0] in "+-" and not l.startswith(("+++", "---"))]
         self.assertEqual(len(diff), 2, diff)
@@ -676,36 +723,84 @@ class App(unittest.TestCase):
         self.wait(lambda: state("en", k2) == "approved", "the saved line to be approved")
         # still fine: change the Uzbek of the approved line; the English needs an update; confirm it
         cell(key, "uz").click()
-        ta = p.locator('textarea[aria-label="text"]')
+        ta = blk("uz").locator('textarea[aria-label="text"]')
         ta.fill(ta.input_value() + " Qoʻshimcha soʻz.")
-        p.click('button:has-text("save edit")')
+        blk("uz").locator('button:has-text("save edit")').click()
         self.wait(lambda: state("en", key) == "needs_update", "the English to need an update")
         p.wait_for_timeout(500)
         cell(key, "en").click()
-        p.click('button:has-text("still fine")')
+        ta = blk("en").locator('textarea[aria-label="text"]')
+        ta.press("End")
+        ta.type(" \n")                                       # a trailing space and newline are not a change
+        self.assertTrue(blk("en").locator('button:has-text("still fine")').is_enabled())
+        ta.press("Backspace")
+        ta.press("Backspace")
+        blk("en").locator('button:has-text("still fine")').click()
         self.wait(lambda: state("en", key) == "approved", "still fine")
         # the Uzbek rule: some Uzbek is not approved, so Build is disabled with the reason, and the server refuses too
         self.assertIn("never voiced or built", p.inner_text(".uz-rule"))
+        uz = next(x for x in self.get(f"/api/lecture-langs?lecture={STEM}")["langs"] if x["lang"] == "uz")["plan"]["unapproved"]
+        left = uz["lines"] + uz["labels"]
+        self.assertGreater(left, 0)
+        self.assertGreater(uz["total"], left)                       # `total` is every item: the banner must not show it
+        self.wait(lambda: f"{left} line" in p.inner_text(".uz-rule"), "the banner to count lines + labels")
+        self.assertNotIn(f"{uz['total']} line", p.inner_text(".uz-rule"))
+        # fully approved Uzbek (faked response): no banner at all
+        def clean_uz(route):
+            r = route.fetch()
+            d = r.json()
+            for x in d["langs"]:
+                if x["lang"] == "uz":
+                    x["plan"]["unapproved"] = {"lines": 0, "labels": 0, "total": uz["total"]}
+            route.fulfill(response=r, body=json.dumps(d))
+        p.route("**/api/lecture-langs*", clean_uz)
+        p.reload()
+        self.wait(lambda: p.locator(".script-bar").count() > 0, "the Script mode")
+        p.wait_for_timeout(500)
+        self.assertEqual(p.locator(".uz-rule").count(), 0)
+        p.unroute("**/api/lecture-langs*")
+        p.reload()
+        self.wait(lambda: p.locator(".uz-rule").count() > 0, "the banner back")
         btn = p.locator('.lang-strip tr[data-lang="uz"] button:has-text("Build")')
         self.assertTrue(btn.is_disabled())
         self.assertIn("Uzbek is built only when every line and label is approved", p.inner_text('.build-note[data-lang="uz"]'))
         r = p.evaluate(f"fetch('/api/narration/build?lecture={STEM}&lang=uz',{{method:'POST'}}).then(async r => [r.status, await r.text()])")
         self.assertEqual(r[0], 400)
         self.assertIn("approved", r[1])
+        # layout: the drawer is the full width, text cells wrap, the review buttons are in view at 1366x768
+        for w, h in ((1920, 1080), (1366, 768)):
+            p.set_viewport_size({"width": w, "height": h})
+            p.wait_for_timeout(300)
+            self.assertEqual(p.evaluate("document.querySelector('dialog.drawer').getBoundingClientRect().width"), w)
+            self.assertEqual(p.evaluate("[...document.querySelectorAll('.mg-text')].filter(e => e.scrollWidth > e.clientWidth).length"), 0)
+            cell(key, "en").click()
+            p.locator(".review-panel .panel-body").evaluate("el => { el.scrollTop = 0 }")
+            for lang in ("en", "uz"):                              # the panel scrolls: scroll each block into view, then its buttons are reachable
+                blk(lang).scroll_into_view_if_needed()
+                for name in ("approve", "save edit", "still fine"):
+                    self.assertTrue(self.uncovered(blk(lang).locator(f'button:text-is("{name}")')), f"{lang} {name} at {w}x{h}")
+        p.set_viewport_size({"width": 1920, "height": 1080})
         self.shot("script")
         self.errors[:] = [e for e in self.errors if "status of 400" not in e]            # the refusal above is on purpose
 
     # ─── 5 ───
     def test_5_export(self):
         p = self.page
-        fake = {"on": False}
+        fake = {"on": False, "mixed": False, "ver": False}
 
         def proj(route):
             r = route.fetch()
             d = r.json()
+            for x in d["sessions"]:
+                x["clean"] = "cloned"                                  # the scratch server cleans with "off"; the real lecture's recordings are cloned
+            if fake["mixed"] and d["sessions"]:
+                d["sessions"][0]["clean"] = "deepfilter"
+            if fake["ver"]:
+                row = {"n": 2, "base": None, "texts": {}, "state": "ready", "error": "", "created": 1.0, "changed": ["0"], "report": {}, "video": None, "line_starts": {}}
+                d["versions"] = {d["scenes"][0]: [row]}
             if fake["on"]:
                 d["jobs"].append({"build": B, "kind": "export", "key": "export", "state": "running", "error": "", "updated": time.time(), "detail": "encoding"})
-                d["exports"].append({"name": f"{B}_edited.mp4", "url": f"/{B}/presenter/export/{B}_edited.mp4", "size": 137000000, "time": time.time()})
+                d["exports"].append({"name": f"{B}_edited.mp4", "url": f"/{B}/presenter/export/{B}_edited.mp4", "size": 137000000, "time": time.time(), "profile": "cloned"})
             route.fulfill(response=r, body=json.dumps(d))
         p.route("**/api/project*", proj)
         p.route("**/api/export*", lambda r: (fake.update(on=True), r.fulfill(status=200, body="")))     # the export itself is not run here
@@ -716,9 +811,14 @@ class App(unittest.TestCase):
         self.assertEqual(p.inner_text("[data-testid=n-you]"), str(you))
         self.assertEqual(you, len(api["used"]))
         self.assertEqual(p.inner_text("[data-testid=n-rest]"), str(len(api["lines"]) - you))
-        self.assertTrue(p.evaluate("document.querySelector('input[name=clean]:checked').parentElement.innerText.startsWith('cloned')"))   # the default
+        self.assertTrue(p.evaluate("document.querySelector('input[name=clean]:checked').parentElement.innerText.startsWith('cloned')"))   # the default: what the recordings use
+        self.assertEqual(p.locator("[data-testid=mixed-profiles], [data-testid=unmerged]").count(), 0)
+        self.assertEqual(p.locator("#download-original, #download-lecture").count(), 1)
+        self.assertIn("Download the original build (before your edits)", p.inner_text("#download-lecture"))
+        self.assertEqual(p.locator("button:has-text('Watch the original build')").count(), 1)
+        self.assertIn("No export yet", p.inner_text("[data-testid=export-top]"))
         p.locator('label.rcard:has(b:text-is("voice"))').click()
-        self.assertEqual(p.evaluate("localStorage.getItem('studioClean')"), "voice")
+        self.assertIsNone(p.evaluate("localStorage.getItem('studioClean')"))                   # the choice is not kept per browser
         self.reqs.clear()
         other = p.evaluate("document.querySelector('input[name=missing]:not(:checked)').parentElement.innerText.startsWith('Silent') ? 'silent' : 'original'")
         p.locator("input[name=missing]:not(:checked)").locator("xpath=..").click()
@@ -730,13 +830,163 @@ class App(unittest.TestCase):
         ex = self.posts("/api/export")
         self.assertTrue(ex and "clean=voice" in ex[-1][1] and f"build={B}" in ex[-1][1], ex)
         self.assertIn("running", p.inner_text('.jobs-list li[data-kind="export"]'))
-        self.assertGreaterEqual(p.locator('.exp-list a[href$="_edited.mp4"]').count(), 1)
-        p.click("button:has-text('Watch the lecture video')")
+        self.assertGreaterEqual(p.locator('.exp-list a[href*="_edited.mp4"]').count(), 1)
+        self.assertRegex(p.locator('.exp-list a[href*="_edited.mp4"]').first.get_attribute("href"), r"_edited\.mp4\?v=\d+$")   # never a cached older file
+        self.assertRegex(p.get_attribute("#download-export", "href"), r"_edited\.mp4\?v=\d+$")
+        self.assertRegex(p.inner_text("#download-export"), r"Download the export \(\d\d:\d\d, 137\.0 MB\)")                 # the primary action, on top
+        self.assertIn("cloned voice", p.inner_text(".exp-list"))                                  # each row: time and voice profile
+        p.click("button:has-text('Watch the original build')")
         p.wait_for_selector("video.watch-video")
         self.assertIn(f"/{B}/{B}.mp4", p.get_attribute("video.watch-video", "src"))
         self.shot("export")
+        # recordings with mixed profiles are said so; a ready, unmerged version is warned about, and Open lands in its Rewrite dialog
+        fake["mixed"] = True
+        fake["ver"] = True
+        p.reload()
+        p.wait_for_selector("[data-testid=mixed-profiles]", timeout=10000)
+        self.assertRegex(p.inner_text("[data-testid=mixed-profiles]"), r"\d recordings? (is|are) cloned, \d (is|are) your voice")
+        self.assertTrue(p.evaluate("document.querySelector('input[name=clean]:checked').parentElement.innerText.startsWith('cloned')"))
+        warn = p.locator("[data-testid=unmerged]")
+        warn.wait_for(timeout=10000)
+        self.assertRegex(warn.inner_text(), r"1 rewritten line is ready but not merged into the lecture video: \S+ v2 \(line 1\)")
+        warn.get_by_role("button", name="Open").click()
+        p.locator("dialog.export-dialog[open]").wait_for(state="detached", timeout=3000)
+        d = p.locator("dialog.panel-dialog[open]")
+        d.wait_for(timeout=6000)
+        self.assertEqual(d.locator('textarea[aria-label="narration of this line"]').count(), 1)
+        d.get_by_role("button", name="Close").click()
         p.unroute("**/api/project*")
         self.errors[:] = [e for e in self.errors if "status of 404" not in e]
+
+    # ─── 6 ───
+    def live_tracks(self):
+        return self.page.evaluate("(window.__streams || []).flatMap(s => s.getTracks()).filter(t => t.readyState === 'live').length")
+
+    def snap(self, name):
+        if SHOTS:
+            self.page.screenshot(path=str(SHOTS / name))
+
+    def test_6_one_workspace(self):
+        """No tab bar: Record is a toggle that turns the monitor into the booth in place (the microphone only while it is on), L from the
+        plain workspace records a take, Script & languages is a drawer, Export a dialog, and the old mode= links land where they did."""
+        p = self.page
+        p.set_viewport_size({"width": 1366, "height": 768})
+        p.goto(f"{self.url}/#lecture={STEM}&lang=en&line=2")
+        p.reload()
+        p.wait_for_selector(".script-list .line-row")
+        p.wait_for_timeout(800)
+        # the top bar: no tabs, no number badges; three buttons
+        self.assertEqual(p.locator(".topbar [role=tablist], .topbar .tabs, .topbar kbd").count(), 0)
+        for name in ("Record", "Script & languages", "Export"):
+            self.assertEqual(p.locator(".topbar button.top-btn", has_text=name).count(), 1, name)
+        for btn in p.locator(".topbar button.top-btn").all():
+            self.assertTrue(btn.get_attribute("title"), "the shortcut is in the tooltip")
+        self.assertIn("(B)", p.locator(".topbar button.rec-toggle").get_attribute("title"))
+        self.assertEqual(p.locator(".booth").count(), 0)
+        self.assertEqual(self.live_tracks(), 0)                                                # no microphone in the plain workspace
+        self.snap("ws_1366.png")
+        # Record on: the monitor area becomes the booth; the script list and the timeline stay; the microphone is open
+        tog = p.locator(".topbar button.rec-toggle")
+        tog.click()
+        p.wait_for_selector(".booth video")
+        self.assertEqual(tog.get_attribute("aria-pressed"), "true")
+        self.assertEqual(p.locator(".monitor-slot").evaluate("e => getComputedStyle(e).display"), "none")
+        self.assertTrue(p.locator(".script-list").is_visible() and p.locator(".timeline").is_visible())
+        self.assertEqual(p.locator(".booth .prompter").count(), 1)
+        for part in (".input-panel", "#rec-take", "#rec-session", ".takes-panel", "#mic-select", "#cin"):
+            self.assertEqual(p.locator(".booth " + part).count(), 1, part)
+        self.wait(lambda: self.live_tracks() >= 1, "the microphone to open")
+        sc, st = p.locator(".booth .screen").bounding_box(), p.locator(".booth .stage").bounding_box()
+        self.assertAlmostEqual(sc["width"] / sc["height"], 16 / 9, delta=16 / 9 * 0.01)
+        self.assertTrue(abs(sc["width"] - st["width"]) <= 2 or abs(sc["height"] - st["height"]) <= 2)
+        self.assertLessEqual(p.locator(".booth").bounding_box()["y"] + p.locator(".booth").bounding_box()["height"], p.locator(".timeline").bounding_box()["y"] + 2)
+        self.snap("ws_record_1366.png")
+        # a line picked in the script list or on the timeline moves the booth to it
+        p.locator("#line-2").click()
+        self.assertIn("line 3 /", p.inner_text(".prompter-bar"))
+        p.locator('.clip[data-lane=picture][data-line="0"]').click()
+        self.assertIn("line 1 /", p.inner_text(".prompter-bar"))
+        p.set_viewport_size({"width": 1920, "height": 1080})
+        p.wait_for_timeout(400)
+        self.snap("ws_record_1920.png")
+        p.set_viewport_size({"width": 1366, "height": 768})
+        # Record off: the monitor is back and the microphone is released
+        tog.click()
+        p.wait_for_selector(".booth", state="detached")
+        self.assertEqual(p.locator(".monitor-slot").evaluate("e => getComputedStyle(e).display"), "flex")
+        self.wait(lambda: self.live_tracks() == 0, "the microphone to be released")
+        # L in the plain workspace: Record turns on and one take of the selected line is recorded after the count-in
+        p.locator("#line-1").click()
+        p.select_option("#cin", "1") if p.locator("#cin").count() else None
+        self.reqs.clear()
+        p.keyboard.press("l")
+        p.wait_for_selector(".booth video")
+        p.wait_for_selector(".rec-badge", timeout=15000)
+        self.assertIn("one take of line 2", p.inner_text(".prompter-bar"))
+        p.wait_for_timeout(1500)
+        p.keyboard.press("l")                                                                  # stop the take (the booth's own key)
+        p.wait_for_selector(".rec-badge", state="detached", timeout=8000)
+        self.wait(lambda: self.posts("/api/finish"), "the take to be finished")
+        p.keyboard.press("b")                                                                  # B: Record off
+        p.wait_for_selector(".booth", state="detached")
+        self.wait(lambda: self.live_tracks() == 0, "the microphone to be released")
+        # Script & languages: a drawer from the right, ~72 % wide and at least 900 px; Esc closes it; the focus stays inside
+        p.locator(".topbar button", has_text="Script & languages").click()
+        dr = p.locator("dialog.drawer[open]")
+        dr.wait_for(timeout=6000)
+        dr.locator(".mgrid .mg-row").first.wait_for(timeout=8000)
+        bb = dr.bounding_box()
+        self.assertGreaterEqual(bb["width"], 900)
+        self.assertAlmostEqual(bb["x"] + bb["width"], 1366, delta=2)
+        self.assertGreaterEqual(bb["y"], 40)                                                   # under the top bar
+        self.assertAlmostEqual(bb["y"] + bb["height"], 768, delta=2)
+        for _ in range(40):
+            p.keyboard.press("Tab")
+        self.assertTrue(p.evaluate("!!document.activeElement.closest('dialog.drawer')"), "focus is trapped in the drawer")
+        self.assertIn("panel=script", p.evaluate("location.hash"))
+        self.snap("ws_script_drawer.png")
+        p.keyboard.press("Escape")
+        dr.wait_for(state="detached", timeout=3000)
+        self.assertNotIn("panel=", p.evaluate("location.hash"))
+        p.locator(".topbar button", has_text="Script & languages").click()                    # ✕ closes it too
+        dr.wait_for(timeout=6000)
+        dr.get_by_role("button", name="Close (Esc)").click()
+        dr.wait_for(state="detached", timeout=3000)
+        # Export: a large dialog with the Export screen
+        p.locator(".topbar button", has_text="Export").click()
+        ex = p.locator("dialog.export-dialog[open]")
+        ex.wait_for(timeout=6000)
+        ex.locator(".stats").wait_for(timeout=8000)
+        self.assertIn("panel=export", p.evaluate("location.hash"))
+        for part in ("#export-now", ".radio-cards"):
+            self.assertGreaterEqual(ex.locator(part).count(), 1, part)
+        self.snap("ws_export_dialog.png")
+        p.keyboard.press("Escape")
+        ex.wait_for(state="detached", timeout=3000)
+        # the keys: S and E open the panels, B the booth (and only when nothing is being typed)
+        p.locator("#line-1").click()
+        p.keyboard.press("s")
+        dr.wait_for(timeout=6000)
+        p.keyboard.press("Escape")
+        dr.wait_for(state="detached", timeout=3000)
+        p.keyboard.press("e")
+        ex.wait_for(timeout=6000)
+        p.keyboard.press("Escape")
+        ex.wait_for(state="detached", timeout=3000)
+        # the old addresses: ?mode=script opens the drawer; ?mode=record&line=3 opens the booth on line 3; ?mode=export&watch= the dialog
+        p.goto(f"{self.url}/?mode=script&lecture={STEM}&lang=en")
+        p.wait_for_selector("dialog.drawer[open] .mgrid .mg-row", timeout=10000)
+        p.goto(f"{self.url}/?mode=record&lecture={STEM}&lang=en&line=3")
+        p.wait_for_selector(".booth video", timeout=10000)
+        self.assertIn("line 3 /", p.inner_text(".prompter-bar"))
+        self.assertEqual(p.locator("dialog[open]").count(), 0)
+        p.goto(f"{self.url}/?mode=export&lecture={STEM}&lang=en&watch=lecture")
+        p.wait_for_selector("dialog.export-dialog[open]", timeout=10000)
+        p.wait_for_selector("dialog.export-dialog video.watch-video", timeout=10000)
+        p.goto(f"{self.url}/?mode=edit&lecture={STEM}&lang=en")
+        p.wait_for_selector(".script-list .line-row")
+        self.assertEqual(p.locator(".booth, dialog[open]").count(), 0)
+        p.set_viewport_size({"width": 1920, "height": 1080})
 
     def test_9_no_console_errors(self):
         self.assertEqual(self.errors, [])

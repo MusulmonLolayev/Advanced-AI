@@ -286,6 +286,46 @@ class Watermark(TL.Scratch):
             (self.nar / "lecture98.md").write_text((self.nar / "lecture98.md").read_text().replace("Vosita nima?", "Vosita nimadir?"))
             self.assertEqual(D.decision("lecture98", "uz", self.c, self.nar), "refused")
 
+    def test_the_unapproved_count_is_lines_plus_labels_not_total(self):
+        with mock.patch.object(LS, "label_keys", return_value=[]):
+            self.approve_all("lecture98", "uz")
+            u = D.unapproved("lecture98", "uz", self.c, self.nar)
+            self.assertEqual((u["lines"], u["labels"]), (0, 0))
+            self.assertEqual(u["total"], 5)                          # every item: not what is left to approve
+
+    def test_a_line_the_instructor_wrote_does_not_tag_but_another_unapproved_line_does(self):
+        with mock.patch.object(LS, "label_keys", return_value=[]):
+            self.approve_all("lecture98", "uz")
+            by = self.texts("lecture98")["uz"]
+            k1, k2 = list(by)[:2]
+            path = self.nar / "lecture98.md"
+            path.write_text(path.read_text().replace(by[k1], by[k1] + " Yangi."))     # rewritten in the studio
+            path.write_text(path.read_text().replace(by[k2], by[k2] + " Boshqa."))    # changed by hand, nobody approved
+            own = {k1: by[k1] + " Yangi."}
+            self.assertEqual(D.unapproved("lecture98", "uz", self.c, self.nar)["lines"], 2)
+            self.assertEqual(D.unapproved("lecture98", "uz", self.c, self.nar, own)["lines"], 1)   # only k2 is left
+            self.assertEqual(D.decision("lecture98", "uz", self.c, self.nar, own), "refused")
+            own[k2] = by[k2] + " Boshqa."
+            self.assertEqual(D.decision("lecture98", "uz", self.c, self.nar, own), "clean")
+            own[k2] = "some other text"                                # text differs from the file: no pass
+            self.assertEqual(D.unapproved("lecture98", "uz", self.c, self.nar, own)["lines"], 1)
+
+    def test_tagged_reads_the_own_lines_from_the_environment(self):
+        with mock.patch.object(LS, "label_keys", return_value=[]):
+            self.approve_all("lecture98", "uz")
+            by = self.texts("lecture98")["uz"]
+            k1 = list(by)[0]
+            path = self.nar / "lecture98.md"
+            path.write_text(path.read_text().replace(by[k1], by[k1] + " Yangi."))
+            self.c.commit()
+            env = {"STUDIO_DB": str(Path(self.tmp.name) / "studio.sqlite"), "NARRATION_DIR": str(self.nar)}
+            with mock.patch.dict(os.environ, env):
+                self.assertTrue(D.tagged("lecture98", "uz"))
+                with mock.patch.dict(os.environ, {"DRAFT_OWN_LINES": json.dumps({k1: by[k1] + " Yangi."})}):
+                    self.assertFalse(D.tagged("lecture98", "uz"))
+                with mock.patch.dict(os.environ, {"DRAFT_OWN_LINES": "not json"}):
+                    self.assertTrue(D.tagged("lecture98", "uz"))
+
     def test_a_render_tags_every_unclean_build_and_a_missing_database_counts_as_unapproved(self):
         with mock.patch.dict(os.environ, {"STUDIO_DB": str(Path(self.tmp.name) / "nope.sqlite"), "NARRATION_DIR": str(self.nar)}):
             self.assertTrue(D.tagged("lecture98", "uz"))

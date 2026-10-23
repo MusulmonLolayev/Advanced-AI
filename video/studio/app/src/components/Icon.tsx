@@ -32,6 +32,7 @@ const PATHS = {
   film: <path d="M4 5h16v14H4zM8 5v14M16 5v14M4 9h4M4 15h4M16 9h4M16 15h4" />,
   mark: <path d="M12 3l6 9-6 9-6-9z" fill="currentColor" stroke="none" />,
   tick: <path d="M12 3v18" />,
+  x: <path d="M6 6l12 12M18 6L6 18" />,
 } as const
 
 export type IconName = keyof typeof PATHS

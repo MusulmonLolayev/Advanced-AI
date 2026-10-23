@@ -1,29 +1,29 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchEditorLangs, fetchLectureLangs, fetchLectures, fetchProject } from './api'
-import { DialogProvider, ToastProvider, useDialog } from './components'
-import { EditMode } from './modes/Edit'
+import { DialogProvider, Drawer, ToastProvider, useDialog } from './components'
 import { ExportMode } from './modes/Export'
-import { RecordMode } from './modes/Record'
 import { ScriptMode } from './modes/Script'
+import { Workspace } from './modes/Workspace'
 import { ProjectBrowser } from './shell/ProjectBrowser'
 import { StatusBar } from './shell/StatusBar'
 import { TopBar } from './shell/TopBar'
-import { StudioCtx, type Mode, type Studio } from './studio'
+import { StudioCtx, type Panel, type Studio } from './studio'
 import { busy } from './model'
 import { uploads } from './upload'
 import { buildName, useLive } from './util'
 
-const MODES: Mode[] = ['record', 'edit', 'script', 'export']
-
-/** The deep link: `#mode=edit&lecture=lecture01&lang=uz&line=14&watch=…` (line as the editor numbers it, from 1). The same
- *  names in the query (`/?mode=edit&…`, what the old pages' addresses redirect to) work too; the hash wins. */
+/** The deep link: `#lecture=lecture01&lang=uz&line=14&rec=1&panel=export&watch=…` (line as the editor numbers it, from 1; `rec=1` the booth
+ *  is on; `panel=script|export` a panel is open). The old `mode=` names still work: record = rec=1, edit = the plain workspace, script and
+ *  export = that panel. The same names in the query (`/?mode=edit&…`, what the old pages' addresses redirect to) work too; the hash wins. */
 function readUrl() {
   const q = new URLSearchParams(location.search)
   const h = new URLSearchParams(location.hash.replace(/^#\/?/, ''))
   const get = (k: string) => h.get(k) ?? q.get(k)
-  const m = get('mode') as Mode | null
+  const m = get('mode')
+  const p = get('panel') ?? (m === 'script' || m === 'export' ? m : null)
   return {
-    mode: m && MODES.includes(m) ? m : ('edit' as Mode),
+    rec: get('rec') === '1' || m === 'record',
+    panel: (p === 'script' || p === 'export' ? p : null) as Panel,
     stem: get('lecture') ?? 'lecture01',
     lang: get('lang') ?? 'uz',
     line: Math.max(0, parseInt(get('line') ?? '1', 10) - 1),
@@ -32,6 +32,9 @@ function readUrl() {
     explicit: get('lecture') !== null,
   }
 }
+
+const hashOf = (rec: boolean, panel: Panel, stem: string, lang: string, line: number, watch: string) =>
+  `#lecture=${stem}&lang=${lang}&line=${line + 1}${rec ? '&rec=1' : ''}${panel ? '&panel=' + panel : ''}${watch && panel === 'export' ? '&watch=' + encodeURIComponent(watch) : ''}`
 
 /** the dialog provider sits outside, because the app itself asks questions (leaving the booth while recording) */
 export default function App() {
@@ -55,7 +58,10 @@ function AppInner() {
     [confirm],
   )
   const init = useMemo(readUrl, [])
-  const [mode, setMode] = useState<Mode>(init.mode)
+  const [boothOn, setBoothNow] = useState(init.rec)
+  const [panel, setPanel] = useState<Panel>(init.panel)
+  const takeOnOpen = useRef(false)
+  const [rewriteLine, setRewriteLine] = useState<number | null>(null)
   const [stem, setStem] = useState(init.stem)
   const [lang, setLang] = useState(init.lang)
   const [line, setLine] = useState(init.line)
@@ -93,7 +99,7 @@ function AppInner() {
   const langs = useLive(project.data ? () => fetchEditorLangs(build) : null, project.data ? build : '')
   const { reload } = project
   // the lecture's languages (counts, builds, build jobs) are needed by Script and Export only
-  const lec = useLive(mode === 'script' || mode === 'export' ? () => fetchLectureLangs(stem) : null, mode === 'script' || mode === 'export' ? stem : '')
+  const lec = useLive(panel ? () => fetchLectureLangs(stem) : null, panel ? stem : '')
   const overview = useLive(fetchLectures, 'all')
   const noLecture = overview.data && !init.explicit && !overview.data.some((m) => m.lectures.some((l) => l.stem === stem))
   useEffect(() => {
@@ -127,13 +133,14 @@ function AppInner() {
   }, [working, reload])
 
   useEffect(() => {
-    history.replaceState(null, '', `${location.pathname}#mode=${mode}&lecture=${stem}&lang=${lang}&line=${line + 1}${watch && mode === 'export' ? '&watch=' + encodeURIComponent(watch) : ''}`)
-  }, [mode, stem, lang, line, watch])
+    history.replaceState(null, '', location.pathname + hashOf(boothOn, panel, stem, lang, line, watch))
+  }, [boothOn, panel, stem, lang, line, watch])
 
   // the address changed under us (typed, pasted, or an old page's redirect): follow it
   useEffect(() => {
     const apply = (u: ReturnType<typeof readUrl>) => {
-      setMode(u.mode)
+      setBoothNow(u.rec)
+      setPanel(u.panel)
       setStem(u.stem)
       setLang(u.lang)
       setLine(u.line)
@@ -141,9 +148,9 @@ function AppInner() {
     }
     const follow = () => {
       const u = readUrl()
-      if (recRef.current && (u.stem !== stemRef.current || u.lang !== langRef.current || u.mode !== modeRef.current)) {
+      if (recRef.current && (u.stem !== stemRef.current || u.lang !== langRef.current || !u.rec)) {
         // put the old address back at once, ask, and only follow the new one when the answer is Leave
-        history.replaceState(null, '', `${location.pathname}#mode=${modeRef.current}&lecture=${stemRef.current}&lang=${langRef.current}`)
+        history.replaceState(null, '', location.pathname + hashOf(true, panelRef.current, stemRef.current, langRef.current, lineRef.current, ''))
         void askLeave().then((ok) => { if (ok) apply(u) })
         return
       }
@@ -164,15 +171,20 @@ function AppInner() {
     return () => clearInterval(t)
   }, [recording])
 
-  const modeRef = useRef(mode)
-  modeRef.current = mode
-  const goMode = useCallback((m: Mode) => {
-    if (m !== modeRef.current && modeRef.current === 'record' && recRef.current) {
-      // the booth stays as it is until the answer; on Leave it unmounts and flushes chunks, events and finish
-      void askLeave().then((ok) => { if (ok) setMode(m) })
-      return
-    }
-    setMode(m)
+  const panelRef = useRef(panel)
+  panelRef.current = panel
+  const lineRef = useRef(line)
+  lineRef.current = line
+  const boothRef = useRef(boothOn)
+  boothRef.current = boothOn
+  /** Record on or off. Off while a recording runs asks first; the booth stays as it is until the answer, and on Leave it unmounts and
+   *  flushes chunks, events and finish. `take` (L from the plain workspace) records one take of the selected line when it is up. */
+  const setBoothOn = useCallback((on: boolean, opts?: { take?: boolean }) => {
+    if (on) {
+      if (opts?.take && !boothRef.current) takeOnOpen.current = true
+      setBoothNow(true)
+    } else if (recRef.current) void askLeave().then((ok) => { if (ok) setBoothNow(false) })
+    else setBoothNow(false)
   }, [askLeave])
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => {
@@ -192,21 +204,25 @@ function AppInner() {
     setLine(0)
   }, [askLeave])
 
+  // the studio's own keys: B Record on / off, S the Script & languages drawer, E the Export dialog (the booth's and the editor's keys are
+  // listed in the README; nothing here clashes with them, and Alt / Ctrl / Meta combinations are left to the browser)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const a = document.activeElement as HTMLElement | null
       if (a && (['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName) || a.isContentEditable)) return
-      if (e.ctrlKey || e.metaKey || e.altKey) return
-      const i = '1234'.indexOf(e.key)
-      if (i >= 0 && e.key.length === 1) goMode(MODES[i])
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return
+      const k = e.key.toLowerCase()
+      if (k === 'b') setBoothOn(!boothRef.current)
+      else if (k === 's') setPanel((p) => (p === 'script' ? null : 'script'))
+      else if (k === 'e') setPanel((p) => (p === 'export' ? null : 'export'))
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [goMode])
+  }, [setBoothOn])
 
   const nLines = project.data?.lines.length ?? 0
   const ctx: Studio = {
-    mode, setMode: goMode, stem, lang, open, build,
+    boothOn, setBoothOn, takeOnOpen, rewriteLine, setRewriteLine, panel, setPanel, stem, lang, open, build,
     line: Math.min(line, Math.max(0, nLines - 1)),
     setLine,
     project: project.data,
@@ -230,14 +246,13 @@ function AppInner() {
           <TopBar toggleBrowser={() => setCollapsed((c) => !c)} />
           <div className="body" data-collapsed={collapsed}>
             <ProjectBrowser collapsed={collapsed} onExpand={() => setCollapsed(false)} />
-            <main className="main" aria-label={mode}>
-              {mode === 'edit' && <EditMode key={build} />}
-              {mode === 'record' && <RecordMode />}
-              {mode === 'script' && <ScriptMode />}
-              {mode === 'export' && <ExportMode />}
+            <main className="main" aria-label="Workspace">
+              <Workspace key={build} />
             </main>
           </div>
           <StatusBar />
+          {panel === 'script' && <Drawer title="Script & languages" onClose={() => setPanel(null)}><ScriptMode /></Drawer>}
+          {panel === 'export' && <Drawer dialog title="Export" onClose={() => setPanel(null)}><ExportMode /></Drawer>}
         </div>
       </ToastProvider>
     </StudioCtx.Provider>

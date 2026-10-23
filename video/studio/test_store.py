@@ -48,5 +48,21 @@ class Forget(unittest.TestCase):
         self.assertEqual([s["name"] for s in S.sessions(self.c, B)], [KEPT])
 
 
+class ExportProfiles(unittest.TestCase):
+    def test_the_profile_an_export_was_made_with_is_listed_and_the_note_is_not(self):
+        with tempfile.TemporaryDirectory() as t:
+            d = Path(t) / B / "presenter" / "export"
+            d.mkdir(parents=True)
+            (d / f"{B}_edited.mp4").write_bytes(b"x" * 10)
+            (d / f"{B}_edited.srt").write_text("1")
+            (d / "old.mp4").write_bytes(b"y")                                 # an export made before profiles were noted
+            A.note_export_profile(t, B, [f"{B}_edited.mp4", f"{B}_edited.srt"], "cloned")
+            got = {e["name"]: e["profile"] for e in A.exports(t, B)}
+            self.assertEqual(got, {f"{B}_edited.mp4": "cloned", f"{B}_edited.srt": "cloned", "old.mp4": ""})
+            A.note_export_profile(t, B, [f"{B}_edited.mp4"], "deepfilter")      # a later export replaces its entry only
+            got = {e["name"]: e["profile"] for e in A.exports(t, B)}
+            self.assertEqual((got[f"{B}_edited.mp4"], got[f"{B}_edited.srt"]), ("deepfilter", "cloned"))
+
+
 if __name__ == "__main__":
     unittest.main()

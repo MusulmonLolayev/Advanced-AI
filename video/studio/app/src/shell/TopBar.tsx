@@ -1,15 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useActions } from '../actions'
-import { Button, Chip, Icon, Tabs } from '../components'
-import { useStudio, type Mode } from '../studio'
+import { Button, Chip, Icon } from '../components'
+import { useStudio } from '../studio'
 import { lectureTitle, timecode } from '../util'
-
-const TABS: { id: Mode; label: string; hint: string }[] = [
-  { id: 'record', label: 'Record', hint: '1' },
-  { id: 'edit', label: 'Edit', hint: '2' },
-  { id: 'script', label: 'Script & languages', hint: '3' },
-  { id: 'export', label: 'Export', hint: '4' },
-]
 
 function Pop({ trigger, children, label }: { trigger: ReactNode; children: ReactNode; label: string }) {
   const [open, setOpen] = useState(false)
@@ -36,7 +29,7 @@ function Pop({ trigger, children, label }: { trigger: ReactNode; children: React
 }
 
 export function TopBar({ toggleBrowser }: { toggleBrowser: () => void }) {
-  const { mode, setMode, stem, lang, open, project, recording, recSeconds, overview } = useStudio()
+  const { boothOn, setBoothOn, panel, setPanel, stem, lang, open, project, recording, recSeconds, overview } = useStudio()
   const mod = overview?.find((m) => m.lectures.some((l) => l.stem === stem))
   const lec = mod?.lectures.find((l) => l.stem === stem)
   const vs = project?.voice_server
@@ -72,7 +65,15 @@ export function TopBar({ toggleBrowser }: { toggleBrowser: () => void }) {
         </label>
       </nav>
       <div className="grow" />
-      <Tabs tabs={TABS.map((t) => ({ id: t.id, label: t.label, hint: t.hint }))} value={mode} onChange={setMode} label="Mode" />
+      <button type="button" className={'top-btn rec-toggle' + (boothOn ? ' on' : '')} aria-pressed={boothOn} title={boothOn ? 'Record is on: the monitor is the booth. Turn it off to go back to the monitor (B)' : 'Turn the monitor into the recording booth (B). L records one take of the selected line'} onClick={() => setBoothOn(!boothOn)}>
+        <span className="dot" />Record
+      </button>
+      <button type="button" className={'top-btn' + (panel === 'script' ? ' on' : '')} aria-pressed={panel === 'script'} title="The narration in every language: approve, edit, build (S)" onClick={() => setPanel(panel === 'script' ? null : 'script')}>
+        Script &amp; languages
+      </button>
+      <button type="button" className={'top-btn' + (panel === 'export' ? ' on' : '')} aria-pressed={panel === 'export'} title="Export the lecture with your takes, watch it, download it (E)" onClick={() => setPanel(panel === 'export' ? null : 'export')}>
+        Export
+      </button>
       <div className="grow" />
       <div className={'rec-state' + (recording ? ' on' : '')} role="status" aria-label={recording ? 'Recording' : 'Not recording'}>
         <span className="dot" />

@@ -67,7 +67,7 @@ export type Session = {
 
 export type Job = { build: string; kind: string; key: string; state: string; error: string; updated: number; detail: string }
 
-export type ExportFile = { name: string; url: string; size: number; time: number }
+export type ExportFile = { name: string; url: string; size: number; time: number; /** the voice profile it was exported with ("" for an export made before this was recorded) */ profile?: string }
 
 export type VersionRow = {
   n: number

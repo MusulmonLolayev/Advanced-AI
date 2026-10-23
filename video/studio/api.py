@@ -344,10 +344,29 @@ def scene_names(b, ls):
     return [names[l[3]] for l in ls]
 
 
+PROFILES = ".profiles.json"                      # export/.profiles.json: {file name: the voice profile it was exported with}
+
+
+def note_export_profile(root, build, names, profile):
+    f = Path(root) / build / "presenter" / "export" / PROFILES
+    try:
+        have = json.loads(f.read_text()) if f.exists() else {}
+    except ValueError:
+        have = {}
+    have.update({n: profile for n in names})
+    f.write_text(json.dumps(have))
+
+
 def exports(root, build):
     d = Path(root) / build / "presenter" / "export"
+    if not d.is_dir():
+        return []
+    try:
+        prof = json.loads((d / PROFILES).read_text())
+    except (OSError, ValueError):
+        prof = {}
     return [{"name": f.name, "url": f"/{build}/presenter/export/{f.name}", "size": f.stat().st_size,
-             "time": f.stat().st_mtime} for f in sorted(d.iterdir())] if d.is_dir() else []
+             "time": f.stat().st_mtime, "profile": prof.get(f.name, "")} for f in sorted(d.iterdir()) if not f.name.startswith(".")]
 
 
 # ─── edits ────────────────────────────────────────────────────────────────

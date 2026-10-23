@@ -18,36 +18,46 @@ const CLEAN: [string, string][] = [
 ]
 const when = (s: number) => new Date(s * 1000).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
 
-/** the voice cleaning chosen last is remembered in this browser (the old editor's key) */
-const readClean = () => {
-  try {
-    const c = localStorage.getItem('studioClean')
-    return CLEAN.some(([k]) => k === c) ? (c as string) : 'cloned'
-  } catch {
-    return 'cloned'
-  }
-}
+const hhmm = (s: number) => new Date(s * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+/** a file's URL with its modification time, so a browser never serves an older file of the same name from its cache */
+const fresh = (f: { url: string; time: number }) => `${f.url}?v=${Math.round(f.time)}`
+const profileName = (c: string) => (c === 'cloned' ? 'cloned voice' : c ? `your voice (${c})` : 'voice profile not recorded')
 
 export function ExportMode() {
-  const { project, projectLoading, build, setMode, watch, setWatch } = useStudio()
+  const { project, projectLoading, build, setPanel, watch, setWatch, setRewriteLine, setLine } = useStudio()
   const act = useActions()
-  const [clean, setCleanState] = useState(readClean)
-  const setClean = (c: string) => {
-    setCleanState(c)
-    try {
-      localStorage.setItem('studioClean', c)
-    } catch {
-      /* not remembered */
-    }
-  }
+  // the voice cleaning defaults to what the lecture's recordings actually use ("cloned" if any is), and is not kept per browser:
+  // a choice from an earlier day must not put your own voice back over recordings that are cloned now
+  const ready = (project?.sessions ?? []).filter((x) => x.state === 'ready' && !x.stale)
+  const counts = ready.reduce<Record<string, number>>((o, x) => ({ ...o, [x.clean || 'unknown']: (o[x.clean || 'unknown'] ?? 0) + 1 }), {})
+  const usual = counts.cloned ? 'cloned' : (Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'cloned')
+  const [pick, setClean] = useState<string | null>(null)
+  const clean = pick ?? (CLEAN.some(([k]) => k === usual) ? usual : 'cloned')
+  const mixed = Object.keys(counts).length > 1
+  const nCloned = counts.cloned ?? 0
+  const nOwn = ready.length - nCloned
+  // cloned-voice versions that are ready but not merged: the export still has the lecture video's old line
+  const unmerged = Object.entries(project?.versions ?? {}).flatMap(([scene, vs]) => vs.filter((v) => v.state === 'ready').map((v) => ({ scene, v, line: +(v.changed[0] ?? project?.scenes.indexOf(scene) ?? 0) })))
+  const newest = [...(project?.exports ?? [])].filter((f) => f.name.endsWith('.mp4')).sort((a, b) => b.time - a.time)[0]
   const missing = project?.settings.missing ?? 'original'
   const m = useMemo(() => (project ? makeup(project) : null), [project])
   const exporting = !!project?.jobs.some((j) => j.kind === 'export' && (j.state === 'queued' || j.state === 'running'))
   const lectureUrl = project ? `/${build}/${build}.mp4?v=${project.video_version}` : ''
   // what plays inline: the lecture video, a finished export (its URL), or a recording built the old way (its name)
-  const watching = !watch ? null : watch === 'lecture' ? { url: lectureUrl, title: `the lecture video ${build}` } : watch.startsWith('/') ? { url: watch, title: watch.split('/').pop() ?? watch } : { url: `/${build}/presenter/recordings/${watch}.mp4`, title: `recording ${watch}` }
+  const watching = !watch ? null : watch === 'lecture' ? { url: lectureUrl, title: `the original build ${build}` } : watch.startsWith('/') ? { url: watch, title: watch.split('/').pop() ?? watch } : { url: `/${build}/presenter/recordings/${watch}.mp4`, title: `recording ${watch}` }
 
   return (
+    <div className="export-wrap">
+    <div className="export-top" data-testid="export-top">
+      {newest ? (
+        <>
+          <a className="btn primary" id="download-export" href={fresh(newest)} download={newest.name}><Icon name="download" size={14} />Download the export ({hhmm(newest.time)}, {mb(newest.size)})</a>
+          <span className="dim sub">{profileName(newest.profile ?? '')} · <Button small variant="ghost" icon="film" onClick={() => setWatch(fresh(newest))}>watch it</Button></span>
+        </>
+      ) : (
+        <span className="dim">No export yet: press Export below.</span>
+      )}
+    </div>
     <div className="export">
       <div className="export-col">
         <Panel title="Export settings" className="settings-panel">
@@ -57,10 +67,11 @@ export function ExportMode() {
               {CLEAN.map(([k, d]) => (
                 <label key={k} className={cls('rcard', clean === k && 'on')}>
                   <input type="radio" name="clean" checked={clean === k} onChange={() => setClean(k)} />
-                  <span><b>{k}</b>{k === 'cloned' && <Chip tone="accent" plain>default</Chip>}<small>{d}</small></span>
+                  <span><b>{k}</b>{k === usual && <Chip tone="accent" plain>your recordings</Chip>}<small>{d}</small></span>
                 </label>
               ))}
             </fieldset>
+            {mixed && <p className="warn sub" data-testid="mixed-profiles">{nCloned} recording{nCloned === 1 ? ' is' : 's are'} cloned, {nOwn} {nOwn === 1 ? 'is' : 'are'} your voice: convert {nOwn === 1 ? 'it' : 'them'} in Recordings… (timeline bar), or the export uses each as it is.</p>}
             <fieldset className="radio-cards">
               <legend className="label">Lines you have not recorded</legend>
               {([['original', 'Original voice', 'The lecture video’s own narration (cloned or synthetic), brought to −19 LUFS like your takes.'], ['silent', 'Silent', 'Nothing plays; the picture runs on.']] as const).map(([k, t, d]) => (
@@ -81,6 +92,15 @@ export function ExportMode() {
           {!projectLoading && !m && <EmptyState title="Nothing to export yet"><p className="dim">There is no presenter page for this build.</p></EmptyState>}
           {project && m && (
             <div className="pad stack">
+              {unmerged.length > 0 && (
+                <div className="update-banner" role="alert" data-testid="unmerged">
+                  <span>
+                    <b>{unmerged.length} rewritten line{unmerged.length === 1 ? ' is' : 's are'} ready but not merged into the lecture video:</b>{' '}
+                    {unmerged.map((u) => `${u.scene} v${u.v.n} (line ${u.line + 1})`).join(', ')} — merge {unmerged.length === 1 ? 'it' : 'them'} first, or the export uses the old line{unmerged.length === 1 ? '' : 's'}.
+                  </span>
+                  <Button small onClick={() => { setLine(unmerged[0].line); setPanel(null); setRewriteLine(unmerged[0].line) }} title="close Export and open that line's Rewrite dialog (merge is there)">Open</Button>
+                </div>
+              )}
               <div className="stats">
                 <div className="stat"><span className="n you" data-testid="n-you">{m.you}</span><span>lines are <b>your takes</b></span><small className="mono dim">{timecode(m.youSec, false)} of voice</small></div>
                 <div className="stat"><span className="n clone" data-testid="n-rest">{m.rest}</span><span>{missing === 'original' ? <>lines are the <b>cloned voice</b></> : <>lines are <b>silent</b></>}</span><small className="mono dim">of {m.n} lines</small></div>
@@ -99,9 +119,9 @@ export function ExportMode() {
               <div className="dim sub">Writes <span className="mono">presenter/export/{project.build}_edited.mp4</span>, <span className="mono">.srt</span> and <span className="mono">.chapters.txt</span> from the same edit list. Voice cleaning: <b>{clean}</b>.</div>
               <div className="btn-row">
                 <Button variant="primary" icon="download" disabled={exporting} id="export-now" onClick={() => void act.exportNow(clean)}>{exporting ? 'Exporting…' : 'Export'}</Button>
-                <Button variant="ghost" onClick={() => setMode('edit')}>Review in Edit</Button>
-                <Button variant="ghost" icon="film" onClick={() => setWatch(watch === 'lecture' ? '' : 'lecture')}>Watch the lecture video</Button>
-                <a className="btn ghost" href={`/${project.build}/${project.build}.mp4`} download={`${project.build}.mp4`} id="download-lecture"><Icon name="download" size={14} />Download the lecture video</a>
+                <Button variant="ghost" onClick={() => setPanel(null)}>Review in the workspace</Button>
+                <Button variant="ghost" icon="film" onClick={() => setWatch(watch === 'lecture' ? '' : 'lecture')} title="the video as it was built, before your recordings and edits">Watch the original build</Button>
+                <a className="btn ghost" href={lectureUrl} download={`${project.build}.mp4`} id="download-lecture"><Icon name="download" size={14} />Download the original build (before your edits)</a>
               </div>
             </div>
           )}
@@ -139,9 +159,9 @@ export function ExportMode() {
               return (
                 <li key={f.name}>
                   <Icon name="film" size={14} />
-                  <span className="grow"><a href={f.url} {...(video ? { target: '_blank', rel: 'noreferrer' } : { download: true })}>{f.name}</a><small className="dim mono">{mb(f.size)} · {when(f.time)}</small></span>
-                  {video && <Button small variant="ghost" onClick={() => setWatch(f.url)}>watch</Button>}
-                  <a className="btn small ghost" href={f.url} download aria-label={`Download ${f.name}`}><Icon name="download" size={12} /></a>
+                  <span className="grow"><a href={fresh(f)} {...(video ? { target: '_blank', rel: 'noreferrer' } : { download: true })}>{f.name}</a><small className="dim mono">{mb(f.size)} · {when(f.time)} · {profileName(f.profile ?? '')}</small></span>
+                  {video && <Button small variant="ghost" onClick={() => setWatch(fresh(f))}>watch</Button>}
+                  <a className="btn small ghost" href={fresh(f)} download aria-label={`Download ${f.name}`}><Icon name="download" size={12} /></a>
                 </li>
               )
             })}
@@ -149,6 +169,7 @@ export function ExportMode() {
           </ul>
         </Panel>
       </div>
+    </div>
     </div>
   )
 }

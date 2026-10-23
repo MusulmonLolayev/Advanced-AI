@@ -46,7 +46,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 
 ## Lecture opening
 ▸ title card "7-modul · 1-maʼruza" → "Agent nima?"
-0. **Salom, aziz doʻstlar! Yettinchi modulning birinchi maʼruzasiga xush kelibsiz. Ushbu modulda biz agentlar bilan ishlaymiz — bular shunday dasturlarki, ularda til modeli mustaqil qarorlar qabul qiladi va turli vositalarni ishga tushiradi.**
+0. **Assalomu alaykum, aziz doʻstlar! Yettinchi modulning birinchi maʼruzasiga xush kelibsiz. Ushbu modulda biz agentlar bilan ishlaymiz — bular shunday dasturlarki, ularda til modeli mustaqil qarorlar qabul qiladi va turli vositalarni ishga tushiradi.**
    *Hello, dear friends, and welcome to the first lecture of module seven. In this module we work with agents: programs in which a language model makes its own decisions and calls tools.*
 1. **Bugungi savolimiz oddiy: agent nima, va u oddiy dasturdan nimasi bilan farq qiladi? Javobni nazariyadan emas, haqiqiy misoldan topamiz. Oʻzbekiston Mehnat kodeksi ustida kichik agent quramiz va uning har bir qadamini koʻrib chiqamiz.**
    *Today's question is simple: what is an agent, and how is it different from an ordinary program? We find the answer not in theory but in a real example. We build a small agent on the Labor Code of Uzbekistan and look at every step it takes.*

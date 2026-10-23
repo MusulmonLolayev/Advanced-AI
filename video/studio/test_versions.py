@@ -251,6 +251,28 @@ class Drafts(Fixture):
             rep = S.version(c, B, scene, n)["report"]
         self.assertEqual(sorted(rep), ["1", "2"])                                # v1's check kept, line 3's added
 
+    def test_the_render_env_carries_the_lines_the_version_rewrote_as_the_instructors_own(self):
+        envs = []
+        run = self.fake_run
+
+        def spy(cmd, env=None, what=""):
+            if env and "ONLY" in env:
+                envs.append(dict(env))
+            return run(cmd, env=env, what=what)
+        with self.connect() as c:
+            scene, n = V.create(self.root, B, 1, NEW_TEXT, None, c)
+        p = self.patched()
+        with mock.patch.object(RW, "run", spy), p[1], p[2]:
+            V.build_version(self.root, B, scene, n, self.connect, progress=lambda m: None, python=Path("/navoiy/python"))
+        self.assertEqual(len(envs), 1)
+        own = json.loads(envs[0]["DRAFT_OWN_LINES"])
+        self.assertEqual(list(own.values()), [NEW_TEXT])                  # only the rewritten line, keyed as in the narration file
+        path, single = N.resolve("m7_lecture99", "uz", self.nar)
+        self.assertEqual(N.texts(path, "uz", single)[next(iter(own))], OLD_TEXT)    # the real file is untouched
+        dn = V.vdir(self.root, B, scene, n) / "narration"
+        p2, s2 = N.resolve("m7_lecture99", "uz", dn)
+        self.assertEqual(N.texts(p2, "uz", s2)[next(iter(own))], NEW_TEXT)   # and the draft holds it under that key
+
     def test_a_failed_render_marks_the_version_failed(self):
         self.fail_on = "render"
         with self.connect() as c:
