@@ -33,7 +33,7 @@ m7_tool:
   uz: "vosita"
 m7_pipeline:
   en: "pipeline"
-  uz: "konveyer"
+  uz: "pipeline"
 m7_agent:
   en: "agent"
   uz: "agent"

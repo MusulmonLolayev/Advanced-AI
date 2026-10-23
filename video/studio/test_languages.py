@@ -1,7 +1,7 @@
 """Languages (languages.yaml, builds.py, studio/linestatus.py, review.py, languages_seed.py): the registry gives the
 voices the renders use today; build names round-trip; a language's narration is found (bilingual file, one-language
 file) or created as an empty skeleton; a line is empty, draft, approved or "needs update" by the hashes of its text and
-of the other languages' texts; labels work the same; the seed approves only Uzbek Lectures 1-5; the review page's actions
+of the other languages' texts; labels work the same; the seed approves only Uzbek Lectures 1-5; the review actions
 write the file through narration_edit and leave the bilingual file's other language alone.
 
     uv run python -m unittest discover -s studio -p 'test_languages.py' -t .        (from video/)
@@ -518,6 +518,37 @@ class Lectures(Scratch):
         LS.save_line(self.c, "lecture98", "uz", "2.4", "Vosita nimaligini koʻramiz.", self.nar)       # approved, but not in the video
         self.assertEqual(R.summary(self.c, root, "lecture98", "uz", self.nar)["builds"][0]["stale"], ["2.4"])
 
+    def test_the_lecture_list_is_the_module_page_as_data(self):
+        """R.lecture_list: the old module page's facts (languages, counts, builds, sessions, shared files) for the project browser."""
+        root = Path(self.tmp.name) / "out"
+        b = root / "lecture98_uz_navoiy"
+        b.mkdir(parents=True)
+        (b / "lecture98_uz_navoiy.mp4").write_bytes(b"v")
+        (b / "joined.txt").write_text("")
+        (root / "m7_lecture98_en").mkdir()                                                     # a folder, no video: not built
+        (root / "shared" / "m7").mkdir(parents=True)
+        (root / "shared" / "m7" / "Module7 notes.pdf").write_bytes(b"x" * 10)
+        S.session_seen(self.c, "lecture98_uz_navoiy", "2026-10-21T14-24-06")
+        LS.approve(self.c, "lecture98", "uz", "line", "0.0", self.texts())
+        mods = R.lecture_list(self.c, root, {0: "Zero", 7: "Seven", 3: "Three"},
+                              lambda k: sorted((root / "shared" / f"m{k}").glob("*")) if (root / "shared" / f"m{k}").is_dir() else [], self.nar)
+        self.assertEqual([(m["k"], m["title"], [l["stem"] for l in m["lectures"]]) for m in mods],
+                         [(0, "Zero", ["lecture98"]), (7, "Seven", ["m7_lecture98"]), (3, "Three", [])])
+        uz = mods[0]["lectures"][0]["langs"][0]
+        self.assertEqual((uz["lang"], uz["build"], uz["sessions"], uz["build_name"]), ("uz", "lecture98_uz_navoiy", 1, "lecture98_uz_navoiy"))
+        self.assertEqual((uz["lines"]["approved"], uz["lines"]["total"], uz["lines"]["draft"]), (1, 5, 4))
+        self.assertEqual(uz["built_on"], (b / "lecture98_uz_navoiy.mp4").stat().st_mtime)
+        en = mods[0]["lectures"][0]["langs"][1]
+        self.assertEqual((en["lang"], en["build"], en["has_narration"], en["build_name"]), ("en", None, True, "lecture98_en"))
+        m7 = mods[1]["lectures"][0]
+        self.assertEqual([l["lang"] for l in m7["langs"]], ["en", "uz"])                        # the primary language first
+        self.assertEqual([l["build"] for l in m7["langs"]], [None, None])                         # no joined.txt, no video
+        f = mods[1]["files"][0]
+        self.assertEqual((f["name"], f["size"], f["url"]), ("Module7 notes.pdf", 10, "/shared/m7/Module7%20notes.pdf"))
+        # every number is the one summary() gives for the same language
+        s = R.summary(self.c, root, "lecture98", "uz", self.nar)
+        self.assertEqual((uz["lines"], uz["labels"]["approved"], uz["labels"]["total"]), (s["lines"], s["labels"]["approved"], s["labels"]["total"]))
+
     def test_the_editors_other_languages_and_per_line_status(self):
         root = Path(self.tmp.name) / "out"
         b = root / "lecture98_uz_navoiy" / "presenter"
@@ -537,95 +568,37 @@ class Lectures(Scratch):
         self.assertEqual(one["others"][0]["review"], "/narration?lecture=lecture98&lang=en#line=1.2")
 
 
-NODE = shutil.which("node")
-
-
-@unittest.skipUnless(NODE, "node is not installed")
-class ReviewPage(Scratch):
-    """studio/narration.html and static/narration/review.js, run on fake DOM elements against the real payload."""
-    DRIVER = """
-const vm = require('vm'), fs = require('fs'), assert = require('assert');
-const payload = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
-const els = {};
-const el = id => els[id] || (els[id] = {id, innerHTML: '', textContent: '', className: '', style: {}, classList: {toggle(){}, add(){ els[id].target = true; }}, scrollIntoView(){ els[id].scrolled = true; }});
-const ctx = {document: {getElementById: el}, location: {hash: process.argv[4] || ''}, localStorage: {getItem: () => null, setItem(){}},
-  fetch: async () => ({ok: true, status: 200, json: async () => payload}), setTimeout, clearTimeout, LECTURE: 'lecture98', LANG: 'uz'};
-vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(process.argv[2], 'utf8'), ctx);
-const run = code => vm.runInContext(code, ctx);
-(async () => {
-  await new Promise(r => setTimeout(r, 20));
-  const out = {};
-  out.list = els.list.innerHTML; out.counts = els.counts.textContent; out.filters = els.filters.innerHTML; out.ref = els.ref.innerHTML;
-  out.langs = els.langs.innerHTML;
-  run("setFilter('needs_update')"); out.needs = els.list.innerHTML;
-  run("setFilter('empty')"); out.empty = els.list.innerHTML;
-  run("setFilter('open')"); out.open = els.list.innerHTML;
-  run("setTab('labels')"); out.labels = els.list.innerHTML; out.labelCounts = els.counts.textContent;
-  out.diff = run("wordDiff('a b c', 'a x c')");
-  out.scrolled = Object.keys(els).filter(k => els[k].scrolled && els[k].target);
-  console.log(JSON.stringify(out));
-})();
-"""
-
-    def run_page(self, lang="uz", stem="lecture98", hash_=""):
-        payload = R.review(self.c, stem, lang, self.nar)
-        d = Path(self.tmp.name)
-        (d / "payload.json").write_text(json.dumps(payload))
-        (d / "run.js").write_text(self.DRIVER.replace("'lecture98'", repr(stem)).replace("'uz'", repr(lang)))
-        r = subprocess.run([NODE, str(d / "run.js"), str(HERE / "studio/static/narration/review.js"), str(d / "payload.json"), hash_],
-                           capture_output=True, text=True)
-        self.assertEqual(r.returncode, 0, r.stdout[-800:] + r.stderr[-800:])
-        return json.loads(r.stdout.strip().splitlines()[-1])
-
-    def test_the_template_is_filled_and_its_files_exist(self):
-        page = (HERE / "studio" / "narration.html").read_text()
-        for ph in ("__LECTURE__", "__LANG__", "__MODULE__", "__TITLE__"):
-            self.assertIn(ph, page)
-        page = page.replace("__LECTURE__", "lecture98").replace("__LANG__", "uz").replace("__MODULE__", "0").replace("__TITLE__", "t")
-        self.assertNotIn("__", page)
-        for f in re.findall(r'(?:src|href)="/studio-static/([^"]+)"', page):
-            self.assertTrue((HERE / "studio" / "static" / f).is_file(), f)
-
-    def test_the_page_shows_status_chips_the_diff_counts_and_filters(self):
+class ReviewData(Scratch):
+    """What the Script & languages screen reads (/api/narration, R.review): statuses, the diff's old and new texts, counts,
+    the reference texts, the section headings."""
+    def test_statuses_changes_counts_and_sections(self):
         LS.approve(self.c, "lecture98", "uz", "line", "1.2", self.texts())
         LS.approve(self.c, "lecture98", "uz", "line", "0.0", self.texts())
         LS.save_line(self.c, "lecture98", "en", "1.2", "Let's begin.", self.nar)
         N.create_skeleton("lecture98", "ru", self.nar)
-        o = self.run_page()
-        self.assertIn('class="item approved" id="line-0.0"', o["list"])
-        self.assertIn('class="item needs_update" id="line-1.2"', o["list"])
-        self.assertIn("en changed", o["list"])
-        self.assertIn("<del>start</del>", o["list"])                                  # the English diff: old and new words
-        self.assertIn("<mark>begin.</mark>", o["list"])
-        self.assertIn('class="item draft" id="line-1.s1a"', o["list"])
-        self.assertEqual(o["counts"], "approved 1 / 5 · 1 need update · 3 draft")
-        self.assertIn("not approved 4", o["filters"])
-        self.assertEqual(o["needs"].count('class="item '), 1)                          # the filters
-        self.assertEqual(o["empty"], '<p class="dim">nothing here with this filter</p>')
-        self.assertEqual(o["open"].count('class="item '), 4)
-        self.assertIn("1-boʻlim · Nega agent?", o["list"])                                # the section headings
-        self.assertIn('<option value="en" selected>', o["ref"])                                     # the reference languages: not Uzbek itself
-        self.assertNotIn('value="uz"', o["ref"])
-        self.assertIn("<mark>x</mark>", o["diff"])
-        self.assertIn("/narration?lecture=lecture98&lang=ru", o["langs"])               # a tab for the new language
+        r = R.review(self.c, "lecture98", "uz", self.nar)
+        by = {x["key"]: x for x in r["lines"]}
+        self.assertEqual((by["0.0"]["state"], by["1.2"]["state"], by["1.s1a"]["state"]), ("approved", "needs_update", "draft"))
+        self.assertEqual(list(by["1.2"]["changed"]), ["en"])
+        self.assertEqual(by["1.2"]["changed"]["en"], {"old": "Let's start with one question.", "new": "Let's begin."})
+        self.assertEqual(r["counts"], {"approved": 1, "needs_update": 1, "draft": 3, "empty": 0, "total": 5})
+        self.assertEqual(r["sections"]["1"], "1-boʻlim · Nega agent?")
+        self.assertEqual(by["1.2"]["refs"]["en"], "Let's begin.")
+        self.assertEqual(r["have"], ["uz", "en", "ru"])
 
     def test_a_skeleton_language_has_only_empty_lines_and_the_reference_text_beside_them(self):
         N.create_skeleton("lecture98", "ru", self.nar)
-        o = self.run_page("ru")
-        self.assertEqual(o["list"].count('class="item empty"'), 5)
-        self.assertEqual(o["counts"], "approved 0 / 5 · 5 empty")
-        self.assertIn("Keling, bitta savoldan boshlaymiz.", o["list"])                 # the reference language (Uzbek, the primary)
-        self.assertEqual(o["empty"].count('class="item empty"'), 5)
-        self.assertRegex(o["labelCounts"], r"^approved 0 / \d+ · \d+ empty$")
+        r = R.review(self.c, "lecture98", "ru", self.nar)
+        self.assertEqual({x["state"] for x in r["lines"]}, {"empty"})
+        self.assertEqual(r["counts"], {"approved": 0, "needs_update": 0, "draft": 0, "empty": 5, "total": 5})
+        self.assertEqual(next(x for x in r["lines"] if x["key"] == "1.2")["refs"]["uz"], "Keling, bitta savoldan boshlaymiz.")
+        self.assertEqual(r["label_counts"]["approved"], 0)
+        self.assertEqual(r["label_counts"]["empty"], r["label_counts"]["total"])
 
-    def test_a_language_with_no_narration_offers_the_skeleton(self):
-        o = self.run_page("de")
-        self.assertIn("create the empty skeleton", o["list"])
-
-    def test_the_hash_opens_the_line(self):
-        o = self.run_page(hash_="#line=1.2")
-        self.assertEqual(o["scrolled"], ["line-1.2"])                                      # scrolled to and marked
+    def test_a_language_with_no_narration_has_none(self):
+        r = R.review(self.c, "lecture98", "de", self.nar)
+        self.assertFalse(r["exists"])
+        self.assertEqual(r["lines"], [])
 
 
 if __name__ == "__main__":

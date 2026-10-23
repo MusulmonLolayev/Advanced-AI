@@ -10,7 +10,7 @@ Narrated Manim videos built from the same material as the slide decks.
   test `endswith("_uz_navoiy")` or repeat the regex. A lecture's narration in a language is `narration/<stem>_<lang>.md`
   (one language, same line ids as the primary language) or, for uz and en, the bilingual `<stem>.md`. New languages are
   added in the studio (**+ add language** writes an empty skeleton), drafted by Claude, approved line by line at
-  `/narration?lecture=<stem>&lang=<code>`; `studio/linestatus.py` keeps who approved what and flags the same line in
+  the app's Script & languages screen (`/#mode=script&lecture=<stem>&lang=<code>`); `studio/linestatus.py` keeps who approved what and flags the same line in
   the other languages "needs update" when one changes (`line_status` table, by hash). Studio-side details in `STATUS.md`. Phase 2: `check_lang.py` (preflight), `cues.py` (cue timing in any language),
   `drafts.py` (watermark), `studio/buildlang.py` (the "Build video" job), `voice_check_lang.py` (whisper CER check).
 - **One video per lecture**, built like the slides: a lecture opening (one greeting), then Part 0, Part 1 … each with a
@@ -56,6 +56,23 @@ Narrated Manim videos built from the same material as the slide decks.
   `out/<lecture>/media/voiceovers/` (file names are relative), so no line is voiced twice.
 - A section file renders on its own while it is being written:
   `LANG_CODE=uz uv run --frozen manim -ql --media_dir out/l02dev_uz/media lecture02_s04.py S04Table`.
+
+## The studio (what the instructor uses)
+One address, `http://localhost:8081/` through the ssh tunnel (the server is `serve_presenter.py` on 8080): the React app in
+`studio/app` (built into `studio/static/app/`; `cd studio/app && npm run build`). Four screens: **Record** (the booth: picture,
+teleprompter, input meter, one take of a line with L or a whole session with R), **Edit** (takes, trims, the timeline, versions of a
+rewritten scene), **Script & languages** (lines and labels × languages: approve, edit, still fine, add a language, build a video;
+an Uzbek line is never voiced or built until approved), **Export** (voice cleaning, unrecorded lines, queue, finished exports,
+watch). Deep links: `/#mode=edit&lecture=lecture01&lang=uz&line=14`. The old pages' addresses (`/?m=7`, `/lecture?build=`,
+`/edit?build=`, `/watch`, `/narration`, `<build>/presenter/presenter.html`) redirect into it. The old HTML frontend is gone;
+`presenter.py` keeps writing `presenter/lines.json`, the silent video and an offline presenter page. `studio/run_tests.sh [fast]`.
+**Voice cleaning profiles** (`compose_recording.CLEAN`; `STUDIO_PROFILE`, `/api/process?clean=`, `/api/export?clean=`): **`cloned`
+is the default** for new recordings and for Export, then `deepfilter`, `voice`, `mild`, `strong`, `off`. `cloned` = the
+deepfilter voice re-spoken by CosyVoice2 voice conversion (`POST /vc` on the voice server, `~/navoiy-stack/work/tts_server.py`,
+port 8765; piece by piece, each piece fitted to its source length, so the file is exactly as long as the deepfilter one;
+`studio/media.py` `vc_pieces` / `convert_voice` / `vc_http`). **The voice server must be up** (the process job starts it if
+not; otherwise the job fails with "cloned voice: the voice server did not answer"). About 0.2 s of processing per second of
+audio. Edit > Recordings: "convert to cloned voice" per recording and "your voice / cloned voice" playback. Details: `STATUS.md`.
 
 ## Environment
 `uv` project (Python 3.12). System deps: `ffmpeg`, `libcairo2-dev`, `libpango1.0-dev`, `pkg-config`.

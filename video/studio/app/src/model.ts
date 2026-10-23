@@ -1,6 +1,6 @@
 // What the Edit mode derives from /api/project: line states, sections, the edit list's level and its long silences,
 // and the edit list's voice levels.
-import type { EditorLangs, LangState, Levels, Project, Take } from './types'
+import type { EditorLangs, LangState, Levels, Project, Take, TakeEdit } from './types'
 
 export type LineKind = 'take' | 'mistake' | 'clone' | 'silent'
 export type LineState = {
@@ -121,3 +121,67 @@ export const busy = (p: Project) =>
   p.sessions.some((s) => ['recording', 'recorded', 'processing'].includes(s.state)) ||
   Object.values(p.versions).flat().some((v) => MAKING.includes(v.state))
 
+
+// ─── what an edit removes, in the raw take's seconds: mirrors studio/timeline.plan (check_makeup.ts compares them) ───
+type Span = [number, number]
+type Squeeze = [number, number, number]
+export function mergeSpans(spans: Span[]): Span[] {
+  const out: Span[] = []
+  for (const [a, b] of spans.map(([p, q]): Span => (p <= q ? [p, q] : [q, p])).sort((x, y) => x[0] - y[0] || x[1] - y[1])) {
+    if (out.length && a <= out[out.length - 1][1]) out[out.length - 1][1] = Math.max(out[out.length - 1][1], b)
+    else if (b > a) out.push([a, b])
+  }
+  return out
+}
+function validSqueezes(sq: Squeeze[]): Squeeze[] {
+  const out: Squeeze[] = []
+  let prev = 0
+  for (const [x, y, n] of sq.map(([a, b, n]): Squeeze => [Math.min(a, b), Math.max(a, b), n]).sort((p, q) => p[0] - q[0] || p[1] - q[1] || p[2] - q[2])) {
+    if (n > 1e-9 && n < y - x - 1e-9 && x >= prev - 1e-9) {
+      out.push([x, y, n])
+      prev = y
+    }
+  }
+  return out
+}
+/** the picture holds still where it says so; a trim removes the still parts and speeds up (up to 4x) the playing ones */
+function fastForward(picture: [number, number, 'play' | 'hold'][], spans: Span[]): [Span[], Squeeze[]] {
+  const still = mergeSpans(picture.filter((p) => p[2] === 'hold').map((p): Span => [p[0], p[1]]))
+  const cuts: Span[] = []
+  const sq: Squeeze[] = []
+  for (const [lo, hi] of spans) {
+    let t = lo
+    for (let [x, y] of [...still, [hi, hi] as Span]) {
+      x = Math.min(Math.max(x, lo), hi)
+      y = Math.min(Math.max(y, lo), hi)
+      const p = x - t
+      if (p > 1e-9 && Math.max(p / 4, 0.15) < p - 1e-9) sq.push([t, x, Math.max(p / 4, 0.15)])
+      if (y > x) cuts.push([x, y])
+      t = Math.max(t, y)
+    }
+  }
+  return [mergeSpans(cuts), sq]
+}
+export type EditPlan = { cuts: Span[]; sq: Squeeze[] }
+export function planOf(edit: TakeEdit, picture: [number, number, 'play' | 'hold'][], total: number): EditPlan {
+  const ends: Span[] = []
+  if (edit.trim_in) ends.push([0, Math.min(edit.trim_in, total)])
+  if (edit.trim_out) ends.push([Math.max(total - edit.trim_out, 0), total])
+  const [c, s] = fastForward(picture, ends)
+  return { cuts: mergeSpans([...(edit.cuts ?? []), ...(edit.auto_cuts ?? []), ...c]), sq: validSqueezes([...(edit.squeeze ?? []), ...s]) }
+}
+/** where raw take time `tt` lands in the edited take (kept parts, squeezed ones faster) */
+export function editedTime(plan: EditPlan, total: number, tt: number): number {
+  const f = plan.sq.map(([x, y, n]) => [x, y, (y - x) / n] as Squeeze)
+  const pts = [...new Set([0, total, ...plan.cuts.flat(), ...f.flatMap((s) => [s[0], s[1]])].map((x) => Math.min(Math.max(x, 0), total)))].sort((a, b) => a - b)
+  let out = 0
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const u = pts[i]
+    const v = pts[i + 1]
+    const m = (u + v) / 2
+    if (v - u <= 1e-9 || plan.cuts.some(([a, b]) => a < m && m < b)) continue
+    const s = f.find(([a, b]) => a < m && m < b)
+    out += Math.max(Math.min(v, tt) - u, 0) / (s ? s[2] : 1)
+  }
+  return out
+}

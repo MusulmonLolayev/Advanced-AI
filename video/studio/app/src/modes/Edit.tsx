@@ -3,7 +3,7 @@ import { composite, longSilences, lineAt, lineStates, ORIGINAL, sections, source
 import { playhead } from '../playhead'
 import { useStudio } from '../studio'
 import type { Project } from '../types'
-import { EmptyState } from './EmptyState'
+import { EmptyState, NoPresenter } from './EmptyState'
 import { Inspector } from './edit/Inspector'
 import { Monitor } from './edit/Monitor'
 import { ScriptList } from './edit/ScriptList'
@@ -12,17 +12,9 @@ import { usePlayer } from './edit/usePlayer'
 import { useLevels } from './edit/useLevels'
 
 export function EditMode() {
-  const { project, projectError, projectLoading, build, stem, lang } = useStudio()
+  const { project, projectLoading } = useStudio()
   if (projectLoading) return <EmptyState title="Loading the project…" />
-  if (!project)
-    return (
-      <EmptyState title={`No editor for ${stem} · ${lang} yet`} tone={projectError?.includes('404') ? undefined : 'bad'}>
-        <p className="dim">{projectError}</p>
-        <p>
-          {build} has no presenter page, so there is nothing to edit. Prepare it from today's module page (or build the video, for a language that has none).
-        </p>
-      </EmptyState>
-    )
+  if (!project) return <NoPresenter what="editor" />
   return <EditBody p={project} />
 }
 

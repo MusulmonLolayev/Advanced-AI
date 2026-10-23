@@ -37,6 +37,8 @@ export function useActions() {
       merge: (scene: string, n: number) => run(() => api.postMerge(build, scene, n), () => `Merging v${n}`),
       discard: (scene: string, n: number) => run(() => api.postDiscard(build, scene, n)),
       setting: (key: string, value: string | number) => run(() => api.postSetting(build, key, value)),
+      /** make the recording's voice again with a profile (a job); "cloned" needs the voice server */
+      convertRecording: (name: string, clean = 'cloned') => run(() => api.postProcess(build, name, clean), () => `Converting ${name} to the cloned voice`),
       deleteRecording: (name: string) => run(() => api.postDelete(build, name), () => `Deleted ${name}`),
       voiceServer: (action: 'start' | 'stop') => run(() => api.postVoiceServer(build, action), () => (action === 'start' ? 'Starting the voice server: about a minute' : 'Stopping the voice server')),
       /** queue the lecture video in a language; the server refuses (with the reason) what cannot be built */

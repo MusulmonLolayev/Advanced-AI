@@ -1,17 +1,19 @@
-// Record mode: the old presenter page (presenter.py PAGE + presenter/takes.js) as components. The engine is booth.ts
+// Record mode: the old presenter page and its takes panel (removed 2026-10-22) as components. The engine is booth.ts
 // (playing, recording, event log) and upload.ts (the chunk queue); this file is the screen.
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useActions } from '../actions'
 import { fetchLine } from '../api'
-import { Button, Chip, Icon, IconButton, Meter, Panel, Timecode, useToast } from '../components'
+import { Button, Chip, Icon, IconButton, Meter, Panel, Timecode, useDialog, useToast } from '../components'
 import { Booth, type Level, type Line, type Snap } from '../booth'
 import { glue, spanOf } from '../player'
 import { useStudio } from '../studio'
 import type { LineInfo, Project, Take } from '../types'
 import { secs, useAsync } from '../util'
 import { uploads, recover } from '../upload'
-import { EmptyState } from './EmptyState'
+import { EmptyState, NoPresenter } from './EmptyState'
 
+const NOTES = ['below', 'right', 'hidden'] as const
+type Notes = (typeof NOTES)[number]
 const KEYS: [string, string][] = [
   ['Space  P', 'pause / play; starts the next line'],
   ['→', 'next line (playing: jump to its end)'],
@@ -21,6 +23,7 @@ const KEYS: [string, string][] = [
   ['X', 'mistake while recording: the line starts over'],
   ['T', 'show or hide the takes'],
   ['M', 'microphone'],
+  ['N', 'notes: below / right / off'],
   ['F', 'full screen'],
   ['Esc', 'stop watching a take, cancel the count-in'],
 ]
@@ -32,17 +35,19 @@ const when = (n: string) => {
   return m ? `${m[2]}.${m[1]} ${m[3]}:${m[4]}` : n
 }
 
+const HIDE_TAKE = {
+  title: 'Hide this take?',
+  body: 'The take is hidden from the lecture.',
+  confirmLabel: 'Hide take',
+  tone: 'danger',
+} as const
+
 export function RecordMode() {
-  const { project, projectLoading, stem, lang, build } = useStudio()
+  const { project, projectLoading, build } = useStudio()
   const lines = useAsync<Line[]>(project ? () => fetch(`/${build}/presenter/lines.json`).then((r) => (r.ok ? r.json() : Promise.reject(new Error('no lines.json'))) as Promise<Line[]>) : null, project ? build : '')
   const L = useMemo<Line[]>(() => lines.data ?? (project ? project.lines.map(([t, s]) => [t, s, []] as Line) : []), [lines.data, project])
   if (projectLoading) return <EmptyState title="Loading the project…" />
-  if (!project)
-    return (
-      <EmptyState title={`No presenter page for ${stem} · ${lang}`}>
-        <p className="dim">Recording needs a built video and its presenter page.</p>
-      </EmptyState>
-    )
+  if (!project) return <NoPresenter what="recording booth" />
   if (lines.loading) return <EmptyState title="Loading the lines…" />
   // lines.json holds the narration chunks (word timings); without it the prompter lights the whole line
   return <BoothView key={build} p={project} L={L} />
@@ -51,6 +56,7 @@ export function RecordMode() {
 function BoothView({ p, L }: { p: Project; L: Line[] }) {
   const { line, setLine, setRecording, recSeconds, build, reload } = useStudio()
   const toast = useToast()
+  const { confirm } = useDialog()
   const act = useActions()
   const videoRef = useRef<HTMLVideoElement>(null)
   const boothRef = useRef<Booth | null>(null)
@@ -66,6 +72,26 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
     }
   })
   const [showTakes, setShowTakes] = useState(true)
+  // where the notes (the teleprompter) go: under the picture, at its right, or hidden; remembered in this browser (the old page's key)
+  const [notes, setNotes] = useState<Notes>(() => {
+    try {
+      const n = localStorage.getItem('presenterNotes')
+      return NOTES.includes(n as Notes) ? (n as Notes) : 'below'
+    } catch {
+      return 'below'
+    }
+  })
+  const nextNotes = useCallback(() => {
+    setNotes((n) => {
+      const m = NOTES[(NOTES.indexOf(n) + 1) % NOTES.length]
+      try {
+        localStorage.setItem('presenterNotes', m)
+      } catch {
+        /* not remembered */
+      }
+      return m
+    })
+  }, [])
   const [info, setInfo] = useState<LineInfo | null>(null)
   const [recovered, setRecovered] = useState<string[]>([])
   const secure = typeof window !== 'undefined' && window.isSecureContext && !!navigator.mediaDevices
@@ -159,10 +185,11 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
     else if (k === 'x') b.retake()
     else if (k === 'l') b.recordTake()
     else if (k === 't') setShowTakes((s) => !s)
+    else if (k === 'n') nextNotes()
     else if (k === 'm') document.getElementById('mic-select')?.focus()
     else if (k === 'f') void (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {})
     else if (e.key === 'Escape' && b.snap.count > 0) void b.toggleRec()
-  }, [])
+  }, [nextNotes])
   useEffect(() => {
     document.addEventListener('keydown', key)
     return () => document.removeEventListener('keydown', key)
@@ -195,16 +222,45 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
     })
   }
 
+  // a long line never runs out of the prompter: the font shrinks until the whole line fits (down to 15 px), and
+  // what still overflows scrolls, keeping the word being said in view
+  const nowRef = useRef<HTMLParagraphElement>(null)
+  const prompterRef = useRef<HTMLDivElement>(null)
+  const [fitTick, setFitTick] = useState(0)
+  useEffect(() => {
+    const el = prompterRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    let w = el.clientWidth
+    const ro = new ResizeObserver(() => { if (el.clientWidth !== w) { w = el.clientWidth; setFitTick((n) => n + 1) } })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  useLayoutEffect(() => {
+    const el = nowRef.current
+    if (!el) return
+    el.style.fontSize = ''
+    let size = parseFloat(getComputedStyle(el).fontSize)
+    while (el.scrollHeight > el.clientHeight + 1 && size > 15) {
+      size -= 1
+      el.style.fontSize = `${size}px`
+    }
+    el.scrollTop = 0
+  }, [text, words.length, fitTick])
+  useEffect(() => {
+    const now = nowRef.current?.querySelector<HTMLElement>('.now')
+    if (now) now.scrollIntoView({ block: 'nearest' })
+  }, [said])
+
   return (
     <div className="booth">
-      <div className="booth-stage">
+      <div className={`booth-stage notes-${notes}`}>
         <div className="screen booth-screen">
           <video ref={videoRef} src={`${p.video}?v=${p.video_version}`} muted playsInline preload="auto" />
           <div className="screen-tag">{watching ? `WATCHING A TAKE · ${snap?.watchClock ?? ''}` : 'PICTURE · the line plays here while you speak'}</div>
           {!!snap?.count && <div className="countin" aria-live="assertive">{snap.count}</div>}
           {rec && <div className="rec-badge"><span className="dot" /> REC <span className="mono">{secs(recSeconds, 0)}</span></div>}
         </div>
-        <div className="prompter" aria-label="Teleprompter">
+        <div className="prompter" aria-label="Teleprompter" ref={prompterRef}>
           <div className="prompter-bar">
             <span className="mono">line {line + 1} / {L.length}</span>
             <span className="dim mono">≈ {secs(dur)}</span>
@@ -215,7 +271,7 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
             <IconButton icon={snap?.playing ? 'pause' : 'play'} label={snap?.playing ? 'Pause (Space)' : 'Play the line (Space)'} on={!!snap?.playing} onClick={() => b?.toggle()} />
             <IconButton icon="next" label="Next line (→)" onClick={() => b?.next()} />
           </div>
-          <p className="prompt-now" data-said={said}>
+          <p className="prompt-now" data-said={said} ref={nowRef}>
             {words.length === 0 ? (
               <span className="said">{text}</span>
             ) : (
@@ -334,7 +390,7 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
                     )}
                     {!used && <Button small onClick={() => void act.choose(line, t.id)}>use</Button>}
                     <Button small variant="ghost" onClick={() => void act.edit(t.id, { rejected: !t.rejected })}>{t.rejected ? 'not a mistake' : 'mistake'}</Button>
-                    <IconButton icon="trash" label={`Hide T${n + 1}`} onClick={() => { if (window.confirm('Hide this take?')) { if (w) b?.stopWatch(); void act.edit(t.id, { deleted: true }) } }} />
+                    <IconButton icon="trash" label={`Hide T${n + 1}`} onClick={async () => { if (await confirm(HIDE_TAKE)) { if (w) b?.stopWatch(); void act.edit(t.id, { deleted: true }) } }} />
                   </div>
                 )
               })}
@@ -342,7 +398,7 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
                 <div key={x.id} className="strip-take" data-pending={x.state}>
                   <b>…</b>
                   <span className={x.state === 'failed' ? 'bad' : 'warn'}>
-                    {({ recording: 'recording…', recorded: 'waiting…', processing: 'cleaning the voice…', failed: 'failed' } as Record<string, string>)[x.state] ?? x.state}
+                    {({ recording: 'recording…', recorded: 'waiting…', processing: 'cleaning the voice, converting it to the cloned voice…', failed: 'failed' } as Record<string, string>)[x.state] ?? x.state}
                     {x.state === 'failed' ? ' ' + x.error : ''}
                   </span>
                   <span className="grow" />
@@ -358,7 +414,7 @@ function BoothView({ p, L }: { p: Project; L: Line[] }) {
             {p.sessions.map((s) => (
               <li key={s.name}>
                 <span className="mono">{s.name}</span>{' '}
-                <span className="dim">{s.stale ? 'earlier build of the video: not used' : s.state === 'ready' ? `${(s.seconds / 60).toFixed(1)} min · ${s.clean}` : s.state === 'processing' ? 'cleaning the voice…' : s.state === 'recorded' ? 'waiting…' : s.state === 'failed' ? 'failed ' + s.error : `recording… ${s.chunks} s`}</span>
+                <span className="dim">{s.stale ? 'earlier build of the video: not used' : s.state === 'ready' ? `${(s.seconds / 60).toFixed(1)} min · ${s.clean}` : s.state === 'processing' ? 'cleaning the voice, converting it to the cloned voice…' : s.state === 'recorded' ? 'waiting…' : s.state === 'failed' ? 'failed ' + s.error : `recording… ${s.chunks} s`}</span>
               </li>
             ))}
             {!p.sessions.length && <li className="dim">none yet</li>}

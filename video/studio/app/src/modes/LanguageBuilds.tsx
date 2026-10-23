@@ -37,7 +37,10 @@ export function LanguageBuilds({ compact }: { compact?: boolean }) {
                 </td>
                 <td className="cell-r">
                   {built ? (
-                    <Button small variant="ghost" onClick={() => open(stem, l.lang)}>Open</Button>
+                    <>
+                      <a className="btn small ghost" href={`/${p.build}/${p.build}.mp4`} download={`${p.build}.mp4`} aria-label={`Download ${p.build}.mp4`}><Icon name="download" size={12} />Download</a>{' '}
+                      <Button small variant="ghost" onClick={() => open(stem, l.lang)}>Open</Button>
+                    </>
                   ) : (
                     <Button small variant={p.can ? 'primary' : 'ghost'} disabled={!p.can || running} onClick={() => void act.buildLanguage(l.lang)} title={p.can ? '' : p.reasons.join('; ')}>
                       {p.draft ? 'Build draft video' : 'Build video'}
@@ -59,6 +62,9 @@ export function LanguageBuilds({ compact }: { compact?: boolean }) {
               <p className="bad sub"><Icon name="warn" size={12} /> {l.name}: not built, not voiced. {p.reasons.join('; ') || 'Uzbek is built only when every line and label is approved.'}</p>
             )}
             {p.approval !== 'refused' && !p.can && p.reasons.length > 0 && <p className="bad sub"><Icon name="warn" size={12} /> {l.name}: {p.reasons.join('; ')}</p>}
+            {!p.can && p.problems.length > 0 && (
+              <ul className="bad sub">{p.problems.slice(0, 8).map((x, i) => <li key={i} className="mono">{String(x)}</li>)}</ul>
+            )}
             {p.can && p.draft && <p className="warn sub"><Icon name="warn" size={12} /> {l.name}: {p.unapproved.lines} lines and {p.unapproved.labels} labels are not approved: the frames carry a draft tag.</p>}
             {job && <p className={cls('sub', job.state === 'failed' ? 'bad' : job.state === 'done' ? 'good' : 'warn')}>build job: {job.state} <span className="dim">{(job.error || job.detail || '').slice(0, 300)}</span></p>}
           </div>

@@ -1,6 +1,6 @@
 // Typed fetchers (GET) and the editor's actions (POST), against today's routes. The POST helpers mirror the old editor's
-// static/editor/*.js: same route, same parameters, same body.
-import type { ActResult, EditorLangs, Levels, LectureLangs, LineInfo, Project, Review } from './types'
+// old editor's scripts (removed 2026-10-22): same route, same parameters, same body.
+import type { ActResult, EditorLangs, Levels, LectureLangs, LineInfo, ModuleRow, Project, Review } from './types'
 
 export class ApiError extends Error {
   status: number
@@ -20,7 +20,8 @@ async function getJSON<T>(url: string): Promise<T> {
   if (!r.ok) {
     let why = ''
     try {
-      why = ((await r.json()) as { error?: string }).error ?? ''
+      const j = (await r.json()) as { error?: string; preparing?: string }
+      why = (j.error ?? '') + (j.preparing ? ` (${j.preparing})` : '')
     } catch {
       /* not JSON */
     }
@@ -46,6 +47,8 @@ export const fetchLine = (build: string, line: number) => getJSON<LineInfo>(`/ap
 export const fetchEditorLangs = (build: string) => getJSON<EditorLangs>(`/api/editor-langs?build=${q(build)}`)
 /** GET /api/narration?lecture=…&lang=… (the review page's data: lines and labels with state, checks, reference texts). Not cached: approvals change it. */
 export const fetchReview = (lecture: string, lang: string) => getJSON<Review>(`/api/narration?lecture=${q(lecture)}&lang=${q(lang)}`)
+/** GET /api/lectures (every module with its lectures and their languages: counts and build state). */
+export const fetchLectures = () => getJSON<{ modules: ModuleRow[] }>('/api/lectures').then((r) => r.modules)
 /** GET /api/lecture-langs?lecture=… (the lecture page's language rows: counts, builds, can it be built and why not, the build job). */
 export const fetchLectureLangs = (lecture: string) => getJSON<LectureLangs>(`/api/lecture-langs?lecture=${q(lecture)}`)
 /** GET /api/counts?build=… (takes per line). */
@@ -104,6 +107,8 @@ export const postMerge = (build: string, scene: string, n: number) => post('/api
 export const postDiscard = (build: string, scene: string, n: number) => post('/api/version/discard', { build, scene, n })
 /** POST /api/settings?build&key&value (margin, missing) */
 export const postSetting = (build: string, key: string, value: string | number) => post('/api/settings', { build, key, value })
+/** POST /api/process?build&name&clean=<profile>: clean the recording's voice again with a profile (a job); cloned = re-spoken in the cloned voice. */
+export const postProcess = (build: string, name: string, clean: string) => post('/api/process', { build, name, clean })
 /** POST /api/delete?build&name: forget a recording and its files. */
 export const postDelete = (build: string, name: string) => post('/api/delete', { build, name })
 export const postVoiceServer = (build: string, action: 'start' | 'stop') => post('/api/voice-server', { build, action })
@@ -119,3 +124,5 @@ export const postAddLanguage = (lecture: string, lang: string) => post<{ file: s
 export const postBuildLanguage = (lecture: string, lang: string) => post<{ build: string }>('/api/narration/build', { lecture, lang })
 /** POST /api/export?build&clean=<profile> */
 export const postExport = (build: string, clean: string) => post('/api/export', { build, clean })
+/** POST /api/prepare?build: write the presenter page (lines.json, the silent video) of a built lecture. */
+export const postPrepare = (build: string) => post('/api/prepare', { build })

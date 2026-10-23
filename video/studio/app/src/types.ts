@@ -89,6 +89,8 @@ export type Project = {
   lines: LineRow[]
   sessions: Session[]
   audio: Record<string, string>
+  /** recordings made with the cloned profile: the same recording before conversion (your voice, cleaned) */
+  audio_alt?: Record<string, string>
   settings: { missing: 'original' | 'silent'; margin: string }
   voice: Record<string, VoiceMark>
   editable: boolean
@@ -181,3 +183,22 @@ export type LangSummary = {
 }
 export type LectureLangs = { lecture: string; primary: string | null; langs: LangSummary[]; addable: { code: string; name: string; native: string }[] }
 export type ActResult = { item: ReviewItem; counts: Counts; label_counts: Counts }
+
+/** GET /api/lectures: the project browser's list (studio/review.py lecture_list) */
+export type LangRow = {
+  lang: string
+  name: string
+  native: string
+  has_narration: boolean
+  lines: Counts
+  labels: Counts
+  /** the built build's name, or null */
+  build: string | null
+  built_on: number | null
+  sessions: number
+  /** the name its build has, or will have (builds.py) */
+  build_name: string
+}
+export type LectureRow = { stem: string; n: number; langs: LangRow[] }
+export type SharedFile = { name: string; size: number; time: number; url: string }
+export type ModuleRow = { k: number; title: string; files: SharedFile[]; lectures: LectureRow[] }

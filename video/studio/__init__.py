@@ -6,5 +6,5 @@
     media.py         ffmpeg/DeepFilterNet work: a session's audio (assembled from its chunks, cleaned, preview copy,
                      silences), and the export (picture + voice + .srt + chapters)
     words_worker.py  speech recognition with word times and forced alignment to the script (the Navoiy env)
-    editor.html      the editor page
+    app/ (React)     the studio's screens (studio/app, built into static/app/); review.py: the language data; api.py: the editor API
 """

@@ -386,25 +386,6 @@ class Studio(unittest.TestCase):
         self.req(f"/api/delete?build={B}&name={c_name}")
         self.assertEqual(len(line()["takes"]), 4)
 
-    def test_2c_the_presenter_page_is_rendered_by_the_server(self):
-        """presenter.html is made from presenter.PAGE with the build's lines and silent video, whatever the file says."""
-        page = self.get(f"/{B}/presenter/presenter.html").decode()
-        mtime = int((self.root / B / "presenter" / f"{B}_silent.mp4").stat().st_mtime)
-        self.assertIn(f'src="{B}_silent.mp4?v={mtime}"', page)
-        self.assertIn("const L = " + json.dumps(LINES, ensure_ascii=False), page)
-        self.assertIn(f'BUILD = "{B}"', page)
-        self.assertNotIn("__LINES__", page)
-        self.assertIn("/studio-static/presenter/takes.js", page)
-        import presenter
-        self.assertEqual(page, presenter.render(LINES, B, self.root / B / "presenter" / f"{B}_silent.mp4"))
-        for name in ("takes.js", "takes.css"):
-            self.assertEqual(self.get(f"/studio-static/presenter/{name}"), (HERE / "studio" / "static" / "presenter" / name).read_bytes())
-        b = "m7_lecture97_en"                                                          # not prepared: the file on disk, if any
-        (self.root / b / "presenter").mkdir(parents=True)
-        (self.root / b / f"{b}.mp4").write_bytes(b"x")
-        (self.root / b / "presenter" / "presenter.html").write_text("<html>static</html>")
-        self.assertEqual(self.get(f"/{b}/presenter/presenter.html"), b"<html>static</html>")
-
     def test_3_requests_that_are_refused(self):
         for path, body in [(f"/api/edit?build={B}&take=x", {"volume": 3}),          # not an edit field
                            (f"/api/edit?build={B}&take=x", {"nudge": 9}),           # out of range
@@ -473,7 +454,6 @@ class Studio(unittest.TestCase):
         self.assertEqual((st, len(body)), (206, 10))
         st, h, body = fetch(mp4, Range="bytes=0-9", **{"If-Range": '"old-1"'})       # changed: the whole file, no cap
         self.assertEqual((st, len(body)), (200, size))
-        self.assertIn(f"{B}.mp4?v=", self.get(f"/lecture?build={B}").decode())
         with self.assertRaises(urllib.error.HTTPError) as cm:
             fetch(mp4, Range=f"bytes={size}-")
         self.assertEqual(cm.exception.code, 416)
@@ -499,7 +479,7 @@ class Studio(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError) as cm:
             self.get(f"/api/project?build={b}")
         self.assertEqual(cm.exception.code, 404)
-        self.assertEqual(json.loads(cm.exception.read()), {"error": "prepare the presenter page first"})
+        self.assertEqual(json.loads(cm.exception.read()), {"error": "prepare the presenter page first", "preparing": ""})
 
     def test_8_deleting_a_recording_forgets_its_session(self):
         name = "2026-10-19T12-00-00"
@@ -540,20 +520,35 @@ class Studio(unittest.TestCase):
             self.sp.make_version = real
 
     def test_9b_static_files_are_served_with_revalidation_and_stay_inside_static(self):
-        r = urllib.request.urlopen(self.url + "/studio-static/editor/main.js")
-        self.assertIn("javascript", r.headers["Content-Type"])
-        self.assertEqual(r.headers["Cache-Control"], "no-cache")
-        self.assertEqual(r.read(), (HERE / "studio" / "static" / "editor" / "main.js").read_bytes())
-        self.assertIn("css", urllib.request.urlopen(self.url + "/studio-static/editor.css").headers["Content-Type"])
-        lm = r.headers["Last-Modified"]
-        with self.assertRaises(urllib.error.HTTPError) as cm:                          # unchanged: not sent again
-            urllib.request.urlopen(urllib.request.Request(self.url + "/studio-static/editor/main.js", headers={"If-Modified-Since": lm}))
-        self.assertEqual(cm.exception.code, 304)
-        for bad in ("/studio-static/../serve_presenter.py", "/studio-static/%2e%2e/serve_presenter.py",
-                    "/studio-static/editor/../../editor.html", "/studio-static/nothing.js", "/studio-static/editor"):
-            with self.assertRaises(urllib.error.HTTPError, msg=bad) as cm:
-                urllib.request.urlopen(self.url + bad)
-            self.assertEqual(cm.exception.code, 404, bad)
+        """/studio-static/ serves studio/static/ (here a scratch copy): revalidated on every load, except the app's hashed
+        assets, which never change under their name; and nothing outside it."""
+        static = self.root / "static"
+        (static / "app" / "assets").mkdir(parents=True)
+        (static / "app" / "index.html").write_text("<html>app</html>")
+        (static / "app" / "assets" / "index-abc123.js").write_text("export {}")
+        (static / "x.css").write_text("a{}")
+        old = self.sp.STATIC
+        self.sp.STATIC = static
+        try:
+            r = urllib.request.urlopen(self.url + "/studio-static/app/assets/index-abc123.js")
+            self.assertIn("javascript", r.headers["Content-Type"])
+            self.assertEqual(r.headers["Cache-Control"], "public, max-age=31536000, immutable")
+            r = urllib.request.urlopen(self.url + "/studio-static/app/index.html")
+            self.assertEqual((r.headers["Cache-Control"], r.read()), ("no-cache", b"<html>app</html>"))
+            r = urllib.request.urlopen(self.url + "/")                                   # the app is the front page
+            self.assertEqual((r.headers["Cache-Control"], r.read()), ("no-cache", b"<html>app</html>"))
+            self.assertIn("css", urllib.request.urlopen(self.url + "/studio-static/x.css").headers["Content-Type"])
+            lm = r.headers["Last-Modified"]
+            with self.assertRaises(urllib.error.HTTPError) as cm:                        # unchanged: not sent again
+                urllib.request.urlopen(urllib.request.Request(self.url + "/studio-static/app/index.html", headers={"If-Modified-Since": lm}))
+            self.assertEqual(cm.exception.code, 304)
+            for bad in ("/studio-static/../serve_presenter.py", "/studio-static/%2e%2e/serve_presenter.py",
+                        "/studio-static/app/../../serve_presenter.py", "/studio-static/nothing.js", "/studio-static/app"):
+                with self.assertRaises(urllib.error.HTTPError, msg=bad) as cm:
+                    urllib.request.urlopen(self.url + bad)
+                self.assertEqual(cm.exception.code, 404, bad)
+        finally:
+            self.sp.STATIC = old
 
     def test_9c_languages_are_added_drafted_approved_and_flagged_over_http(self):
         def narr(lang, **q):
@@ -568,12 +563,12 @@ class Studio(unittest.TestCase):
             self.assertEqual(cm.exception.code, code)
             body = cm.exception.read()
             return json.loads(body) if body[:1] == b"{" else {}
-        studio = self.get("/?m=7").decode()
-        self.assertIn("Lecture 99", studio)
-        self.assertIn("+ add language", studio)
-        self.assertNotIn("Russian</h3>", studio)
+        lang = lambda: next(l for m in self.get("/api/lectures")["modules"] for l in m["lectures"] if l["stem"] == "m7_lecture99")["langs"]
+        self.assertNotIn("ru", [l["lang"] for l in lang()])
+        self.assertIn("ru", [a["code"] for a in self.get("/api/lecture-langs?lecture=m7_lecture99")["addable"]])
         self.assertEqual(self.req("/api/narration/add?lecture=m7_lecture99&lang=ru"), {"file": "m7_lecture99_ru.md"})
-        self.assertIn("ask Claude to draft Russian for this lecture", self.get("/?m=7").decode())
+        ru_row = next(l for l in lang() if l["lang"] == "ru")                                     # the language row: a skeleton, every line empty
+        self.assertEqual((ru_row["lines"]["empty"], ru_row["lines"]["total"], ru_row["build"]), (3, 3, None))
         ru = narr("ru")
         self.assertEqual([(l["key"], l["state"]) for l in ru["lines"]], [("0.0", "empty"), ("1.1", "empty"), ("1.2", "empty")])
         self.assertEqual((ru["primary"], ru["have"]), ("en", ["uz", "en", "ru"]))
@@ -591,10 +586,8 @@ class Studio(unittest.TestCase):
         line = next(l for l in narr("ru")["lines"] if l["key"] == "1.1")
         self.assertEqual(line["state"], "needs_update")
         self.assertEqual(line["changed"], {"uz": {"old": "Ikkinchi qator, vositalar.", "new": "Ikkinchi qator, asboblar."}})
-        self.assertIn("1 need update", self.get("/?m=7").decode())
-        # the editor knows: its header links to the review page of a language with no build, and the line carries the flag
-        page = self.get(f"/edit?build={B}").decode()
-        self.assertIn("/narration?lecture=m7_lecture99&amp;lang=ru", page)
+        self.assertEqual(next(l for l in lang() if l["lang"] == "ru")["lines"]["needs_update"], 1)
+        # the editor knows: the line carries the flag, and the other languages link to their review
         el = self.get(f"/api/editor-langs?build={B}")
         self.assertEqual([(o["lang"], o["build"]) for o in el["others"]], [("uz", None), ("ru", None)])
         self.assertEqual(el["lines"]["1"]["key"], "1.1")
@@ -607,14 +600,6 @@ class Studio(unittest.TestCase):
         refused(lambda: post("approve", "ru", "1.1", kind="thing"))
         refused(lambda: self.req("/api/narration/add?lecture=m7_lecture12&lang=ru"), 404)
         refused(lambda: self.get("/api/narration?lecture=m7_lecture99&lang=xx"), 404)
-        self.assertIn("narration review", self.get("/narration?lecture=m7_lecture99&lang=ru").decode())
-
-    def test_4_pages(self):
-        page = self.get(f"/edit?build={B}").decode()
-        self.assertIn(f'const BUILD = "{B}"', page)
-        self.assertNotIn("__", page.split("<script>")[1].split("BUILD")[0])  # every placeholder filled
-        studio = self.get("/?m=7").decode()
-        self.assertIn(f"/edit?build={B}", studio)
 
 
 if __name__ == "__main__":

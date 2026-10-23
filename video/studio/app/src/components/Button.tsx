@@ -1,8 +1,8 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import { cls } from '../util'
 import { Icon, type IconName } from './Icon'
 
-type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
+type Props = ComponentProps<'button'> & {
   variant?: 'default' | 'primary' | 'ghost' | 'danger' | 'record'
   small?: boolean
   icon?: IconName

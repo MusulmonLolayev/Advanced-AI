@@ -71,3 +71,7 @@ export function useLive<T>(fn: (() => Promise<T>) | null, key: string): Async<T>
   }, [key, reload])
   return { ...st, reload }
 }
+
+/** The build a lecture has in a language, by builds.py's naming: Uzbek in the cloned voice, the others in edge-tts. */
+export const buildName = (stem: string, lang: string): string => (lang === 'uz' ? `${stem}_uz_navoiy` : `${stem}_${lang}`)
+export const lectureTitle = (n: number): string => `Lecture ${String(n).padStart(2, '0')}`

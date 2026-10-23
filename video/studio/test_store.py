@@ -23,7 +23,7 @@ class Forget(unittest.TestCase):
             S.session_seen(self.c, B, name)
             S.set_edit(self.c, B, f"{name}@1.39", {"nudge": 0.1})
             S.choose(self.c, B, 0 if name == GONE else 1, f"{name}@1.39")
-            for ext in ("webm", "json", "m4a", "silence.json", "deepfilter.f32", "off.f32", "json.5ab28c4610a7"):
+            for ext in ("webm", "json", "m4a", "yours.m4a", "cloned.json", "cloned.f32", "silence.json", "deepfilter.f32", "off.f32", "json.5ab28c4610a7"):
                 (self.rec / f"{name}.{ext}").write_text("x")
             (self.rec / f"{name}.chunks").mkdir()
             (self.rec / f"{name}.chunks" / "000000.part").write_text("x")
@@ -44,7 +44,7 @@ class Forget(unittest.TestCase):
         A.forget(self.root, B, GONE, self.c)
         left = sorted(p.name for p in self.rec.iterdir() if p.name.startswith(GONE))
         self.assertEqual(left, [f"{GONE}.json.5ab28c4610a7"])
-        self.assertEqual(len([p for p in self.rec.iterdir() if p.name.startswith(KEPT)]), 9)
+        self.assertEqual(len([p for p in self.rec.iterdir() if p.name.startswith(KEPT)]), 12)
         self.assertEqual([s["name"] for s in S.sessions(self.c, B)], [KEPT])
 
 

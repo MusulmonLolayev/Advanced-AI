@@ -1,5 +1,5 @@
 // The player: plays the two tracks (voice, picture) the server builds, the same ones the export renders. A port of
-// static/editor/player.js; the sync rules are the old ones, unchanged. It drives a video element and an audio map it is
+// the old editor's player (removed 2026-10-22); the sync rules are the old ones, unchanged. It drives a video element and an audio map it is
 // handed, nothing else.
 import type { LineSpan, PictureSpan, Tracks, VoiceSpan } from './types'
 
@@ -192,7 +192,7 @@ export class Player {
   }
 }
 
-/** Tracks end to end (a take in context); a shorter track is padded like the edit list. Mirrors glue() in presenter/takes.js. */
+/** Tracks end to end (a take in context); a shorter track is padded like the edit list. Mirrors the old takes panel's glue(). */
 export function glue(parts: Tracks[]): Tracks {
   const out: Tracks = { voice: [], picture: [] }
   for (const tr of parts) {

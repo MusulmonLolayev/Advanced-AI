@@ -6,15 +6,18 @@ cloned voice, the service and voice id (common.NavoiyService). The first entry t
 for the same text is removed. No manim import: this runs in the Navoiy env too.
 """
 import json
-import re
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parents[1]
 
 
 def voice_id():
-    """common.NAVOIY_VOICE_ID, read from the source (importing common would load manim)."""
-    return re.search(r'^NAVOIY_VOICE_ID = "([^"]+)"', (HERE / "common.py").read_text(), re.M)[1]
+    """common.NAVOIY_VOICE_ID: the cloned voice of the language registry (importing common would load manim)."""
+    if str(HERE) not in sys.path:
+        sys.path.insert(0, str(HERE))
+    import languages
+    return languages.voices("navoiy")["uz"]
 
 
 def navoiy_data(text):

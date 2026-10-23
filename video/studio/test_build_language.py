@@ -434,36 +434,8 @@ class Job(TL.Scratch):
             self.assertFalse(BL.plan(self.c, self.root, "m7_lecture01", "ru")["can"])         # built: never rebuilt over
 
 
-class LanguageRow(unittest.TestCase):
-    """serve_presenter.lang_row: the Build button, its draft wording, the job line; none for Uzbek with unapproved items."""
-    def summary(self, **plan):
-        p = {"build": "m7_lecture01_ru", "can": True, "draft": True, "approval": "draft", "problems": [], "reasons": [],
-             "unapproved": {"lines": 4, "labels": 2, "total": 20}, "built": False}
-        p.update(plan)
-        c = {"approved": 0, "needs_update": 0, "draft": 4, "empty": 0, "total": 4}
-        return {"lang": "ru", "name": "Russian", "native": "Русский", "has_narration": True, "lines": c, "labels": dict(c, missing=0),
-                "builds": [], "ready": not p["reasons"], "missing": p["reasons"], "plan": p, "job": None}
-
-    def test_the_button_and_the_job_line(self):
-        import serve_presenter as SP
-        html, busy = SP.lang_row("m7_lecture01", self.summary(), [])
-        self.assertIn("Build draft video", html)
-        self.assertIn("buildLang(&#x27;m7_lecture01&#x27;, &#x27;ru&#x27;)" if "&#x27;" in html else "buildLang('m7_lecture01', 'ru')", html)
-        html, _ = SP.lang_row("m7_lecture01", self.summary(draft=False, approval="clean", unapproved={"lines": 0, "labels": 0, "total": 9}), [])
-        self.assertIn(">Build video<", html)
-        html, _ = SP.lang_row("m7_lecture01", self.summary(can=False, reasons=["Uzbek is built only when every line and label is approved (6 left)"],
-                                                           approval="refused"), [])
-        self.assertNotIn("<button", html.split("can be built")[1])
-        self.assertIn("can be built: <span class=\"bad\">no</span>", html)
-        s = self.summary()
-        s["job"] = {"state": "running", "detail": "step 2 of 4: join", "error": "", "updated": time.time()}
-        html, busy = SP.lang_row("m7_lecture01", s, [])
-        self.assertTrue(busy)
-        self.assertIn("step 2 of 4: join", html)
-        s["job"] = {"state": "failed", "detail": "", "error": "RuntimeError: render failed", "updated": time.time()}
-        html, busy = SP.lang_row("m7_lecture01", s, [])
-        self.assertIn("RuntimeError: render failed", html)
-
+class BuildRequest(unittest.TestCase):
+    """serve_presenter.build_language: a request for what cannot be built is refused with the reason, else queued."""
     def test_the_build_request_is_refused_for_what_cannot_be_built(self):
         import serve_presenter as SP
         with mock.patch.object(SP.BL, "plan", return_value={"can": False, "reasons": ["3 labels have no Russian form"], "build": "x"}):

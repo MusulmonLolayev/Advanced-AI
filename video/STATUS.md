@@ -49,18 +49,39 @@ new lines per lecture: `out/review/l0N_add.txt`.
 - Voice server: `cd ~/navoiy-stack/CosyVoice && echo $$ > ~/navoiy-stack/work/tts_server.shellpid; exec
   .venv/bin/python ../work/tts_server.py 8765` (stop with `kill $(cat ~/navoiy-stack/work/tts_server.shellpid)`).
   Stopped 2026-10-14.
+  **Routes** (`tts_server.py`; backup before the change `tts_server.py.bak2`): `POST /tts` as before (any path other
+  than `/vc`), and `POST /vc {"source": 16 kHz mono wav, "out": wav, "seed": 1986}` -> `{"ok", "seconds"}`: CosyVoice2
+  voice conversion with the fine-tuned model and the instructor's 16 kHz prompt (`ref_musulmon_16k.wav`), 24 kHz WAV out
+  (no loudnorm), same lock and seed as /tts. Restarted 2026-10-23 to load it (nothing was running).
+- **Cloned voice profile** (2026-10-23, the default for new recordings and for Export): `clean(.., "cloned")` in
+  `studio/media.py` = the deepfilter voice with its speech converted by `/vc` and put back. `vc_pieces` splits at the
+  pauses `silences()` finds (pieces of at most 25 s, speech joined across pauses under 1 s, a long speech cut at its
+  quietest frame; 0.1 s of pause kept each side and cross-faded); `convert_voice` fits every converted piece to its source
+  piece's exact sample count (pad/crop, drift per piece reported in `<name>.cloned.json`) so the result is exactly as long
+  as the deepfilter f32 and every edit, trim and cut still lines up; pauses stay deepfilter. Cached as `<name>.cloned.f32`
+  (same freshness rule, atomic `.tmp`). `vc_http` starts the voice server if it is down and otherwise raises "cloned voice:
+  the voice server did not answer". A cloned session also keeps `<name>.yours.m4a` (the same take before conversion, served
+  as `audio_alt` in `/api/project`) for comparing. **The voice server must be up** (a new recording is cleaned by the
+  process job right after it is recorded; the job starts the server if needed). Measured: 20.4 s take -> 4.2 s (0.21 s per s);
+  161 s of real takes in 13 pieces -> 27.4 s (0.17 s per s), lengths equal, drift under 0.05 s per piece. Quiet-frame level
+  (10th percentile): raw -45.5 dB, deepfilter -77, cloned -65 dB; the converted speech is ~13 dB louder than the deepfilter
+  speech (every source is levelled to -19 LUFS later). Edit's Recordings list: "convert to cloned voice" per recording
+  (`POST /api/process?clean=cloned`), "converting…" while its job runs, and "your voice / cloned voice" buttons that play the
+  whole recording both ways. The old whole-recording `compose_recording.py` treats "cloned" as deepfilter.
 - Recording studio: `nohup .venv/bin/python serve_presenter.py 8080 > out/serve_presenter.log 2>&1 &`, then save
   the PID the log prints (`studio on port 8080 (pid N)`; `$!` is the wrapper shell, not the server) to
   out/serve_presenter.pid (stop with `kill $(cat out/serve_presenter.pid)`); reach it with `ssh -L 8081:localhost:8080
-  hometqqt` → http://localhost:8081/ (the instructor's laptop has its own 8080 taken). Presenter keys: Space pause /
+  hometqqt` → http://localhost:8081/ (the instructor's laptop has its own 8080 taken). **That address is the one entry point: the React
+  app (`studio/app`, built into `studio/static/app/` with `cd studio/app && npm run build`; the server serves it at `/`
+  with `Cache-Control: no-cache`, its hashed assets for good).** Record keys: Space pause /
   play, → next line, ← back, N notes below / right / off (words light up at the narration's pace), M microphone, R record;
   the video plays at 1/1.1 speed (logged per recording, the build slows the picture to match). Build cleans the voice: `deepfilter` (default; DeepFilterNet binary in `bin/`, git-ignored, from the
   v0.5.6 release) or the profiles of `~/teaching/clean_video.sh` (voice / mild / strong / off), then one fixed gain
   to −19 LUFS + a peak limiter, picture via NVENC. DNSMOS on the instructor's first recording: raw 1.78, voice 2.17,
-  deepfilter 3.16. Listening samples: `out/denoise_compare/` (served at /denoise_compare/). The studio page is split by module (a
-  panel on the left, `/?m=7`): Module K's lectures are builds `mK_lectureNN_uz_navoiy` (Module 0: `lectureNN_uz_navoiy`),
+  deepfilter 3.16. Listening samples: `out/denoise_compare/` (served at /denoise_compare/). The project browser (left panel;
+  `GET /api/lectures`, the old module page's facts as JSON) lists every module: Module K's lectures are builds `mK_lectureNN_uz_navoiy` (Module 0: `lectureNN_uz_navoiy`),
   its files whatever is linked into `out/shared/mK/` (e.g. `m7/Module7_Lecture01.pdf` → `agents/lecture01.pdf`).
-- **Editor** (2026-10-19, `studio/`, "Open editor" on a lecture; `/edit?build=…#open=41`): the presenter uploads each
+- **Editor** (2026-10-19, `studio/`; since 2026-10-22 the app's Edit screen, `/#mode=edit&lecture=…&lang=…&line=41`): the presenter uploads each
   recording in one-second pieces (kept in the browser until the server has them; an unsent rest is sent on the next
   visit; a session silent for 2 min is closed and processed anyway), logs each line start, and X marks a mistake (the
   line starts over). Each session is processed once (joined, cleaned with deepfilter, a seekable preview copy, its
@@ -99,21 +120,19 @@ new lines per lecture: `out/review/l0N_add.txt`.
   `*.levels.json`) with every silence of "long silence >=" seconds (header, default 1.0, kept in the browser) in amber,
   across line boundaries; click one, or use the transport's "next long silence" / back arrow, to jump there and open
   its line. On lecture01_uz_navoiy: 61 silences of 1 s or more, 155 s in all (no recording edited).
-  **Takes on the presenter page** (2026-10-21): `presenter.html#line=7` opens with a takes panel (a drawer at the right,
-  T shows or hides it, gone while a recording runs) for the line on screen; it follows ← / →. It lists every take of the
-  line from every usable session (T1, T2 …, length, time, "used in the video", struck through when a mistake) with ▶ watch
-  (the take as the video will have it, on the page's own video with the editor's two-track player, nothing logged),
-  ▶ in context (the last 2 s of the line before, the take, the first 2 s of the line after: the edit list's neighbours),
-  use this one, mistake, delete, and the editor's level strip with both handles and fit start / end / both. **L** (or
-  "● record a take") records one take of that line: new session, the line event, the picture plays the line, and the
-  recording stops itself 1 s after the line ends (or at → / L), finishes the session and processes it; the panel shows
-  "processing…" and then the take, and L again adds another. The newest take that is not a mistake is the used one unless
-  one was picked by hand (a hand pick stays). One call per line: `GET /api/line?build&line=K` (K from 0 like every `line`
-  in the API: text, takes as the editor's views, chosen / picked, audio, margin, video, the joins, pending sessions);
-  the panel polls it every 3 s while something is processing. X outside a recording now says what it does. The page itself
-  is rendered by serve_presenter.py from `presenter.PAGE` (`presenter.render`) with the build's lines.json and the silent
-  video's `?v=`, so a change to it reaches every lecture without `presenter.py` (which re-encodes the video); the file
-  presenter.py writes is the same page for offline use (no panel there: it needs /studio-static/).
+  **The React app replaces the old pages (2026-10-22).** One window at `/`: a project browser (Module, Lecture, Language) and
+  four screens, Record, Edit, Script & languages and Export (`studio/app`, see its README). The old HTML pages (module,
+  lecture, watch, editor, narration review, presenter with its takes panel), their scripts and styles and the Python that
+  built them are gone (see git history before 2026-10-22). Their addresses
+  still answer with a 302 to the same thing in the app (`serve_presenter.old_route`): `/?m=N`, `/lecture?build=`,
+  `/edit?build=`, `/watch?build=&name=`, `/narration?lecture=&lang=`, `<build>/presenter/presenter.html` (the app reads
+  its deep link from the query as well as the hash, so `#line=41` survives the redirect). The app follows the address when
+  it changes (`hashchange`). New API: `GET /api/lectures` (the browser's list), `GET /api/lecture-langs?lecture=` (one
+  lecture's language rows with the build plan and job). Takes of a line (watch, in context, use, mistake, hide, trims)
+  are in Record and Edit, with the same player (`src/player.ts`, `Player.seekNow` unchanged). `presenter.py` stays: it
+  writes `presenter/lines.json` and the silent video (the "prepare", merge and language-build jobs run it) and an
+  offline `presenter/presenter.html`, a standalone presenter with no studio files (no takes panel). Without the built
+  app `/` is a 404: build it first.
   **Languages** (2026-10-21, phase 1: management, review, approval; rendering a video in a new language is phase 2).
   `languages.yaml` (+ `languages.py`) lists the course's languages (uz, en, ru, ko, tr, de, fr, es, ar, zh): names, script,
   edge voices (all found in `edge_tts --list-voices` on 2026-10-21), rate / trim (Korean only), section-card word,
@@ -158,7 +177,7 @@ new lines per lecture: `out/review/l0N_add.txt`.
   **Watermark:** `drafts.py`: clean when every line and label of the language is approved; else a draft (M7 scenes tag
   themselves with the label `m7_draft`; any other lecture in a language but uz / en gets the registry's `draft` word in the
   corner); a hand render of uz still tags, but the studio's job refuses uz with unapproved items. **Studio:** a language row
-  with no video shows "Build video" (or "Build draft video") when `studio/buildlang.plan` says so; it queues one job
+  with no video shows "Build video" (or "Build draft video", in Script & languages and Export) when `studio/buildlang.plan` says so; it queues one job
   (`kind=build`, shown on the row with the step): `render.sh <lecture> h` with `LANG_CODE` (+ `VOICE_ENGINE=navoiy` for uz,
   starting the voice server like a rewritten line does), `join_parts.sh`, `presenter.py`, then the voice check:
   `voice_check.py` for Uzbek, `voice_check_lang.py <lang> <build>` otherwise (whisper-large-v3-turbo, CER, fails over 0.15,
@@ -167,12 +186,11 @@ new lines per lecture: `out/review/l0N_add.txt`.
   voice (mean -23 dB), the draft tag, the cue on «Мы строим небольшого агента» and CER 0.000 on both clips. Arabic is shaped
   and ordered right to left by Pango; `tagged()` (number and words split by index) and `aligned_edge=LEFT` layouts are not
   mirrored, so an Arabic lecture needs its scenes looked at.
-  The page is plain files, no build step: `studio/editor.html` + `studio/static/` (served at /studio-static/;
-  `editor/player.js` is a `Player` class that drives any video element and audio map, `editor/levels.js` takes its
-  take lookup, edit and play from `LV.host`; the presenter's panel is `presenter/takes.js` + `takes.css`).
-  Tests: `studio/run_tests.sh` (220; `fast` skips the server run, the browser run and the GPU recognisers). The browser
-  run (`test_presenter_browser.py` → `presenter_browser_check.py`) needs Playwright in the system `python3` (the venv has
-  none) and drives headless Chromium with a fake microphone through keys, one-take recording, watching and choosing.
+  Tests: `studio/run_tests.sh` (`fast` skips the server run, the browser run and the GPU recognisers). The app is built and
+  checked first (tsc, vite build, `npm run check`: the Export numbers and the level strip's plan equal the server's),
+  `test_routes` checks the front door and every old address's redirect, `test_app_browser` (→ `app_browser_check.py`) drives
+  the app in headless Chromium with a fake microphone on a scratch server built from fixtures (needs Playwright in the system
+  `python3`; the venv has none): Record, Edit, Script & languages, Export.
 
 ## Slide discrepancies found by the drafts (slides not edited)
 

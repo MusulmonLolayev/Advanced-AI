@@ -9,7 +9,8 @@ import { EmptyState } from './EmptyState'
 import { LanguageBuilds } from './LanguageBuilds'
 
 const CLEAN: [string, string][] = [
-  ['deepfilter', 'Neural denoiser, the cleanest (DNSMOS 3.2 vs 2.2 for voice on your first recording; about 5 min per 30 min). The default.'],
+  ['cloned', 'Your take re-spoken in the cloned voice: your timing and pronunciation, the cloned voice\'s clean sound. Needs the voice server (GPU); about 6 times faster than real time (1 min of speech takes about 10 s). The default.'],
+  ['deepfilter', 'Neural denoiser, the cleanest of the filters (DNSMOS 3.2 vs 2.2 for voice on your first recording; about 5 min per 30 min).'],
   ['voice', 'Filters tuned for speech.'],
   ['mild', 'Lighter cleaning.'],
   ['strong', 'For a noisy room.'],
@@ -21,17 +22,16 @@ const when = (s: number) => new Date(s * 1000).toLocaleString([], { day: 'numeri
 const readClean = () => {
   try {
     const c = localStorage.getItem('studioClean')
-    return CLEAN.some(([k]) => k === c) ? (c as string) : 'deepfilter'
+    return CLEAN.some(([k]) => k === c) ? (c as string) : 'cloned'
   } catch {
-    return 'deepfilter'
+    return 'cloned'
   }
 }
 
 export function ExportMode() {
-  const { project, projectLoading, build, setMode } = useStudio()
+  const { project, projectLoading, build, setMode, watch, setWatch } = useStudio()
   const act = useActions()
   const [clean, setCleanState] = useState(readClean)
-  const [watching, setWatching] = useState<{ url: string; title: string } | null>(null)
   const setClean = (c: string) => {
     setCleanState(c)
     try {
@@ -44,6 +44,8 @@ export function ExportMode() {
   const m = useMemo(() => (project ? makeup(project) : null), [project])
   const exporting = !!project?.jobs.some((j) => j.kind === 'export' && (j.state === 'queued' || j.state === 'running'))
   const lectureUrl = project ? `/${build}/${build}.mp4?v=${project.video_version}` : ''
+  // what plays inline: the lecture video, a finished export (its URL), or a recording built the old way (its name)
+  const watching = !watch ? null : watch === 'lecture' ? { url: lectureUrl, title: `the lecture video ${build}` } : watch.startsWith('/') ? { url: watch, title: watch.split('/').pop() ?? watch } : { url: `/${build}/presenter/recordings/${watch}.mp4`, title: `recording ${watch}` }
 
   return (
     <div className="export">
@@ -55,7 +57,7 @@ export function ExportMode() {
               {CLEAN.map(([k, d]) => (
                 <label key={k} className={cls('rcard', clean === k && 'on')}>
                   <input type="radio" name="clean" checked={clean === k} onChange={() => setClean(k)} />
-                  <span><b>{k}</b>{k === 'deepfilter' && <Chip tone="accent" plain>default</Chip>}<small>{d}</small></span>
+                  <span><b>{k}</b>{k === 'cloned' && <Chip tone="accent" plain>default</Chip>}<small>{d}</small></span>
                 </label>
               ))}
             </fieldset>
@@ -98,14 +100,15 @@ export function ExportMode() {
               <div className="btn-row">
                 <Button variant="primary" icon="download" disabled={exporting} id="export-now" onClick={() => void act.exportNow(clean)}>{exporting ? 'Exporting…' : 'Export'}</Button>
                 <Button variant="ghost" onClick={() => setMode('edit')}>Review in Edit</Button>
-                <Button variant="ghost" icon="film" onClick={() => setWatching(watching?.url === lectureUrl ? null : { url: lectureUrl, title: `the lecture video ${build}` })}>Watch the lecture video</Button>
+                <Button variant="ghost" icon="film" onClick={() => setWatch(watch === 'lecture' ? '' : 'lecture')}>Watch the lecture video</Button>
+                <a className="btn ghost" href={`/${project.build}/${project.build}.mp4`} download={`${project.build}.mp4`} id="download-lecture"><Icon name="download" size={14} />Download the lecture video</a>
               </div>
             </div>
           )}
         </Panel>
 
         {watching && (
-          <Panel title={<>Watching · <span className="mono">{watching.title}</span></>} actions={<Button small variant="ghost" onClick={() => setWatching(null)}>close</Button>} className="watch-panel">
+          <Panel title={<>Watching · <span className="mono">{watching.title}</span></>} actions={<Button small variant="ghost" onClick={() => setWatch('')}>close</Button>} className="watch-panel">
             <video key={watching.url} className="watch-video" src={watching.url} controls autoPlay preload="metadata" />
             <p className="dim sub pad"><a href={`/lecture?build=${build}`} target="_blank" rel="noreferrer">open on its own page</a></p>
           </Panel>
@@ -137,7 +140,7 @@ export function ExportMode() {
                 <li key={f.name}>
                   <Icon name="film" size={14} />
                   <span className="grow"><a href={f.url} {...(video ? { target: '_blank', rel: 'noreferrer' } : { download: true })}>{f.name}</a><small className="dim mono">{mb(f.size)} · {when(f.time)}</small></span>
-                  {video && <Button small variant="ghost" onClick={() => setWatching({ url: `${f.url}?v=${Math.floor(f.time)}`, title: f.name })}>watch</Button>}
+                  {video && <Button small variant="ghost" onClick={() => setWatch(f.url)}>watch</Button>}
                   <a className="btn small ghost" href={f.url} download aria-label={`Download ${f.name}`}><Icon name="download" size={12} /></a>
                 </li>
               )

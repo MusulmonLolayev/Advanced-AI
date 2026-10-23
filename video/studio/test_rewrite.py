@@ -39,5 +39,17 @@ class Helpers(unittest.TestCase):
         self.assertIn("oops", str(cm.exception))
 
 
+class VoiceCache(unittest.TestCase):
+    def test_voice_id_is_the_registry_cloned_voice(self):
+        """The cache key a re-voiced clip is filed under must be the voice common.NavoiyService uses, or the render
+        misses the new clip (common.py has read it from the registry since the languages work: the old regex on a
+        string literal there found nothing and every re-voice failed)."""
+        import languages
+        from studio import voicecache as VC
+        self.assertEqual(VC.voice_id(), languages.voices("navoiy")["uz"])
+        self.assertIn('NAVOIY_VOICE_ID = languages.voices("navoiy")["uz"]', (VC.HERE / "common.py").read_text())
+        self.assertEqual(VC.navoiy_data("a  b\nc"), {"input_text": "a b c", "service": "navoiy", "voice": VC.voice_id()})
+
+
 if __name__ == "__main__":
     unittest.main()

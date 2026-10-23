@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { fetchEditorLangs, fetchLectureLangs, fetchProject } from './api'
-import { ToastProvider } from './components'
+import { fetchEditorLangs, fetchLectureLangs, fetchLectures, fetchProject } from './api'
+import { DialogProvider, ToastProvider, useDialog } from './components'
 import { EditMode } from './modes/Edit'
 import { ExportMode } from './modes/Export'
 import { RecordMode } from './modes/Record'
@@ -8,37 +8,67 @@ import { ScriptMode } from './modes/Script'
 import { ProjectBrowser } from './shell/ProjectBrowser'
 import { StatusBar } from './shell/StatusBar'
 import { TopBar } from './shell/TopBar'
-import { buildName } from './snapshot'
 import { StudioCtx, type Mode, type Studio } from './studio'
 import { busy } from './model'
 import { uploads } from './upload'
-import { useLive } from './util'
+import { buildName, useLive } from './util'
 
 const MODES: Mode[] = ['record', 'edit', 'script', 'export']
 
-/** #mode=edit&lecture=lecture01&lang=uz&line=14 (line as the editor numbers it, from 1) */
-function readHash() {
-  const p = new URLSearchParams(location.hash.replace(/^#\/?/, ''))
-  const m = p.get('mode') as Mode | null
+/** The deep link: `#mode=edit&lecture=lecture01&lang=uz&line=14&watch=…` (line as the editor numbers it, from 1). The same
+ *  names in the query (`/?mode=edit&…`, what the old pages' addresses redirect to) work too; the hash wins. */
+function readUrl() {
+  const q = new URLSearchParams(location.search)
+  const h = new URLSearchParams(location.hash.replace(/^#\/?/, ''))
+  const get = (k: string) => h.get(k) ?? q.get(k)
+  const m = get('mode') as Mode | null
   return {
     mode: m && MODES.includes(m) ? m : ('edit' as Mode),
-    stem: p.get('lecture') ?? 'lecture01',
-    lang: p.get('lang') ?? 'uz',
-    line: Math.max(0, parseInt(p.get('line') ?? '1', 10) - 1),
+    stem: get('lecture') ?? 'lecture01',
+    lang: get('lang') ?? 'uz',
+    line: Math.max(0, parseInt(get('line') ?? '1', 10) - 1),
+    watch: get('watch') ?? '',
+    /** the address names a lecture; otherwise the app opens the first one there is */
+    explicit: get('lecture') !== null,
   }
 }
 
+/** the dialog provider sits outside, because the app itself asks questions (leaving the booth while recording) */
 export default function App() {
-  const init = useMemo(readHash, [])
+  return (
+    <DialogProvider>
+      <AppInner />
+    </DialogProvider>
+  )
+}
+
+function AppInner() {
+  const { confirm } = useDialog()
+  // leaving the booth (another mode, lecture or language) stops a running recording: ask first
+  const askLeave = useCallback(
+    () => confirm({
+      title: 'Leave and stop recording?',
+      body: 'A recording is running. Leaving stops it and saves what has been recorded.',
+      confirmLabel: 'Leave',
+      tone: 'primary',
+    }),
+    [confirm],
+  )
+  const init = useMemo(readUrl, [])
   const [mode, setMode] = useState<Mode>(init.mode)
   const [stem, setStem] = useState(init.stem)
   const [lang, setLang] = useState(init.lang)
   const [line, setLine] = useState(init.line)
+  const [watch, setWatch] = useState(init.watch)
   const [collapsed, setCollapsed] = useState(window.innerWidth < 1500)
   const [recording, setRecording] = useState(false)
   const [recSeconds, setRecSeconds] = useState(0)
   const recRef = useRef(false)
   recRef.current = recording
+  const stemRef = useRef(stem)
+  const langRef = useRef(lang)
+  stemRef.current = stem
+  langRef.current = lang
   const build = buildName(stem, lang)
 
   const project = useLive(() => fetchProject(build), build)
@@ -46,13 +76,29 @@ export default function App() {
   const { reload } = project
   // the lecture's languages (counts, builds, build jobs) are needed by Script and Export only
   const lec = useLive(mode === 'script' || mode === 'export' ? () => fetchLectureLangs(stem) : null, mode === 'script' || mode === 'export' ? stem : '')
-  const reloadLec = lec.reload
+  const overview = useLive(fetchLectures, 'all')
+  const noLecture = overview.data && !init.explicit && !overview.data.some((m) => m.lectures.some((l) => l.stem === stem))
+  useEffect(() => {
+    const first = overview.data?.flatMap((m) => m.lectures)[0]
+    if (noLecture && first) {
+      setStem(first.stem)
+      setLang(first.langs.find((l) => l.build)?.lang ?? first.langs[0]?.lang ?? 'uz')
+    }
+  }, [noLecture, overview.data])
+  const reloadLecture = lec.reload
+  const reloadOverview = overview.reload
+  const reloadLec = useCallback(async () => void (await Promise.all([reloadLecture(), reloadOverview()])), [reloadLecture, reloadOverview])
   const lecBusy = !!lec.data?.langs.some((l) => l.job && (l.job.state === 'queued' || l.job.state === 'running'))
   useEffect(() => {
     if (!lecBusy) return
     const t = setInterval(() => void reloadLec(), 2000)
     return () => clearInterval(t)
   }, [lecBusy, reloadLec])
+  // a build job finished or a recording was made: the browser's counts move too
+  useEffect(() => {
+    if (!lecBusy) return
+    return () => void reloadOverview()
+  }, [lecBusy, reloadOverview])
 
   // while a job, a version or a recording is being made, ask again every 2 s; stop when idle
   const working = !!project.data && busy(project.data)
@@ -63,8 +109,35 @@ export default function App() {
   }, [working, reload])
 
   useEffect(() => {
-    history.replaceState(null, '', `#mode=${mode}&lecture=${stem}&lang=${lang}&line=${line + 1}`)
-  }, [mode, stem, lang, line])
+    history.replaceState(null, '', `${location.pathname}#mode=${mode}&lecture=${stem}&lang=${lang}&line=${line + 1}${watch && mode === 'export' ? '&watch=' + encodeURIComponent(watch) : ''}`)
+  }, [mode, stem, lang, line, watch])
+
+  // the address changed under us (typed, pasted, or an old page's redirect): follow it
+  useEffect(() => {
+    const apply = (u: ReturnType<typeof readUrl>) => {
+      setMode(u.mode)
+      setStem(u.stem)
+      setLang(u.lang)
+      setLine(u.line)
+      setWatch(u.watch)
+    }
+    const follow = () => {
+      const u = readUrl()
+      if (recRef.current && (u.stem !== stemRef.current || u.lang !== langRef.current || u.mode !== modeRef.current)) {
+        // put the old address back at once, ask, and only follow the new one when the answer is Leave
+        history.replaceState(null, '', `${location.pathname}#mode=${modeRef.current}&lecture=${stemRef.current}&lang=${langRef.current}`)
+        void askLeave().then((ok) => { if (ok) apply(u) })
+        return
+      }
+      apply(u)
+    }
+    window.addEventListener('hashchange', follow)
+    window.addEventListener('popstate', follow)
+    return () => {
+      window.removeEventListener('hashchange', follow)
+      window.removeEventListener('popstate', follow)
+    }
+  }, [askLeave])
 
   useEffect(() => {
     if (!recording) return
@@ -73,14 +146,16 @@ export default function App() {
     return () => clearInterval(t)
   }, [recording])
 
-  // leaving the booth (another mode, lecture or language) stops a running recording: ask first
-  const leave = () => !recRef.current || window.confirm('A recording is running. Leaving stops it and saves what has been recorded. Leave?')
   const modeRef = useRef(mode)
   modeRef.current = mode
   const goMode = useCallback((m: Mode) => {
-    if (m !== modeRef.current && modeRef.current === 'record' && recRef.current && !window.confirm('A recording is running. Leaving stops it and saves what has been recorded. Leave?')) return
+    if (m !== modeRef.current && modeRef.current === 'record' && recRef.current) {
+      // the booth stays as it is until the answer; on Leave it unmounts and flushes chunks, events and finish
+      void askLeave().then((ok) => { if (ok) setMode(m) })
+      return
+    }
     setMode(m)
-  }, [])
+  }, [askLeave])
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => {
       if (uploads.unsaved()) {
@@ -92,12 +167,12 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', warn)
   }, [])
 
-  const open = useCallback((s: string, l: string) => {
-    if (!leave()) return
+  const open = useCallback(async (s: string, l: string) => {
+    if (recRef.current && !(await askLeave())) return
     setStem(s)
     setLang(l)
     setLine(0)
-  }, [])
+  }, [askLeave])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -122,7 +197,10 @@ export default function App() {
     langs: langs.data,
     reload: project.reload,
     lec: lec.data,
-    reloadLec: lec.reload,
+    reloadLec,
+    overview: overview.data,
+    watch,
+    setWatch,
     reloadLangs: langs.reload,
     recording, setRecording, recSeconds,
   }

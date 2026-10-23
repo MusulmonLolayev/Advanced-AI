@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useActions } from '../actions'
 import { Button, Chip, Icon, Tabs } from '../components'
-import { LANGUAGES, LECTURES, MODULES, lectureTitle } from '../snapshot'
 import { useStudio, type Mode } from '../studio'
-import { timecode } from '../util'
+import { lectureTitle, timecode } from '../util'
 
 const TABS: { id: Mode; label: string; hint: string }[] = [
   { id: 'record', label: 'Record', hint: '1' },
@@ -37,9 +36,9 @@ function Pop({ trigger, children, label }: { trigger: ReactNode; children: React
 }
 
 export function TopBar({ toggleBrowser }: { toggleBrowser: () => void }) {
-  const { mode, setMode, stem, lang, open, project, recording, recSeconds, lec: live } = useStudio()
-  const lec = LECTURES.find((l) => l.stem === stem)
-  const mod = lec ? MODULES[lec.module] : MODULES[0]
+  const { mode, setMode, stem, lang, open, project, recording, recSeconds, overview } = useStudio()
+  const mod = overview?.find((m) => m.lectures.some((l) => l.stem === stem))
+  const lec = mod?.lectures.find((l) => l.stem === stem)
   const vs = project?.voice_server
   const act = useActions()
   const jobs = project?.jobs ?? []
@@ -57,16 +56,16 @@ export function TopBar({ toggleBrowser }: { toggleBrowser: () => void }) {
         <span>Studio</span>
       </div>
       <nav className="crumbs" aria-label="Project">
-        <span className="dim mod-crumb">Module {mod.k}</span>
+        <span className="dim mod-crumb">Module {mod?.k ?? '…'}</span>
         <Icon name="chevron" size={12} className="mod-crumb" />
-        <span>{lec ? lectureTitle(lec) : stem}</span>
+        <span>{lec ? lectureTitle(lec.n) : stem}</span>
         <Icon name="chevron" size={12} />
         <label className="lang-switch">
           <Icon name="globe" size={14} />
           <select value={lang} aria-label="Language" onChange={(e) => open(stem, e.target.value)}>
-            {(live ? live.langs.map((x) => ({ code: x.lang, approved: x.lines.approved, total: x.lines.total })) : (lec?.langs ?? [])).map((l) => (
-              <option key={l.code} value={l.code}>
-                {LANGUAGES[l.code]?.name ?? l.code} · {l.approved}/{l.total}
+            {(lec?.langs ?? [{ lang, name: lang, lines: { approved: 0, total: 0 } }]).map((l) => (
+              <option key={l.lang} value={l.lang}>
+                {l.name} · {l.lines.approved}/{l.lines.total}
               </option>
             ))}
           </select>

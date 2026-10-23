@@ -134,7 +134,7 @@ button.link { background: none; border: 0; padding: 0; color: var(--accent); cur
 .prompter { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-3); padding: 8px 20px 18px; display: flex; flex-direction: column; gap: 8px; }
 .prompter-bar { display: flex; align-items: center; gap: 12px; color: var(--dim); font-size: var(--fs-sm); }
 .prompter-bar .grow { flex: 1; }
-.prompt-now { margin: 0; font-size: clamp(22px, 2.3vw, 34px); line-height: 1.38; font-weight: 500; color: #6f7883; max-height: 5.6em; overflow: hidden; }
+.prompt-now { margin: 0; font-size: clamp(22px, 2.3vw, 34px); line-height: 1.38; font-weight: 500; color: #6f7883; max-height: calc(clamp(22px, 2.3vw, 34px) * 1.38 * 4); overflow-y: auto; }
 .prompt-now .said { color: var(--text); }
 .prompt-now .now { color: var(--accent-ink); background: var(--accent); border-radius: 4px; padding: 0 3px; margin: 0 -3px; }
 .prompt-next { margin: 0; font-size: var(--fs-lg); color: var(--faint); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -248,3 +248,37 @@ del { color: var(--bad); opacity: .8; }
 .build-note p { margin: 0; padding: 2px 12px; }
 .review textarea.dirty { border-color: var(--warn); }
 .watch-video { width: 100%; max-height: 46vh; background: #000; display: block; }
+
+/* Record: where the notes go (N) */
+.booth-stage.notes-right { flex-direction: row; }
+.booth-stage.notes-right .prompter { flex: none; width: min(38%, 520px); overflow: auto; }
+.booth-stage.notes-hidden .prompter { display: none; }
+
+/* hand cuts on a take's wave: selecting a part, the cuts drawn, the bar under the wave */
+.takewave { user-select: none; touch-action: pan-y; }
+.cut-hand, .cut-auto { position: absolute; top: 0; bottom: 0; }
+.cut-hand { z-index: 1; cursor: pointer; background: repeating-linear-gradient(135deg, rgba(0,0,0,.72) 0 3px, var(--record-soft) 3px 6px); border-left: 1px solid var(--bad); border-right: 1px solid var(--bad); min-width: 2px; }
+.cut-hand:hover, .cut-hand.picked { background: repeating-linear-gradient(135deg, rgba(0,0,0,.72) 0 3px, rgba(238,59,59,.4) 3px 6px); }
+.cut-auto { pointer-events: none; background: repeating-linear-gradient(45deg, rgba(0,0,0,.55) 0 3px, rgba(233,180,76,.16) 3px 6px); border-left: 1px solid var(--warn); border-right: 1px solid var(--warn); min-width: 2px; }
+.wave-sel { position: absolute; top: 0; bottom: 0; z-index: 1; pointer-events: none; background: rgba(77,163,255,.34); border-left: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+.wave-bar { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-1); }
+.wave-cuts { font-size: var(--fs-xs); display: flex; gap: var(--sp-2); align-items: baseline; flex-wrap: wrap; }
+.cut-hint { margin: 0 0 var(--sp-1); }
+.compare { display: inline-flex; gap: 4px; }
+
+/* floating toolbar over the selection (or a picked cut), the playhead, and the wide take editor */
+.wave-tools { position: absolute; top: 2px; z-index: 3; display: flex; align-items: center; gap: var(--sp-1); padding: 2px; background: var(--panel-2); border: 1px solid var(--line-strong); border-radius: var(--r-2); box-shadow: var(--shadow); white-space: nowrap; }
+.wave-playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--text); z-index: 2; pointer-events: none; }
+.take-editor { width: min(1180px, calc(100vw - 2 * var(--sp-3))); }
+.te-head { display: flex; align-items: center; gap: var(--sp-2); }
+.te-head .dialog-title { margin: 0; }
+.te-zoom { min-width: 3ch; text-align: center; }
+.te-scroll { overflow-x: auto; padding-bottom: var(--sp-1); }
+.te-cuts { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+.takewave.big .trim-handle { width: 12px; margin-left: -6px; cursor: grab; }
+.takewave.big .trim-handle:active { cursor: grabbing; }
+.takewave.big .trim-handle::after { display: none; }
+.takewave.big .trim-handle::before { left: -6px; right: -6px; }
+.trim-label { position: absolute; top: var(--sp-1); font-size: var(--fs-xs); font-weight: 600; color: var(--accent-ink); background: var(--accent); padding: 0 var(--sp-1); border-radius: var(--r-1); white-space: nowrap; pointer-events: none; }
+.trim-handle.in .trim-label { left: 14px; } .trim-handle.out .trim-label { right: 14px; }
+.te-save { align-self: center; margin-right: auto; font-size: var(--fs-sm); }

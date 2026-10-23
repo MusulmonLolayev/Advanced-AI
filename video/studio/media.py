@@ -88,11 +88,19 @@ def read_f32(path):
 
 
 def clean(build_dir, name, profile):
-    """The session's voice cleaned with `profile`, as raw 48 kHz mono float32 (cached per profile)."""
+    """The session's voice cleaned with `profile`, as raw 48 kHz mono float32 (cached per profile).
+    "cloned" is the deepfilter voice re-spoken piece by piece in the cloned voice (voice conversion, see below)."""
     rec = recdir(build_dir)
     out = rec / f"{name}.{profile}.f32"
     webm = rec / f"{name}.webm"
     if out.exists() and out.stat().st_mtime >= webm.stat().st_mtime:
+        return out
+    if profile == "cloned":
+        x = read_f32(clean(build_dir, name, "deepfilter"))
+        y, drifts = convert_voice(x, vc_http)
+        y.tofile(out.with_suffix(".tmp"))
+        out.with_suffix(".tmp").replace(out)
+        (rec / f"{name}.cloned.json").write_text(json.dumps({"drift_s": [round(d, 4) for d in drifts]}))
         return out
     with tempfile.TemporaryDirectory() as tmp:
         if profile == "deepfilter":
@@ -118,8 +126,10 @@ def level_chain(f32):
     return f"volume={TARGET - loudness(f32):.2f}dB,alimiter=limit={PEAK:.4f}:level=false:latency=true"
 
 
-def preview(build_dir, name, f32):
-    out = recdir(build_dir) / f"{name}.m4a"
+def preview(build_dir, name, f32, suffix=""):
+    """The seekable copy at the narration's loudness: <name>.m4a, or <name>.<suffix>.m4a (the cloned profile's
+    "yours.m4a": the same take before conversion, for comparing)."""
+    out = recdir(build_dir) / f"{name}{suffix}.m4a"
     ff("-f", "f32le", "-ar", SR, "-ac", "1", "-i", f32, "-af", level_chain(f32), "-c:a", "aac", "-b:a", "128k",
        "-movflags", "+faststart", out)
     return out
@@ -146,6 +156,114 @@ def silences(x, sr=SR, frame=0.02, min_len=0.4):
     return out
 
 
+# ─── the cloned voice: voice conversion of the cleaned voice ──────────────
+VC_LIMIT = 25.0          # seconds: the longest piece sent to the converter (the S3 tokenizer's limit is 30)
+VC_JOIN = 1.0            # pauses shorter than this (seconds) stay inside a piece; longer ones separate pieces
+VC_PAD = 0.1             # seconds of the pause kept on each side of a piece, as context, cross-faded back to the source
+VC_URL = "http://127.0.0.1:8765/vc"
+
+
+def vc_pieces(x, sr=SR, limit=VC_LIMIT, join=VC_JOIN, pad=VC_PAD, spans=None):
+    """[(a, b, fade_in, fade_out)] in samples: the stretches of speech to convert. The speech between the pauses of
+    `silences(x)` is joined across pauses shorter than `join`; a piece never exceeds `limit` seconds, and where speech
+    runs longer it is cut at the quietest 20 ms frame in the last third of the limit (preferring a pause). A piece
+    keeps `pad` of the pause on each side that borders a pause (cross-faded over that pad); a cut inside speech has
+    no fade."""
+    n = len(x)
+    lim = int(limit * sr)
+    pad = int(pad * sr)
+    sil = silences(x, sr) if spans is None else spans
+    sil = [(round(a * sr), min(round(b * sr), n)) for a, b in sil]
+    speech, pos = [], 0
+    for a, b in sil:
+        if a > pos:
+            speech.append([pos, a])
+        pos = max(pos, b)
+    if pos < n:
+        speech.append([pos, n])
+    # join across short pauses while the piece (with its pads) fits
+    joined = []
+    for a, b in speech:
+        if joined and a - joined[-1][1] < join * sr and b - joined[-1][0] + 2 * pad <= lim:
+            joined[-1][1] = b
+        else:
+            joined.append([a, b])
+    frame = int(0.02 * sr)
+    cuts = []
+    for a, b in joined:
+        while b - a + 2 * pad > lim:                      # too long: cut at the quietest frame in the last third
+            hi = a + lim - 2 * pad
+            lo = max(a + (hi - a) * 2 // 3, a + frame)
+            seg = x[lo:hi]
+            m = max(len(seg) // frame, 1)
+            e = (seg[: m * frame].reshape(m, frame) ** 2).mean(axis=1)
+            cut = min(lo + int(np.argmin(e)) * frame + frame // 2, hi)
+            cuts.append((a, cut))
+            a = cut
+        cuts.append((a, b))
+    pieces = []
+    for k, (a, b) in enumerate(cuts):
+        # a cut inside speech (the next piece starts where this ends) has no pad and no fade on that side
+        pa = a if k and cuts[k - 1][1] == a else max(a - pad, 0)
+        pb = b if k + 1 < len(cuts) and cuts[k + 1][0] == b else min(b + pad, n)
+        pieces.append((pa, pb, a - pa, pb - b))
+    return pieces
+
+
+def fit(y, n):
+    """`y` made exactly `n` samples long: cropped at the end, or padded with zeros."""
+    y = np.asarray(y, dtype=np.float32)
+    return y[:n] if len(y) >= n else np.concatenate([y, np.zeros(n - len(y), np.float32)])
+
+
+def convert_voice(x, convert, sr=SR, **kw):
+    """The cleaned voice `x` with its speech pieces replaced by `convert(piece)` (a function from 48 kHz float32 to
+    48 kHz float32, any length close to the input's), each fitted to its source piece's exact length and placed at its
+    offset, cross-faded at the pause side. Pauses stay as they are. Returns (y of len(x), [length drift per piece in
+    seconds: converted minus source])."""
+    y = x.copy()
+    drifts = []
+    for a, b, fi, fo in vc_pieces(x, sr, **kw):
+        c = convert(x[a:b])
+        drifts.append((len(c) - (b - a)) / sr)
+        c = fit(c, b - a)
+        w = np.ones(b - a, np.float32)
+        if fi:
+            w[:fi] = np.linspace(0, 1, fi, dtype=np.float32)
+        if fo:
+            w[-fo:] = np.minimum(w[-fo:], np.linspace(1, 0, fo, dtype=np.float32))
+        y[a:b] = x[a:b] * (1 - w) + c * w
+    return y, drifts
+
+
+def vc_http(piece, url=VC_URL, seed=1986):
+    """One piece through the voice server's /vc: 48 kHz float32 in, 48 kHz float32 out (the server works at 16 kHz in,
+    24 kHz out). Starts the server if it is down."""
+    import urllib.request
+    from studio import voice_server
+    if not voice_server.up():
+        try:
+            voice_server.start()
+        except Exception as e:
+            raise RuntimeError(f"cloned voice: the voice server did not answer ({e})")
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        raw = tmp / "in.f32"
+        np.asarray(piece, dtype=np.float32).tofile(raw)
+        ff("-f", "f32le", "-ar", SR, "-ac", 1, "-i", raw, "-ar", 16000, "-ac", 1, tmp / "in.wav")
+        req = urllib.request.Request(url, json.dumps({"source": str(tmp / "in.wav"), "out": str(tmp / "out.wav"),
+                                                      "seed": seed}).encode(), {"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=600) as r:
+                ans = json.loads(r.read())
+        except Exception as e:
+            raise RuntimeError(f"cloned voice: the voice server did not answer ({e})")
+        if not ans.get("ok"):
+            raise RuntimeError(f"cloned voice: the voice server failed: {ans.get('error', '?')}")
+        ff("-i", tmp / "out.wav", "-ar", SR, "-ac", 1, "-f", "f32le", tmp / "out.f32")
+        return read_f32(tmp / "out.f32")
+
+
 def process(build_dir, name, profile="deepfilter"):
     """Everything the editor needs from a session: the joined recording, its cleaned voice, the preview copy,
     its pauses. Returns the session's length in seconds."""
@@ -153,6 +271,10 @@ def process(build_dir, name, profile="deepfilter"):
     assemble(build_dir, name)
     f32 = clean(build_dir, name, profile)
     preview(build_dir, name, f32)
+    if profile == "cloned":
+        preview(build_dir, name, clean(build_dir, name, "deepfilter"), ".yours")
+    else:
+        (rec / f"{name}.yours.m4a").unlink(missing_ok=True)
     x = read_f32(f32)
     (rec / f"{name}.silence.json").write_text(json.dumps(silences(x)))
     return len(x) / SR
@@ -166,7 +288,9 @@ def original(build_dir):
     if not (f32.exists() and m4a.exists() and f32.stat().st_mtime >= video.stat().st_mtime):
         ff("-i", video, "-vn", "-ac", 1, "-ar", SR, "-f", "f32le", f32.with_suffix(".tmp"))
         f32.with_suffix(".tmp").replace(f32)
-        ff("-i", video, "-vn", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", m4a)
+        part = m4a.with_name("original.part.m4a")     # the page may ask for it while it is written: never serve half
+        ff("-i", video, "-vn", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", part)
+        part.replace(m4a)
     return f32, m4a
 
 

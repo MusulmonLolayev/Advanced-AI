@@ -43,7 +43,7 @@ class S03ReAct(Scene7):
         name.to_edge(UP, buff=SAFE + 0.3)
         with self.say("3.21") as (tr, t):
             self.play(FadeIn(name), run_time=0.6)
-            self.cue(tr, t, {"uz": "Model navbatma-navbat", "en": "The model writes in turns"})
+            self.cue(tr, t, {"uz": "Model ketma-ket ravishda", "en": "The model writes in turns"})
             self.play(FadeIn(loop[0]), run_time=0.4)
             self.play(GrowArrow(loop[4]), FadeIn(loop[1]), run_time=0.5)
             self.play(GrowArrow(loop[5]), FadeIn(loop[2]), run_time=0.5)

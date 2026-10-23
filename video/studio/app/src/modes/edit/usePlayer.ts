@@ -1,12 +1,12 @@
 // The Edit mode's transport. It owns the Player (src/player.ts) and says what it is playing: the whole lecture's edit
 // list, one take (alone or in context), or a version's scene clip (the video itself, with its own sound). Time on the
-// timeline is the edit list's; the Player clock drives the playhead store. Mirrors static/editor/main.js.
+// timeline is the edit list's; the Player clock drives the playhead store. Mirrors the old editor's main script.
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { fetchLine } from '../../api'
 import { useToast } from '../../components'
 import { lineAt, type LineState } from '../../model'
 import { Player, glue, spanOf } from '../../player'
-import { playhead } from '../../playhead'
+import { playhead, takeHead } from '../../playhead'
 import type { Project, Take, VersionRow } from '../../types'
 
 export type Playing = { kind: 'lecture' } | { kind: 'take'; label: string } | { kind: 'version'; label: string }
@@ -19,8 +19,10 @@ export type Transport = {
   seek: (T: number) => void
   toggle: () => void
   playLine: (k: number) => void
-  playTake: (t: Take, n: number) => void
+  playTake: (t: Take, n: number, at?: number, until?: number) => void
   playContext: (t: Take, n: number) => Promise<void>
+  /** the voice pieces the player has loaded now, as JSON (what a take edit must change: the wide editor shows it, the browser check reads it) */
+  loadedVoice: () => string
   watchVersion: (v: VersionRow, scene: string, k: number) => void
   back: () => void
 }
@@ -37,6 +39,9 @@ export function usePlayer(p: Project, states: LineState[], videoRef: RefObject<H
   cur.current = { p, states, line, what, setLine }
   const quiet = useRef(false) // a seek by the user: the span the player lands in is not a "playing entered a line" event
   const lastSpan = useRef(-1)
+  const stopTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // the take (alone or in context) the player holds, and its tracks as loaded: an edit changes the take's tracks, so it is loaded again
+  const loaded = useRef<{ t: Take; n: number; ctx: boolean; key: string; stale: boolean } | null>(null)
   const videoSrc = `${p.video}?v=${p.video_version}`
   const elKey = useMemo(() => JSON.stringify(p.edit_list), [p.edit_list])
 
@@ -71,6 +76,7 @@ export function usePlayer(p: Project, states: LineState[], videoRef: RefObject<H
       clock: (T, total) => {
         if (cur.current.what.kind === 'lecture') playhead.set(T)
         else {
+          takeHead.set(T)
           const s = `${mmss(T)} / ${mmss(total)}`
           if (s !== last) setSideClock((last = s))
         }
@@ -123,6 +129,8 @@ export function usePlayer(p: Project, states: LineState[], videoRef: RefObject<H
     (T: number) => {
       const P = player.current
       if (!P) return
+      if (stopTimer.current) clearTimeout(stopTimer.current)
+      stopTimer.current = null
       if (cur.current.what.kind !== 'lecture') {
         leaveVersion()
         loadAll(T)
@@ -155,31 +163,65 @@ export function usePlayer(p: Project, states: LineState[], videoRef: RefObject<H
     [seek],
   )
 
-  const toggle = useCallback(() => player.current?.toggle(), [])
-
+  // `until` (the take's own second) stops a take played for a selection; any other start, seek or toggle forgets it
+  const forgetStop = () => {
+    if (stopTimer.current) clearTimeout(stopTimer.current)
+    stopTimer.current = null
+  }
   const startTake = useCallback(
-    (tracks: Take['tracks'], t: Take, label: string, at = 0) => {
+    (tracks: Take['tracks'], t: Take, label: string, at = 0, until?: number, n = 0, ctx = false) => {
       const P = player.current
       if (!P) return
       leaveVersion()
+      forgetStop()
+      loaded.current = { t, n, ctx, key: JSON.stringify(t.tracks), stale: false }
       P.load(tracks, [[t.line, 0, spanOf(tracks), t.id]], at)
       setWhat({ kind: 'take', label })
       P.play()
+      if (until !== undefined && until > at) stopTimer.current = setTimeout(() => P.pause(), (until - at) * 1000)
     },
     [leaveVersion],
   )
-  const playTake = useCallback((t: Take, n: number) => startTake(t.tracks, t, `take T${n}`), [startTake])
+  const playTake = useCallback((t: Take, n: number, at = 0, until?: number) => startTake(t.tracks, t, `take T${n}`, at, until, n, false), [startTake])
   const playContext = useCallback(
     async (t: Take, n: number) => {
       try {
         const c = (await fetchLine(cur.current.p.build, t.line)).context
-        startTake(glue([c.before, t.tracks, c.after]), t, `take T${n} in context`, Math.max(0, spanOf(c.before) - 1))
+        startTake(glue([c.before, t.tracks, c.after]), t, `take T${n} in context`, Math.max(0, spanOf(c.before) - 1), undefined, n, true)
       } catch (e) {
         toast(`Failed: ${(e as Error).message}`)
       }
     },
     [startTake, toast],
   )
+
+  const toggle = useCallback(() => {
+    if (stopTimer.current) clearTimeout(stopTimer.current)
+    stopTimer.current = null
+    const l = loaded.current
+    if (l?.stale && cur.current.what.kind === 'take') void (l.ctx ? playContext(l.t, l.n) : playTake(l.t, l.n)) // edited since it was loaded
+    else player.current?.toggle()
+  }, [playContext, playTake])
+
+  // a take edit (trim, cut, nudge) changes the take's tracks: what is loaded must follow, from the same edited second
+  useEffect(() => {
+    const l = loaded.current
+    const P = player.current
+    if (!l || !P || cur.current.what.kind !== 'take') return
+    const now = Object.values(p.takes).flat().find((x) => x.id === l.t.id)
+    if (!now) return
+    const key = JSON.stringify(now.tracks)
+    if (key === l.key) return
+    if (l.ctx) {
+      P.pause()
+      l.stale = true // the context was glued from the old take: play loads it again
+      return
+    }
+    const was = P.playing
+    const at = Math.min(P.T, Math.max(spanOf(now.tracks) - 0.05, 0))
+    startTake(now.tracks, now, `take T${l.n}`, at, undefined, l.n, false)
+    if (!was) P.pause()
+  }, [p.takes, startTake])
 
   const watchVersion = useCallback(
     (x: VersionRow, scene: string, k: number) => {
@@ -205,5 +247,6 @@ export function usePlayer(p: Project, states: LineState[], videoRef: RefObject<H
     [videoRef],
   )
 
-  return { playing, what, sideClock, seek, toggle, playLine, playTake, playContext, watchVersion, back }
+  const loadedVoice = useCallback(() => JSON.stringify((player.current?.ap ?? []).map((x) => x.p)), [])
+  return { playing, what, sideClock, seek, toggle, playLine, playTake, playContext, loadedVoice, watchVersion, back }
 }

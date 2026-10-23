@@ -46,7 +46,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 
 ## Lecture opening
 ▸ title card "7-modul · 1-maʼruza" → "Agent nima?"
-0. **Assalomu alaykum, aziz doʻstlar. Yettinchi modulning birinchi maʼruzasiga xush kelibsiz. Bu modulda agentlar bilan ishlaymiz, yaʼni til modeli oʻzi qaror qabul qilib, vositalarni chaqiradigan dasturlar bilan.**
+0. **Salom, aziz doʻstlar! Yettinchi modulning birinchi maʼruzasiga xush kelibsiz. Ushbu modulda biz agentlar bilan ishlaymiz — bular shunday dasturlarki, ularda til modeli mustaqil qarorlar qabul qiladi va turli vositalarni ishga tushiradi.**
    *Hello, dear friends, and welcome to the first lecture of module seven. In this module we work with agents: programs in which a language model makes its own decisions and calls tools.*
 1. **Bugungi savolimiz oddiy: agent nima, va u oddiy dasturdan nimasi bilan farq qiladi? Javobni nazariyadan emas, haqiqiy misoldan topamiz. Oʻzbekiston Mehnat kodeksi ustida kichik agent quramiz va uning har bir qadamini koʻrib chiqamiz.**
    *Today's question is simple: what is an agent, and how is it different from an ordinary program? We find the answer not in theory but in a real example. We build a small agent on the Labor Code of Uzbekistan and look at every step it takes.*
@@ -56,7 +56,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 2. **Keling, bitta savoldan boshlaymiz: normal ish haftasi eng koʻpi bilan necha soat? Bu savolga bitta qidiruv yetarli. Kodeksdan kerakli moddani topamiz, oʻqiymiz, va javob beramiz.**
    *Let's start with one question: at most, how many hours is a normal working week? One search is enough for it. We find the right article in the code, read it, and answer.*
    ▸ a row of boxes: savol → qidiruv → javob
-3. **Bunday qatʼiy ketma-ketlikni konveyer deymiz. Qadamlar tartibini dasturchi oldindan yozib qoʻygan: avval qidiruv, keyin javob. Qadamlar soni ham oldindan maʼlum.**
+3. **Bunday qatʼiy ketma-ketlikni pipeline deymiz. Qadamlar tartibini dasturchi oldindan yozib qoʻygan: avval qidiruv, keyin javob. Qadamlar soni ham oldindan maʼlum.**
    *We call such a fixed sequence a pipeline. The programmer wrote the order of the steps in advance: first search, then answer. The number of steps is known in advance too.*
 4. **Endi savolni biroz oʻzgartiramiz: oʻn sakkiz yoshga toʻlmagan xodimlar uchun bu chegara boshqachami? Endi bitta qidiruv yetmaydi. Umumiy qoidani topamiz, oʻqiymiz, unda yosh haqida hech narsa yoʻqligini koʻramiz, va yana qidiramiz.**
    *Now let's change the question a little: is that limit different for employees under eighteen? Now one search is not enough. We find the general rule, read it, see that it says nothing about age, and search again.*
@@ -80,14 +80,14 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 11. **Bizning agentimizda uchta harakat bor. Qidiruv soʻzlar boʻyicha moddalarni topadi. Moddani olish bitta moddaning toʻliq matnini beradi. Javob esa ishni tugatadi, va undagi har bir daʼvo modda raqami bilan koʻrsatiladi.**
     *Our agent has three actions. Search finds articles by words. Fetch article returns one article's full text. Answer ends the run, and every claim in it is cited by its article number.*
     ▸ three cards: `search[…]` · `fetch_article[…]` · `answer[…]`
-12. **Bir qadamda tanlash mumkin boʻlgan harakatlarning hammasi harakatlar toʻplami deyiladi. Bizda bu toʻplam uchta harakatdan iborat.**
+12. **Har bir qadamda tanlash mumkin boʻlgan harakatlarning hammasi harakatlar toʻplami deyiladi. Bizda bu toʻplam uchta harakatdan iborat.**
     *All the actions available at one step are called the action space. Ours has three.*
 13. **Bitta vazifa uchun yozilgan barcha fikrlar, harakatlar va kuzatuvlar ketma-ketligi traektoriya deyiladi. Sakkizinchi maʼruzada agentni faqat oxirgi javobi boʻyicha emas, butun traektoriyasi boʻyicha baholaymiz.**
     *The whole sequence of thoughts, actions and observations for one task is called a trajectory. In lecture eight we grade an agent by its whole trajectory, not only by its last answer.*
-14. **Eng muhim nuqta shu: model hech narsani oʻzi bajarmaydi. U faqat soʻrov yozadi: «mana bu moddani olib ber». Bajarish yoki bajarmaslikni bizning kodimiz hal qiladi.**
+14. **Eng muhim nuqta shuki: model hech narsani oʻzi bajarmaydi. U faqat soʻrov yozadi: «mana bu moddani olib ber». Bajarish yoki bajarmaslikni bizning kodimiz hal qiladi.**
     *The most important point is this: the model never executes anything itself. It only writes a request: "fetch this article". Our code decides whether to carry it out.*
     ▸ the model box writes a slip `fetch_article[182]`; a code box takes it, runs the tool, hands back the text
-15. **Shuning uchun xavfsizlik chegarasi aynan shu yerda, soʻrov bilan bajarish orasida. Sakkizinchi maʼruzadagi barcha himoya shu chegaraga quriladi.**
+15. **Shuning uchun xavfsizlik chegarasi aynan shu yerda, soʻrov bilan bajarish orasida boʻladi. Sakkizinchi maʼruzadagi barcha himoya shu chegaraga quriladi.**
     *That is why the security boundary sits exactly here, between the request and the execution. All the defences in lecture eight are built on this boundary.*
 16. **Bir daqiqaga toʻxtaymiz. Agentimizga toʻrtinchi vosita, kalkulyator qoʻshmoqchimiz. Uning tavsifini bitta gap bilan yozib koʻramiz. Qaysi soʻzlar modelga uni qachon chaqirishni tushuntiradi?**
     *Let's pause for a minute. We want to give our agent a fourth tool, a calculator. Let's write its description in one sentence. Which words tell the model when to call it?*
@@ -103,16 +103,16 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
     ▸ a chain of thought bubbles, the first one red, the red carried to the end
 20. **Ikkinchi yoʻl — faqat harakat. Model rejasiz vositalarni chaqiraveradi. Natija kutilmagan boʻlsa, «rejani oʻzgartirish kerak» degan fikrni yozib qoʻyadigan joyi yoʻq.**
     *The second way is acting only. The model keeps calling tools with no plan. When a result is surprising, it has nowhere to write down that the plan must change.*
-21. **Yao va hamkasblari ikki ming yigirma uchinchi yilda uchinchi yoʻlni taklif qilishdi: Riekt. Model navbatma-navbat yozadi: fikr, harakat, va vosita qaytargan kuzatuv. Har bir qadam traektoriyaga qoʻshiladi.**
+21. **Yao va uning hamkasblari 2023-yilda uchinchi usulni — ReActʼni taklif qildilar. Model ketma-ket ravishda quyidagilarni yozib boradi: fikr, harakat va vosita qaytargan kuzatuv natijasi. Har bir qadam jarayonlar ketma-ketligiga (traektoriyaga) qoʻshib boriladi.**
     *Yao and colleagues proposed a third way in 2023: ReAct. The model writes in turns: a thought, an action, and the observation the tool returned. Each step is added to the trajectory.*
     ▸ the loop: Fikr → Harakat → Kuzatuv → back to Fikr; an exit to Javob
-22. **Fikr aynan oʻsha joy, u yerda model «bu qidiruv hech narsa bermadi, soʻrovni toraytiraman» deb yozib qoʻya oladi.**
+22. **Fikr — bu aynan model shunday deb yozishi mumkin boʻlgan oʻrindir: "bu qidiruv hech qanday foydali natija bermadi; soʻrovni aniqlashtiraman".**
     *The thought is exactly the place where the model can write: "that search gave nothing useful; I will narrow the query".*
 23. **Har bir navbatda model shu paytgacha yozilgan butun matnni qaytadan oʻqiydi va keyingi fikrni yozadi. Boshqa hech narsa eslab qolinmaydi.**
     *Every turn the model re-reads the whole text written so far and writes the next thought. Nothing else is remembered.*
-24. **Yao va hamkasblarining tajribalarida bu aralash sikl savol-javob vazifalarida ham, interaktiv vazifalarda ham ikkala oddiy yoʻldan yaxshiroq natija bergan.**
+24. **Yao va uning hamkasblari oʻtkazgan tajribalarda aralash sikl (mixed loop) ham savollarga javob berish, ham interaktiv vazifalarni bajarish boʻyicha oddiy usullarning ikkalasidan ham ustun keldi.**
     *In Yao and colleagues' experiments, the mixed loop beat both simple ways, on question answering and on interactive tasks.*
-25. **Toʻxtab oʻylaymiz: faqat harakat qiladigan agent oʻn sakkiz yosh haqidagi savolda qayerda adashishi mumkin?**
+25. **Keling, toʻxtab, oʻylab koʻraylik: faqat harakatlarga asoslanadigan agent oʻn sakkiz yoshga toʻlmaganlar masalasida qayerda xatoga yoʻl qoʻyishi mumkin?**
     *Let's stop and think: where could an act-only agent go wrong on the under-eighteen question?*
     ▸ pause card
 26. **Endi bu siklni haqiqiy agentda ishga tushirib koʻramiz.**
@@ -126,14 +126,14 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 29. **Birinchi qadam. Fikr: menga normal ish haftasi va voyaga yetmaganlar uchun qisqartirilgan vaqt haqidagi moddalar kerak. Harakat: qidiruv, «ish haftasining davomiyligi». Kuzatuv: yuz sakson ikkinchi modda, ish vaqtining normal davomiyligi; roʻyxatda toʻrt yuz oʻn beshinchi modda ham bor.**
     *Step one. Thought: I need the provisions on the normal working week and on reduced hours for minors. Action: search, "length of the working week". Observation: Article one hundred eighty-two, normal working time; Article four hundred fifteen is on the list too.*
     ▸ the trace builds line by line from `traces/q2_under18.json`; the search result list appears, 182 and 415 lit
-30. **Ikkinchi qadam. Model yuz sakson ikkinchi moddani oladi. Unda shunday yozilgan: ish vaqtining normal davomiyligi haftasiga qirq soatdan oshmasligi kerak.**
+30. **Ikkinchi qadam. Model bir yuz sakson ikkinchi moddani oladi. Unda shunday yozilgan: ish vaqtining normal davomiyligi haftasiga qirq soatdan oshmasligi kerak.**
     *Step two. The model fetches Article one hundred eighty-two. It says: normal working time may not exceed forty hours a week.*
     ▸ the article's Uzbek text, «haftasiga qirq soatdan ortiq» highlighted
 31. **Uchinchi qadam. Fikr: endi oʻn sakkiz yoshgacha boʻlganlar uchun alohida qoida kerak. Model toʻrt yuz oʻn beshinchi moddani oladi: oʻn oltidan oʻn sakkiz yoshgacha haftasiga oʻttiz olti soat, oʻn beshdan oʻn olti yoshgacha esa yigirma toʻrt soat.**
     *Step three. Thought: now I need the specific rule for those under eighteen. The model fetches Article four hundred fifteen: thirty-six hours a week from sixteen to eighteen, and twenty-four hours from fifteen to sixteen.*
 32. **Toʻrtinchi qadam, javob: qirq soat, yuz sakson ikkinchi modda; oʻn sakkiz yoshgacha esa oʻttiz olti va yigirma toʻrt soat, toʻrt yuz oʻn beshinchi modda.**
     *Step four, the answer: forty hours, Article one hundred eighty-two; under eighteen, thirty-six and twenty-four hours, Article four hundred fifteen.*
-33. **Eʼtibor beraylik: toʻrt yuz oʻn beshinchi moddani olishni hech kim buyurmadi. Model qidiruv natijasini koʻrib, oʻzi qaror qildi. Konveyerdan farqi aynan shu.**
+33. **Eʼtibor beraylik: toʻrt yuz oʻn beshinchi moddani olishni hech kim buyurmadi. Model qidiruv natijasini koʻrib, oʻzi qaror qildi. Pipelinedan farqi aynan shu.**
     *Notice: nobody told it to fetch Article four hundred fifteen. The model saw the search result and decided itself. That is exactly the difference from a pipeline.*
 34. **Yana bir qiziq narsa bor. Birinchi savolimizda modelning birinchi fikri «ehtimol, yuz sakson ikkinchi modda» edi, hali hech narsa qidirmasdan. Model kodeksni oʻqitilgan paytidan eslaydi. Unda nega baribir qidiradi? Chunki u eslaganini emas, oʻqiganini manba qilib koʻrsatishi kerak.**
     *There is one more interesting thing. On our first question, the model's first thought was "likely Article one hundred eighty-two", before it had searched anything. The model remembers the code from its training. So why does it still search? Because it must cite what it read, not what it remembers.*
@@ -150,7 +150,7 @@ Format per line: **UZ** (your voice) · *EN* (English track) · ▸ visual.
 38. **Javob ishonchli eshitiladi: qirq soat, oʻttiz olti soat, yigirma toʻrt soat. Raqamlar toʻgʻri. Lekin manba sifatida yuz sakson uchinchi modda koʻrsatilgan.**
     *The answer sounds sure: forty hours, thirty-six hours, twenty-four hours. The numbers are right. But it cites Article one hundred eighty-three.*
     ▸ `traces/q2_under18_notools.json`, the citation [Art. 183] boxed
-39. **Yuz sakson uchinchi moddani ochamiz. Unda faqat kimlarga qisqartirilgan ish vaqti berilishi sanab oʻtilgan. Oʻttiz olti ham, yigirma toʻrt ham u yerda yoʻq. Bu raqamlar toʻrt yuz oʻn beshinchi moddada.**
+39. **Bir yuz sakson uchinchi moddani ochamiz. Unda faqat kimlarga qisqartirilgan ish vaqti berilishi sanab oʻtilgan. Oʻttiz olti ham, yigirma toʻrt ham u yerda yoʻq. Bu raqamlar toʻrt yuz oʻn beshinchi moddada.**
     *We open Article one hundred eighty-three. It only lists who gets reduced hours. Neither thirty-six nor twenty-four is there. Those numbers are in Article four hundred fifteen.*
 40. **Ikkinchi savol yanada qiziq: Oʻzbekistonda eng kam oylik ish haqi necha soʻm? Vositasiz model aniq raqam aytdi, bir million bir yuz ellik besh ming soʻm, va bir yuz ellik uchinchi moddani koʻrsatdi.**
     *The second question is even more interesting: what is the minimum monthly wage in Uzbekistan, in soʻm? Without tools the model named an exact figure, one million one hundred fifty-five thousand soʻm, and cited Article one hundred fifty-three.*

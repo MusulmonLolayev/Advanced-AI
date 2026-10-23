@@ -198,6 +198,111 @@ class Chapters(unittest.TestCase):
             self.assertEqual(M.line_sections(b), {0: 0, 1: 1, 3: 2})
 
 
+class ClonedVoice(unittest.TestCase):
+    """The cloned profile's pure part (splitting, fitting, placing), with a fake converter: no GPU."""
+
+    def speech(self):
+        # 10 s speech, 2 s pause, 12 s speech, 0.6 s breath, 8 s speech, 3 s pause, 5 s speech, 1.5 s pause at the end
+        self.parts = [("v", 10), ("q", 2), ("v", 12), ("q", 0.6), ("v", 8), ("q", 3), ("v", 5), ("q", 1.5)]
+        return np.concatenate([tone(d, f=200 + 30 * i) if k == "v" else quiet(d, seed=i)
+                               for i, (k, d) in enumerate(self.parts)])
+
+    def test_pieces_are_at_most_25_s_and_cut_in_pauses_where_they_can(self):
+        x = self.speech()
+        pieces = M.vc_pieces(x)
+        for a, b, fi, fo in pieces:
+            self.assertLessEqual(b - a, 25 * M.SR)
+            self.assertGreaterEqual(a, 0)
+            self.assertLessEqual(b, len(x))
+        self.assertEqual(len(pieces), 3)                            # 10 s | 12+0.6+8 = 20.6 s | 5 s; the 2 s and 3 s pauses separate
+        mid = pieces[1]
+        self.assertAlmostEqual(mid[0] / M.SR, 12 - M.VC_PAD, delta=0.05)    # starts a pad before the speech
+        self.assertAlmostEqual((mid[1] - mid[0]) / M.SR, 20.6 + 2 * M.VC_PAD, delta=0.06)
+
+    def test_a_long_speech_is_cut_in_its_quietest_frame(self):
+        x = np.concatenate([tone(20, f=200), quiet(0.1, amp=0.0), tone(20, f=210)])      # one 40.1 s speech, a 0.1 s dip
+        pieces = M.vc_pieces(x)
+        self.assertGreaterEqual(len(pieces), 2)
+        self.assertTrue(all(b - a <= 25 * M.SR for a, b, _, _ in pieces))
+        a0, b0, fi0, fo0 = pieces[0]
+        self.assertEqual(fo0, 0)                                    # an inner cut: no fade
+        self.assertEqual(pieces[1][2], 0)
+        self.assertEqual(pieces[1][0], b0)                          # the next piece starts exactly where it ends
+        self.assertAlmostEqual(b0 / M.SR, 20.05, delta=0.05)        # in the dip
+        self.assertEqual(pieces[-1][1], len(x))
+
+    def test_output_has_the_input_length_pauses_are_untouched_and_pieces_land_at_their_offsets(self):
+        x = self.speech()
+        seen = []
+
+        def fake(p):                                                # the "converter": silence-free flat 0.25
+            seen.append(len(p))
+            return np.full(len(p), 0.25, np.float32)
+
+        y, drifts = M.convert_voice(x, fake)
+        self.assertEqual(len(y), len(x))
+        self.assertEqual(len(drifts), 3)
+        self.assertTrue(all(d == 0 for d in drifts))
+        S = M.SR
+        same = lambda a, b: np.all(y[int(a * S): int(b * S)] == x[int(a * S): int(b * S)])
+        self.assertTrue(same(10.2, 11.8))                           # the 2 s pause between pieces 1 and 2
+        self.assertTrue(same(32.8, 35.4))                           # the 3 s pause between pieces 2 and 3
+        self.assertTrue(same(40.8, 42.1))                           # the pause at the end
+        for a, b in ((1, 9), (13, 23), (24.1, 24.5), (26, 32), (36, 40)):     # speech, and the 0.6 s breath inside a piece
+            self.assertTrue(np.allclose(y[int(a * S): int(b * S)], 0.25), (a, b))
+
+    def test_a_converter_returning_a_longer_or_shorter_piece_is_cropped_or_padded(self):
+        x = self.speech()
+        for delta in (+700, -700):
+            y, drifts = M.convert_voice(x, lambda p, d=delta: np.full(len(p) + d, 0.25, np.float32))
+            self.assertEqual(len(y), len(x))
+            for dr in drifts:
+                self.assertAlmostEqual(dr, delta / M.SR, places=6)
+        self.assertEqual(len(M.fit(np.ones(10), 4)), 4)
+        f = M.fit(np.ones(4), 10)
+        self.assertEqual(len(f), 10)
+        self.assertTrue(np.all(f[4:] == 0))
+
+    def test_pad_edges_fade_into_the_source(self):
+        x = self.speech()
+        y, _ = M.convert_voice(x, lambda p: np.full(len(p), 0.25, np.float32))
+        a = M.vc_pieces(x)[0]
+        self.assertGreater(a[3], 0)
+        self.assertAlmostEqual(float(y[a[1] - 1]), float(x[a[1] - 1]), delta=0.01)       # last sample is the source again
+        self.assertAlmostEqual(float(y[a[1] - a[3] // 2]), 0.5 * 0.25 + 0.5 * float(x[a[1] - a[3] // 2]), delta=0.01)  # halfway
+
+    def test_cloned_clean_is_cached_and_written_whole(self):
+        with tempfile.TemporaryDirectory() as d:
+            b = Path(d) / "m7_lecture99_en"
+            rec = M.recdir(b)
+            rec.mkdir(parents=True)
+            x = self.speech()
+            x.tofile(rec / "s.deepfilter.f32")
+            (rec / "s.webm").write_bytes(b"x")
+            import os
+            os.utime(rec / "s.webm", (0, 0))
+            real, M.vc_http = M.vc_http, lambda p: np.full(len(p) + 5, 0.25, np.float32)
+            try:
+                f = M.clean(b, "s", "cloned")
+            finally:
+                M.vc_http = real
+            self.assertEqual(f.name, "s.cloned.f32")
+            self.assertEqual(len(M.read_f32(f)), len(x))
+            self.assertFalse((rec / "s.cloned.tmp").exists())
+            self.assertEqual(len(json.loads((rec / "s.cloned.json").read_text())["drift_s"]), 3)
+
+    def test_an_unreachable_server_is_a_clear_error(self):
+        from studio import voice_server
+        up, st = voice_server.up, voice_server.start
+        voice_server.up = lambda port=8765: False
+        voice_server.start = lambda wait=300: (_ for _ in ()).throw(RuntimeError("no stack"))
+        try:
+            with self.assertRaisesRegex(RuntimeError, "cloned voice: the voice server did not answer"):
+                M.vc_http(np.zeros(100, np.float32))
+        finally:
+            voice_server.up, voice_server.start = up, st
+
+
 class RealLecture(unittest.TestCase):
     """The real Module 7 build, when it is there: its line list carries scene numbers and chapters come out."""
     B = Path(__file__).resolve().parents[1] / "out" / "m7_lecture01_en"

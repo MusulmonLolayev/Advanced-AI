@@ -69,7 +69,7 @@ def forget(root, build, name, c):
     S.drop_session(c, build, name)
     for d in (rec / f"{name}.chunks", rec / f"{name}.words"):
         shutil.rmtree(d, ignore_errors=True)
-    for f in [rec / f"{name}.{x}" for x in ("webm", "json", "mp4", "m4a", "silence.json", "words.json")] + \
+    for f in [rec / f"{name}.{x}" for x in ("webm", "json", "mp4", "m4a", "yours.m4a", "cloned.json", "silence.json", "words.json")] + \
             list(rec.glob(f"{name}.*.f32")) + list(rec.glob(f"{name}.*.levels.json")):
         f.unlink(missing_ok=True)
 
@@ -228,6 +228,14 @@ def mtime(path):
         return 0
 
 
+def audio_alt_urls(root, build, good):
+    """{session: URL of its audio before voice conversion}: for a session made with the cloned profile, the same
+    recording cleaned only (what the instructor's voice sounds like), to compare with `audio`."""
+    rec = M.recdir(Path(root) / build)
+    return {s["name"]: f"/{build}/presenter/recordings/{s['name']}.yours.m4a?v={mtime(rec / (s['name'] + '.yours.m4a'))}"
+            for s in good if s["state"] == "ready" and s.get("clean") == "cloned" and (rec / f"{s['name']}.yours.m4a").exists()}
+
+
 def audio_urls(root, build, good, st):
     """{voice source: URL of its audio}: every ready session, and the lecture's own narration when that is the fallback."""
     b = Path(root) / build
@@ -271,7 +279,7 @@ def project(root, build, c):
         "video_version": int((b / "presenter" / f"{build}_silent.mp4").stat().st_mtime),
         "lines": [[l[0], l[1]] for l in ls],
         "sessions": [dict(s, stale=s["name"] in stale) for s in sessions],
-        "audio": audio_urls(root, build, good, st),
+        "audio": audio_urls(root, build, good, st), "audio_alt": audio_alt_urls(root, build, good),
         "settings": st, "voice": voice_marks(root, build), "editable": editable(build),
         "old_page": bool(ls) and len(ls[0]) < 4,      # prepared before lines knew their section: refresh it
         "engine": "navoiy" if navoiy else "edge",

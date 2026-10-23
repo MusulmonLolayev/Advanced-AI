@@ -1,6 +1,6 @@
 // The app's shared state: which mode, lecture and language are open, the selected line, and the loaded project.
 import { createContext, useContext } from 'react'
-import type { EditorLangs, LectureLangs, Project } from './types'
+import type { EditorLangs, LectureLangs, ModuleRow, Project } from './types'
 
 export type Mode = 'record' | 'edit' | 'script' | 'export'
 
@@ -22,7 +22,13 @@ export type Studio = {
   reloadLangs: () => Promise<void>
   /** the lecture's languages with counts, builds and build jobs (loaded in Script and Export) */
   lec: LectureLangs | null
+  /** fetch the lecture's languages and the project browser's list again */
   reloadLec: () => Promise<void>
+  /** every module, lecture and language (the project browser); null while loading */
+  overview: ModuleRow[] | null
+  /** Export: what is playing inline ("lecture", a recording's name, or an export file's URL), else '' */
+  watch: string
+  setWatch: (w: string) => void
   recording: boolean
   setRecording: (r: boolean) => void
   recSeconds: number

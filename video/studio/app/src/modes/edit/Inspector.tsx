@@ -1,10 +1,11 @@
 import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { useActions } from '../../actions'
-import { Button, Chip, Icon, InspectorSection, Panel, useToast } from '../../components'
+import { Button, Chip, Icon, InspectorSection, Panel, useDialog, useToast } from '../../components'
 import { ORIGINAL, type LineState } from '../../model'
 import type { EditorLangs, Levels, Project, Session, Take, VersionRow } from '../../types'
 import { secs, timecode } from '../../util'
 import { LineMarks } from './ScriptList'
+import { TakeEditor, takeWaveProps } from './TakeEditor'
 import { TakeWave } from './TakeWave'
 import type { Transport } from './usePlayer'
 
@@ -51,6 +52,8 @@ function tightenLabel(tg: Take['tighten']): string {
 }
 
 function TakeCard({ t, n, k, used, levels, act, tr }: { t: Take; n: number; k: number; used: boolean; levels: Levels | undefined; act: Act; tr: Transport }) {
+  const { confirm } = useDialog()
+  const [editing, setEditing] = useState(false)
   const e = t.edit
   const off = (a: number, b: number) => Math.abs(a - b) > 1e-3
   const ck = t.check
@@ -65,7 +68,7 @@ function TakeCard({ t, n, k, used, levels, act, tr }: { t: Take; n: number; k: n
         {t.rejected && <Chip tone="bad">mistake</Chip>}
         {ck && (ck.missing.length ? <Chip tone="bad">{ck.missing.length} missed</Chip> : <Chip tone="good">script ✓</Chip>)}
       </div>
-      <TakeWave levels={levels} from={t.t_in} to={t.t_out} pauses={t.pauses} trimIn={e.trim_in ?? 0} trimOut={e.trim_out ?? 0} fit={t.fit} color="--track-you" onTrim={(c) => void act.edit(t.id, c)} />
+      <TakeWave levels={levels} {...takeWaveProps(t, n, act, tr)} />
       <div className="take-trim mono dim">
         <span>in {(e.trim_in ?? 0).toFixed(2)}</span>
         <span>{secs(t.raw_length)} → {secs(t.length)}</span>
@@ -73,18 +76,17 @@ function TakeCard({ t, n, k, used, levels, act, tr }: { t: Take; n: number; k: n
       </div>
       <div className="btn-row">
         <Button small icon="play" onClick={() => tr.playTake(t, n)} title="play this take alone">watch</Button>
+        <Button small onClick={() => setEditing(true)} title="a wide editor for this take: select a part, cut it, restore it, zoom">edit parts</Button>
         <Button small onClick={() => void tr.playContext(t, n)} title="the end of the line before, this take, the start of the line after">in context</Button>
         {!used && <Button small variant="primary" onClick={() => void act.choose(k, t.id)} title="use this recording for the line in your edit (preview and export)">use this one</Button>}
         <Button small variant="ghost" onClick={() => void act.edit(t.id, { rejected: !t.rejected })}>{t.rejected ? 'not a mistake' : 'mistake'}</Button>
-        <Button small variant="ghost" icon="trash" onClick={() => { if (window.confirm('Hide this take?')) void act.edit(t.id, { deleted: true }) }}>hide</Button>
+        <Button small variant="ghost" icon="trash" onClick={async () => { if (await confirm({ title: 'Hide this take?', body: 'The take is hidden from the lecture.', confirmLabel: 'Hide take', tone: 'danger' })) void act.edit(t.id, { deleted: true }) }}>hide</Button>
       </div>
       <div className="btn-row fit">
-        <span className="dim label">line ends · keep {t.margin} s</span>
-        <Button small disabled={!off(t.fit[0], e.trim_in ?? 0)} onClick={() => void act.fit(t.id, 'start')} title={`trim the start so ${t.margin} s of silence stays before the first word (${t.fit[0].toFixed(2)} s)`}>fit start</Button>
-        <Button small disabled={!off(t.fit[1], e.trim_out ?? 0)} onClick={() => void act.fit(t.id, 'end')} title={`trim the end so ${t.margin} s of silence stays after the last word (${t.fit[1].toFixed(2)} s)`}>fit end</Button>
-        <Button small disabled={!off(t.fit[0], e.trim_in ?? 0) && !off(t.fit[1], e.trim_out ?? 0)} onClick={() => void act.fit(t.id, 'both')}>fit both</Button>
-        <Button small variant="ghost" disabled={!e.trim_in && !e.trim_out} onClick={() => void act.edit(t.id, { trim_in: null, trim_out: null })} title="put both ends back to the recording's own">reset</Button>
+        <Button small disabled={!off(t.fit[0], e.trim_in ?? 0) && !off(t.fit[1], e.trim_out ?? 0)} onClick={() => void act.fit(t.id, 'both')} title={`set the start and end to your first and last word, keeping ${t.margin} s`}>trim silence</Button>
+        <Button small variant="ghost" disabled={!e.trim_in && !e.trim_out} onClick={() => void act.edit(t.id, { trim_in: null, trim_out: null })} title="put both ends back to the recording's own">undo trims</Button>
       </div>
+      {editing && <TakeEditor t={t} n={n} levels={levels} tr={tr} onClose={() => setEditing(false)} />}
     </div>
   )
 }
@@ -107,20 +109,48 @@ function Nudge({ value, onSave }: { value: number; onSave: (v: number) => void }
   )
 }
 
-function SessionRow({ s, act }: { s: Session; act: Act }) {
+/** hear a whole recording in your voice (cleaned) or in the cloned voice, one at a time */
+function Compare({ yours, cloned }: { yours: string; cloned: string }) {
+  const [on, setOn] = useState<'yours' | 'cloned' | null>(null)
+  const el = useRef<HTMLAudioElement | null>(null)
+  const play = (which: 'yours' | 'cloned') => {
+    el.current?.pause()
+    if (on === which) return setOn(null)
+    const a = new Audio(which === 'yours' ? yours : cloned)
+    a.onended = () => setOn(null)
+    el.current = a
+    setOn(which)
+    void a.play().catch(() => setOn(null))
+  }
+  return (
+    <span className="compare">
+      <Button small variant={on === 'yours' ? 'primary' : 'ghost'} onClick={() => play('yours')} title="this recording, your voice cleaned, before conversion">{on === 'yours' ? 'stop' : 'your voice'}</Button>
+      <Button small variant={on === 'cloned' ? 'primary' : 'ghost'} onClick={() => play('cloned')} title="this recording, re-spoken in the cloned voice">{on === 'cloned' ? 'stop' : 'cloned voice'}</Button>
+    </span>
+  )
+}
+
+function SessionRow({ s, act, p }: { s: Session; act: Act; p: Project }) {
+  const { confirm } = useDialog()
+  const converting = p.jobs.some((j) => j.kind === 'process' && j.key === s.name && (j.state === 'queued' || j.state === 'running'))
+  const yours = p.audio_alt?.[s.name]
   const state = s.stale ? <span className="dim">earlier build of the video: not used</span> : {
     recording: <span className="warn">recording… {s.chunks} s</span>,
     recorded: <span className="warn">waiting</span>,
-    processing: <span className="warn">cleaning the voice…</span>,
+    processing: <span className="warn">{s.clean === 'cloned' ? 'converting to the cloned voice…' : 'cleaning the voice…'}</span>,
     ready: <span className="dim">{(s.seconds / 60).toFixed(1)} min · {s.clean}</span>,
     failed: <span className="bad">failed {s.error}</span>,
   }[s.state]
   return (
     <li className="session">
       <span className="mono" title={s.name}>{sessionLabel(s.name)}</span>
-      <span className="grow">{state}</span>
+      <span className="grow">{converting && s.state !== 'processing' ? <span className="warn">converting…</span> : state}</span>
+      {s.state === 'ready' && !s.stale && yours && p.audio[s.name] && <Compare yours={yours} cloned={p.audio[s.name]} />}
+      {s.state === 'ready' && !s.stale && s.clean !== 'cloned' && (
+        <Button small disabled={converting} onClick={() => void act.convertRecording(s.name)} title="re-speak this recording in the cloned voice: your timing and pronunciation, the cloned voice's clean sound (needs the voice server)">convert to cloned voice</Button>
+      )}
       <button type="button" className="icon-btn" title={`Delete recording ${s.name}`} aria-label={`Delete recording ${s.name}`}
-        onClick={() => { if (window.confirm(`Delete recording ${s.name} (${mmss(s.seconds)})? This cannot be undone.`)) void act.deleteRecording(s.name) }}>
+        onClick={async () => { if (await confirm({ title: `Delete recording ${s.name}?`, body: `The recording (${mmss(s.seconds)}) is deleted. This cannot be undone.`, confirmLabel: 'Delete recording', tone: 'danger' })) void act.deleteRecording(s.name) }}>
         <Icon name="trash" size={14} />
       </button>
     </li>
@@ -141,6 +171,7 @@ export function Inspector({
 }) {
   const act = useActions()
   const toast = useToast()
+  const { confirm } = useDialog()
   const takes = p.takes[String(k)] ?? []
   const text = p.lines[k][1]
   const scene = p.scenes[k]
@@ -245,6 +276,7 @@ export function Inspector({
             <TakeWave levels={orig} from={vStart} to={vEnd} color="--track-clone" handles={false} height={52} />
           </div>
         )}
+        {takes.length > 0 && <p className="dim sub cut-hint">Drag on the wave to select a part, then ✂ or Delete to cut it.</p>}
         {takes.map((t, i) => (
           <TakeCard key={t.id} t={t} n={i + 1} k={k} used={t.id === chosen?.id} levels={levels[t.session]} act={act} tr={tr} />
         ))}
@@ -333,12 +365,12 @@ export function Inspector({
                 {ready && <Button small variant="ghost" onClick={() => rewriteAgain(x)} title="load this version's text of the line into the box; the next version grows from it">rewrite again</Button>}
                 {ready && (
                   <Button small variant="primary" icon="merge" title="put it in the lecture"
-                    onClick={() => { if (window.confirm(`Merge v${x.n} into the lecture? The narration file gets its texts, the scene and the lecture video are replaced (about a minute), and your recordings move to the new timings. The previous video is kept as before_merge.`)) void act.merge(scene, x.n) }}>
+                    onClick={async () => { if (await confirm({ title: `Merge v${x.n} into the lecture?`, body: 'The narration file gets its texts, the scene and the lecture video are replaced (about a minute), and your recordings move to the new timings. The previous video is kept as before_merge.', confirmLabel: 'Merge', tone: 'primary' })) void act.merge(scene, x.n) }}>
                     merge
                   </Button>
                 )}
                 {!(x.state === 'merged' || x.state === 'voicing' || x.state === 'rendering' || merging) && (
-                  <Button small variant="ghost" title="delete this version" onClick={() => { if (window.confirm(`Discard v${x.n} of ${scene}? Its files are deleted.`)) void act.discard(scene, x.n) }}>discard</Button>
+                  <Button small variant="ghost" title="delete this version" onClick={async () => { if (await confirm({ title: `Discard v${x.n} of ${scene}?`, body: 'Its files are deleted.', confirmLabel: 'Discard version', tone: 'danger' })) void act.discard(scene, x.n) }}>discard</Button>
                 )}
               </div>
               {x.error && <p className="bad sub">{x.error}</p>}
@@ -394,7 +426,7 @@ export function Inspector({
 
       <InspectorSection title="Recordings" count={p.sessions.length || 'none'} open={false}>
         <ul className="plain sessions">
-          {p.sessions.map((s) => <SessionRow key={s.name} s={s} act={act} />)}
+          {p.sessions.map((s) => <SessionRow key={s.name} s={s} act={act} p={p} />)}
           {!p.sessions.length && <li className="dim">none yet: press Record</li>}
         </ul>
       </InspectorSection>

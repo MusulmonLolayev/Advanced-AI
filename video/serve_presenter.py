@@ -1,24 +1,24 @@
-"""The recording studio: a small web app, served to another computer on the LAN (the server has no screen of its own).
+"""The recording studio: a small web server for the React app (studio/app, built into studio/static/app/) and its API.
 
-http://localhost:8080/ (through an ssh -L tunnel; the microphone needs a secure origin) lists every built lecture:
-prepare its presenter page (presenter.py), open it to present and record (key R), build each recording into a 1080p
-video with the instructor's voice, cleaned with the chosen profile of ~/teaching/clean_video.sh (compose_recording.py), watch it in the page, delete it. Recordings and their build
-state live in a small SQLite file, out/studio.sqlite; the files stay in <build>/presenter/recordings/. Heavy jobs run
-one at a time in the background. Video is served with Range support, so the players can seek. The page is split by
-module (a panel on the left, /?m=7): a module's lectures are its builds (lectureNN_uz_navoiy for Module 0,
-mK_lectureNN_uz_navoiy for Module K), and its files are whatever is put in (or linked into) out/shared/mK/ -- a
-lecture PDF, say -- to open or download.
+http://localhost:8080/ (through an ssh -L tunnel; the microphone needs a secure origin) is the app: a project browser
+(Module, Lecture, Language) and four screens, Record, Edit, Script & languages and Export. Recordings and their state
+live in a small SQLite file, out/studio.sqlite; the files stay in <build>/presenter/recordings/. Heavy jobs run one at a
+time in the background. Video is served with Range support, so the players can seek. A module's lectures are its
+builds (lectureNN_uz_navoiy for Module 0, mK_lectureNN_uz_navoiy for Module K); its files are whatever is put in (or
+linked into) out/shared/mK/, listed in the project browser.
 
-The editor (/edit?build=…, studio/): the presenter sends each recording in one-second pieces as it is made, with
-its line starts and retakes; each session is processed once (joined, cleaned, a seekable preview copy, its pauses),
-cut into one take per line, and the editor picks, trims, cuts, nudges and transcribes takes, previews the result in
-the browser and exports it (video, subtitles, chapters). Its API is studio/api.py; heavy jobs share the one queue.
+The editor API (studio/api.py): the app sends each recording in one-second pieces as it is made, with its line starts
+and retakes; each session is processed once (joined, cleaned, a seekable preview copy, its pauses), cut into one take
+per line, and the app picks, trims, cuts, nudges and transcribes takes, previews the result and exports it (video,
+subtitles, chapters). Heavy jobs share the one queue.
+
+The old pages' addresses (/?m=N, /lecture, /edit, /watch, /narration, <build>/presenter/presenter.html) answer with a
+302 to the same thing in the app (`old_route`).
 
     ssh -L 8080:localhost:8080 musulmon@10.0.0.5            # on the instructor's computer
     uv run python serve_presenter.py 8080                    # here; then open http://localhost:8080/
 """
 import gzip
-import html
 import io
 import json
 import os
@@ -33,11 +33,10 @@ import traceback
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, quote, unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
 import builds as B
 import languages as LG
-import presenter
 from compose_recording import CLEAN
 from studio import api as A
 from studio import buildlang as BL
@@ -53,15 +52,6 @@ DB = ROOT / "studio.sqlite"
 MODULES = {0: "Statistics for Advanced AI", 1: "Classical Machine Learning", 2: "Vision / Deep Neural Networks",
            3: "Natural Language Processing", 4: "Graph Neural Networks", 5: "Reinforcement Learning & Alignment",
            6: "Efficient AI & Deployment", 7: "AI Agents, Tool Use & Retrieval"}      # course-map.md
-
-
-def module_of(build):
-    return B.module(build)
-
-
-def lecture_title(build):
-    _, lecture, lang, _ = B.parse(build)
-    return f"Lecture {lecture:02d} · {LG.name(lang)}"
 
 
 NAME = re.compile(r"[0-9T-]+")                         # a recording's name: its start time
@@ -172,7 +162,7 @@ def enqueue(build, kind, key, fn):
     JOBS.put(run)
 
 
-PROFILE = os.environ.get("STUDIO_PROFILE", "deepfilter")      # how a new session's voice is cleaned (tests: off)
+PROFILE = os.environ.get("STUDIO_PROFILE", "cloned")      # how a new session's voice is cleaned (tests: off); cloned needs the voice server
 
 
 def process(build, name, profile=None):
@@ -255,41 +245,6 @@ def build_language(stem, lang):
     return build
 
 
-def lang_switch(build):
-    """The editor header's links to the lecture's other languages: their editor when it is built, else their review page."""
-    stem = B.stem(build)
-    with dbc() as c:
-        others = R.editor_langs(c, ROOT, build)["others"]
-    return "".join(f'<a class="btn" href="{html.escape("/edit?build=" + o["build"] if o["build"] else o["review"])}" '
-                   f'title="{html.escape(o["name"])}: {"the editor" if o["build"] else "narration review (no build yet)"}">'
-                   f'{html.escape(o["native"])}{"" if o["build"] else " (review)"}</a> ' for o in others)
-
-
-def narration_page(stem, lang):
-    page = (HERE / "studio" / "narration.html").read_text()
-    m = B.parse_stem(stem)
-    return (page.replace("__LECTURE__", stem).replace("__LANG__", lang).replace("__MODULE__", str(m[0]))
-            .replace("__TITLE__", html.escape(f"Lecture {m[1]:02d} · {LG.name(lang)}")))
-
-
-def editor(build):
-    m = module_of(build)
-    page = (HERE / "studio" / "editor.html").read_text()
-    return (page.replace("__BUILD__", build).replace("__TITLE__", html.escape(lecture_title(build)))
-            .replace("__MODULE__", str(m)).replace("__LANGS__", lang_switch(build)).replace("__CLEAN__", "".join(
-                f'<option value="{k}">{k}</option>' for k in sorted(CLEAN, key=lambda k: k != "deepfilter"))))
-
-
-def presenter_page(build):
-    """The build's presenter page, rendered now from presenter.PAGE with its lines.json and silent video (None until
-    the page has been prepared once)."""
-    d = ROOT / build / "presenter"
-    silent = d / f"{build}_silent.mp4"
-    if not (d / "lines.json").exists() or not silent.exists():
-        return None
-    return presenter.render(json.loads((d / "lines.json").read_text()), build, silent)
-
-
 STATIC = HERE / "studio" / "static"                    # the editor's CSS and scripts, served at /studio-static/
 SHARED = ROOT / "shared"
 
@@ -300,247 +255,35 @@ def shared(module):
     return [f for f in sorted(d.iterdir()) if f.is_file() and not f.name.startswith(".")] if d.is_dir() else []
 
 
-def files(module):
-    rows = []
-    for f in shared(module):
-        st, q = f.stat(), f"m{module}/{quote(f.name)}"
-        rows.append(f'<li>{html.escape(f.name)} <span class=dim>· {st.st_size / 1e6:.1f} MB · '
-                    f'{time.strftime("%d %b %H:%M", time.localtime(st.st_mtime))}</span> · '
-                    f'<a class="btn" href="/shared/{q}" target="_blank">Open</a> '
-                    f'<a class="btn" href="/shared/{q}" download>Download</a></li>')
-    return f"<section><h2>Files</h2><ul>{''.join(rows) or '<li class=dim>nothing shared yet</li>'}</ul></section>"
-
-
-def sidebar(module):
-    items = []
-    for k, title in MODULES.items():
-        n_lec = len(R.stems(ROOT, k))
-        n_files = len(shared(k))
-        count = " · ".join(x for x in (f"{n_lec} lecture{'s' * (n_lec != 1)}" if n_lec else "",
-                                        f"{n_files} file{'s' * (n_files != 1)}" if n_files else "") if x)
-        items.append(f'<a href="/?m={k}" class="mod{" on" if k == module else ""}{"" if count else " empty"}">'
-                     f'<b>Module {k}</b><span>{html.escape(title)}</span><small>{count or "nothing yet"}</small></a>')
-    return f'<nav><div class="brand">Recording studio</div>{"".join(items)}</nav>' 
-
-
-def builds():
-    return [d.name for d in sorted(ROOT.iterdir()) if d.is_dir() and B.is_build(d.name)
-            and (d / f"{d.name}.mp4").exists() and (d / "joined.txt").exists()]
-
-
-def when(t):
-    return time.strftime("%d %b %H:%M", time.localtime(t))
-
-
-def counts_line(c, kind):
-    """"approved 87 / 91 · 3 need update · 1 empty" for a narration or label count (the parts that are zero are left out)."""
-    parts = [f"approved {c['approved']} / {c['total']}"]
-    for k, word in (("needs_update", "need update"), ("draft", "draft"), ("empty", "empty")):
-        if c[k]:
-            parts.append(f'<span class="{"warn" if k == "needs_update" else "dim"}">{c[k]} {word}</span>')
-    return f'{kind}: ' + " · ".join(parts)
-
-
-def build_buttons(b, rows):
-    """A built lecture's buttons and its recordings (the studio's original per-build block). Returns (html, busy)."""
-    ready = (ROOT / b / "presenter" / "presenter.html").exists()
-    st = PREPARING.get(b, "")
-    if st == "running":
-        pres = '<span class="busy">preparing the presenter page…</span>'
-    elif ready:
-        pres = (f'<a class="btn" href="/{b}/presenter/presenter.html">Present &amp; record</a> '
-                f'<button class="quiet" onclick="post(\'/api/prepare?build={b}\')">Refresh page</button>')
-    else:
-        pres = f'<button onclick="post(\'/api/prepare?build={b}\')">Prepare presenter page</button>'
-    if st.startswith("failed"):
-        pres += f' <span class="bad">{html.escape(st)}</span>'
-    pres = (f'<a class="btn" href="/lecture?build={b}">Watch video</a> '
-            + (f'<a class="btn" href="/edit?build={b}">Open editor</a> ' if ready else "") + pres)
-    recs, busy = [], st == "running"
-    for r in (r for r in rows if r["build"] == b):
-        n, s = r["name"], r["state"]
-        busy |= s in ("queued", "building")
-        q = f"build={b}&name={n}"
-        act = {"queued": '<span class="busy">queued…</span>', "building": '<span class="busy">building…</span>'}.get(s)
-        if act is None:
-            act = (f'<a class="btn" href="/watch?{q}">Watch</a> <span class=dim>voice: {html.escape(r["clean"] or "?")}</span> '
-                   if s == "built" else "") + \
-                  f'<button onclick="build(\'{q}\')">{"Rebuild" if s == "built" else "Build video"}</button> '
-            if s == "failed":
-                act += f'<span class="bad">failed: {html.escape(r["error"])}</span> '
-        act += f'<button class="quiet" onclick="del(\'{q}\')">Delete</button>'
-        recs.append(f"<li><span class=mono>{when(r['created'])}</span> · {r['seconds'] / 60:.1f} min · {act}</li>")
-    return (f"<p>{pres}</p><ul>{''.join(recs) or '<li class=dim>no recordings yet</li>'}</ul>"), busy
-
-
-def lang_row(stem, s, rows):
-    """One language of a lecture on the lecture page: narration and label counts, the build, its buttons. (html, busy)"""
-    lang, busy = s["lang"], False
-    review = f'<a class="btn" href="/narration?lecture={stem}&amp;lang={lang}">Review narration</a>'
-    native = f' <span class="dim">· {html.escape(s["native"])}</span>' if s["native"] != s["name"] else ""
-    out = [f'<div class="lang"><h3>{html.escape(s["name"])}{native}</h3>']
-    if s["has_narration"]:
-        out.append(f'<p class="stat">{counts_line(s["lines"], "narration")}<br>{counts_line(s["labels"], "labels")}</p>')
-    else:
-        out.append('<p class="stat dim">no narration yet</p>')
-    if s["has_narration"] and s["lines"]["total"] and s["lines"]["empty"] == s["lines"]["total"]:
-        out.append(f'<p class="note">skeleton created: ask Claude to draft {html.escape(s["name"])} for this lecture '
-                   f'(<span class="mono">narration/{stem}_{lang}.md</span>), then approve it line by line here.</p>')
-    out.append(f'<p>{review}</p>')
-    built = [b for b in s["builds"] if b["built"] and (ROOT / b["build"] / "joined.txt").exists()]
-    for b in s["builds"]:
-        if b not in built:
-            out.append(f'<p class="stat dim">build {b["build"]}: not built yet</p>')
-    for b in built:
-        if b["stale"]:
-            state = (f'<span class="warn">narration changed since the build</span> '
-                     f'<span class="dim">({len(b["stale"])} approved line{"s" * (len(b["stale"]) != 1)} differ from the video)</span>')
-        elif b["stale"] is None:
-            state = '<span class="dim">(no presenter page to compare the narration with)</span>'
-        elif not s["lines"]["approved"] + s["lines"]["needs_update"]:
-            state = '<span class="dim">no approved lines to compare with the video yet</span>'
-        else:
-            state = '<span class="good">narration matches the video</span>'
-        btns, bb = build_buttons(b["build"], rows)
-        busy |= bb
-        out.append(f'<p class="stat">build {b["build"]}: built {when(b["when"])} · {state} · '
-                   f'recorded sessions: {b["sessions"]}</p>{btns}')
-    p, job = s["plan"], s["job"]
-    if not built:
-        out.append('<p class="stat">' + ('can be built: <span class="good">yes</span>' if s["ready"] else
-                   f'can be built: <span class="bad">no</span> <span class="dim">— {html.escape("; ".join(s["missing"]))}</span>') + '</p>')
-        if p["can"]:
-            word = "Build draft video" if p["draft"] else "Build video"
-            note = (f'<span class="dim">{p["unapproved"]["lines"]} lines and {p["unapproved"]["labels"]} labels are not approved: '
-                    f'the frames carry a draft tag</span>') if p["draft"] else ""
-            out.append(f'<p><button onclick="buildLang(\'{stem}\', \'{lang}\')">{word}</button> {note}</p>')
-    if job and job["state"] in ("queued", "running"):
-        busy = True
-    if job:
-        cls = {"failed": "bad", "done": "good"}.get(job["state"], "dim")
-        out.append(f'<p class="stat">build job: <span class="{cls}">{job["state"]}</span> '
-                   f'<span class="dim">{html.escape((job["error"] or job["detail"] or "")[:300])}</span></p>')
-    out.append("</div>")
-    return "".join(out), busy
-
-
-def add_language_form(stem, have):
-    opts = "".join(f'<option value="{c}">{html.escape(LG.name(c))} · {html.escape(LG.native(c))}</option>'
-                   for c in LG.CODES if c not in have)
-    return (f'<p class="addlang"><select id="add-{stem}">{opts}</select> '
-            f'<button onclick="addLang(\'{stem}\')">+ add language</button> '
-            f'<span class="dim">creates an empty narration to be drafted by Claude</span></p>')
-
-
-def studio(module):
-    with db() as c:
-        rows = c.execute("select * from recordings order by created desc").fetchall()
-    out, busy = [], bool(PREPARING) and any(v == "running" for v in PREPARING.values())
-    with dbc() as c:
-        for stem in R.stems(ROOT, module):
-            langs = R.lecture_langs(ROOT, stem)
-            body = []
-            for lang in langs:
-                html_, bb = lang_row(stem, R.summary(c, ROOT, stem, lang), rows)
-                body.append(html_)
-                busy |= bb
-            out.append(f'<section><h2>Lecture {B.parse_stem(stem)[1]:02d}</h2>{"".join(body)}'
-                       f'{add_language_form(stem, set(langs))}</section>')
-    head = f'<h1>Module {module} · {html.escape(MODULES[module])}</h1>'
-    lectures = "".join(out) or '<section><h2>Lectures</h2><p class=dim>no lecture narration or video yet</p></section>'
-    return (PAGE.replace("NAV", sidebar(module))
-            .replace("BODY", head + files(module) + lectures + HELP)
-            .replace("BUSY", "true" if busy else "false").replace("MODULE", str(module)))
-
-
-def stamp(path):
-    """?v= for a video the pages play: its mtime, so a rebuilt file is never served from the browser's cache."""
-    try:
-        return int(Path(path).stat().st_mtime)
-    except OSError:
-        return 0
-
-
-def lecture(build):
-    """The built lecture video itself (the narrated Manim video), to watch before presenting it."""
-    m = module_of(build)
-    src = f"/{build}/{build}.mp4?v={stamp(ROOT / build / (build + '.mp4'))}"
-    return (PAGE.replace("NAV", sidebar(m))
-            .replace("BODY", f'<p><a href="/?m={m}">← Module {m}</a> · {lecture_title(build)} · the narrated video</p>'
-                             f'<video src="{src}" controls autoplay style="width:100%;background:#000;border-radius:8px">'
-                             f'</video>')
-            .replace("BUSY", "false").replace("MODULE", str(m)))
-
-
-def watch(build, name):
-    src = f"/{build}/presenter/recordings/{quote(name)}.mp4?v={stamp(recdir(build) / (name + '.mp4'))}"
-    m = module_of(build)
-    return (PAGE.replace("NAV", sidebar(m))
-            .replace("BODY", f'<p><a href="/?m={m}">← Module {m}</a> · {lecture_title(build)} · '
-                             f'<span class=mono>{name}</span></p><video src="{src}" controls autoplay '
-                             f'style="width:100%;background:#000;border-radius:8px"></video>')
-            .replace("BUSY", "false").replace("MODULE", str(m)))
-
-
-HELP = ("""<h2 class="sub">How it works</h2><p class="help">Present &amp; record: Space pause / play, → next line, ← back,
-N notes (below / right / off), M microphone, R starts and stops recording, X marks a mistake (the line starts over).
-Then <b>Open editor</b>: pick each line's take, cut, preview, export. (<b>Build video</b> below still builds a whole
-recording as it was made.)</p><p>Voice cleaning when building: <select id="clean">"""
-        + "".join(f'<option value="{k}">{k}</option>' for k in sorted(CLEAN, key=lambda k: k != "deepfilter"))
-        + """</select> <span class="help">deepfilter (default): neural denoiser,
-the cleanest (DNSMOS 3.2 vs 2.2 for voice on your first recording; ~5 min per 30 min) · voice: tuned for speech · mild: lighter · strong: a noisy
-room · off: low cut only. Rebuild to try another.</span></p>""")
-
-PAGE = """<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Recording studio</title><style>
-:root{--bg:#111;--fg:#eee;--dim:#888;--acc:#8fb8de;--bad:#e5484d}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
-.wrap{display:flex;min-height:100vh}
-nav{width:250px;flex:none;border-right:1px solid #2a2a2a;padding:16px 10px;box-sizing:border-box;
-  position:sticky;top:0;height:100vh;overflow-y:auto;background:#151515}
-nav .brand{font-weight:600;padding:4px 10px 12px;color:var(--fg)}
-nav a.mod{display:block;padding:8px 10px;border-radius:8px;color:var(--fg);text-decoration:none;margin:2px 0}
-nav a.mod span{display:block;font-size:14px;line-height:1.3}
-nav a.mod small{display:block;font-size:12px;color:var(--dim)}
-nav a.mod:hover{background:#1d1d1d}nav a.mod.on{background:#1f2a36}nav a.mod.on b{color:var(--acc)}
-nav a.mod.empty{opacity:.55}
-main{flex:1;min-width:0;max-width:960px;margin:0 auto;padding:24px 16px}a{color:var(--acc)}
-h2.sub{margin-top:24px}
-@media (max-width:720px){.wrap{flex-direction:column}
-  nav{width:auto;height:auto;position:static;display:flex;overflow-x:auto;gap:6px;border-right:0;
-    border-bottom:1px solid #2a2a2a;padding:8px}
-  nav .brand{display:none}nav a.mod{flex:none;width:170px}}
-h1{font-size:24px}h2{font-size:18px;margin:0 0 6px}
-section{border:1px solid #2a2a2a;border-radius:10px;padding:14px 16px;margin:12px 0}
-ul{margin:6px 0 0;padding-left:18px}li{margin:6px 0}
-button,.btn{background:#1f2a36;color:var(--acc);border:1px solid #2f4256;border-radius:6px;padding:4px 10px;
-font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
-button.quiet{background:none;color:var(--dim);border-color:#333}
-.mono{font-family:ui-monospace,monospace;font-size:14px}.dim{color:var(--dim)}.busy{color:#d7b46a}.bad{color:var(--bad)}
-.help{color:var(--dim);font-size:14px}.good{color:#5fa0a4}.warn{color:#d7b46a}
-.lang{border-top:1px solid #2a2a2a;margin-top:10px;padding-top:6px}.lang:first-of-type{border-top:0;margin-top:0}
-.lang h3{font-size:16px;margin:4px 0}.stat{margin:4px 0;font-size:14px}.note{margin:4px 0;font-size:14px;color:#d7b46a}
-.addlang{margin:12px 0 0;padding-top:8px;border-top:1px dashed #2a2a2a}select{background:#1f2a36;color:var(--acc);border:1px solid #2f4256;border-radius:6px;padding:4px 8px;font:inherit;font-size:14px}
-</style></head><body><div class="wrap">NAV<main>BODY</main></div><script>
-// the module last opened is remembered: "/" without ?m= goes back to it
-const MOD = "MODULE", asked = new URLSearchParams(location.search).get('m');
-try { if (location.pathname === '/' && asked === null && (localStorage.getItem('studioModule') || MOD) !== MOD)
-        location.replace('/?m=' + localStorage.getItem('studioModule'));
-      else if (location.pathname === '/') localStorage.setItem('studioModule', MOD); } catch (e) {}
-document.querySelector('nav a.mod.on')?.scrollIntoView({inline: 'center', block: 'nearest'});   // on a phone, a strip
-async function post(u){ const r = await fetch(u, {method:'POST'}); if (!r.ok) alert(await r.text()); location.reload(); }
-const clean = document.getElementById('clean');
-if (clean){ try { clean.value = localStorage.getItem('studioClean') || 'deepfilter'; } catch (e) { clean.value = 'deepfilter'; }
-  clean.onchange = () => { try { localStorage.setItem('studioClean', clean.value); } catch (e) {} }; }
-async function addLang(stem){ const l = document.getElementById('add-' + stem).value; if (!l) return;
-  const r = await fetch('/api/narration/add?lecture=' + stem + '&lang=' + l, {method:'POST'});
-  if (!r.ok) alert(await r.text()); location.reload(); }
-async function buildLang(stem, lang){ const r = await fetch('/api/narration/build?lecture=' + stem + '&lang=' + lang, {method:'POST'});
-  if (!r.ok) alert((await r.json()).error); location.reload(); }
-function build(q){ post('/api/compose?' + q + '&clean=' + (clean ? clean.value : 'deepfilter')); }
-function del(q){ if (confirm('Delete this recording and its video?')) post('/api/delete?' + q); }
-if (BUSY) setTimeout(() => location.reload(), 10000);
-</script></body></html>"""
+def old_route(path, q):
+    """Where the address of an old page goes in the app (the Location of a 302), or None for any other address.
+    The app reads its deep link from the query (`/?mode=edit&lecture=lecture01&lang=uz`) as well as the hash, so a
+    fragment the browser keeps across the redirect (presenter.html#line=41 -> line 41) still reaches it."""
+    def app(mode, build, **more):
+        p = {"mode": mode, "lecture": B.stem(build), "lang": B.lang(build), **more}
+        return "/?" + urlencode({k: v for k, v in p.items() if v})
+    build = q.get("build", "")
+    if path in ("/", "/index.html"):
+        m = q.get("m", "")
+        if not m:
+            return None
+        stems = R.stems(ROOT, int(m)) if m.isdigit() and int(m) in MODULES else []
+        return "/?" + urlencode({"lecture": stems[0]}) if stems else "/"
+    if path in ("/lecture", "/edit", "/watch") and B.is_build(build) and (ROOT / build).is_dir():
+        if path == "/lecture":
+            return app("export", build, watch="lecture")                 # the narrated video, playing in Export
+        if path == "/edit":
+            return app("edit", build)
+        return app("export", build, watch=q["name"]) if NAME.fullmatch(q.get("name", "")) else app("export", build)
+    if path == "/narration":
+        stem, lang = q.get("lecture", ""), q.get("lang", "")
+        if B.STEM.fullmatch(stem) and lang in LG.LANGS:
+            return "/?" + urlencode({"mode": "script", "lecture": stem, "lang": lang})
+        return None
+    m = re.fullmatch(r"/([\w-]+)/presenter/presenter\.html", path)
+    if m and B.is_build(m[1]) and (ROOT / m[1]).is_dir():
+        return app("record", m[1])
+    return None
 
 
 RANGE_CAP = 4 << 20                                    # an open-ended Range gets this much, not the rest of the file
@@ -556,6 +299,21 @@ class Counted:
     def write(self, data):
         self.n += len(data)
         return self.f.write(data)
+
+    def __getattr__(self, name):
+        return getattr(self.f, name)
+
+
+class HeadOnly:
+    """The response stream of a HEAD request: the status line and headers go out (the first write), the body does not."""
+    def __init__(self, f):
+        self.f, self.sent = f, False
+
+    def write(self, data):
+        if not self.sent:
+            self.sent = True
+            return self.f.write(data)
+        return len(data)
 
     def __getattr__(self, name):
         return getattr(self.f, name)
@@ -670,11 +428,12 @@ class Studio(SimpleHTTPRequestHandler):
             return self.send_error(404)
         mtime = self.date_time_string(p.stat().st_mtime)
         body = p.read_bytes()
+        hashed = rel.startswith("app/assets/")
         zipped = self.gzips() and len(body) > 1024
         if self.headers.get("If-Modified-Since") == mtime:
             self.send_response(304)
             self.send_header("Last-Modified", mtime)
-            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Cache-Control", "public, max-age=31536000, immutable" if hashed else "no-cache")
             return self.end_headers()
         if zipped:
             body = gzip.compress(body, 6)
@@ -685,7 +444,8 @@ class Studio(SimpleHTTPRequestHandler):
             self.send_header("Vary", "Accept-Encoding")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Last-Modified", mtime)
-        self.send_header("Cache-Control", "no-cache")
+        # the app's assets are named by their content hash: a new build has new names, so the old ones never change
+        self.send_header("Cache-Control", "public, max-age=31536000, immutable" if rel.startswith("app/assets/") else "no-cache")
         self.end_headers()
         self.wfile.write(body)
 
@@ -720,8 +480,6 @@ class Studio(SimpleHTTPRequestHandler):
         a = self.narration_args(q)
         if a is None:
             return self.send_error(404, "no such lecture or language")
-        if path == "/narration":
-            return self.html(narration_page(*a))
         try:
             with dbc() as c:
                 return self.json(R.review(c, *a))
@@ -748,10 +506,31 @@ class Studio(SimpleHTTPRequestHandler):
         except (ValueError, KeyError, FileNotFoundError) as e:
             return self.json({"error": str(e.args[0] if e.args else e)[:300]}, 400)
 
+    def do_HEAD(self):                                      # the same answer as GET, without the body (curl -I)
+        real, self.wfile = self.wfile, HeadOnly(self.wfile)
+        try:
+            self.do_GET()
+        finally:
+            self.wfile = real
+
     def do_GET(self):
         path, q, b, n = self.args()
-        if path in ("/narration", "/api/narration"):
+        to = old_route(path, q)
+        if to:                                              # an old page's address: the same thing in the app
+            self.send_response(302)
+            self.send_header("Location", to)
+            self.send_header("Content-Length", "0")
+            self.send_header("Cache-Control", "no-store")
+            return self.end_headers()
+        if path == "/api/narration":
             return self.narration_get(path, q)
+        if path == "/api/lectures":                         # the project browser: modules, lectures, languages (studio/review.py lecture_list)
+            try:
+                with dbc() as c:
+                    return self.json({"modules": R.lecture_list(c, ROOT, MODULES, shared)})
+            except Exception as e:
+                traceback.print_exc()
+                return self.json({"error": f"{type(e).__name__}: {e}"[:500]}, 500)
         if path == "/api/lecture-langs":                   # the lecture page's language rows as JSON (the React app's Script and Export)
             stem = q.get("lecture", "")
             if not B.STEM.fullmatch(stem) or stem not in R.stems(ROOT, B.parse_stem(stem)[0]):
@@ -775,26 +554,8 @@ class Studio(SimpleHTTPRequestHandler):
             except Exception as e:
                 traceback.print_exc()
                 return self.json({"error": f"{type(e).__name__}: {e}"[:500]}, 500)
-        if path in ("/", "/index.html"):
-            m = q.get("m", "0")
-            return self.html(studio(int(m) if m.isdigit() and int(m) in MODULES else 0))
-        if path == "/lecture":
-            if not b:
-                return self.send_error(404, "no such lecture")
-            return self.html(lecture(b))
-        if path == "/watch":
-            if not (b and n and (recdir(b) / f"{n}.mp4").exists()):
-                return self.send_error(404, "no such video")
-            return self.html(watch(b, n))
-        if path == "/edit":
-            if not (b and (ROOT / b / "presenter" / "lines.json").exists()):
-                return self.send_error(404, "prepare the presenter page first")
-            return self.html(editor(b))
-        m = re.fullmatch(r"/([\w-]+)/presenter/presenter\.html", path)
-        if m and B.is_build(m[1]):                         # rendered from presenter.PAGE: a page fix reaches every lecture
-            page = presenter_page(m[1])
-            if page:
-                return self.html(page)
+        if path in ("/", "/index.html"):                   # the React app (studio/app, built into static/app/)
+            return self.static("app/index.html")
         if path == "/api/line":
             if not b:
                 return self.send_error(404, "no such lecture")
@@ -816,7 +577,7 @@ class Studio(SimpleHTTPRequestHandler):
             if not b:
                 return self.send_error(404, "no such lecture")
             if not (ROOT / b / "presenter" / "lines.json").exists():
-                return self.json({"error": "prepare the presenter page first"}, 404)
+                return self.json({"error": "prepare the presenter page first", "preparing": PREPARING.get(b, "")}, 404)
             try:
                 with dbc() as c:
                     cut_off = A.abandoned(ROOT, b, c)         # cut off without a finish: process what came
@@ -944,7 +705,7 @@ class Studio(SimpleHTTPRequestHandler):
             elif path == "/api/voice-server" and q.get("action") in ("start", "stop"):
                 later.append(lambda: voice_server_action(q["action"]))
             elif path == "/api/export":
-                later.append(lambda: export(b, q.get("clean") if q.get("clean") in CLEAN else "deepfilter"))
+                later.append(lambda: export(b, q.get("clean") if q.get("clean") in CLEAN else "cloned"))
             else:
                 return False
         for f in later:

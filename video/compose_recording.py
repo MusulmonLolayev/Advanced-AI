@@ -49,6 +49,9 @@ CLEAN = {
                   "equalizer=f=180:t=q:w=1.0:g=-2,equalizer=f=2800:t=q:w=1.1:g=3,"
                   "equalizer=f=10000:t=h:width=3500:g=2",
 }
+# "cloned" (studio/media.py): the deepfilter voice re-spoken in the cloned voice by CosyVoice2 voice conversion. This
+# whole-recording tool has no voice server step, so it uses the deepfilter voice for it.
+CLEAN["cloned"] = CLEAN["deepfilter"]
 DEEP_FILTER = Path(__file__).parent / "bin" / "deep-filter"
 DF_LIMIT = 30                                   # dB: at most this much reduction, so the pauses are not dead silent
 
@@ -117,7 +120,7 @@ def main(build, name, clean="deepfilter"):
         (tmp / "list.txt").write_text("".join(f"file '{f}'\n" for f in files))
         ff("-f", "concat", "-safe", "0", "-i", tmp / "list.txt", "-c", "copy", tmp / "picture.mp4")
         out = rec / f"{name}.mp4"
-        if clean == "deepfilter":
+        if clean in ("deepfilter", "cloned"):
             voice, chain = deepfilter(rec / f"{name}.webm", tmp), CLEAN[clean]
         else:
             voice, chain = rec / f"{name}.webm", f"aresample=async=1:first_pts=0,{CLEAN[clean]}"

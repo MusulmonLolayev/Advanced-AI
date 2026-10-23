@@ -12,13 +12,17 @@ the pace of the original narration (the subtitle chunks' times, spread over the 
 (press R again to stop). While recording, the page sends the recording to the server every second (and keeps each
 piece in the browser until the server has it, so a closed tab or a dropped tunnel loses nothing: the next visit
 sends what was left), logs where each line starts, and X marks a mistake: the take of the line on screen is
-rejected and the line starts over, so you say it again without stopping. The studio's editor (/edit) cuts the
-session into one take per line. presenter.html#line=41 opens at line 41 (to record just that line again) with the takes
-panel open: T shows or hides it, and it lists every take of the line on screen to watch (alone or between its
-neighbours), use, mark as a mistake, delete and trim (studio/static/presenter/takes.js, with the editor's player and
-level strip); L records one take of that line (the picture plays the line, the recording stops by itself 1 s after it
-or at → / L, and the session is processed at once), as often as you like. serve_presenter.py renders this page itself
-(`render`), so a change here reaches every lecture without running this script, which also re-encodes the video.
+rejected and the line starts over, so you say it again without stopping. The studio's Edit screen cuts the
+session into one take per line. presenter.html#line=41 opens at line 41; L records one take of that line (the picture
+plays the line, the recording stops by itself 1 s after it or at → / L, and the session is processed at once), as often
+as you like.
+
+What this file is now. The studio is the React app (studio/app); the app's Record screen replaced this page for
+presenting and recording, and the server answers <build>/presenter/presenter.html with a redirect to it. This script
+stays for two things: the build pipeline (`lines()` and `main()` write presenter/lines.json, the line timings the studio
+and merge read, and the silent video; the studio's "prepare", merge and language-build jobs run it), and an offline
+copy, presenter/presenter.html, a standalone presenter (no studio files): it plays the video line by line with the
+notes and the word light, and records through the server's /api/chunk when one answers.
 Lines are found in each scene's subtitles: chunks of one line follow each other
 0.1 s apart, a new line starts after a longer gap (>= 0.23 s).
 
@@ -77,7 +81,6 @@ def lines(build):
 
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>Presenter</title>
-<link rel="stylesheet" href="/studio-static/presenter/takes.css">
 <style>
 :root{--bg:#000;--fg:#eee;--dim:#888;--accent:#8fb8de;--acc:#8fb8de;--warn:#d7b46a;--bad:#e5484d;--good:#5fa0a4;--line:#2a2a2a}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:18px/1.45 system-ui,sans-serif}
@@ -115,15 +118,12 @@ body.single #onetake{display:block}
 <div id="rec"></div><div id="onetake"></div><div id="msg"></div>
 <div id="mic"><div class="lab" style="margin-top:0">microphone</div><select id="micsel"></select>
 <div id="lvl"><div></div></div><div class="lab">speak to test the level · M or Esc closes</div></div>
-<div id="bar">Space pause / play · → next line (while playing: jump to its end) · ← back · X mistake (while recording): retake this line · T takes of this line · L record a take of this line · N notes: below / right / off · F full screen · M microphone · R record</div>
-<script src="/studio-static/editor/player.js"></script>
-<script src="/studio-static/editor/levels.js"></script>
+<div id="bar">Space pause / play · → next line (while playing: jump to its end) · ← back · X mistake (while recording): retake this line · L record a take of this line · N notes: below / right / off · F full screen · M microphone · R record</div>
 <script>
 const L = __LINES__, BUILD = "__BUILD__", v = document.getElementById('v'), recEl = document.getElementById('rec');
 // recording: the microphone, and every moment the picture starts or stops, so the video can be rebuilt around the voice
 let rec = null, t0 = 0, ev = [], session = null, seq = 0, sendQ = Promise.resolve(), waiting = 0, evTimer = null;
-let watching = false;                           // a take is playing in the takes panel: nothing is logged
-function log(kind, k){ if (rec && t0 && !watching){ const e = [(performance.now() - t0) / 1000, kind, v.currentTime, v.playbackRate];
+function log(kind, k){ if (rec && t0){ const e = [(performance.now() - t0) / 1000, kind, v.currentTime, v.playbackRate];
   if (k !== undefined) e.push(k); ev.push(e); } }
 v.addEventListener('playing', () => log('play'));
 v.defaultPlaybackRate = v.playbackRate = 1 / 1.1;                         // the narration's pace felt fast
@@ -172,7 +172,7 @@ async function recover(){                       // pieces a closed tab never sen
     else queue(key, `/api/events?build=${BUILD}&name=${val.name}`, val.events); }
   for (const n of names) queue(`${BUILD}|${n}|finish`, `/api/finish?build=${BUILD}&name=${n}`, '');
   if (names.length){ await sendQ; recEl.style.display = 'block';
-    recEl.innerHTML = 'recovered an unsent recording: ' + names.join(', ') + ' — <a href="/edit?build=' + BUILD + '" style="color:#8fb8de">open the editor</a>'; } }
+    recEl.textContent = 'recovered an unsent recording: ' + names.join(', '); } }
 // the microphone: the one chosen with M (remembered in this browser), else the default
 const micEl = document.getElementById('mic'), micSel = document.getElementById('micsel'),
       lvl = document.querySelector('#lvl div');
@@ -246,13 +246,12 @@ async function toggleRec(oneLine){
     await sendQ;
     if (recEl.textContent.startsWith('NOT')) return;
     recEl.style.display = 'block';
-    recEl.innerHTML = 'saved: ' + name + ' — <a href="/edit?build=' + BUILD + '" style="color:#8fb8de">open the editor</a>';
-    counts(); if (window.Takes) Takes.recorded(!!oneLine); };
+    recEl.textContent = 'saved: ' + name;
+    counts(); };
   rec.start(1000); }
 function recordTake(){                          // L: one take of the line on screen; it stops itself 1 s after the line
   if (single){ stopTake(); return; }
   if (rec){ say('A recording is running: stop it with R first.'); return; }
-  if (watching && window.Takes) Takes.stopWatch();
   toggleRec(true); }
 function lineEnded(){ if (single && !single.timer) single.timer = setTimeout(stopTake, 1000); }
 function stopTake(){                            // the take is over: the picture stops, the recording is finished and processed
@@ -278,7 +277,7 @@ function lineWords(k){
     let c = 0;
     for (const w of ws){ const el = document.createElement('span'); el.textContent = w + ' ';
       words.push([a + (b - a) * c / n, el]); cur.appendChild(el); c += w.length + 1; } } }
-function said(){ if (watching) return; const t = v.currentTime; for (const [ws, el] of words) el.classList.toggle('said', t >= ws + 0.03); }
+function said(){ const t = v.currentTime; for (const [ws, el] of words) el.classList.toggle('said', t >= ws + 0.03); }
 const MODES = ['below', 'right', 'hidden'];
 let mode = 'below';
 try { mode = MODES.includes(localStorage.getItem('presenterNotes')) ? localStorage.getItem('presenterNotes') : 'below'; } catch (e) {}
@@ -287,8 +286,7 @@ function place(m){ mode = m; document.body.classList.remove(...MODES); document.
 function show(){ const n = takeCount[i] || 0;
   document.getElementById('num').textContent = (i+1)+' / '+L.length + (n ? ' · ' + n + (n > 1 ? ' takes' : ' take') : '');
   lineWords(i); said();
-  document.getElementById('next').textContent = L[i+1] ? L[i+1][1] : '— end —';
-  if (window.Takes) Takes.sync(); }
+  document.getElementById('next').textContent = L[i+1] ? L[i+1][1] : '— end —'; }
 function play(k){ i = Math.max(0, Math.min(k, L.length-1)); nxt = i + 1; v.currentTime = L[i][0];
   stopAt = L[i+1] ? L[i+1][0] - 0.04 : null; show(); log('line', i); v.play().catch(() => {}); }
 let nxt = 0;                                    // the line the next press plays
@@ -314,14 +312,12 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape' || e.key === 'm' || e.key === 'M'){ e.preventDefault(); toggleMic(); }
     return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (watching && window.Takes && Takes.key(e)) return;     // a take is playing: Space and Esc are its
   if (e.key === 'm' || e.key === 'M') toggleMic();
   else if (e.key === ' ' || e.key === 'p' || e.key === 'P'){ e.preventDefault(); toggle(); }
   else if (e.key === 'ArrowRight' || e.key === 'PageDown'){ e.preventDefault(); next(); }
   else if (e.key === 'ArrowLeft' || e.key === 'PageUp'){ e.preventDefault(); back(); }
   else if (e.key === 'r' || e.key === 'R') toggleRec();
   else if (e.key === 'x' || e.key === 'X') retake();
-  else if (e.key === 't' || e.key === 'T') window.Takes && Takes.toggle();
   else if (e.key === 'l' || e.key === 'L') recordTake();
   else if (e.key === 'n' || e.key === 'N') place(MODES[(MODES.indexOf(mode) + 1) % MODES.length]);
   else if (e.key === 'f' || e.key === 'F'){ document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
@@ -330,7 +326,6 @@ const at = location.hash.match(/line=(\\d+)/);       // presenter.html#line=41: 
 if (at){ i = Math.max(0, Math.min(+at[1] - 1, L.length - 1)); nxt = i; v.currentTime = L[i][0]; }
 place(mode); show(); requestAnimationFrame(tick); counts(); recover();
 </script>
-<script src="/studio-static/presenter/takes.js"></script>
 </body></html>"""
 
 

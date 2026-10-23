@@ -4,6 +4,7 @@ its narration, and whether a language can be built (studio/buildlang.py plans it
 """
 import re
 from pathlib import Path
+from urllib.parse import quote
 
 import builds as B
 import languages as LG
@@ -141,6 +142,39 @@ def lecture_langs(root, stem, narration_dir=None):
     have = set(N.languages_of(stem, narration_dir)) | set(builds_of(root, stem))
     first = N.primary(stem, narration_dir)
     return sorted(have, key=lambda l: (l != first, LG.CODES.index(l)))
+
+
+def lecture_list(c, root, modules, shared_files, narration_dir=None):
+    """The project browser's list: every module (`modules`: {number: title}) with its lectures, and for each lecture its
+    languages with their approval counts, build state and recorded sessions. The same facts the old module page
+    showed (`summary` per language), without the build plan, which is slow: /api/lecture-langs has that for one lecture.
+    `shared_files(k)` lists the module's shared files (Paths)."""
+    out = []
+    for k, title in modules.items():
+        lecs = []
+        for stem in stems(root, k):
+            by_line = LS.line_texts(stem, narration_dir)
+            builds = builds_of(root, stem)
+            langs = []
+            for lang in lecture_langs(root, stem, narration_dir):
+                sts = LS.statuses(c, stem, lang, "line", by_line)
+                _, _, lab = LS.label_statuses(c, stem, lang)
+                built = None
+                for b in builds.get(lang, []):
+                    mp4 = Path(root) / b / f"{b}.mp4"
+                    if mp4.exists() and (Path(root) / b / "joined.txt").exists():
+                        built = {"build": b, "when": mp4.stat().st_mtime,
+                                 "sessions": c.execute("select count(*) from sessions where build=?", (b,)).fetchone()[0]}
+                        break
+                langs.append({"lang": lang, "name": LG.name(lang), "native": LG.native(lang), "has_narration": lang in by_line,
+                              "lines": LS.counts(sts), "labels": LS.counts(lab), "build": built["build"] if built else None,
+                              "built_on": built["when"] if built else None, "sessions": built["sessions"] if built else 0,
+                              "build_name": BL.build_name(stem, lang)})
+            lecs.append({"stem": stem, "n": B.parse_stem(stem)[1], "langs": langs})
+        files = [{"name": f.name, "size": f.stat().st_size, "time": f.stat().st_mtime, "url": f"/shared/m{k}/{quote(f.name)}"}
+                 for f in shared_files(k)]
+        out.append({"k": k, "title": title, "files": files, "lectures": lecs})
+    return out
 
 
 def stale_lines(root, build, by_line, lang, sts):
