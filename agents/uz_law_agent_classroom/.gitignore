@@ -1,0 +1,4 @@
+# Instructor solutions: the repository is public, so they are never committed. Student folders are generated from
+# them with tools/make_student.py.
+solutions/
+__pycache__/

@@ -1,0 +1,2 @@
+# Pinned minimum versions of what uz_agent actually imports, nothing else.
+openai>=1.40

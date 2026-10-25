@@ -1,20 +1,50 @@
-# Assignments of <your-github-username>
+# Lecture N assignment: <topic>
 
-Work only in this folder. Put answers in `answers/`, notes and code for each step next to them. One step per lecture;
-the acceptance checks for each are in `STEPS.md` at the repository root. The agent works over Uzbek law; the Labor Code
-is the starter corpus used in the course videos. Tick a box when the step's checks hold.
+## Goal
 
-- [ ] L1 ReAct loop: ran the recorded runs, answered the questions about the loop in `answers/`
-- [ ] L2 Tool schemas and structured output
-- [ ] L3 Memory
-- [ ] L4 Verifier subagent
-- [ ] L5 Chunking
-- [ ] L6 BM25 and embeddings
-- [ ] L7 ANN index
-- [ ] L8 Evaluation harness and injection test
-- [ ] Optional: port the agent to the UK corpus (English), see `STEPS.md`
-- [ ] Optional: add another Uzbek law as a corpus, see `STEPS.md` and `docs/ADDING_A_LAW.md`
+## What you will build
 
-## Notes
+| Task | Function | In one sentence |
+|---|---|---|
+| Q1 | `module.function(...)` | |
 
-(What you built, what surprised you, what you would change.)
+The details and the edge cases are in the banner above each function. Everything else is given.
+
+## Before you start
+
+Pointers to the lecture (`agents/lectures/`). Python version.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env               # only needed for a live run; the checks and the replays need no key
+```
+
+## The data
+
+Where it comes from (`data/SOURCE.md`: source, date, licence, sha256, record count).
+
+## How to check
+
+```bash
+python -m uz_agent.self_checks
+```
+
+## Rules for editing
+
+Edit only between the `START OF YOUR CODE` and `END OF YOUR CODE` lines; keep both lines and delete the
+`raise NotImplementedError` line when you write your code. Do not edit the given files, the checks, the data or the
+traces.
+
+## What to submit
+
+```bash
+./collectSubmission.sh
+```
+
+## Grading
+
+The self-checks are the same checks the grader runs.
+
+## Academic honesty

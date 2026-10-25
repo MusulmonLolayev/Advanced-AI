@@ -1,0 +1,74 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the minimum monthly wage in Uzbekistan, in soʻm?",
+ "max_steps": 8,
+ "stop": true,
+ "answer": "The Labor Code of Uzbekistan does not itself state a specific minimum monthly wage figure. Article 245 provides that the minimum amount of remuneration is set by the President of Uzbekistan for the entire territory of the republic simultaneously, taking into account the need to ensure a decent standard of living and proposals developed by the republican tripartite commission on social and labor issues, and is mandatory for all employers regardless of organizational-legal form, ownership form or departmental subordination [Art. 245]. It further provides that the monthly remuneration of an employee who has worked the monthly norm of working time and performed the labor duty stipulated in the employment contract may not be less than the minimum amount of remuneration established by law [Art. 245]. Article 243 similarly defines the minimum amount of remuneration as the legislatively guaranteed monthly wage for unskilled labor under normal conditions corresponding to the first grade of the Unified Tariff Scale [Art. 243]. Because the code only establishes the framework and leaves the actual amount to be set by the President, the Labor Code does not answer the question of the current minimum monthly wage in soʻm.",
+ "trace": [
+  {
+   "step": 1,
+   "model": "Thought: I need to find provisions on minimum wage in the Labor Code.\nAction: search[eng kam ish haqi]",
+   "observation": "Art. 99: Ish oʻrinlarining belgilangan eng kam soni hisobiga ishga joylashtirish\nArt. 240: Ish haqi qisman saqlanadigan taʼtil\nArt. 243: Mehnatga haq toʻlash va ish haqi tushunchalari\nArt. 257: Oʻrtacha ish haqi va uni hisoblab chiqarish tartibi\nArt. 331: Boquvchining yoʻqotilgan ish haqi oʻrnini qoplash uchun amalga oshiriladigan har oylik toʻlovlar miqdori"
+  },
+  {
+   "step": 2,
+   "model": "Thought: Let me search for another phrasing of minimum monthly wage.\nAction: search[eng kam oylik ish haqi miqdori]",
+   "observation": "Art. 331: Boquvchining yoʻqotilgan ish haqi oʻrnini qoplash uchun amalga oshiriladigan har oylik toʻlovlar miqdori\nArt. 324: Xodimning sogʻligʻiga ziyon yetkazilganligi munosabati bilan yoʻqotilgan ish haqining oʻrnini qoplash uchun amalga oshiriladigan oylik toʻlovlar miqdori\nArt. 243: Mehnatga haq toʻlash va ish haqi tushunchalari\nArt. 245: Mehnatga haq toʻlashning eng kam miqdorini belgilash\nArt. 257: Oʻrtacha ish haqi va uni hisoblab chiqarish tartibi"
+  },
+  {
+   "step": 3,
+   "model": "Thought: Article 245 seems directly relevant to setting the minimum wage.\nAction: fetch_article[245]",
+   "observation": "245-modda. Mehnatga haq toʻlashning eng kam miqdorini belgilash\nMehnatga haq toʻlashning eng kam miqdori Oʻzbekiston Respublikasi Prezidenti tomonidan insonning munosib turmush darajasini taʼminlash zarurati hamda Ijtimoiy-mehnat masalalari boʻyicha respublika uch tomonlama komissiyasi tomonidan ishlab chiqilgan takliflar hisobga olingan holda Oʻzbekiston Respublikasining butun hududida bir vaqtning oʻzida belgilanadi hamda tashkiliy-huquqiy shakllaridan, mulkchilik shakllaridan va idoraviy boʻysunuvidan qatʼi nazar, barcha ish beruvchilar uchun majburiydir.\nIsh vaqtining oylik normasini ishlab bergan va mehnat shartnomasida belgilangan mehnat vazifasini bajargan xodimning mehnatiga haq toʻlashning oylik miqdori qonunchilikda belgilangan mehnatga haq toʻlashning eng kam miqdoridan kam boʻlishi mumkin emas.\nOʻz mehnat majburiyatlarini bajargan xodimning mehnatiga soatbay haq toʻlashning eng kam miqdori tegishli kalendar yilda olti kunlik ish haftasidagi ish soatlarining oʻrtacha oylik miqdoriga boʻlingan, bir oyda mehnatga haq toʻlashning qonunchilikda belgilangan eng kam miqdoridan kam boʻlishi mumkin emas.\nMehnatga haq toʻlash tizimida nazarda tutilgan mukofotlar, ish haqiga ustamalar, boshqa ragʻbatlantiruvchi toʻlovlar, shuningdek ish vaqtidan tashqari ish, dam olish kunlaridagi va ishlanmaydigan bayram kunlaridagi ish, tungi vaqtdagi ish uchun toʻlovlar, tuman koeffitsiyentlariga doir toʻlovlar hamda boshqa kompensatsiyaga oid va ijtimoiy toʻlovlar mehnatga haq toʻlashning eng kam miqdoriga kiritilmaydi."
+  },
+  {
+   "step": 4,
+   "model": "Thought: The article explains the framework but not the actual amount. Let me check if any article gives a specific figure.\nAction: search[minimal ish haqi miqdori soʻm]",
+   "observation": "Art. 331: Boquvchining yoʻqotilgan ish haqi oʻrnini qoplash uchun amalga oshiriladigan har oylik toʻlovlar miqdori\nArt. 240: Ish haqi qisman saqlanadigan taʼtil\nArt. 243: Mehnatga haq toʻlash va ish haqi tushunchalari\nArt. 257: Oʻrtacha ish haqi va uni hisoblab chiqarish tartibi\nArt. 324: Xodimning sogʻligʻiga ziyon yetkazilganligi munosabati bilan yoʻqotilgan ish haqining oʻrnini qoplash uchun amalga oshiriladigan oylik toʻlovlar miqdori"
+  },
+  {
+   "step": 5,
+   "model": "Thought: Perhaps the code references the base calculation amount (BHM), which could be relevant. Let me check Article 243 for wage definitions.\nAction: fetch_article[243]",
+   "observation": "243-modda. Mehnatga haq toʻlash va ish haqi tushunchalari\nMehnatga haq toʻlash ish beruvchi tomonidan xodimga uning mehnati uchun toʻlovlar belgilash va ularni amalga oshirish yuzasidan mehnat shartnomasi taraflari oʻrtasidagi mehnat toʻgʻrisidagi qonunchilik, mehnat haqidagi boshqa huquqiy hujjatlar va mehnat shartnomasi bilan tartibga solingan munosabatlar tizimidir.\nIsh beruvchi tomonidan xodimning malakasiga, bajaradigan ishining murakkabligiga, miqdoriga, sifati va sharoitlariga qarab toʻlanadigan mehnat uchun mukofot summasi, shuningdek kompensatsiya xususiyatiga ega toʻlovlar (kompensatsiya xususiyatiga ega qoʻshimcha toʻlovlar va ustamalar, shu jumladan normal ish sharoitlaridan chetga chiqadigan sharoitlarda ishlaganlik, noqulay tabiiy-iqlim sharoitlarida ishlaganlik uchun shunday qoʻshimcha toʻlovlar va ustamalar hamda kompensatsiya xususiyatiga ega boshqa toʻlovlar) va ragʻbatlantiruvchi toʻlovlar (ragʻbatlantiruvchi xususiyatga ega qoʻshimcha toʻlovlar hamda ustamalar, mukofotlar va taqdirlovchi toʻlovlar) ish haqidir.\nNormal ish sharoitlarida oddiy ishlarni bajarish chogʻida ish vaqtining normasini toʻliq ishlab bergan xodimning malaka talab etmaydigan mehnati uchun qonunchilikda kafolatlangan, Yagona tarif setkasining birinchi razryadiga muvofiq boʻlgan oylik ish haqi miqdori mehnatga haq toʻlashning eng kam miqdoridir."
+  },
+  {
+   "step": 6,
+   "model": "Thought: The code may tie wages to the base calculation value (BHM). Let me search for that term.\nAction: search[bazaviy hisoblash miqdori]",
+   "observation": "Art. 172: Mehnat shartnomasi bekor qilinganda xodim bilan hisob-kitob qilish\nArt. 198: Ish vaqtini hisobga olish tushunchasi va turlari\nArt. 199: Ish vaqtini jamlab hisobga olishni belgilash va qoʻllash tartibi\nArt. 223: Har yilgi mehnat taʼtili davomiyligini ishlab berilgan vaqtga mutanosib ravishda hisoblab chiqarish hollari\nArt. 224: Har yilgi mehnat taʼtili davomiyligini ishlab berilgan vaqtga mutanosib ravishda hisoblab chiqarish tartibi"
+  },
+  {
+   "step": 7,
+   "model": "Thought: I have confirmed Article 245 sets the framework but delegates the amount to the President; the code contains no figure.\nAction: answer[The Labor Code of Uzbekistan does not itself state a specific minimum monthly wage figure. Article 245 provides that the minimum amount of remuneration is set by the President of Uzbekistan for the entire territory of the republic simultaneously, taking into account the need to ensure a decent standard of living and proposals developed by the republican tripartite commission on social and labor issues, and is mandatory for all employers regardless of organizational-legal form, ownership form or departmental subordination [Art. 245]. It further provides that the monthly remuneration of an employee who has worked the monthly norm of working time and performed the labor duty stipulated in the employment contract may not be less than the minimum amount of remuneration established by law [Art. 245]. Article 243 similarly defines the minimum amount of remuneration as the legislatively guaranteed monthly wage for unskilled labor under normal conditions corresponding to the first grade of the Unified Tariff Scale [Art. 243]. Because the code only establishes the framework and leaves the actual amount to be set by the President, the Labor Code does not answer the question of the current minimum monthly wage in soʻm.]",
+   "observation": null
+  }
+ ],
+ "calls": [
+  {
+   "prompt": "fd376e11647bcb4e",
+   "reply": "Thought: I need to find provisions on minimum wage in the Labor Code.\nAction: search[eng kam ish haqi]"
+  },
+  {
+   "prompt": "570150c764045ce7",
+   "reply": "Thought: Let me search for another phrasing of minimum monthly wage.\nAction: search[eng kam oylik ish haqi miqdori]"
+  },
+  {
+   "prompt": "ba17dd688d5eb934",
+   "reply": "Thought: Article 245 seems directly relevant to setting the minimum wage.\nAction: fetch_article[245]"
+  },
+  {
+   "prompt": "ca62cd7a98fad4af",
+   "reply": "Thought: The article explains the framework but not the actual amount. Let me check if any article gives a specific figure.\nAction: search[minimal ish haqi miqdori soʻm]"
+  },
+  {
+   "prompt": "16d4dbfa990adc1a",
+   "reply": "Thought: Perhaps the code references the base calculation amount (BHM), which could be relevant. Let me check Article 243 for wage definitions.\nAction: fetch_article[243]"
+  },
+  {
+   "prompt": "4df83f39509acf3c",
+   "reply": "Thought: The code may tie wages to the base calculation value (BHM). Let me search for that term.\nAction: search[bazaviy hisoblash miqdori]"
+  },
+  {
+   "prompt": "413ca2bb61b4723a",
+   "reply": "Thought: I have confirmed Article 245 sets the framework but delegates the amount to the President; the code contains no figure.\nAction: answer[The Labor Code of Uzbekistan does not itself state a specific minimum monthly wage figure. Article 245 provides that the minimum amount of remuneration is set by the President of Uzbekistan for the entire territory of the republic simultaneously, taking into account the need to ensure a decent standard of living and proposals developed by the republican tripartite commission on social and labor issues, and is mandatory for all employers regardless of organizational-legal form, ownership form or departmental subordination [Art. 245]. It further provides that the monthly remuneration of an employee who has worked the monthly norm of working time and performed the labor duty stipulated in the employment contract may not be less than the minimum amount of remuneration established by law [Art. 245]. Article 243 similarly defines the minimum amount of remuneration as the legislatively guaranteed monthly wage for unskilled labor under normal conditions corresponding to the first grade of the Unified Tariff Scale [Art. 243]. Because the code only establishes the framework and leaves the actual amount to be set by the President, the Labor Code does not answer the question of the current minimum monthly wage in soʻm.]"
+  }
+ ]
+}

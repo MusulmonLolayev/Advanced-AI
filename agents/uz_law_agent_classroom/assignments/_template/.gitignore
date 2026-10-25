@@ -1,0 +1,7 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+submission.zip
+self_check_output.txt

@@ -1,0 +1,38 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the maximum normal working week?",
+ "max_steps": 8,
+ "stop": false,
+ "answer": "The maximum normal working week is 40 hours per week. Under Article 182, an employee's normal duration of working time may not exceed forty hours per week, whether on a five-day or a six-day working week [Art. 182].",
+ "trace": [
+  {
+   "step": 1,
+   "model": "Thought: I need to locate the provision on normal working time duration, likely using Uzbek terms for working week.\nAction: search[ish haftasining davomiyligi]",
+   "observation": "Art. 182: Ish vaqtining normal davomiyligi\nArt. 184: Ishi yuqori darajadagi ruhiy, aqliy va asabiy zoʻriqish bilan bogʻliq boʻlgan xodimlar uchun ish vaqtining qisqartirilgan davomiyligi\nArt. 397: Uch yoshga toʻlmagan bolaning ota-onasidan birining (vasiysining) qisqartirilgan ish vaqti davomiyligiga boʻlgan huquqi\nArt. 415: Oʻn sakkiz yoshgacha boʻlgan xodimlar uchun qisqartirilgan ish vaqti davomiyligi\nArt. 427: I va II guruh nogironligi boʻlgan xodimlar uchun ish vaqtining qisqartirilgan davomiyligi"
+  },
+  {
+   "step": 2,
+   "model": "Thought: Article 182 is titled \"Normal duration of working time\" and should state the maximum normal working week.\nAction: fetch_article[182]",
+   "observation": "182-modda. Ish vaqtining normal davomiyligi\nXodim uchun ish vaqtining normal davomiyligi besh kunlik yoki olti kunlik ish haftasida haftasiga qirq soatdan ortiq boʻlishi mumkin emas."
+  },
+  {
+   "step": 3,
+   "model": "Thought: Article 182 directly answers the question: normal working time may not exceed 40 hours per week under a five- or six-day working week.\nAction: answer[The maximum normal working week is 40 hours per week. Under Article 182, an employee's normal duration of working time may not exceed forty hours per week, whether on a five-day or a six-day working week [Art. 182].]",
+   "observation": null
+  }
+ ],
+ "calls": [
+  {
+   "prompt": "e81a854fc4bd90a7",
+   "reply": "Thought: I need to locate the provision on normal working time duration, likely using Uzbek terms for working week.\nAction: search[ish haftasining davomiyligi]"
+  },
+  {
+   "prompt": "210fc07ce780dd8b",
+   "reply": "Thought: Article 182 is titled \"Normal duration of working time\" and should state the maximum normal working week.\nAction: fetch_article[182]"
+  },
+  {
+   "prompt": "5b048559f2f0ba6e",
+   "reply": "Thought: Article 182 directly answers the question: normal working time may not exceed 40 hours per week under a five- or six-day working week.\nAction: answer[The maximum normal working week is 40 hours per week. Under Article 182, an employee's normal duration of working time may not exceed forty hours per week, whether on a five-day or a six-day working week [Art. 182].]"
+  }
+ ]
+}

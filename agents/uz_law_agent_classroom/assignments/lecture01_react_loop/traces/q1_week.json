@@ -1,0 +1,38 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the maximum normal working week?",
+ "max_steps": 8,
+ "stop": true,
+ "answer": "The maximum normal working week is 40 hours. Under Article 182, an employee's normal working time may not exceed forty hours per week, whether on a five-day or a six-day working week [Art. 182].",
+ "trace": [
+  {
+   "step": 1,
+   "model": "Thought: I need to find the provision on normal working time duration, likely Article 182 or nearby.\nAction: search[ish vaqtining normal davomiyligi]",
+   "observation": "Art. 182: Ish vaqtining normal davomiyligi\nArt. 437: Oʻrindoshlik asosida ishlash chogʻidagi ish vaqtining davomiyligi va uni hisobga olish\nArt. 482: Ish vaqtining qisqartirilgan davomiyligi belgilangan noqulay mehnat sharoitlaridagi ishlarda band boʻlgan shaxslarning mehnatiga haq toʻlash\nArt. 145: Ish beruvchining tashabbusiga koʻra xodimni vaqtincha boshqa ishga oʻtkazish\nArt. 181: Ish vaqtining tushunchasi va turlari"
+  },
+  {
+   "step": 2,
+   "model": "Thought: Article 182 directly addresses normal working time duration.\nAction: fetch_article[182]",
+   "observation": "182-modda. Ish vaqtining normal davomiyligi\nXodim uchun ish vaqtining normal davomiyligi besh kunlik yoki olti kunlik ish haftasida haftasiga qirq soatdan ortiq boʻlishi mumkin emas."
+  },
+  {
+   "step": 3,
+   "model": "Thought: Article 182 states the normal working time cannot exceed forty hours per week under a five- or six-day working week.\nAction: answer[The maximum normal working week is 40 hours. Under Article 182, an employee's normal working time may not exceed forty hours per week, whether on a five-day or a six-day working week [Art. 182].]",
+   "observation": null
+  }
+ ],
+ "calls": [
+  {
+   "prompt": "473455433f6c925f",
+   "reply": "Thought: I need to find the provision on normal working time duration, likely Article 182 or nearby.\nAction: search[ish vaqtining normal davomiyligi]"
+  },
+  {
+   "prompt": "4b1c673394288183",
+   "reply": "Thought: Article 182 directly addresses normal working time duration.\nAction: fetch_article[182]"
+  },
+  {
+   "prompt": "c73765623e91b376",
+   "reply": "Thought: Article 182 states the normal working time cannot exceed forty hours per week under a five- or six-day working week.\nAction: answer[The maximum normal working week is 40 hours. Under Article 182, an employee's normal working time may not exceed forty hours per week, whether on a five-day or a six-day working week [Art. 182].]"
+  }
+ ]
+}

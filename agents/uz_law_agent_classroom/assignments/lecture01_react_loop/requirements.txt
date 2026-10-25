@@ -1,0 +1,5 @@
+# Imported by uz_agent: only openai, and only for a live run (llm.py imports it lazily). Replay and the
+# self-checks use the standard library alone.
+openai>=1.40
+# To open the notebook
+jupyterlab>=4.0

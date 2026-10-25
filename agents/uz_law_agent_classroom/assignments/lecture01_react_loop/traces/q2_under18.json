@@ -1,0 +1,47 @@
+{
+ "model": "deepseek-flash",
+ "question": "What is the maximum normal working week, and does it differ for employees under 18?",
+ "max_steps": 8,
+ "stop": true,
+ "answer": "The normal working time for an employee may not exceed forty hours per week, whether under a five-day or six-day working week [Art. 182]. Yes, it differs for employees under 18: working time is set at no more than thirty-six hours per week for employees aged sixteen to eighteen, and no more than twenty-four hours per week for persons aged fifteen to sixteen [Art. 415]. In addition, during the academic year, students working in their free time from studies may not work more than half of the maximum working time provided in part one of that article for persons of the corresponding age [Art. 415].",
+ "trace": [
+  {
+   "step": 1,
+   "model": "Thought: I need the provisions on normal working week and reduced hours for minors.\nAction: search[ish haftasining davomiyligi]",
+   "observation": "Art. 182: Ish vaqtining normal davomiyligi\nArt. 184: Ishi yuqori darajadagi ruhiy, aqliy va asabiy zoʻriqish bilan bogʻliq boʻlgan xodimlar uchun ish vaqtining qisqartirilgan davomiyligi\nArt. 397: Uch yoshga toʻlmagan bolaning ota-onasidan birining (vasiysining) qisqartirilgan ish vaqti davomiyligiga boʻlgan huquqi\nArt. 415: Oʻn sakkiz yoshgacha boʻlgan xodimlar uchun qisqartirilgan ish vaqti davomiyligi\nArt. 427: I va II guruh nogironligi boʻlgan xodimlar uchun ish vaqtining qisqartirilgan davomiyligi"
+  },
+  {
+   "step": 2,
+   "model": "Thought: Let me read the general norm in Art. 182.\nAction: fetch_article[182]",
+   "observation": "182-modda. Ish vaqtining normal davomiyligi\nXodim uchun ish vaqtining normal davomiyligi besh kunlik yoki olti kunlik ish haftasida haftasiga qirq soatdan ortiq boʻlishi mumkin emas."
+  },
+  {
+   "step": 3,
+   "model": "Thought: Now I need the specific rule for employees under 18.\nAction: fetch_article[415]",
+   "observation": "415-modda. Oʻn sakkiz yoshgacha boʻlgan xodimlar uchun qisqartirilgan ish vaqti davomiyligi\nIsh vaqtining davomiyligi oʻn oltidan oʻn sakkiz yoshgacha boʻlgan xodimlar uchun haftasiga oʻttiz olti soatdan oshmaydigan, oʻn beshdan oʻn olti yoshgacha boʻlgan shaxslar uchun esa haftasiga yigirma toʻrt soatdan oshmaydigan qilib belgilanadi.\nOʻquv yili davomida oʻqishdan boʻsh vaqtida ishlayotgan oʻquvchilarning ish vaqti davomiyligi ushbu moddaning birinchi qismida tegishli yoshdagi shaxslar uchun nazarda tutilgan ish vaqti eng koʻp davomiyligining yarmidan oshishi mumkin emas."
+  },
+  {
+   "step": 4,
+   "model": "Thought: I have both provisions; I can answer.\nAction: answer[The normal working time for an employee may not exceed forty hours per week, whether under a five-day or six-day working week [Art. 182]. Yes, it differs for employees under 18: working time is set at no more than thirty-six hours per week for employees aged sixteen to eighteen, and no more than twenty-four hours per week for persons aged fifteen to sixteen [Art. 415]. In addition, during the academic year, students working in their free time from studies may not work more than half of the maximum working time provided in part one of that article for persons of the corresponding age [Art. 415].]",
+   "observation": null
+  }
+ ],
+ "calls": [
+  {
+   "prompt": "0151bd4c3954e430",
+   "reply": "Thought: I need the provisions on normal working week and reduced hours for minors.\nAction: search[ish haftasining davomiyligi]"
+  },
+  {
+   "prompt": "893a8adc1b758c78",
+   "reply": "Thought: Let me read the general norm in Art. 182.\nAction: fetch_article[182]"
+  },
+  {
+   "prompt": "87650594c42cae00",
+   "reply": "Thought: Now I need the specific rule for employees under 18.\nAction: fetch_article[415]"
+  },
+  {
+   "prompt": "393cb395ce42d60c",
+   "reply": "Thought: I have both provisions; I can answer.\nAction: answer[The normal working time for an employee may not exceed forty hours per week, whether under a five-day or six-day working week [Art. 182]. Yes, it differs for employees under 18: working time is set at no more than thirty-six hours per week for employees aged sixteen to eighteen, and no more than twenty-four hours per week for persons aged fifteen to sixteen [Art. 415]. In addition, during the academic year, students working in their free time from studies may not work more than half of the maximum working time provided in part one of that article for persons of the corresponding age [Art. 415].]"
+  }
+ ]
+}
